@@ -66,3 +66,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.light {
+  background-color: #ffffff; /* ライトモードでの背景色 */
+}
+
+.dark {
+  background-color: #333333; /* ダークモードでの背景色 */
+}
