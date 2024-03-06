@@ -7,3 +7,5 @@ app.all("/test", async (c) => {
     return c.json({ message: "Hello, World!" });
 }
 )
+
+export default app;
