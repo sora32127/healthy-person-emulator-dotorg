@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { Button } from "react-bootstrap";
+import DarkModeIcon from "./assets/dark_mode_icon.svg";
+import LightModeIcon from "./assets/light_mode_icon.svg";
 
 const ThemeSwitcher = () => {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -15,9 +18,13 @@ const ThemeSwitcher = () => {
     }, [theme])
 
     return (
-        <button onClick={toggleTheme}>
-            {theme === 'light' ? '🌙' : '☀️'}
-        </button>        
+        <Button onClick={toggleTheme}>
+            {theme === 'light' ? (
+                <img src={DarkModeIcon} alt="Switch to Dark Mode" style={{ width: '24px', height: '24px' }} />
+            ) : (
+                <img src={LightModeIcon} alt="Switch to Light Mode" style={{ width: '24px', height: '24px' }} />
+            )}
+        </Button>        
     )
 }
 

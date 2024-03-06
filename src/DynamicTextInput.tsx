@@ -1,79 +1,73 @@
-import React, { useState, useEffect } from 'react';
-
-interface TextInputProps {
-  id: string;
-  placeholder?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onDelete: () => void;
-}
+import React, { useState } from 'react';
+import { Form, Button, Row, Col } from 'react-bootstrap';
 
 interface DynamicTextInputProps {
-  inputs?: { placeholder: string }[];
+  initialInputs?: { value: string }[];
   description?: string;
+  onInputChange: (values: string[]) => void;
 }
 
-function TextInputFormatter({
-  id,
-  placeholder,
-  onChange,
-  onDelete,
-}: TextInputProps) {
-  return (
-    <div className='TextInputList'>
-      <input className='TextInput'
-        type="text"
-        id={id}
-        placeholder={placeholder}
-        onChange={onChange}
-      />
-      <button onClick={onDelete} className="TextInputDeleteButton">削除</button>
-    </div>
+const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
+  initialInputs = [{ value: "" }],
+  description = "",
+  onInputChange,
+}) => {
+  const [inputFields, setInputFields] = useState<{ id: string; value: string }[]>(
+    initialInputs.map((input, index) => ({
+      id: `input-${index}`,
+      value: input.value,
+    }))
   );
-}
 
-function DynamicTextInput({ inputs = [{ placeholder: "文章を入力してください" }], description = "" }: DynamicTextInputProps) {
-  const [inputFields, setInputFields] = useState<TextInputProps[]>([]);
-
-  useEffect(() => {
-    setInputFields(inputs.map((input, index) => ({
-      id: (index + 1).toString(),
-      placeholder: input.placeholder,
-    })));
-  }, [inputs]);
+  const handleInputChange = (index: number, value: string) => {
+    const updatedInputFields = inputFields.map((input, i) =>
+      i === index ? { ...input, value } : input
+    );
+    setInputFields(updatedInputFields);
+    onInputChange(updatedInputFields.map(input => input.value));
+  };
 
   const addInput = () => {
     const newInput = {
-      id: (inputFields.length + 1).toString(),
-      placeholder: "",
+      id: `input-${inputFields.length}`,
+      value: "",
     };
     setInputFields([...inputFields, newInput]);
   };
 
-  const handleInputChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (index === inputFields.length - 1) {
-      addInput();
-    }
-  };
-
   const deleteInput = (id: string) => {
-    setInputFields(inputFields.filter(input => input.id !== id));
+    const updatedInputFields = inputFields.filter(input => input.id !== id);
+    setInputFields(updatedInputFields);
+    onInputChange(updatedInputFields.map(input => input.value));
   };
 
   return (
-    <div className="DynamicTextInputList">
-      {description && <p>{description}</p>}
-      {inputFields.map((input, index) => (
-        <TextInputFormatter
-          key={input.id}
-          id={input.id}
-          placeholder={input.placeholder}
-          onChange={handleInputChange(index)}
-          onDelete={() => deleteInput(input.id)}
-        />
-      ))}
-      <button onClick={addInput}>テキスト入力を追加</button>
+    <div>
+      {description && <p className="text-start">{description}</p>}
+      <Form>
+        {inputFields.map((input, index) => (
+          <Form.Group as={Row} key={input.id} className="mb-3">
+            <Col>
+              <Form.Control
+                type="text"
+                id={input.id}
+                value={input.value}
+                onChange={(e) => handleInputChange(index, e.target.value)}
+              />
+            </Col>
+            <Col xs="auto">
+              <Button variant="danger" onClick={() => deleteInput(input.id)}>
+                削除
+              </Button>
+            </Col>
+          </Form.Group>
+        ))}
+        <Button variant="primary" onClick={addInput}>
+          テキスト入力を追加
+        </Button>
+      </Form>
     </div>
   );
-}
+};
 
 export default DynamicTextInput;

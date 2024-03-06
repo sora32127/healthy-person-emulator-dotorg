@@ -1,15 +1,28 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Form, ListGroup, Button, Badge } from 'react-bootstrap';
+import styled from 'styled-components';
 
 interface Tag {
     count: number;
     name: string;
 }
 
-const TagSelectionBox = (): JSX.Element => {
+interface TagSelectionBoxProps {
+    onTagsSelected: (tags: string[]) => void;
+    createdTags: string[];
+}
+
+const TagListGroup = styled(ListGroup)`
+    height: 300px;
+    overflow-y: auto;
+`;
+
+const TagSelectionBox = ({ onTagsSelected, createdTags }: TagSelectionBoxProps): JSX.Element => {
     const [tags, setTags] = useState<Tag[]>([]);
     const [searchText, setSearchText] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [sortBy, setSortBy] = useState<'count' | 'name'>('count');
 
     useEffect(() => {
         const getTags = async () => {
@@ -46,27 +59,73 @@ const TagSelectionBox = (): JSX.Element => {
         }
     };
 
-    const filteredTags = tags.filter(tag => tag.name.includes(searchText));
+    const handleRemoveSelectedTag = (tagName: string) => {
+        setSelectedTags(selectedTags.filter(tag => tag !== tagName));
+    };
+
+    const filteredTags = tags
+        .filter(tag => tag.name.includes(searchText))
+        .sort((a, b) => {
+            if (sortBy === 'count') {
+                return b.count - a.count;
+            } else {
+                return a.name.localeCompare(b.name, 'ja');
+            }
+        });
+
+    useEffect(() => {
+        const allSelectedTags = [...selectedTags, ...createdTags];
+        onTagsSelected(allSelectedTags);
+    }, [selectedTags, createdTags, onTagsSelected]);
 
     return (
         <div>
-            <input
+            <h3>タグ選択</h3>
+            <p>タグを選択してください。</p>
+            <Form.Control
                 type="text"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
+                placeholder="タグを検索..."
             />
-            <div className="TagSelectionBox">
+            <div className="mt-3">
+                <Button
+                    variant={sortBy === 'count' ? 'primary' : 'outline-primary'}
+                    onClick={() => setSortBy('count')}
+                >
+                    タグ数順で並び替え
+                </Button>{' '}
+                <Button
+                    variant={sortBy === 'name' ? 'primary' : 'outline-primary'}
+                    onClick={() => setSortBy('name')}
+                >
+                    五十音順で並び替え
+                </Button>
+            </div>
+            <TagListGroup className="mt-3">
                 {filteredTags.map(tag => (
-                    <div
+                    <ListGroup.Item
                         key={tag.name}
-                        style={{
-                            cursor: 'pointer',
-                            backgroundColor: selectedTags.includes(tag.name) ? 'lightblue' : 'transparent',
-                        }}
+                        action
+                        active={selectedTags.includes(tag.name) || createdTags.includes(tag.name)}
                         onClick={() => handleTagClick(tag.name)}
                     >
                         {tag.name} ({tag.count})
-                    </div>
+                    </ListGroup.Item>
+                ))}
+            </TagListGroup>
+            <div className="mt-3">
+                <h4>選択したタグ:</h4>
+                {[...selectedTags, ...createdTags].map(tag => (
+                    <Badge
+                        key={tag}
+                        pill
+                        className="mr-2"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleRemoveSelectedTag(tag)}
+                    >
+                        {tag} x
+                    </Badge>
                 ))}
             </div>
         </div>

@@ -13,6 +13,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.TopBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+  z-index: 1000;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -74,3 +86,5 @@ button:focus-visible {
 .dark {
   background-color: #333333; /* ダークモードでの背景色 */
 }
+
+
