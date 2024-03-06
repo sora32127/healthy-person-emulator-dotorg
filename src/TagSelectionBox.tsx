@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Form, ListGroup, Button, Badge } from 'react-bootstrap';
 import styled from 'styled-components';
@@ -73,10 +73,14 @@ const TagSelectionBox = ({ onTagsSelected, createdTags }: TagSelectionBoxProps):
             }
         });
 
-    useEffect(() => {
+    const handleTagsSelected = useCallback(() => {
         const allSelectedTags = [...selectedTags, ...createdTags];
         onTagsSelected(allSelectedTags);
     }, [selectedTags, createdTags, onTagsSelected]);
+    
+    useEffect(() => {
+        handleTagsSelected();
+    }, [handleTagsSelected]);
 
     return (
         <div>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { GoogleReCaptcha, GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { Button, Modal } from 'react-bootstrap';
+import { Turnstile } from '@marsidev/react-turnstile'
 
-const VITE_RECAPTCHA_KEY = import.meta.env.VITE_RECAPTCHA_KEY
+const VITE_CF_TURNSTILE_SITEKEY = import.meta.env.VITE_CF_TURNSTILE_SITEKEY;
 
 interface SubmitContentBoxProps {
   situationValues: { [key: string]: string };
@@ -25,14 +25,14 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
   selectedType,
   selectedTags,
 }) => {
-  const [isVerified, setIsVerified] = useState(true); // 本番時はfalseにする
   const [showModal, setShowModal] = useState(false);
+  const [isValidUser, setIsValidUser] = useState(false);
 
-  const handleRecaptchaVerify = (token: string | null) => {
-    if (token) {
-      setIsVerified(true);
-    }
-  };
+  const handleTurnstileValidation = (isValid: boolean) => {
+    setIsValidUser(isValid);
+  }
+
+
   const handleSubmit = async () => {
     try {
       const response = await fetch("/maketext", {
@@ -70,17 +70,12 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
 
   return (
     <div>
-      <GoogleReCaptchaProvider reCaptchaKey={VITE_RECAPTCHA_KEY}>
-        <GoogleReCaptcha onVerify={handleRecaptchaVerify} />
-      </GoogleReCaptchaProvider>
-      {isVerified ? (
-        <Button variant="primary" onClick={() => setShowModal(true)}>
-          投稿する
-        </Button>
-      ) : (
-        <p>ReCAPTCHA認証を行ってください。</p>
-      )}
-
+      <div className="checkbox mb-3">
+        <Turnstile siteKey={VITE_CF_TURNSTILE_SITEKEY} onSuccess={() => handleTurnstileValidation(true)} />
+      </div>
+      <Button disabled = {isValidUser} variant="primary" onClick={() => setShowModal(true)}>
+        投稿する
+      </Button>
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>投稿確認</Modal.Title>

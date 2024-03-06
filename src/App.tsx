@@ -1,5 +1,5 @@
 import './App.css'
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import DynamicTextInput from './DynamicTextInput';
 import TagSelectionBox from './TagSelectionBox';
 import SituationInput from './SituationInput';
@@ -48,20 +48,20 @@ function App() {
   }
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const handleTagSelection = (selectedTags: string[]) => {
-      setSelectedTags(selectedTags);
-  }
+  const handleTagSelection = useCallback((selectedTags: string[]) => {
+    setSelectedTags(selectedTags);
+  }, []);
 
   const [createdTags, setCreatedTags] = useState<string[]>([]);
-  const handleTagCreated = (tag: string) => {
-    setSelectedTags([...selectedTags, tag]);
-    setCreatedTags([...createdTags, tag]);
-  };
+  const handleTagCreated = useCallback((tag: string) => {
+    setSelectedTags((prevSelectedTags) => [...prevSelectedTags, tag]);
+    setCreatedTags((prevCreatedTags) => [...prevCreatedTags, tag]);
+  }, []);
 
-  const handleTagRemoved = (tag: string) => {
-    setSelectedTags(selectedTags.filter((t) => t !== tag));
-    setCreatedTags(createdTags.filter((t) => t !== tag));
-  };
+  const handleTagRemoved = useCallback((tag: string) => {
+    setSelectedTags((prevSelectedTags) => prevSelectedTags.filter((t) => t !== tag));
+    setCreatedTags((prevCreatedTags) => prevCreatedTags.filter((t) => t !== tag));
+  }, []);
 
   return (
     <div>
