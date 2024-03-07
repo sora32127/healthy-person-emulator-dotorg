@@ -73,9 +73,14 @@ function App() {
       localStorage.setItem('titleValue', JSON.stringify(values));
   }
 
-  const [selectedType, setSelectedType] = useState('misDeed');
+  const [selectedType, setSelectedType] = useState<string>( () => {
+    const saved = localStorage.getItem('selectedType');
+    const initialValue = saved || 'misDeed';
+    return initialValue;
+  });
   const handleToggle = (selectedType: string) => {
       setSelectedType(selectedType);
+      localStorage.setItem('selectedType', selectedType);
   }
 
   const [selectedTags, setSelectedTags] = useState<string[]>( () => {
