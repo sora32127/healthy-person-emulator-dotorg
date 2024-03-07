@@ -19,12 +19,17 @@ function App() {
   });
   const handleSituationChange = (values: { [key: string]: string }) => {
       setSituationValues(values);
-      localStorage.setItem('situation', JSON.stringify(values));
+      localStorage.setItem('situationValue', JSON.stringify(values));
   };
 
-  const [assumptionValues, setAssumptionValues] = useState<string[]>([]);
+  const [assumptionValues, setAssumptionValues] = useState<string[]>( () => {
+    const saved = localStorage.getItem('assumptionValue');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
   const handleAssumptionChange = (values: string[]) => {
       setAssumptionValues(values);
+      localStorage.setItem('assumptionValue', JSON.stringify(values));
   };
 
   const [reflectionValues, setReflectionValues] = useState<string[]>([]);
@@ -85,6 +90,7 @@ function App() {
           description='書ききれなかった前提条件はありますか？'
           initialInputs={[{ value: "文章を入力してください" }]}
           onInputChange={handleAssumptionChange}
+          parentComponentStateValues={assumptionValues}
         />
         <br></br>
         <br></br>

@@ -5,20 +5,17 @@ interface DynamicTextInputProps {
   initialInputs?: { value: string }[];
   description?: string;
   onInputChange: (values: string[]) => void;
+  parentComponentStateValues: string[];
 }
 
 const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
-  initialInputs = [{ value: "" }],
   description = "",
   onInputChange,
+  parentComponentStateValues,
 }) => {
-  const [inputFields, setInputFields] = useState<{ id: string; value: string }[]>(
-    initialInputs.map((input, index) => ({
-      id: `input-${index}`,
-      value: input.value,
-    }))
-  );
-
+  const [inputFields, setInputFields] = useState(
+    parentComponentStateValues.map((value, index) => ({ id: `input-${index}`, value })
+  ));
   const handleInputChange = (index: number, value: string) => {
     const updatedInputFields = inputFields.map((input, i) =>
       i === index ? { ...input, value } : input
