@@ -12,9 +12,14 @@ import SubmitContentBox from './SubmitContentBox';
 
 function App() {
 
-  const [ situationValues, setSituationValues] = useState<{ [key: string]: string }>({});
+  const [ situationValues, setSituationValues] = useState<{ [key: string]: string }>( () => {
+    const saved = localStorage.getItem('situation');
+    const initialValue = JSON.parse(saved || '{}');
+    return initialValue;
+  });
   const handleSituationChange = (values: { [key: string]: string }) => {
       setSituationValues(values);
+      localStorage.setItem('situation', JSON.stringify(values));
   };
 
   const [assumptionValues, setAssumptionValues] = useState<string[]>([]);
@@ -70,7 +75,10 @@ function App() {
         <br></br>
         <br></br>
         <br></br>
-        <SituationInput onInputChange={handleSituationChange} />
+        <SituationInput
+          onInputChange={handleSituationChange}
+          parentComponentStateValues={situationValues}
+        />
         <br></br>
         <br></br>
         <DynamicTextInput

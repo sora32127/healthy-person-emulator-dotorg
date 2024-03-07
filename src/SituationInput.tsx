@@ -3,9 +3,10 @@ import Form from 'react-bootstrap/Form';
 
 interface SituationInputProps {
     onInputChange: (situation: { [key: string]: string }) => void;
+    parentComponentStateValues: { [key: string]: string };
 }
 
-const SituationInput = ({onInputChange}: SituationInputProps) => {
+const SituationInput = ({onInputChange, parentComponentStateValues}: SituationInputProps) => {
     const textData = [
         {
             "key": "who",
@@ -51,7 +52,7 @@ const SituationInput = ({onInputChange}: SituationInputProps) => {
         }
     ];
 
-    const [situation, setSituation] = useState<{ [key: string]: string }>({});
+    const [situation, setSituation] = useState<{ [key: string]: string }>(parentComponentStateValues);
     const handleInputChange = (key: string, value: string) => {
         const newSituation = { ...situation, [key]: value };
         setSituation(newSituation);
