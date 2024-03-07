@@ -2,9 +2,10 @@ import { Badge } from 'react-bootstrap';
 
 interface TagPreviewBoxProps {
   selectedTags: string[];
+  createdTags: string[];
 }
 
-const TagPreviewBox: React.FC<TagPreviewBoxProps> = ({ selectedTags }) => {
+const TagPreviewBox: React.FC<TagPreviewBoxProps> = ({ selectedTags, createdTags}) => {
   return (
     <div>
       <h3>選択したタグ</h3>
@@ -14,6 +15,11 @@ const TagPreviewBox: React.FC<TagPreviewBoxProps> = ({ selectedTags }) => {
           <Badge key={tag} pill className="mr-2">
             {tag}
           </Badge>
+        ))}
+        {createdTags.map(tag => (
+          <Badge key={tag} pill className="mr-2">
+            {tag}
+        </Badge>
         ))}
       </div>
     </div>

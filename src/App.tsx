@@ -1,5 +1,5 @@
 import './App.css'
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import DynamicTextInput from './DynamicTextInput';
 import TagSelectionBox from './TagSelectionBox';
 import SituationInput from './SituationInput';
@@ -32,24 +32,45 @@ function App() {
       localStorage.setItem('assumptionValue', JSON.stringify(values));
   };
 
-  const [reflectionValues, setReflectionValues] = useState<string[]>([]);
+  const [reflectionValues, setReflectionValues] = useState<string[]>( () => {
+    const saved = localStorage.getItem('reflectionValue');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
   const handleReflectionChange = (values: string[]) => {
       setReflectionValues(values);
+      localStorage.setItem('reflectionValue', JSON.stringify(values));
   }
 
-  const [counterFactualReflectionValues, setCounterFactualReflectionValues] = useState<string[]>([]);
+  const [counterFactualReflectionValues, setCounterFactualReflectionValues] = useState<string[]>( () => {
+    const saved = localStorage.getItem('counterFactualReflectionValue');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  
+  });
   const handleCounterFactualReflectionChange = (values: string[]) => {
       setCounterFactualReflectionValues(values);
+      localStorage.setItem('counterFactualReflectionValue', JSON.stringify(values));
   }
 
-  const [noteValues, setNoteValues] = useState<string[]>([]);
+  const [noteValues, setNoteValues] = useState<string[]>( () => {
+    const saved = localStorage.getItem('noteValue');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
   const handleNoteChange = (values: string[]) => {
       setNoteValues(values);
+      localStorage.setItem('noteValue', JSON.stringify(values));
   }
 
-  const [titleValues, setTitleValues] = useState<string[]>([]);
+  const [titleValues, setTitleValues] = useState<string[]>( () => {
+    const saved = localStorage.getItem('titleValue');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
   const handleTitleChange = (values: string[]) => {
       setTitleValues(values);
+      localStorage.setItem('titleValue', JSON.stringify(values));
   }
 
   const [selectedType, setSelectedType] = useState('misDeed');
@@ -57,21 +78,32 @@ function App() {
       setSelectedType(selectedType);
   }
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const handleTagSelection = useCallback((selectedTags: string[]) => {
-    setSelectedTags(selectedTags);
-  }, []);
+  const [selectedTags, setSelectedTags] = useState<string[]>( () => {
+    const saved = localStorage.getItem('selectedTags');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
+  const handleTagSelection = (tags: string[]) => {
+    setSelectedTags(tags);
+    localStorage.setItem('selectedTags', JSON.stringify(tags));
+  }
 
-  const [createdTags, setCreatedTags] = useState<string[]>([]);
-  const handleTagCreated = useCallback((tag: string) => {
-    setSelectedTags((prevSelectedTags) => [...prevSelectedTags, tag]);
+  const [createdTags, setCreatedTags] = useState<string[]>( () => {
+    const saved = localStorage.getItem('createdTags');
+    const initialValue = JSON.parse(saved || '[]');
+    return initialValue;
+  });
+  useEffect(() => {
+    localStorage.setItem('createdTags', JSON.stringify(createdTags));
+  }, [createdTags]);
+  
+  const handleTagCreated = (tag: string) => {
     setCreatedTags((prevCreatedTags) => [...prevCreatedTags, tag]);
-  }, []);
-
-  const handleTagRemoved = useCallback((tag: string) => {
-    setSelectedTags((prevSelectedTags) => prevSelectedTags.filter((t) => t !== tag));
-    setCreatedTags((prevCreatedTags) => prevCreatedTags.filter((t) => t !== tag));
-  }, []);
+  };
+  
+  const handleTagRemoved = (tag: string) => {
+    setCreatedTags(createdTags.filter(createdTag => createdTag !== tag));
+  };
 
   return (
     <div>
@@ -101,12 +133,14 @@ function App() {
               title='健常行動ブレイクポイント'
               description='上で記述した状況がどのような点でアウトだったのかの説明です。 できる範囲で構わないので、なるべく理由は深堀りしてください。 「マナーだから」は理由としては認められません。 健常者エミュレータはマナー講師ではありません。一つずつ追加してください。3つ記入する必要はありません。'
               onInputChange={handleReflectionChange}
+              parentComponentStateValues={reflectionValues}
             />
             <StaticTextInput
               row={3}
               title='どうすればよかったか'
               description='5W1H状況説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。'
               onInputChange={handleCounterFactualReflectionChange}
+              parentComponentStateValues={counterFactualReflectionValues}
             />
           </>
         ) : (
@@ -116,12 +150,14 @@ function App() {
               title='なぜやってよかったのか'
               description='上で記述した行動がなぜやってよかったのか、理由を説明します。できる範囲で構わないので、なるべく理由は深堀りしてください。なんとなくただ「よかった」は理由としては認められません。一つずつ追加してください。3つ記入する必要はありません。'
               onInputChange={handleReflectionChange}
+              parentComponentStateValues={reflectionValues}
             />
             <StaticTextInput
               row={3}
               title='やらなかったらどうなっていたか'
               description='仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構いません。'
               onInputChange={handleCounterFactualReflectionChange}
+              parentComponentStateValues={counterFactualReflectionValues}
             />
           </>
         )}
@@ -130,6 +166,7 @@ function App() {
           title='備考'
           description='書ききれなかったことを書きます'
           onInputChange={handleNoteChange}
+          parentComponentStateValues={noteValues}
         />
         <Preview
           selectedType={selectedType}
@@ -145,11 +182,19 @@ function App() {
           title='タイトル'
           description='得られる教訓を要約してください'
           onInputChange={handleTitleChange}
+          parentComponentStateValues={titleValues}
         />
-        <TagSelectionBox onTagsSelected={handleTagSelection} createdTags={createdTags}/>
+        <TagSelectionBox
+          onTagsSelected={handleTagSelection}
+          parentComponentStateValues={selectedTags}
+        />
         <br></br>
-        <TagCreateBox onTagCreated={handleTagCreated} onTagRemoved={handleTagRemoved} /> 
-        <TagPreviewBox selectedTags={selectedTags} />
+        <TagCreateBox
+          handleTagCreated={handleTagCreated}
+          handleTagRemoved={handleTagRemoved}
+          parentComponentStateValues={createdTags}
+        /> 
+        <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags}/>
         <SubmitContentBox
           situationValues={situationValues}
           assumptionValues={assumptionValues}

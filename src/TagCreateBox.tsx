@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Form, Button, Badge } from 'react-bootstrap';
 
 interface TagCreateBoxProps {
-  onTagCreated: (tag: string) => void;
-  onTagRemoved: (tag: string) => void;
+  handleTagCreated: (tag: string) => void;
+  handleTagRemoved: (tag: string) => void;
+  parentComponentStateValues: string[];
 }
 
-const TagCreateBox: React.FC<TagCreateBoxProps> = ({ onTagCreated, onTagRemoved }) => {
+const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTagRemoved, parentComponentStateValues}) => {
   const [tagInput, setTagInput] = useState('');
-  const [createdTags, setCreatedTags] = useState<string[]>([]);
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTagInput(e.target.value);
@@ -17,16 +17,9 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ onTagCreated, onTagRemoved 
   const handleCreateTag = () => {
     if (tagInput.trim() !== '') {
       const newTag = tagInput.trim();
-      setCreatedTags([...createdTags, newTag]);
-      onTagCreated(newTag);
+      handleTagCreated(newTag);
       setTagInput('');
     }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    const updatedTags = createdTags.filter((t) => t !== tag);
-    setCreatedTags(updatedTags);
-    onTagRemoved(tag);
   };
 
   return (
@@ -46,13 +39,13 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ onTagCreated, onTagRemoved 
       </Button>
       <div className="mt-3">
         <h4>作成したタグ:</h4>
-        {createdTags.map((tag) => (
+        {parentComponentStateValues.map((tag) => (
           <Badge
             key={tag}
             pill
             className="mr-2"
             style={{ cursor: 'pointer' }}
-            onClick={() => handleRemoveTag(tag)}
+            onClick={() => handleTagRemoved(tag)}
           >
             {tag} x
           </Badge>

@@ -7,11 +7,12 @@ interface StaticTextInputProps {
   description?: string;
   placeholders?: string[];
   onInputChange: (values: string[]) => void;
+  parentComponentStateValues: string[];
 }
 
-function StaticTextInput({ row, title = '', description = '', placeholders = [], onInputChange}: StaticTextInputProps) {
-    const [inputValues, setInputValues] = useState<string[]>(new Array(row).fill('')); // 追加
-    const handleInputChange = (index: number, value: string) => { // 追加
+function StaticTextInput({ row, title = '', description = '', placeholders = [], onInputChange, parentComponentStateValues}: StaticTextInputProps) {
+    const [inputValues, setInputValues] = useState<string[]>(parentComponentStateValues);
+    const handleInputChange = (index: number, value: string) => {
         const newInputValues = [...inputValues];
         newInputValues[index] = value;
         setInputValues(newInputValues);
