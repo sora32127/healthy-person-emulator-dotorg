@@ -106,6 +106,7 @@ const SituationInput = ({onInputChange, parentComponentStateValues, selectedType
 
     return (
         <div>
+            <h3>5W1H+Then状況説明</h3>
             <Form>
                 {textData.map((data, index) => (
                     <Form.Group key={index}>
