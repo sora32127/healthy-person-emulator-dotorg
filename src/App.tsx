@@ -155,7 +155,6 @@ function App() {
         <br></br>
         <DynamicTextInput
           description='書ききれなかった前提条件はありますか？'
-          initialInputs={[{ value: "文章を入力してください" }]}
           onInputChange={handleAssumptionChange}
           parentComponentStateValues={assumptionValues}
         />
