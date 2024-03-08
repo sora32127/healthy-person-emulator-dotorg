@@ -24,6 +24,7 @@ function StaticTextInput({ row, title = '', description = '', placeholders = [],
         <Form.Group key={i} className="mb-3">
           <Form.Control
             type="text"
+            as="textarea"
             placeholder={placeholder}
             value={parentComponentStateValues[i] || ''}
             onChange={(e) => handleInputChange(i, e.target.value)}
