@@ -4,8 +4,7 @@ import DarkModeIcon from "./assets/dark_mode_icon.svg";
 import LightModeIcon from "./assets/light_mode_icon.svg";
 
 const ThemeSwitcher = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
