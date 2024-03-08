@@ -126,10 +126,10 @@ function App() {
     setCounterFactualReflectionValues([]);
     setNoteValues([]);
     setTitleValues([]);
-    setSelectedType('misDeed');
     setSelectedTags([]);
     setCreatedTags([]);
     localStorage.clear()
+    setSelectedType('misDeed');
   };
 
 

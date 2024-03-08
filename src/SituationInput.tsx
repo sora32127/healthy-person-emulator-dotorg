@@ -52,17 +52,10 @@ const SituationInput = ({onInputChange, parentComponentStateValues}: SituationIn
         }
     ];
 
-    const [situation, setSituation] = useState<{ [key: string]: string }>(parentComponentStateValues);
     const handleInputChange = (key: string, value: string) => {
-        const newSituation = { ...situation, [key]: value };
-        setSituation(newSituation);
+        const newSituation = { ...parentComponentStateValues, [key]: value };
         onInputChange(newSituation);
     }
-    useEffect(() => {
-        setSituation(parentComponentStateValues);
-    }, [parentComponentStateValues]);
-
-
 
     return (
         <div>
@@ -76,7 +69,7 @@ const SituationInput = ({onInputChange, parentComponentStateValues}: SituationIn
                             as="textarea"
                             id={data.key}
                             placeholder={data.placeholder}
-                            value={situation[data.key] || ""}
+                            value={parentComponentStateValues[data.key] || ""}
                             rows={data.rows}
                             onChange={e => handleInputChange(data.key, e.target.value)}
                         />
@@ -86,6 +79,5 @@ const SituationInput = ({onInputChange, parentComponentStateValues}: SituationIn
         </div>
     );
 }
-
 
 export default SituationInput;

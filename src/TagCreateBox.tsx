@@ -7,7 +7,7 @@ interface TagCreateBoxProps {
   parentComponentStateValues: string[];
 }
 
-const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTagRemoved, parentComponentStateValues}) => {
+const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTagRemoved, parentComponentStateValues }) => {
   const [tagInput, setTagInput] = useState('');
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

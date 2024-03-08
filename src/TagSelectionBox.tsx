@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, ListGroup, Button, Badge } from 'react-bootstrap';
 import styled from 'styled-components';
@@ -21,7 +21,6 @@ const TagListGroup = styled(ListGroup)`
 const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSelectionBoxProps): JSX.Element => {
     const [tags, setTags] = useState<Tag[]>([]);
     const [searchText, setSearchText] = useState('');
-    const [selectedTags, setSelectedTags] = useState<string[]>(parentComponentStateValues);
     const [sortBy, setSortBy] = useState<'count' | 'name'>('count');
 
     useEffect(() => {
@@ -29,7 +28,7 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
             let allTags: Tag[] = [];
             let page = 1;
             let hasMore = true;
-    
+
             while (hasMore) {
                 try {
                     const response = await axios.get(`https://healthy-person-emulator.org/wp-json/wp/v2/tags?per_page=100&page=${page}`);
@@ -44,25 +43,25 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
                     hasMore = false;
                 }
             }
-    
+
             setTags(allTags);
         };
-    
+
         getTags();
     }, []);
-    
+
     const handleTagClick = (tagName: string) => {
-        if (selectedTags.includes(tagName)) {
-            setSelectedTags(selectedTags.filter(tag => tag !== tagName));
+        if (parentComponentStateValues.includes(tagName)) {
+            onTagsSelected(parentComponentStateValues.filter(tag => tag !== tagName));
         } else {
-            setSelectedTags([...selectedTags, tagName]);
+            onTagsSelected([...parentComponentStateValues, tagName]);
         }
     };
-    
+
     const handleRemoveSelectedTag = (tagName: string) => {
-        setSelectedTags(selectedTags.filter(tag => tag !== tagName));
+        onTagsSelected(parentComponentStateValues.filter(tag => tag !== tagName));
     };
-    
+
     const filteredTags = tags
         .filter(tag => tag.name.includes(searchText))
         .sort((a, b) => {
@@ -72,15 +71,7 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
                 return a.name.localeCompare(b.name, 'ja');
             }
         });
-    
-    const handleTagsSelected = useCallback(() => {
-        onTagsSelected(selectedTags);
-    }, [selectedTags, onTagsSelected]);
-    
-    useEffect(() => {
-        handleTagsSelected();
-    }, [handleTagsSelected]);
-    
+
     return (
         <div>
             <h3>タグ選択</h3>
@@ -110,7 +101,7 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
                     <ListGroup.Item
                         key={tag.name}
                         action
-                        active={selectedTags.includes(tag.name)}
+                        active={parentComponentStateValues.includes(tag.name)}
                         onClick={() => handleTagClick(tag.name)}
                     >
                         {tag.name} ({tag.count})
@@ -119,7 +110,7 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
             </TagListGroup>
             <div className="mt-3">
                 <h4>選択したタグ:</h4>
-                {selectedTags.map(tag => (
+                {parentComponentStateValues.map(tag => (
                     <Badge
                         key={tag}
                         pill
