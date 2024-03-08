@@ -20,7 +20,7 @@ TODO
 function App() {
 
   const [ situationValues, setSituationValues] = useState<{ [key: string]: string }>( () => {
-    const saved = localStorage.getItem('situation');
+    const saved = localStorage.getItem('situationValue');
     const initialValue = JSON.parse(saved || '{}');
     return initialValue;
   });
