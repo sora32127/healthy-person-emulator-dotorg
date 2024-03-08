@@ -31,6 +31,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleTurnstileValidation = (isValid: boolean) => {
     setIsValidUser(isValid);
@@ -40,6 +41,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
 
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const response = await fetch("/maketext", {
         method: 'POST',
@@ -71,6 +73,9 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
   } catch (error) {
     console.error('投稿エラー:', error);
     alert('投稿中にエラーが発生しました。');
+  } finally {
+    setIsSubmitting(false);
+    setShowModal(false);
   }
   };
 
@@ -79,7 +84,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
       <div className="checkbox mb-3">
         <Turnstile siteKey={VITE_CF_TURNSTILE_SITEKEY} onSuccess={() => handleTurnstileValidation(true)} />
       </div>
-      <Button className='submitButton' disabled = {!isValidUser || !isValid} variant="primary" onClick={() => setShowModal(true)}>
+      <Button className='submitButton' disabled={!isValidUser || !isValid || isSubmitting} variant="primary" onClick={() => setShowModal(true)}>
         投稿する
       </Button>
       <Modal show={showModal} onHide={() => setShowModal(false)}>
@@ -88,16 +93,15 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
         </Modal.Header>
         <Modal.Body>本当に投稿しますか？</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Button variant="secondary" onClick={() => setShowModal(false)} disabled={isSubmitting}>
             戻る
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            投稿する
+          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? '投稿中...' : '投稿する'}
           </Button>
         </Modal.Footer>
       </Modal>
     </div>
   );
 };
-
 export default SubmitContentBox;
