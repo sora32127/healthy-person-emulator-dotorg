@@ -12,7 +12,6 @@ interface PreviewProps {
 }
 
 const PreviewContainer = styled(Container)`
-  background-color: #5F524F;
   padding: 20px;
   border-radius: 5px;
 `;
@@ -26,7 +25,7 @@ const Preview: React.FC<PreviewProps> = ({
   selectedType,
 }) => {
   return (
-    <PreviewContainer>
+    <PreviewContainer className='previewContainer'>
       <Row>
         <Col>
           <h1 className="text-start">プレビュー</h1>

@@ -1,12 +1,21 @@
 .light .main-campus {
-  background-color: white;
+  background-color: #F2F0E8;
   color: black;
   padding: 20px;
+}
+
+.light .navbar {
+  background-color: #F2F0E8;
 }
 
 .light .navbar .navbar-brand {
   color: black;
 }
+
+.light .previewContainer {
+  background-color: #F5F5DC;
+}
+
 
 .dark .main-campus {
   background-color: #333;
@@ -14,8 +23,10 @@
   padding: 20px;
 }
 
-
-
 .dark .navbar {
   background-color: #333;
+}
+
+.dark .previewContainer {
+  background-color: #2F4F4F;
 }
