@@ -29,7 +29,7 @@ const TopBar: React.FC<TopbarProps> = ({ onToggle, clearInputs }) => {
     return (
         <StyledNavbar fixed="top" data-bs-theme="dark">
             <Container fluid>
-                <Navbar.Brand>健エミュ投稿フォーム3.0.0</Navbar.Brand>
+                <Navbar.Brand>3.0.0</Navbar.Brand>
                 <Navbar.Collapse className="justify-content-end">
                     <Nav className="ml-auto">
                         <Nav.Item className="mr-3">
