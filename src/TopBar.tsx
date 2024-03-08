@@ -1,5 +1,6 @@
 import ThemeSwitcher from './ThemeSwitcher';
 import TextTypeSwitcher from './TextTypeSwitcher';
+import ClearLocalStorageButton from './ClearLocalStorageButton';
 import Container from 'react-bootstrap/Container';
 import { Navbar, Nav } from 'react-bootstrap';
 import styled from 'styled-components';
@@ -21,9 +22,10 @@ const StyledNavbar = styled(Navbar)`
 
 interface TopbarProps {
   onToggle: (selectedType: string) => void;
+  clearInputs: () => void;
 }
 
-const TopBar: React.FC<TopbarProps> = ({ onToggle }) => {
+const TopBar: React.FC<TopbarProps> = ({ onToggle, clearInputs }) => {
     return (
         <StyledNavbar fixed="top" data-bs-theme="dark">
             <Container fluid>
@@ -32,6 +34,9 @@ const TopBar: React.FC<TopbarProps> = ({ onToggle }) => {
                     <Nav className="ml-auto">
                         <Nav.Item className="mr-3">
                             <ThemeSwitcher />
+                        </Nav.Item>
+                        <Nav.Item>
+                            <ClearLocalStorageButton clearInputs={clearInputs} />
                         </Nav.Item>
                         <Nav.Item>
                             <TextTypeSwitcher onToggle={onToggle} />

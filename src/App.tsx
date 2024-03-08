@@ -10,6 +10,14 @@ import TagPreviewBox from './TagPreviewBox';
 import TagCreateBox from './TagCreateBox';
 import SubmitContentBox from './SubmitContentBox';
 
+/*
+TODO
+- ローカルストレージの値をクリアするボタンの追加
+- 説明書きの追加
+- CSSの最終調整
+- 最終ハッピーパステスト
+- 本番公開
+*/
 function App() {
 
   const [ situationValues, setSituationValues] = useState<{ [key: string]: string }>( () => {
@@ -110,9 +118,25 @@ function App() {
     setCreatedTags(createdTags.filter(createdTag => createdTag !== tag));
   };
 
+  const clearInputs = () => {
+    console.log("CLEARBUTTON")
+    setSituationValues({});
+    setAssumptionValues([]);
+    setReflectionValues([]);
+    setCounterFactualReflectionValues([]);
+    setNoteValues([]);
+    setTitleValues([]);
+    setSelectedType('misDeed');
+    setSelectedTags([]);
+    setCreatedTags([]);
+    localStorage.clear()
+  };
+
+
+
   return (
     <div>
-      <TopBar onToggle={handleToggle} />
+      <TopBar onToggle={handleToggle} clearInputs={clearInputs} />
       <div className='main-campus'>
         <br></br>
         <br></br>

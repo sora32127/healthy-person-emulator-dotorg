@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Form from 'react-bootstrap/Form';
 
 interface SituationInputProps {
@@ -58,6 +58,9 @@ const SituationInput = ({onInputChange, parentComponentStateValues}: SituationIn
         setSituation(newSituation);
         onInputChange(newSituation);
     }
+    useEffect(() => {
+        setSituation(parentComponentStateValues);
+    }, [parentComponentStateValues]);
 
 
 
