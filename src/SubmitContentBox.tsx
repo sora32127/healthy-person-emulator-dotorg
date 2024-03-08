@@ -79,7 +79,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
       <div className="checkbox mb-3">
         <Turnstile siteKey={VITE_CF_TURNSTILE_SITEKEY} onSuccess={() => handleTurnstileValidation(true)} />
       </div>
-      <Button disabled = {!isValidUser || !isValid} variant="primary" onClick={() => setShowModal(true)}>
+      <Button className='submitButton' disabled = {!isValidUser || !isValid} variant="primary" onClick={() => setShowModal(true)}>
         投稿する
       </Button>
       <Modal show={showModal} onHide={() => setShowModal(false)}>
