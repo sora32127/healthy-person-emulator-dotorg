@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { Form } from 'react-bootstrap';
 
 interface StaticTextInputProps {
@@ -10,16 +10,14 @@ interface StaticTextInputProps {
   parentComponentStateValues: string[];
 }
 
-function StaticTextInput({ row, title = '', description = '', placeholders = [], onInputChange, parentComponentStateValues}: StaticTextInputProps) {
-    const [inputValues, setInputValues] = useState<string[]>(parentComponentStateValues);
-    const handleInputChange = (index: number, value: string) => {
-        const newInputValues = [...inputValues];
-        newInputValues[index] = value;
-        setInputValues(newInputValues);
-        onInputChange(newInputValues);
-      };
-    
-    const renderTextInputs = () => {
+function StaticTextInput({ row, title = '', description = '', placeholders = [], onInputChange, parentComponentStateValues }: StaticTextInputProps) {
+  const handleInputChange = (index: number, value: string) => {
+    const newInputValues = [...parentComponentStateValues];
+    newInputValues[index] = value;
+    onInputChange(newInputValues);
+  };
+
+  const renderTextInputs = () => {
     const inputs = [];
     for (let i = 0; i < row; i++) {
       const placeholder = placeholders[i] || '';
@@ -28,9 +26,9 @@ function StaticTextInput({ row, title = '', description = '', placeholders = [],
           <Form.Control
             type="text"
             placeholder={placeholder}
-            value={inputValues[i]}
+            value={parentComponentStateValues[i] || ''}
             onChange={(e) => handleInputChange(i, e.target.value)}
-            />
+          />
         </Form.Group>
       );
     }
