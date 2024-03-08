@@ -14,47 +14,51 @@ export async function onRequest(c) {
     const WP_USER_PASS = c.env.VITE_WP_USER_PASS;
     const AUTH_STRING = 'Basic ' + btoa(`${WP_USER_NAME}:${WP_USER_PASS}`);
     const result = `
-    <h3>5W1H+Then状況説明</h3>
-    <table><tbody>
-      <tr><td>Who(誰が)</td><td>${situationValues.who}</td></tr>
-      <tr><td>When(いつ)</td><td>${situationValues.when}</td></tr>
-      <tr><td>Where(どこで)</td><td>${situationValues.where}</td></tr>
-      <tr><td>Why(なぜ)</td><td>${situationValues.why}</td></tr>
-      <tr><td>What(何を)</td><td>${situationValues.what}</td></tr>
-      <tr><td>How(どのように)</td><td>${situationValues.how}</td></tr>
-      <tr><td>Then(どうした)</td><td>${situationValues.then}</td></tr>
-    </tbody></table>
-    <h3>前提条件</h3>
-    <ul>
-      ${assumptionValues.map((assumption) => `<li>${assumption}</li>`).join('')}
-    </ul>
-    <h3>
-      ${selectedType == 'misDeed'
-        ? '健常行動ブレイクポイント'
-        : selectedType == 'goodDeed'
-        ? 'なぜやってよかったのか'
-        : ''}
-    </h3>
-    <ul>
-      ${reflectionValues.map((reflection) => `<li>${reflection}</li>`).join('')}
-    </ul>
+        <h3>5W1H+Then状況説明</h3>
+        <table><tbody>
+          <tr><td>Who(誰が)</td><td>${situationValues.who || ''}</td></tr>
+          <tr><td>When(いつ)</td><td>${situationValues.when || ''}</td></tr>
+          <tr><td>Where(どこで)</td><td>${situationValues.where || ''}</td></tr>
+          <tr><td>Why(なぜ)</td><td>${situationValues.why || ''}</td></tr>
+          <tr><td>What(何を)</td><td>${situationValues.what || ''}</td></tr>
+          <tr><td>How(どのように)</td><td>${situationValues.how || ''}</td></tr>
+          <tr><td>Then(どうした)</td><td>${situationValues.then || ''}</td></tr>
+        </tbody></table>
+        ${assumptionValues.length > 0 ? `
+          <h3>前提条件</h3>
+          <ul>
+            ${assumptionValues.map((assumption) => `<li>${assumption}</li>`).join('')}
+          </ul>
+        ` : ''}
+        <h3>
+          ${selectedType == 'misDeed'
+            ? '健常行動ブレイクポイント'
+            : selectedType == 'goodDeed'
+            ? 'なぜやってよかったのか'
+            : ''}
+        </h3>
+        <ul>
+          ${reflectionValues.map((reflection) => `<li>${reflection}</li>`).join('')}
+        </ul>
 
-    <h3>
-      ${selectedType == 'misDeed'
-        ? 'どうすればよかったか'
-        : selectedType == 'goodDeed'
-        ? 'やらなかったらどうなっていたか'
-        : ''}
-    </h3>
-    <ul>
-      ${counterFactualReflectionValues.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
-    </ul>
+        <h3>
+          ${selectedType == 'misDeed'
+            ? 'どうすればよかったか'
+            : selectedType == 'goodDeed'
+            ? 'やらなかったらどうなっていたか'
+            : ''}
+        </h3>
+        <ul>
+          ${counterFactualReflectionValues.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
+        </ul>
 
-    <h3>備考</h3>
-    <ul>
-      ${noteValues.map((note) => `<li>${note}</li>`).join('')}
-    </ul>
-  `;
+        ${noteValues.length > 0 ? `
+          <h3>備考</h3>
+          <ul>
+            ${noteValues.map((note) => `<li>${note}</li>`).join('')}
+          </ul>
+        ` : ''}
+      `;
 
     const allTags = await getAllTags(AUTH_STRING);
     const existingTagNames = allTags.map((tag) => tag.name);
