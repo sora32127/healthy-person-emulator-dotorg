@@ -3,7 +3,7 @@ export async function onRequest(c) {
         situationValues = {},
         assumptionValues = [],
         reflectionValues = [],
-        counterReflectionValues = [],
+        counterFactualReflectionValues = [],
         noteValues = [],
         titleValues = [],
         selectedType = '',
@@ -47,7 +47,7 @@ export async function onRequest(c) {
         : ''}
     </h3>
     <ul>
-      ${counterReflectionValues.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
+      ${counterFactualReflectionValues.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
     </ul>
 
     <h3>備考</h3>
@@ -109,7 +109,6 @@ export async function onRequest(c) {
       },
     );
     const data = await response.json();
-    console.log(data)
     let postedURL = data.guid.rendered;
 
     return new Response(JSON.stringify({ url: postedURL, statuscode: response.status }), {
