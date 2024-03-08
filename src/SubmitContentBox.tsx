@@ -13,6 +13,7 @@ interface SubmitContentBoxProps {
   titleValues: string[];
   selectedType: string;
   selectedTags: string[];
+  isValid: boolean;
 }
 
 const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
@@ -24,6 +25,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
   titleValues,
   selectedType,
   selectedTags,
+  isValid,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
@@ -73,7 +75,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
       <div className="checkbox mb-3">
         <Turnstile siteKey={VITE_CF_TURNSTILE_SITEKEY} onSuccess={() => handleTurnstileValidation(true)} />
       </div>
-      <Button disabled = {isValidUser} variant="primary" onClick={() => setShowModal(true)}>
+      <Button disabled = {!isValidUser || !isValid} variant="primary" onClick={() => setShowModal(true)}>
         投稿する
       </Button>
       <Modal show={showModal} onHide={() => setShowModal(false)}>

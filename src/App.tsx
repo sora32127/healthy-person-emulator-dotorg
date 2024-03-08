@@ -10,10 +10,10 @@ import TagPreviewBox from './TagPreviewBox';
 import TagCreateBox from './TagCreateBox';
 import SubmitContentBox from './SubmitContentBox';
 import UserExplanation from './UserExplanation';
+import ValidationCheckBox from './ValidationCheckBox';
 
 /*
 TODO
-- バリデーションチェックの追加
 - CSSの最終調整
 - 最終ハッピーパステスト
 - 本番公開
@@ -116,6 +116,11 @@ function App() {
   
   const handleTagRemoved = (tag: string) => {
     setCreatedTags(createdTags.filter(createdTag => createdTag !== tag));
+  };
+
+  const [isValid, setIsValid] = useState(false);
+  const handleValidationResult = (result: boolean) => {
+    setIsValid(result);
   };
 
   const clearInputs = () => {
@@ -231,6 +236,13 @@ function App() {
           parentComponentStateValues={createdTags}
         /> 
         <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags}/>
+        <ValidationCheckBox
+          titleValues={titleValues}
+          situationValues={situationValues}
+          reflectionValues={reflectionValues}
+          counterFactualReflectionValues={counterFactualReflectionValues}
+          onValidationResult={handleValidationResult}
+        />
         <SubmitContentBox
           situationValues={situationValues}
           assumptionValues={assumptionValues}
@@ -240,6 +252,7 @@ function App() {
           titleValues={titleValues}
           selectedType={selectedType}
           selectedTags={selectedTags}
+          isValid={isValid}
         />
       </div>
       
