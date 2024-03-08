@@ -9,10 +9,10 @@ import Preview from './Preview';
 import TagPreviewBox from './TagPreviewBox';
 import TagCreateBox from './TagCreateBox';
 import SubmitContentBox from './SubmitContentBox';
+import UserExplanation from './UserExplanation';
 
 /*
 TODO
-- ローカルストレージの値をクリアするボタンの追加
 - 説明書きの追加
 - CSSの最終調整
 - 最終ハッピーパステスト
@@ -141,6 +141,7 @@ function App() {
         <br></br>
         <br></br>
         <br></br>
+        <UserExplanation />
         <SituationInput
           onInputChange={handleSituationChange}
           parentComponentStateValues={situationValues}
