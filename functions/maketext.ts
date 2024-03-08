@@ -7,7 +7,7 @@ export async function onRequest(c) {
         noteValues = [],
         titleValues = [],
         selectedType = '',
-        selectedTags = [],
+        allLabeledTags = [],
       } = await c.request.json();
 
     const WP_USER_NAME = c.env.VITE_WP_USER_NAME;
@@ -60,10 +60,10 @@ export async function onRequest(c) {
     const existingTagNames = allTags.map((tag) => tag.name);
 
     let tag_id_list: number[] = [];
-    for (let i = 0; i < selectedTags.length; i++) {
+    for (let i = 0; i < allLabeledTags.length; i++) {
       let tag_id: number;
 
-      const tagIndex = existingTagNames.indexOf(selectedTags[i]);
+      const tagIndex = existingTagNames.indexOf(allLabeledTags[i]);
       if (tagIndex !== -1) {
         tag_id = allTags[tagIndex].id;
       } else {
@@ -77,7 +77,7 @@ export async function onRequest(c) {
                 'Authorization': AUTH_STRING
               },
               body: JSON.stringify({
-                'name': selectedTags[i],
+                'name': allLabeledTags[i],
               })
             }
           );
@@ -91,7 +91,7 @@ export async function onRequest(c) {
 
       tag_id_list.push(tag_id);
     }
-
+    
     const response = await fetch(
       'https://healthy-person-emulator.org/wp-json/wp/v2/posts',
       {

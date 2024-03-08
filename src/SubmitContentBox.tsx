@@ -13,6 +13,7 @@ interface SubmitContentBoxProps {
   titleValues: string[];
   selectedType: string;
   selectedTags: string[];
+  createdTags: string[];
   isValid: boolean;
 }
 
@@ -25,6 +26,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
   titleValues,
   selectedType,
   selectedTags,
+  createdTags,
   isValid,
 }) => {
   const [showModal, setShowModal] = useState(false);
@@ -33,6 +35,8 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
   const handleTurnstileValidation = (isValid: boolean) => {
     setIsValidUser(isValid);
   }
+
+  const allLabeledTags = selectedTags.concat(createdTags);
 
 
   const handleSubmit = async () => {
@@ -50,7 +54,7 @@ const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
           noteValues,
           titleValues,
           selectedType,
-          selectedTags,
+          allLabeledTags,
         }),
       });
       if (response.ok) {

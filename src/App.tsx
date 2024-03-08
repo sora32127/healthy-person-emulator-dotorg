@@ -250,6 +250,7 @@ function App() {
           titleValues={titleValues}
           selectedType={selectedType}
           selectedTags={selectedTags}
+          createdTags={createdTags}
           isValid={isValid}
         />
       </div>
