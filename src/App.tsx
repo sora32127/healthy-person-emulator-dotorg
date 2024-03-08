@@ -14,7 +14,6 @@ import ValidationCheckBox from './ValidationCheckBox';
 
 /*
 TODO
-- CSSの最終調整
 - 最終ハッピーパステスト
 - 本番公開
 */
