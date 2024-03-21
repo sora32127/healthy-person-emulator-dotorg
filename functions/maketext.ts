@@ -1,14 +1,27 @@
+function removeEmptyString(array: string[]): string[] {
+  return array.filter((value) => !/^\s*$/.test(value));
+}
+
 export async function onRequest(c) {
-    const {
-        situationValues = {},
+    let {
         assumptionValues = [],
         reflectionValues = [],
         counterFactualReflectionValues = [],
         noteValues = [],
+        ...rest
+      } = await c.request.json();
+
+    const {
+        situationValues = {},
         titleValues = [],
         selectedType = '',
         allLabeledTags = [],
-      } = await c.request.json();
+      } = rest;
+    
+    assumptionValues = removeEmptyString(assumptionValues);
+    reflectionValues = removeEmptyString(reflectionValues);
+    counterFactualReflectionValues = removeEmptyString(counterFactualReflectionValues);
+    noteValues = removeEmptyString(noteValues);
 
     const WP_USER_NAME = c.env.VITE_WP_USER_NAME;
     const WP_USER_PASS = c.env.VITE_WP_USER_PASS;
@@ -63,7 +76,7 @@ export async function onRequest(c) {
     const allTags = await getAllTags(AUTH_STRING);
     const existingTagNames = allTags.map((tag) => tag.name);
 
-    let tag_id_list: number[] = [];
+    const tag_id_list: number[] = [];
     for (let i = 0; i < allLabeledTags.length; i++) {
       let tag_id: number;
 
@@ -113,7 +126,7 @@ export async function onRequest(c) {
       },
     );
     const data = await response.json();
-    let postedURL = data.guid.rendered;
+    const postedURL = data.guid.rendered;
 
     return new Response(JSON.stringify({ url: postedURL, statuscode: response.status }), {
         headers: { 'Content-Type': 'application/json' },
