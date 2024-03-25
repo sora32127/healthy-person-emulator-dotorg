@@ -2,6 +2,7 @@ import { json } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import { useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
+import { H1, H2 } from "~/components/Headings";
 
 export async function loader() {
     const mostRecentPosts = await prisma.userPostContent.findMany({
@@ -22,7 +23,8 @@ export default function Feed() {
     const mostRecentPosts = useLoaderData<typeof loader>();
     return (
         <>
-        <h1>Feed</h1>
+        <H1>フィード</H1>
+        <H2>最新の投稿</H2>
         {mostRecentPosts.map((post) => (
             <PostCard
                 key={post.postUrl}
