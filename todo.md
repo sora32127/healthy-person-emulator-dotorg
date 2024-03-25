@@ -1,0 +1,14 @@
+- スキーマの変更
+  - user_post_contentsのtag_idsカラムを削除
+  - tag_relationshipsテーブルを作成し、tag_idとuser_post_contentのpost_idを紐付ける
+  - それに紐づくカスケード変更
+- PostCardモデルの変更
+  - ハイライト文をオプショナルに受け取れるようにする
+- 投稿を表示する
+- コメントを表示する
+- TailwindCSSでレスポンシブデザインをする方法について調べる
+- 遷移途中UIの実装
+- 投稿導線の確保
+- そのほかのメニューを追加
+- ボトムナビゲーションバーにアイコンを追加
+- PlaywrightでE2Eテストを書く
