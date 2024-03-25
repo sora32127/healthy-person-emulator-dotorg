@@ -19,3 +19,6 @@
 - データベース: [Supabase](https://supabase.io/)
 - ORM : [Prisma](https://www.prisma.io/)
 - CSS : [Tailwind CSS](https://tailwindcss.com/)
+
+# 活用したアセット
+- [Google Fonts](https://fonts.google.com/)
