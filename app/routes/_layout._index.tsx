@@ -19,10 +19,31 @@ export async function loader() {
             postTitle: true,
             postDateJst: true,
             postUrl: true,
+            tagIds: true,
+            countLikes: true,
+            countDislikes: true,
         },
     });
 
-    return json(mostRecentPosts);
+    const allTagIds = [...new Set(mostRecentPosts.flatMap(post => post.tagIds))];
+
+    const tags = await prisma.dimTags.findMany({
+        where: {
+            tagId: { in: allTagIds },
+        },
+    });
+
+    const tagDictionary: { [key: number]: string } = tags.reduce((acc, tag) => ({
+        ...acc,
+        [tag.tagId]: tag.tagName,
+    }), {});
+
+    const postsWithTags = mostRecentPosts.map(post => ({
+        ...post,
+        tagNames: post.tagIds.map(tagId => tagDictionary[tagId])
+    }));
+
+    return json(postsWithTags);
 }
 
 
@@ -38,6 +59,9 @@ export default function Feed() {
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
                 postUrl={post.postUrl}
+                tagNames={post.tagNames}
+                countLikes={post.countLikes}
+                countDislikes={post.countDislikes}
             />
         ))}
         </>

@@ -8,17 +8,27 @@ datasource db {
 }
 
 model UserPostContent {
-  postId             Int      @map("post_id")
-  postRevisionNumber Int      @map("post_revision_number")
-  postAuthorHash     String  @map("post_author_hash")
+  postId             Int       @map("post_id")
+  postRevisionNumber Int       @map("post_revision_number")
+  postAuthorHash     Decimal  @map("post_author_hash")
   postDateJst        DateTime @map("post_date_jst")
   postDateGmt        DateTime @map("post_date_gmt")
-  postContent        String  @map("post_content")
-  postTitle          String  @map("post_title")
-  postStatus         String  @map("post_status")
-  commentStatus      String  @map("comment_status")
-  postUrl            String  @map("post_url")
+  postContent        String   @map("post_content")
+  postTitle          String   @map("post_title")
+  postStatus         String   @map("post_status")
+  commentStatus      String   @map("comment_status")
+  postUrl            String   @map("post_url")
+  tagIds            Int[]      @map("tag_ids")
+  countLikes        Int       @map("count_likes")
+  countDislikes     Int       @map("count_dislikes")
 
   @@id([postId, postRevisionNumber])
   @@map("user_post_contents")
+}
+
+model DimTags {
+  tagId   Int    @map("tag_id") @id
+  tagName String @map("tag_name")
+
+  @@map("dim_tags")
 }
