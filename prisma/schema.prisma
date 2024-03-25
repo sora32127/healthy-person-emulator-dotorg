@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SUPABASE_CONNECTION_STRING")
+}
+
+model UserPostContent {
+  postId             Int      @map("post_id")
+  postRevisionNumber Int      @map("post_revision_number")
+  postAuthorHash     String  @map("post_author_hash")
+  postDateJst        DateTime @map("post_date_jst")
+  postDateGmt        DateTime @map("post_date_gmt")
+  postContent        String  @map("post_content")
+  postTitle          String  @map("post_title")
+  postStatus         String  @map("post_status")
+  commentStatus      String  @map("comment_status")
+  postUrl            String  @map("post_url")
+
+  @@id([postId, postRevisionNumber])
+  @@map("user_post_contents")
+}
