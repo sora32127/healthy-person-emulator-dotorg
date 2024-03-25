@@ -43,12 +43,17 @@ export async function loader() {
         tagNames: post.tagIds.map(tagId => tagDictionary[tagId])
     }));
 
-    return json(postsWithTags);
+    return json(
+        {mostRecentPosts : postsWithTags}, 
+        {
+        headers: {
+            "Chache-Control": "max-age=3600, public"
+    }});
 }
 
 
 export default function Feed() {
-    const mostRecentPosts = useLoaderData<typeof loader>();
+    const { mostRecentPosts } = useLoaderData<typeof loader>();
     return (
         <>
         <H1>フィード</H1>
