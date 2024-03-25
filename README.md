@@ -17,3 +17,5 @@
 - インフラ：[Vercel](https://vercel.com/)
 - テスト：[Playwright](https://playwright.dev/)
 - データベース: [Supabase](https://supabase.io/)
+- ORM : [Prisma](https://www.prisma.io/)
+- CSS : [Tailwind CSS](https://tailwindcss.com/)
