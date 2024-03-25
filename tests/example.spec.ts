@@ -1,18 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+const localHostUrl = 'http://localhost:5173';
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+test('has title on TopPage', async ({ page }) => {
+  await page.goto(localHostUrl);
+  await expect(page).toHaveTitle(/健常者エミュレータ事例集/);
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+test('get feed link', async ({ page }) => {
+  await page.goto(localHostUrl);
+  await page.getByRole('link', { name: 'Go to the feed' }).click();
+  await page.getByRole('link', { name: 'パソコンのキーボードはフロントUSBに刺したほうがいい' }).click();
+  await expect(page).toHaveTitle(/パソコンのキーボードはフロントUSBに刺したほうがいい/);
 });
