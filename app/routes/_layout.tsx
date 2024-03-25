@@ -3,8 +3,8 @@ import { NavLink } from "react-router-dom";
 
 export default function Component() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Outlet />
+    <div className="flex flex-col min-h-screen px-4">
+      <Outlet/>
       <footer className="bg-white shadow-inner mt-auto fixed bottom-0 w-full">
         <nav className="mx-auto px-4 py-4">
           <ul className="flex justify-around">
@@ -22,7 +22,7 @@ export default function Component() {
             </li>
             <li>
               <NavLink
-                to="/guideline"
+                to="/readme"
                 className={({ isActive }) =>
                   `block text-center text-gray-700 hover:text-blue-500 ${
                     isActive ? "text-blue-500 font-bold" : ""
