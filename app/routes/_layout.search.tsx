@@ -92,6 +92,7 @@ export default function Component() {
       {data && data.length > 0 ? (
         data.map((post: any) => (
             <PostCard
+              postId={post.postid}
               postTitle={post.posttitle}
               postDateJst={post.postdatejst}
               postUrl={post.posturl}

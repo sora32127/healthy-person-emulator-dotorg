@@ -53,6 +53,7 @@ export default function Feed() {
         {mostRecentPosts.map((post) => (
             <PostCard
                 key={post.postUrl}
+                postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
                 postUrl={post.postUrl}

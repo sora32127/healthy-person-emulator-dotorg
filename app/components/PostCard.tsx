@@ -1,6 +1,7 @@
 import { NavLink } from "@remix-run/react";
 
 interface PostCardProps {
+    postId: number;
     postTitle: string;
     postDateJst: string;
     postUrl: string;
@@ -11,9 +12,9 @@ interface PostCardProps {
 }
 
 export default function PostCard({
+    postId,
     postTitle,
     postDateJst,
-    postUrl,
     tagNames,
     countLikes,
     countDislikes,
@@ -34,7 +35,7 @@ export default function PostCard({
             <div className="flex justify-between items-center mb-2">
                 <p className="text-gray-600 text-sm">{formattedPostDate}</p>
             </div>
-            <NavLink to={postUrl} className="text-lg font-bold text-blue-600 hover:underline">{postTitle}</NavLink>
+            <NavLink to={`/archives/${postId}`} className="text-lg font-bold text-blue-600 hover:underline">{postTitle}</NavLink>
             {highLightedText && (
                 <p
                     className="text-gray-600 text-sm mt-2"
