@@ -10,11 +10,9 @@ interface CommentCardProps {
 
 export default function CommentCard(
     {
-        commentId,
         commentDateJst,
         commentAuthor,
         commentContent,
-        commentParentId,
         level,
     }: CommentCardProps
 ) {
