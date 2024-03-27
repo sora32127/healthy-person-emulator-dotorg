@@ -32,3 +32,17 @@ model DimTags {
   @@id([tagId, postId])
   @@map("dim_tags")
 }
+
+model DimComments {
+  commentId Int @map("comment_id")
+  postId    Int @map("post_id")
+  commentAuthor String @map("comment_author")
+  commentAuthorIpHash String @map("comment_author_ip_hash")
+  commentDateJst DateTime @map("comment_date_jst")
+  commentDateGmt DateTime @map("comment_date_gmt")
+  commentContent String @map("comment_content")
+  commentParent Int @map("comment_parent")
+
+  @@id([commentId, postId])
+  @@map("dim_comments")
+}

@@ -1,6 +1,7 @@
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
+import CommentCard from "~/components/CommentCard";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -25,21 +26,48 @@ export async function loader({ request }:LoaderFunctionArgs){
         },
     });
 
-    return json({ postContent, tagNames });
+    const comments = await prisma.dimComments.findMany({
+        where: {
+          postId: Number(postId),
+        },
+    });
+    
+    return json({ postContent, tagNames, comments });
 }
 
 export default function Component() {
-    const { postContent, tagNames } = useLoaderData<typeof loader>();
-    return (
-        <div>
-            <h1>{postContent.postTitle}</h1>
-            <div>
-                {tagNames.map((tag) => (
-                    <span key={tag.tagName}>{tag.tagName}</span>
-                ))}
-            </div>
-            <div dangerouslySetInnerHTML={{ __html: postContent.postContent }} />
-        </div>
-    );
+  const { postContent, tagNames, comments } = useLoaderData<typeof loader>();
 
+  const renderComments = (parentId: number = 0, level: number = 0) => {
+      return comments
+          .filter((comment) => comment.commentParent === parentId)
+          .map((comment) => (
+              <div key={comment.commentId}>
+                  <CommentCard
+                      commentId={comment.commentId}
+                      commentContent={comment.commentContent}
+                      commentDateJst={comment.commentDateJst}
+                      commentAuthor={comment.commentAuthor}
+                      commentParentId={comment.commentParent}
+                      level={level}
+                  />
+                  {renderComments(comment.commentId, level + 1)}
+              </div>
+          ));
+  };
+
+  return (
+      <div>
+          <h1>{postContent.postTitle}</h1>
+          <div>
+              {tagNames.map((tag) => (
+                  <span key={tag.tagName}>{tag.tagName}</span>
+              ))}
+          </div>
+          <div dangerouslySetInnerHTML={{ __html: postContent.postContent }} />
+          <div>
+              {renderComments()}
+          </div>
+      </div>
+  );
 }
