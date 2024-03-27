@@ -2,6 +2,19 @@ import { Form, useLoaderData, useSearchParams } from "@remix-run/react";
 import { H1, H2 } from "~/components/Headings";
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { supabase } from "~/modules/supabase.server";
+import { prisma } from "~/modules/db.server";
+import PostCard from "~/components/PostCard";
+
+interface UserPostContentSearchResult {
+  highlightedcontent: string;
+  postid: number;
+  posttitle: string;
+  posturl: string;
+  postdatejst: string;
+  countlikes: number;
+  countdislikes: number;
+}
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -10,14 +23,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return json({ results: [], query: "" });
   }
 
-  let { data } = await supabase.rpc("search_post_contents", { keyword : query });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let { data } = await supabase.rpc("search_post_contents", { keyword : query }) as { data: UserPostContentSearchResult[] };
   data = data.map((post) => {
     return {
       ...post,
       highlightedcontent: MakeReadbleHighlightText(post.highlightedcontent)
     };
   });
+
+  const allTags = await prisma.dimTags.findMany({
+    select: {
+      postId: true,
+      tagName: true,
+    },
+    where : { postId: { in: data.map((post) => post.postid) } },
+  });
+
+  data = data.map((post) => {
+    const tagNames = allTags
+      .filter((tag) => tag.postId === post.postid)
+      .map((tag) => tag.tagName);
+    return { ...post, tagNames };
+  });
+
+
   return json({ data, query });
 };
 
@@ -61,14 +90,18 @@ export default function Component() {
         </div>
       </Form>
       {data && data.length > 0 ? (
-        <ul>
-          {data.map((post: any) => (
-            <li key={post.id} className="mb-4">
-              <H2>{post.posttitle}</H2>
-              <div dangerouslySetInnerHTML={{ __html: post.highlightedcontent }} />
-            </li>
-          ))}
-        </ul>
+        data.map((post: any) => (
+            <PostCard
+              postTitle={post.posttitle}
+              postDateJst={post.postdatejst}
+              postUrl={post.posturl}
+              tagNames={post.tagNames}
+              countLikes={post.countlikes}
+              countDislikes={post.countdislikes}
+              highLightedText={post.highlightedcontent}
+              key={post.posturl}
+            />
+          ))
       ) : query ? (
         <p>検索結果がありません。</p>
       ) : null}

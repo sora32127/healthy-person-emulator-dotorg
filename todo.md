@@ -1,9 +1,3 @@
-- スキーマの変更
-  - user_post_contentsのtag_idsカラムを削除
-  - tag_relationshipsテーブルを作成し、tag_idとuser_post_contentのpost_idを紐付ける
-  - それに紐づくカスケード変更
-- PostCardモデルの変更
-  - ハイライト文をオプショナルに受け取れるようにする
 - 投稿を表示する
 - コメントを表示する
 - TailwindCSSでレスポンシブデザインをする方法について調べる

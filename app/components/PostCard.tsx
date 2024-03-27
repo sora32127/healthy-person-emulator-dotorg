@@ -7,6 +7,7 @@ interface PostCardProps {
     tagNames: string[];
     countLikes: number;
     countDislikes: number;
+    highLightedText?: string;
 }
 
 export default function PostCard({
@@ -15,7 +16,8 @@ export default function PostCard({
     postUrl,
     tagNames,
     countLikes,
-    countDislikes
+    countDislikes,
+    highLightedText,
 }: PostCardProps) {
     const formattedPostDate = new Date(postDateJst).toLocaleString("ja-JP", {
         year: "numeric",
@@ -33,6 +35,12 @@ export default function PostCard({
                 <p className="text-gray-600 text-sm">{formattedPostDate}</p>
             </div>
             <NavLink to={postUrl} className="text-lg font-bold text-blue-600 hover:underline">{postTitle}</NavLink>
+            {highLightedText && (
+                <p
+                    className="text-gray-600 text-sm mt-2"
+                    dangerouslySetInnerHTML={{ __html: highLightedText }}
+                />
+            )}
             <div className="mt-2">
                 {tagNames && tagNames.map((tag, index) => (
                 <span key={index} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2 underline underline-offset-3">
