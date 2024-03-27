@@ -25,6 +25,7 @@ export default function Component() {
                   }`
                 }
               >
+                <img src="src/assets/feed_icon.svg" alt="Feed" className="mx-auto" />
                 フィード
               </NavLink>
             </li>
@@ -37,6 +38,7 @@ export default function Component() {
                   }`
                 }
               >
+                <img src="src/assets/guideline_icon.svg" alt="Readme" className="mx-auto" />
                 ガイドライン
               </NavLink>
             </li>
@@ -49,6 +51,7 @@ export default function Component() {
                   }`
                 }
               >
+                <img src="src/assets/post_icon.svg" alt="Post" className="mx-auto" />
                 投稿
               </NavLink>
             </li>
@@ -61,6 +64,7 @@ export default function Component() {
                   }`
                 }
               >
+                <img src="src/assets/search_icon.svg" alt="Search" className="mx-auto" />
                 検索
               </NavLink>
             </li>
@@ -73,7 +77,8 @@ export default function Component() {
                   }`
                 }
               >
-                そのほか
+                <img src="src/assets/menu_icon.svg" alt="Etc" className="mx-auto" />
+                メニュー
               </NavLink>
             </li>
           </ul>

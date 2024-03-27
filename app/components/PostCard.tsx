@@ -51,11 +51,11 @@ export default function PostCard({
             </div>
             <div className="flex items-center mt-2">
                 <div className="flex items-center mr-4">
-                    <img src="/thumb_up.svg" alt="Thumb up" className="h-5 w-5 text-blue-500" />
+                    <img src="src/assets/thumb_up.svg" alt="Thumb up" className="h-5 w-5 text-blue-500" />
                     <span className="text-sm text-gray-600 ml-1">{countLikes}</span>
                 </div>
                 <div className="flex items-center">
-                    <img src="/thumb_down.svg" alt="Thumb down" className="h-5 w-5 text-red-500" />
+                    <img src="src/assets/thumb_down.svg" alt="Thumb down" className="h-5 w-5 text-red-500" />
                     <span className="text-sm text-gray-600 ml-1">{countDislikes}</span>
                 </div>
             </div>

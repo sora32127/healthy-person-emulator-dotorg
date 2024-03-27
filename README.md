@@ -22,3 +22,6 @@
 
 # 活用したアセット
 - [Google Fonts](https://fonts.google.com/)
+
+# 参考にしたデザイン
+- [デジタル庁デザインシステム1.4.1](https://www.figma.com/community/file/1255349027535859598/design-system-1-4-1)
