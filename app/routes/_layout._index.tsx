@@ -16,39 +16,31 @@ export async function loader() {
         orderBy: { postDateJst: "desc" },
         take: 10,
         select: {
+            postId: true,
             postTitle: true,
             postDateJst: true,
             postUrl: true,
-            tagIds: true,
             countLikes: true,
             countDislikes: true,
         },
     });
 
-    const allTagIds = [...new Set(mostRecentPosts.flatMap(post => post.tagIds))];
-
-    const tags = await prisma.dimTags.findMany({
-        where: {
-            tagId: { in: allTagIds },
+    const allTagNames = await prisma.dimTags.findMany({
+        select: {
+            postId: true,
+            tagName: true,
         },
+        where : { postId: { in: mostRecentPosts.map((post) => post.postId) } },
     });
 
-    const tagDictionary: { [key: number]: string } = tags.reduce((acc, tag) => ({
-        ...acc,
-        [tag.tagId]: tag.tagName,
-    }), {});
+    const postData = mostRecentPosts.map((post) => {
+        const tagNames = allTagNames
+            .filter((tag) => tag.postId === post.postId)
+            .map((tag) => tag.tagName);
+        return { ...post, tagNames };
+    });
 
-    const postsWithTags = mostRecentPosts.map(post => ({
-        ...post,
-        tagNames: post.tagIds.map(tagId => tagDictionary[tagId])
-    }));
-
-    return json(
-        {mostRecentPosts : postsWithTags}, 
-        {
-        headers: {
-            "Chache-Control": "max-age=3600, public"
-    }});
+    return json({ mostRecentPosts: postData });
 }
 
 

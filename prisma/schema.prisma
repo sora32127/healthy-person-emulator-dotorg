@@ -18,7 +18,6 @@ model UserPostContent {
   postStatus         String   @map("post_status")
   commentStatus      String   @map("comment_status")
   postUrl            String   @map("post_url")
-  tagIds            Int[]      @map("tag_ids")
   countLikes        Int       @map("count_likes")
   countDislikes     Int       @map("count_dislikes")
 
@@ -27,8 +26,9 @@ model UserPostContent {
 }
 
 model DimTags {
-  tagId   Int    @map("tag_id") @id
+  tagId   Int    @map("tag_id")
+  postId Int @map("post_id")
   tagName String @map("tag_name")
-
+  @@id([tagId, postId])
   @@map("dim_tags")
 }
