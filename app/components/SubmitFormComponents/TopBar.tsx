@@ -3,7 +3,7 @@ import TextTypeSwitcher from './TextTypeSwitcher';
 import ClearLocalStorageButton from './ClearLocalStorageButton';
 import Container from 'react-bootstrap/Container';
 import { Navbar, Nav } from 'react-bootstrap';
-import styled from 'styled-components';
+import { styled }  from 'styled-components';
 
 const StyledNavbar = styled(Navbar)`
   @media (max-width: 576px) {

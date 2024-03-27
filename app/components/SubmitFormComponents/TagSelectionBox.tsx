@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Form, ListGroup, Button, Badge } from 'react-bootstrap';
-import styled from 'styled-components';
+import { styled }  from 'styled-components';
 
 interface Tag {
     count: number;

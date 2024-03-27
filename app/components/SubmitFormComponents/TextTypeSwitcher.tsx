@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import ToggleButton from 'react-bootstrap/ToggleButton';
-import styled from 'styled-components';
+import { styled }  from 'styled-components';
 
 interface ToggleButtonProps {
   onToggle: (selectedType: string) => void; // トグルの状態が変わった時に親コンポーネントに通知するための関数

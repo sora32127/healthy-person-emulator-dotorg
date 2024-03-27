@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Row, Col, Table } from 'react-bootstrap';
-import styled from 'styled-components';
+import { styled } from 'styled-components';
 
 interface PreviewProps {
   situationValues: { [key: string]: string };

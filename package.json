@@ -12,14 +12,18 @@
   },
   "dependencies": {
     "@axe-core/playwright": "^4.8.5",
+    "@marsidev/react-turnstile": "^0.5.3",
     "@prisma/client": "^5.11.0",
     "@remix-run/node": "^2.8.1",
     "@remix-run/react": "^2.8.1",
     "@remix-run/serve": "^2.8.1",
     "@supabase/supabase-js": "^2.40.0",
+    "axios": "^1.6.8",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-bootstrap": "^2.10.2",
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.1.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.42.1",

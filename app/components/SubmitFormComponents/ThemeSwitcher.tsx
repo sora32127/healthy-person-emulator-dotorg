@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "react-bootstrap";
-import DarkModeIcon from "./assets/dark_mode_icon.svg";
-import LightModeIcon from "./assets/light_mode_icon.svg";
+import DarkModeIcon from "/public/dark_mode_icon.svg";
+import LightModeIcon from "/public/light_mode_icon.svg";
 
 const ThemeSwitcher = () => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
