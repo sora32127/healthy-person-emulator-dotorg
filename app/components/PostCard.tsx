@@ -37,13 +37,15 @@ export default function PostCard({
             <div className="flex justify-between items-center mb-2">
                 <p className="text-gray-600 text-sm">{formattedPostDate}</p>
             </div>
-            <NavLink to={`/archives/${postId}`} className="text-lg font-bold text-blue-600 hover:underline">{postTitle}</NavLink>
+            <img src = "/src/assets/article_icon.svg" alt = "Article icon" className = "h-5 w-5 inline-block mr-2" />
+            <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700">{postTitle}</NavLink>
             {highLightedText && (
                 <p className="text-gray-700">{parse(highLightedText)}</p>
             )}
             <div className="mt-2">
+                <img src="/src/assets/tag_icon.svg" alt="Tag icon" className="h-5 w-5 inline-block mr-2" />
                 {tagNames && tagNames.map((tag, index) => (
-                <span key={index} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2 underline underline-offset-3">
+                <span key={index} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2 underline underline-offset-4 decoration-blue-700">
                     <TagCard tagName={tag} />
                 </span>
                 ))}
