@@ -5,3 +5,31 @@
 h1 {
   @apply text-4xl font-bold;
 }
+
+.postContent h3 {
+  @apply text-xl font-bold mb-2;
+}
+
+.postContent table {
+  @apply w-full border-collapse mb-4;
+}
+
+.postContent table td {
+  @apply border border-gray-300 px-4 py-2;
+}
+
+.postContent table td:first-child {
+  @apply font-bold;
+}
+
+.postContent ul {
+  @apply list-disc list-inside mb-4;
+}
+
+.postContent li {
+  @apply mb-1;
+}
+
+.postContent {
+  @apply text-lg;
+}

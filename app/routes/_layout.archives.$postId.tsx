@@ -59,13 +59,13 @@ export default function Component() {
 
   return (
       <div>
-          <h1>{postContent.postTitle}</h1>
+          <h1>{postContent && postContent.postTitle}</h1>
           <div>
               {tagNames.map((tag) => (
                   <span key={tag.tagName}>{tag.tagName}</span>
               ))}
           </div>
-          <div>
+          <div className="postContent">
               {postContent && parser(postContent.postContent)}
           </div>
           <div>
