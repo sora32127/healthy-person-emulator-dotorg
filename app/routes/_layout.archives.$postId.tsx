@@ -3,6 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
+import TagCard from "~/components/TagCard";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -62,7 +63,10 @@ export default function Component() {
           <h1>{postContent && postContent.postTitle}</h1>
           <div>
               {tagNames.map((tag) => (
-                  <span key={tag.tagName}>{tag.tagName}</span>
+                  <span key={tag.tagName} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2">
+                      <TagCard tagName={tag.tagName} />
+                  </span>
+                  
               ))}
           </div>
           <div className="postContent">

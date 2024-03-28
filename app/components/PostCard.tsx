@@ -1,5 +1,6 @@
 import { NavLink } from "@remix-run/react";
 import parse from "html-react-parser";
+import TagCard from "./TagCard";
 
 interface PostCardProps {
     postId: number;
@@ -43,7 +44,7 @@ export default function PostCard({
             <div className="mt-2">
                 {tagNames && tagNames.map((tag, index) => (
                 <span key={index} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2 underline underline-offset-3">
-                    {tag}
+                    <TagCard tagName={tag} />
                 </span>
                 ))}
             </div>
