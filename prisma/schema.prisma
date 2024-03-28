@@ -46,3 +46,13 @@ model DimComments {
   @@id([commentId, postId])
   @@map("dim_comments")
 }
+
+model FctPostVoteHisotry {
+  voteDateGmt DateTime @map("vote_date_gmt")
+  voteUserIpHash String @map("vote_user_ip_hash")
+  postId Int @map("post_id")
+  voteTypeInt Int @map("vote_type_int")
+  
+  @@id([voteDateGmt, voteUserIpHash, postId])
+  @@map("fct_post_vote_history")
+}
