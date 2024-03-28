@@ -1,6 +1,6 @@
 import { MetaFunction, json } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
-import { useLoaderData } from "@remix-run/react";
+import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H1, H2 } from "~/components/Headings";
 
@@ -24,6 +24,8 @@ export async function loader() {
             countDislikes: true,
         },
     });
+
+    
 
     const allTagNames = await prisma.dimTags.findMany({
         select: {
@@ -62,6 +64,7 @@ export default function Feed() {
                 countDislikes={post.countDislikes}
             />
         ))}
+        <NavLink to="/feed?p=2">次へ</NavLink>
         </>
 
     );
