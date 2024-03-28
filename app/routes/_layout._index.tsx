@@ -118,6 +118,7 @@ export default function Feed() {
                 countDislikes={post.countDislikes}
             />
         ))}
+        <NavLink to="/feed?p=2&likeFrom=24&likeTo=0">次へ</NavLink>
         </>
 
     );
