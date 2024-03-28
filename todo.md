@@ -1,4 +1,3 @@
-- HTML-React-Parserを使う
 - 投稿表示ページのCSSを整える
 - タグ表示自体をコンポーネント化
 - PlaywrightでE2Eテストを書く

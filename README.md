@@ -1,5 +1,5 @@
 <p align="center">
-<img src = ./public/favicon.png width=500>
+<img src = ./public/favicon.ico width=500>
 </p>
 
 # README

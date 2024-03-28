@@ -19,6 +19,7 @@
     "@remix-run/serve": "^2.8.1",
     "@supabase/supabase-js": "^2.40.0",
     "axios": "^1.6.8",
+    "html-react-parser": "^5.1.9",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",

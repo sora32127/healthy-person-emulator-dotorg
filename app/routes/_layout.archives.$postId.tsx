@@ -2,6 +2,7 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
+import parser from "html-react-parser";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -64,7 +65,9 @@ export default function Component() {
                   <span key={tag.tagName}>{tag.tagName}</span>
               ))}
           </div>
-          <div dangerouslySetInnerHTML={{ __html: postContent.postContent }} />
+          <div>
+              {postContent && parser(postContent.postContent)}
+          </div>
           <div>
               {renderComments()}
           </div>

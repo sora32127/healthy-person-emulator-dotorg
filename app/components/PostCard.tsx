@@ -1,4 +1,5 @@
 import { NavLink } from "@remix-run/react";
+import parse from "html-react-parser";
 
 interface PostCardProps {
     postId: number;
@@ -37,10 +38,7 @@ export default function PostCard({
             </div>
             <NavLink to={`/archives/${postId}`} className="text-lg font-bold text-blue-600 hover:underline">{postTitle}</NavLink>
             {highLightedText && (
-                <p
-                    className="text-gray-600 text-sm mt-2"
-                    dangerouslySetInnerHTML={{ __html: highLightedText }}
-                />
+                <p className="text-gray-700">{parse(highLightedText)}</p>
             )}
             <div className="mt-2">
                 {tagNames && tagNames.map((tag, index) => (
