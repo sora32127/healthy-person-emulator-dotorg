@@ -45,7 +45,7 @@ export default function PostCard({
             <div className="mt-2">
                 <img src="/src/assets/tag_icon.svg" alt="Tag icon" className="h-5 w-5 inline-block mr-2" />
                 {tagNames && tagNames.map((tag, index) => (
-                <span key={index} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2 underline underline-offset-4 decoration-blue-700">
+                <span key={index} className="inline-block py-1 text-sm font-semibold mr-2">
                     <TagCard tagName={tag} />
                 </span>
                 ))}
