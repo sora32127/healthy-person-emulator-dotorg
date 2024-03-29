@@ -15,7 +15,7 @@ import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 
 export async function loader () {
-    const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY;
+    const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
     return json({ CFTurnstileSiteKey });
 }
 
