@@ -10,6 +10,14 @@ h1 {
   @apply text-xl font-bold mb-2;
 }
 
+.postContent h4 {
+  @apply text-lg font-bold mb-2;
+}
+
+.postContent h5 {
+  @apply text-lg font-bold mb-2;
+}
+
 .postContent table {
   @apply w-full border-collapse mb-4;
 }

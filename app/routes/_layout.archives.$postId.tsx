@@ -60,21 +60,36 @@ export default function Component() {
 
   return (
       <div>
-          <h1>{postContent && postContent.postTitle}</h1>
+        <h1>{postContent && postContent.postTitle}</h1>
+        <p className="flex my-1">
+            <img src="/src/assets/clock_icon.svg" alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
+            {postContent && new Date(postContent.postDateJst).toLocaleString("ja-JP", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hourCycle: "h23",
+            }).replace(/\//g, "-")}
+        </p>
+        <div className="flex justify-start items-center mb-2">
+          <img src="/src/assets/tag_icon.svg" alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
               {tagNames.map((tag) => (
-                  <span key={tag.tagName} className="inline-block py-1 text-sm font-semibold text-gray-500 mr-2">
+                  <span key={tag.tagName} className="inline-block mt-3 text-sm font-semibold text-gray-500 mr-2">
                       <TagCard tagName={tag.tagName} />
                   </span>
                   
               ))}
           </div>
-          <div className="postContent">
-              {postContent && parser(postContent.postContent)}
-          </div>
-          <div>
-              {renderComments()}
-          </div>
+        </div>
+        <div className="postContent">
+            {postContent && parser(postContent.postContent)}
+        </div>
+        <div>
+            {renderComments()}
+        </div>
       </div>
   );
 }
