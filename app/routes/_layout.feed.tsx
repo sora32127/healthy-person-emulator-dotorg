@@ -1,5 +1,6 @@
-import { LoaderFunctionArgs, json, redirect, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Form } from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
+import { H1 } from "~/components/Headings";
+import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 
@@ -9,11 +10,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const likeFromHour = url.searchParams.get("likeFrom");
   const likeToHour = url.searchParams.get("likeTo");
   let postData = [];
+  let totalCount = 0;
 
   if (likeFromHour) {
     const likeFromHourInt = parseInt(likeFromHour);
     const likeToHourInt = parseInt(likeToHour || "0");
-    const now = new Date();
+    let now;
+    if (process.env.NODE_ENV === "development") {
+      now = new Date("2024-03-11")
+    }
+    else{
+      now = new Date();
+    }
+
     const gteDate = new Date(now.getTime() - likeFromHourInt * 60 * 60 * 1000);
     const lteDate = new Date(now.getTime() - likeToHourInt * 60 * 60 * 1000);
 
@@ -58,6 +67,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
         .map((tag) => tag.tagName);
         return { ...post, tagNames };
     });
+
+    totalCount = await prisma.fctPostVoteHisotry.count({
+        where: {
+            voteDateGmt: {
+            gte: gteDate,
+            lte: lteDate,
+            },
+            voteTypeInt: { in: [1] },
+        },
+    });
   }
   else {
     const mostRecentPosts = await prisma.userPostContent.findMany({
@@ -88,76 +107,89 @@ export async function loader({ request }: LoaderFunctionArgs) {
           .map((tag) => tag.tagName);
         return { ...post, tagNames };
       });
+
+      totalCount = await prisma.userPostContent.count();
   }
   
-  return json({ mostRecentPosts: postData, currentPage: pagingNumber });
+  return json({ 
+    posts: postData, 
+    currentPage: pagingNumber,
+    totalCount,
+  });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-    const formData = await request.formData();
-    const action = formData.get("action");
-    const sort = formData.get("sort");
-    const currentPage = parseInt(formData.get("currentPage") as string);
-    const url = new URL(request.url);
-    const likeFrom = url.searchParams.get("likeFrom");
-    const likeTo = url.searchParams.get("likeTo");
-  
-    if (sort === "likes") {
-      return redirect(`/feed?p=1&likeFrom=24&likeTo=0`);
-    } else if (sort === "new") {
-      return redirect(`/feed?p=1`);
-    }
-  
-    if (!likeFrom && action === "prevPage") {
-      return redirect(`/feed?p=${currentPage - 1}`);
-    } else if (!likeFrom && action === "nextPage") {
-      return redirect(`/feed?p=${currentPage + 1}`);
-    } else if (likeFrom && action === "prevPage") {
-      return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage - 1}`);
-    } else if (likeFrom && action === "nextPage") {
-      return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage + 1}`);
-    }
-    return null;
+  const formData = await request.formData();
+  const action = formData.get("action");
+  const currentPage = parseInt(formData.get("currentPage") as string);
+  const url = new URL(request.url);
+  const likeFrom = url.searchParams.get("likeFrom");
+  const likeTo = url.searchParams.get("likeTo");
+
+  if (action === "sortByNew") {
+    return redirect(`/feed?p=1`);
+  } else if (action === "sortByLikes") {
+    return redirect(`/feed?p=1&likeFrom=24&likeTo=0`);
+  }
+
+  if (!likeFrom && action === "firstPage") {
+    return redirect(`/feed?p=1`);
+  } else if (!likeFrom && action === "prevPage") {
+    return redirect(`/feed?p=${currentPage - 1}`);
+  } else if (!likeFrom && action === "nextPage") {
+    return redirect(`/feed?p=${currentPage + 1}`);
+  } else if (!likeFrom && action === "lastPage") {
+    return redirect(`/feed?p=${formData.get("totalPages")}`);
+  } else if (likeFrom && action === "firstPage") {
+    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=1`);
+  } else if (likeFrom && action === "prevPage") {
+    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage - 1}`);
+  } else if (likeFrom && action === "nextPage") {
+    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage + 1}`);
+  } else if (likeFrom && action === "lastPage") {
+    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${formData.get("totalPages")}`);
+  }
+  return null;
 }
 
 export default function Feed() {
-  const { mostRecentPosts, currentPage } = useLoaderData<typeof loader>();
+  const { posts, currentPage, totalCount } = useLoaderData<typeof loader>();
+  const totalPages = Math.ceil(totalCount / 10);
+  const url = new URL(window.location.href);
+  const likeFrom = url.searchParams.get("likeFrom");
 
   return (
     <div>
-      <h1>Feed</h1>
+      <H1>フィード</H1>
       <Form method="post" className="mb-4">
         <div className="flex items-center">
-          <label htmlFor="sort-likes" className="mr-2">
-            <input
-              type="radio"
-              id="sort-likes"
-              name="sort"
-              value="likes"
-              className="mr-1"
-            />
-            いいね順
-          </label>
-          <label htmlFor="sort-new">
-            <input
-              type="radio"
-              id="sort-new"
-              name="sort"
-              value="new"
-              defaultChecked
-              className="mr-1"
-            />
-            新着順
-          </label>
           <button
             type="submit"
-            className="ml-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            name="action"
+            value="sortByNew"
+            className={`px-4 py-2 mr-2 ${
+              !likeFrom
+                ? "bg-blue-500 text-white"
+                : "bg-white text-blue-500 border border-blue-500"
+            } rounded`}
           >
-            適用
+            新着順
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="sortByLikes"
+            className={`px-4 py-2 ${
+              likeFrom
+                ? "bg-blue-500 text-white"
+                : "bg-white text-blue-500 border border-blue-500"
+            } rounded`}
+          >
+            いいね順
           </button>
         </div>
       </Form>
-      {mostRecentPosts.map((post) => (
+      {posts.map((post) => (
         <PostCard
           key={post.postId}
           postId={post.postId}
@@ -169,26 +201,67 @@ export default function Feed() {
           countDislikes={post.countDislikes}
         />
       ))}
-      <Form method="post" className="flex justify-between mt-4">
-        <input type="hidden" name="currentPage" value={currentPage} />
-        <button
-          type="submit"
-          name="action"
-          value="prevPage"
-          disabled={currentPage === 1}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          前のページ
-        </button>
-        <button
-          type="submit"
-          name="action"
-          value="nextPage"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          次のページ
-        </button>
-      </Form>
+      <div className="flex justify-center mt-8">
+        <Form method="post" className="flex items-center">
+          <input type="hidden" name="currentPage" value={currentPage} />
+          <input type="hidden" name="totalPages" value={totalPages} />
+          <button
+            type="submit"
+            name="action"
+            value="firstPage"
+            disabled={currentPage === 1}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === 1
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white"
+            } rounded`}
+          >
+            最初
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="prevPage"
+            disabled={currentPage === 1}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === 1
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white"
+            } rounded`}
+          >
+            前へ
+          </button>
+          <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            type="submit"
+            name="action"
+            value="nextPage"
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === totalPages
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white"
+            } rounded`}
+          >
+            次へ
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="lastPage"
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 mx-1 ${
+              currentPage === totalPages
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white"
+            } rounded`}
+          >
+            最後
+          </button>
+        </Form>
+      </div>
     </div>
   );
 }
