@@ -5,7 +5,7 @@ export default function Component() {
   const transitionStatus = useNavigation();
 
   return (
-    <div className="flex flex-col min-h-screen px-4">
+    <div className="flex flex-col min-h-screen">
       {transitionStatus.state === "loading" && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 z-50 flex items-center justify-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-solid rounded-full animate-spin"></div>
@@ -14,7 +14,7 @@ export default function Component() {
       <div className="md:mt-32 md:mx-auto">
         <Outlet />
       </div>
-      <nav className="mx-auto px-4 py-4 bg-white shadow-inner mt-auto md:fixed md:top-0 md:w-full w-full">
+      <nav className="py-4 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full">
         <ul className="flex justify-around">
           <li>
             <NavLink
