@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, NavLink } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -86,6 +86,14 @@ export default function Component() {
         </div>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
+        </div>
+        <div>
+          <NavLink
+            to={`/archives/${postContent?.postId}/edit`}
+            className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
+          >
+            編集する
+          </NavLink>
         </div>
         <div>
             {renderComments()}
