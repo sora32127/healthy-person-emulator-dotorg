@@ -104,7 +104,12 @@ export default function Feed() {
                 countDislikes={post.countDislikes}
             />
         ))}
-        <NavLink to="/feed?p=2">次へ</NavLink>
+        <NavLink
+            to="/feed?p=2"
+            className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+        >
+        最新の投稿を見る
+        </NavLink>
         <H2>最近いいねされた投稿</H2>
         {recentVotedPosts.map((post) => (
             <PostCard
@@ -118,8 +123,12 @@ export default function Feed() {
                 countDislikes={post.countDislikes}
             />
         ))}
-        <NavLink to="/feed?p=2&likeFrom=24&likeTo=0">次へ</NavLink>
-        </>
-
+        <NavLink
+            to="/feed?p=2&likeFrom=24&likeTo=0"
+            className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+        >
+        最近いいねされた投稿を見る
+        </NavLink>
+    </>
     );
 }
