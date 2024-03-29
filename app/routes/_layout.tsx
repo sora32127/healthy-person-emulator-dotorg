@@ -11,7 +11,7 @@ export default function Component() {
           <div className="w-16 h-16 border-4 border-blue-500 border-solid rounded-full animate-spin"></div>
         </div>
       )}
-      <div className="md:mt-32 md:mx-auto">
+      <div className="mx-4 md:mt-32 md:mx-10 lg:mx-20 xl:mx-40 2xl:mx-60">
         <Outlet />
       </div>
       <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
