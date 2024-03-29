@@ -47,6 +47,7 @@ module.exports = {
           typescript: {},
         },
       },
+      
     },
 
     // Typescript

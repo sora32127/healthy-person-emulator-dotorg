@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Button, Row, Col } from 'react-bootstrap';
+import { Form } from "@remix-run/react";
 
 interface DynamicTextInputProps {
   description?: string;
@@ -28,29 +28,34 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
   };
 
   return (
-    <div>
-      {description && <p className="text-start">{description}</p>}
-      <Form>
+    <div className="mb-8">
+      {description && <p className="text-gray-600 mb-4">{description}</p>}
+      <Form className="space-y-4">
         {parentComponentStateValues.map((value, index) => (
-          <Form.Group as={Row} key={`input-${index}`} className="mb-3">
-            <Col>
-              <Form.Control
-                type="text"
-                id={`input-${index}`}
-                value={value}
-                onChange={(e) => handleInputChange(index, e.target.value)}
-              />
-            </Col>
-            <Col xs="auto">
-              <Button variant="danger" onClick={() => deleteInput(index)}>
-                削除
-              </Button>
-            </Col>
-          </Form.Group>
+          <div key={`input-${index}`} className="flex items-center space-x-2">
+            <input
+              type="text"
+              id={`input-${index}`}
+              value={value}
+              onChange={(e) => handleInputChange(index, e.target.value)}
+              className="flex-grow px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => deleteInput(index)}
+              className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none"
+            >
+              削除
+            </button>
+          </div>
         ))}
-        <Button variant="primary" onClick={addInput}>
+        <button
+          type="button"
+          onClick={addInput}
+          className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none"
+        >
           テキスト入力を追加
-        </Button>
+        </button>
       </Form>
     </div>
   );

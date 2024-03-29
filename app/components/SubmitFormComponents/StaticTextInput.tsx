@@ -1,4 +1,4 @@
-import { Form } from 'react-bootstrap';
+import { Form } from "@remix-run/react";
 
 interface StaticTextInputProps {
   row: number;
@@ -9,7 +9,14 @@ interface StaticTextInputProps {
   parentComponentStateValues: string[];
 }
 
-function StaticTextInput({ row, title = '', description = '', placeholders = [], onInputChange, parentComponentStateValues }: StaticTextInputProps) {
+function StaticTextInput({
+  row,
+  title = "",
+  description = "",
+  placeholders = [],
+  onInputChange,
+  parentComponentStateValues,
+}: StaticTextInputProps) {
   const handleInputChange = (index: number, value: string) => {
     const newInputValues = [...parentComponentStateValues];
     newInputValues[index] = value;
@@ -19,27 +26,27 @@ function StaticTextInput({ row, title = '', description = '', placeholders = [],
   const renderTextInputs = () => {
     const inputs = [];
     for (let i = 0; i < row; i++) {
-      const placeholder = placeholders[i] || '';
+      const placeholder = placeholders[i] || "";
       inputs.push(
-        <Form.Group key={i} className="mb-3">
-          <Form.Control
-            type="text"
-            as="textarea"
+        <div key={i} className="mb-4">
+          <textarea
             placeholder={placeholder}
-            value={parentComponentStateValues[i] || ''}
+            value={parentComponentStateValues[i] || ""}
             onChange={(e) => handleInputChange(i, e.target.value)}
+            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+            rows={4}
           />
-        </Form.Group>
+        </div>
       );
     }
     return inputs;
   };
 
   return (
-    <div>
-      {title && <h3 className="text-start">{title}</h3>}
-      {description && <p className="text-start">{description}</p>}
-      <Form>{renderTextInputs()}</Form>
+    <div className="mb-8">
+      {title && <h3 className="text-2xl font-bold mb-4">{title}</h3>}
+      {description && <p className="text-gray-600 mb-4">{description}</p>}
+      <Form className="space-y-4">{renderTextInputs()}</Form>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Alert } from 'react-bootstrap';
 
 interface ValidationCheckBoxProps {
   titleValues: string[];
@@ -46,14 +45,14 @@ const ValidationCheckBox: React.FC<ValidationCheckBoxProps> = ({
   }
 
   return (
-    <Alert variant="danger">
-      <h4>入力が不完全です</h4>
-      <ul>
+    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+      <strong className="font-bold block mb-2">入力が不完全です</strong>
+      <ul className="list-disc list-inside">
         {errors.map((error, index) => (
           <li key={index}>{error}</li>
         ))}
       </ul>
-    </Alert>
+    </div>
   );
 };
 

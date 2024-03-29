@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button, Badge } from 'react-bootstrap';
+import { Form } from "@remix-run/react";
 
 interface TagCreateBoxProps {
   handleTagCreated: (tag: string) => void;
@@ -23,33 +23,55 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
   };
 
   return (
-    <div>
-      <h3>タグ作成</h3>
-      <Form.Group controlId="tagInput">
-        <Form.Label>新しいタグを入力してください</Form.Label>
-        <Form.Control
+    <div className="mb-8">
+      <h3 className="text-2xl font-bold mb-4">タグ作成</h3>
+      <div className="mb-4">
+        <label htmlFor="tagInput" className="block text-gray-700 font-bold mb-2">
+          新しいタグを入力してください
+        </label>
+        <input
           type="text"
+          id="tagInput"
           value={tagInput}
           onChange={handleTagInputChange}
           placeholder="タグを入力..."
+          className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
         />
-      </Form.Group>
-      <Button variant="primary" onClick={handleCreateTag}>
+      </div>
+      <button
+        type="button"
+        onClick={handleCreateTag}
+        className="px-4 py-2 font-bold text-white bg-blue-500 rounded-full hover:bg-blue-700 focus:outline-none focus:shadow-outline"
+      >
         タグを作成
-      </Button>
-      <div className="mt-3">
-        <h4>作成したタグ:</h4>
-        {parentComponentStateValues.map((tag) => (
-          <Badge
-            key={tag}
-            pill
-            className="mr-2"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleTagRemoved(tag)}
-          >
-            {tag} x
-          </Badge>
-        ))}
+      </button>
+      <div className="mt-4">
+        <h4 className="text-xl font-bold mb-2">作成したタグ:</h4>
+        <div className="flex flex-wrap">
+          {parentComponentStateValues.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer"
+              onClick={() => handleTagRemoved(tag)}
+            >
+              {tag}
+              <svg
+                className="w-4 h-4 ml-1"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,32 +1,36 @@
-import React, { useState } from 'react';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import ToggleButton from 'react-bootstrap/ToggleButton';
-import { styled }  from 'styled-components';
+import { useState } from 'react';
+import { H3 } from '../Headings';
 
 interface ToggleButtonProps {
-  onToggle: (selectedType: string) => void; // トグルの状態が変わった時に親コンポーネントに通知するための関数
+  onToggle: (selectedType: string) => void;
 }
 
-const StyledToggleButton = styled(ToggleButton)`
-  border-radius: 20px;
-  width: 60px;
-  height: 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  padding: 0;
-  margin: 0 5px;
-  border: none;
-  background-color: ${props => props.checked ? '#007BFF' : '#6C757D'};
-  color: white;
-  &:hover {
-    background-color: ${props => props.checked ? '#0056b3' : '#5a6268'};
-  }
-`;
+const ToggleButton: React.FC<{
+  id: string;
+  checked: boolean;
+  value: string;
+  onChange: () => void;
+  children: React.ReactNode;
+// eslint-disable-next-line react/prop-types
+}> = ({ id, checked, value, onChange, children }) => {
+  const baseStyle = "rounded-full w-15 h-8 flex justify-center items-center text-xs px-3 mx-1 border-0";
+  const checkedStyle = "bg-blue-600 hover:bg-blue-700";
+  const uncheckedStyle = "bg-gray-600 hover:bg-gray-700";
 
-const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle }) => {
-  const [selectedType, setSelectedType] = useState('misDeed'); // 初期状態は「やってはいけなかったこと」が選択されているとする
+  return (
+    <button
+      id={id}
+      value={value}
+      onClick={onChange}
+      className={`${baseStyle} ${checked ? checkedStyle : uncheckedStyle} text-white`}
+    >
+      {children}
+    </button>
+  );
+};
+
+const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle }: ToggleButtonProps) => {
+  const [selectedType, setSelectedType] = useState('misDeed');
 
   const toggleSelection = (type: string) => {
     setSelectedType(type);
@@ -34,26 +38,28 @@ const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle }) => {
   };
 
   return (
-    <ButtonGroup>
-      <StyledToggleButton
-        id="1"
-        type="radio"
-        checked={selectedType === 'goodDeed'}
-        value="goodDeed"
-        onChange={() => toggleSelection('goodDeed')}
-      >
-        結果善
-      </StyledToggleButton>
-      <StyledToggleButton
-        id="2"
-        type="radio"
-        checked={selectedType === 'misDeed'}
-        value="misDeed"
-        onChange={() => toggleSelection('misDeed')}
-      >
-        結果悪
-      </StyledToggleButton>
-    </ButtonGroup>
+    <div className="mb-4">
+    <H3>投稿タイプを選択</H3>
+      <p>投稿したい経験知の種類を選択してください。</p>
+      <div className="flex mt-4">
+        <ToggleButton
+          id="1"
+          checked={selectedType === 'goodDeed'}
+          value="goodDeed"
+          onChange={() => toggleSelection('goodDeed')}
+        >
+          結果善
+        </ToggleButton>
+        <ToggleButton
+          id="2"
+          checked={selectedType === 'misDeed'}
+          value="misDeed"
+          onChange={() => toggleSelection('misDeed')}
+        >
+          結果悪
+        </ToggleButton>
+      </div>
+    </div>
   );
 };
 

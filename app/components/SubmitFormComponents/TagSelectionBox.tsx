@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Form, ListGroup, Button, Badge } from 'react-bootstrap';
-import { styled }  from 'styled-components';
+import { Form } from "@remix-run/react";
 
 interface Tag {
     count: number;
@@ -12,11 +11,6 @@ interface TagSelectionBoxProps {
     onTagsSelected: (tags: string[]) => void;
     parentComponentStateValues: string[];
 }
-
-const TagListGroup = styled(ListGroup)`
-    height: 300px;
-    overflow-y: auto;
-`;
 
 const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSelectionBoxProps): JSX.Element => {
     const [tags, setTags] = useState<Tag[]>([]);
@@ -73,54 +67,82 @@ const TagSelectionBox = ({ onTagsSelected, parentComponentStateValues }: TagSele
         });
 
     return (
-        <div>
-            <h3>タグ選択</h3>
-            <p>タグを選択してください。</p>
-            <Form.Control
+        <div className="mb-8">
+            <h3 className="text-2xl font-bold mb-4">タグ選択</h3>
+            <p className="text-gray-600 mb-4">タグを選択してください。</p>
+            <input
                 type="text"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 placeholder="タグを検索..."
+                className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none mb-4"
             />
-            <div className="mt-3">
-                <Button
-                    variant={sortBy === 'count' ? 'primary' : 'outline-primary'}
+            <div className="flex space-x-2 mb-4">
+                <button
+                    type="button"
+                    className={`px-4 py-2 rounded-lg focus:outline-none ${
+                        sortBy === 'count'
+                            ? 'text-white bg-blue-500 hover:bg-blue-600'
+                            : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                    }`}
                     onClick={() => setSortBy('count')}
                 >
                     タグ数順で並び替え
-                </Button>{' '}
-                <Button
-                    variant={sortBy === 'name' ? 'primary' : 'outline-primary'}
+                </button>
+                <button
+                    type="button"
+                    className={`px-4 py-2 rounded-lg focus:outline-none ${
+                        sortBy === 'name'
+                            ? 'text-white bg-blue-500 hover:bg-blue-600'
+                            : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                    }`}
                     onClick={() => setSortBy('name')}
                 >
                     五十音順で並び替え
-                </Button>
+                </button>
             </div>
-            <TagListGroup className="mt-3">
+            <ul className="space-y-2 max-h-80 overflow-y-auto">
                 {filteredTags.map(tag => (
-                    <ListGroup.Item
+                    <li
                         key={tag.name}
-                        action
-                        active={parentComponentStateValues.includes(tag.name)}
+                        className={`px-4 py-2 rounded-lg cursor-pointer ${
+                            parentComponentStateValues.includes(tag.name)
+                                ? 'text-white bg-blue-500'
+                                : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                        }`}
                         onClick={() => handleTagClick(tag.name)}
                     >
                         {tag.name} ({tag.count})
-                    </ListGroup.Item>
+                    </li>
                 ))}
-            </TagListGroup>
-            <div className="mt-3">
-                <h4>選択したタグ:</h4>
-                {parentComponentStateValues.map(tag => (
-                    <Badge
-                        key={tag}
-                        pill
-                        className="mr-2"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleRemoveSelectedTag(tag)}
-                    >
-                        {tag} x
-                    </Badge>
-                ))}
+            </ul>
+            <div className="mt-4">
+                <h4 className="text-xl font-bold mb-2">選択したタグ:</h4>
+                <div className="flex flex-wrap">
+                    {parentComponentStateValues.map(tag => (
+                        <span
+                            key={tag}
+                            className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer"
+                            onClick={() => handleRemoveSelectedTag(tag)}
+                        >
+                            {tag}
+                            <svg
+                                className="w-4 h-4 ml-1"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </span>
+                    ))}
+                </div>
             </div>
         </div>
     );
