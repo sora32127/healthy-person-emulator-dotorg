@@ -14,7 +14,7 @@ export default function Component() {
       <div className="md:mt-32 md:mx-auto">
         <Outlet />
       </div>
-      <nav className="py-4 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full">
+      <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
         <ul className="flex justify-around">
           <li>
             <NavLink
