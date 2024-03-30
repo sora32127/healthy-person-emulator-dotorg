@@ -8,14 +8,17 @@ interface CommentCardProps {
     commentContent: string;
     commentParentId: number;
     level: number;
+    onReplyClick: (commentId: number) => void;
 }
 
 export default function CommentCard(
     {
+        commentId,
         commentDateJst,
         commentAuthor,
         commentContent,
         level,
+        onReplyClick,
     }: CommentCardProps
 ) {
     const formattedCommentDate = new Date(commentDateJst).toLocaleString("ja-JP", {
@@ -38,6 +41,13 @@ export default function CommentCard(
                 <p className="text-gray-600 text-sm">{formattedCommentDate}</p>
             </div>
             <p className="mt-2">{commentContent}</p>
+            <button
+                type="button"
+                onClick={() => onReplyClick(commentId)}
+                className="mt-4 text-blue-500 hover:underline"
+            >
+                返信
+            </button>
         </div>
     );
 }
