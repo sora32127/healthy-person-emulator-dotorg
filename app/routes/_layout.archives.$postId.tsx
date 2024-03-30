@@ -4,6 +4,8 @@ import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
+import clockIcon from "~/src/assets/clock_icon.svg";
+import tagIcon from "~/src/assets/tag_icon.svg";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -62,7 +64,7 @@ export default function Component() {
       <div>
         <h1>{postContent && postContent.postTitle}</h1>
         <p className="flex my-1">
-            <img src="/src/assets/clock_icon.svg" alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
+            <img src={clockIcon} alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
             {postContent && new Date(postContent.postDateJst).toLocaleString("ja-JP", {
                 year: "numeric",
                 month: "2-digit",
@@ -74,7 +76,7 @@ export default function Component() {
             }).replace(/\//g, "-")}
         </p>
         <div className="flex justify-start items-center mb-2">
-          <img src="/src/assets/tag_icon.svg" alt="Tag icon" className="h-5 w-5 mr-2" />
+          <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
               {tagNames.map((tag) => (
                   <span key={tag.tagName} className="inline-block mt-3 text-sm font-semibold text-gray-500 mr-2">
@@ -89,7 +91,7 @@ export default function Component() {
         </div>
         <div>
           <NavLink
-            to={`/archives/${postContent?.postId}/edit`}
+            to={`/archives/edit/${postContent?.postId}`}
             className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
           >
             編集する
