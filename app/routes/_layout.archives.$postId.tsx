@@ -42,15 +42,26 @@ export async function loader({ request }:LoaderFunctionArgs){
         },
     });
 
+    const commentVoteData = await prisma.fctCommentVoteHisotry.groupBy({
+        by: ["commentId", "voteType" ],
+        _count: { commentId: true },
+        where: {
+          commentId: { in: comments.map((comment) => comment.commentId) },
+        },
+    });
+
     const session = await getSession(request.headers.get("Cookie"));
     const likedPages = session.get("likedPages") || [];
     const dislikedPages = session.get("dislikedPages") || [];
+    const likedComments = session.get("likedComments") || [];
+    const dislikedComments = session.get("dislikedComments") || [];
 
-    return json({ postContent, tagNames, comments, likedPages, dislikedPages });
+    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments });
 }
 
 export default function Component() {
-  const { postContent, tagNames, comments, likedPages, dislikedPages } = useLoaderData<typeof loader>();
+  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments } = useLoaderData<typeof loader>();
+
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
@@ -99,6 +110,17 @@ export default function Component() {
     setReplyTo(commentId);
   };
   
+  const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
+    const formData = new FormData();
+    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("commentId", commentId.toString());
+    formData.append("voteType", voteType);
+
+    fetcher.submit(formData, {
+        method: "post",
+        action: `/archives/${postContent?.postId}`,
+    });
+  };
 
   const renderComments = (parentId: number = 0, level: number = 0) => {
     return comments
@@ -113,6 +135,11 @@ export default function Component() {
                     commentParentId={comment.commentParent}
                     level={level}
                     onReplyClick={handleReplyClick}
+                    onCommentVote={handleCommentVote}
+                    likedComments={likedComments}
+                    dislikedComments={dislikedComments}
+                    likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
+                    dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
                 />
                 {replyTo === comment.commentId && (
                   <div className="ml-8">
@@ -258,10 +285,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const postId = Number(formData.get("postId"));
   const voteType = formData.get("voteType")?.toString();
-
-  if (voteType !== "like" && voteType !== "dislike") {
-    return json({ error: "無効な投票タイプです。" }, { status: 400 });
-  }
+  const commentId = Number(formData.get("commentId"));
 
   const ip = getClientIPAddress(request) || "";
   const voteUserIpHash = await crypto.subtle.digest(
@@ -275,6 +299,41 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const localDate = new Date();
   const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+
+  if (commentId) {
+    console.log(localDate, voteUserIpHashString, commentId, postId, voteType);
+    await prisma.$transaction(async (prisma) => {
+        await prisma.fctCommentVoteHisotry.create({
+            data: {
+                commentVoteDateJst: localDate,
+                voteUserIpHash: voteUserIpHashString,
+                commentId,
+                postId,
+                voteType: voteType === "like" ? 1 : -1,
+            },
+        });
+    });
+
+    const session = await getSession(request.headers.get("Cookie"));
+    if (voteType === "like") {
+        session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
+    } else if (voteType === "dislike") {
+        session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
+    }
+
+    return json(
+        { success: true },
+        {
+            headers: {
+                "Set-Cookie": await commitSession(session),
+            },
+        }
+    );
+  }
+
+  if (voteType !== "like" && voteType !== "dislike") {
+    return json({ error: "無効な投票タイプです。" }, { status: 400 });
+  }
 
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHisotry.create({

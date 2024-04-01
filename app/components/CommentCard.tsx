@@ -1,5 +1,7 @@
 // CommentCard.tsx
 import clockIcon from "~/src/assets/clock_icon.svg";
+import thumb_up from "~/src/assets/thumb_up.svg";
+import thumb_down from "~/src/assets/thumb_down.svg";
 
 interface CommentCardProps {
     commentId: number;
@@ -9,6 +11,11 @@ interface CommentCardProps {
     commentParentId: number;
     level: number;
     onReplyClick: (commentId: number) => void;
+    onCommentVote: (commentId: number, voteType: "like" | "dislike") => void;
+    likedComments: number[];
+    dislikedComments: number[];
+    likesCount: number;
+    dislikesCount: number;
 }
 
 export default function CommentCard(
@@ -19,6 +26,11 @@ export default function CommentCard(
         commentContent,
         level,
         onReplyClick,
+        onCommentVote,
+        likedComments,
+        dislikedComments,
+        likesCount,
+        dislikesCount,
     }: CommentCardProps
 ) {
     const formattedCommentDate = new Date(commentDateJst).toLocaleString("ja-JP", {
@@ -32,6 +44,8 @@ export default function CommentCard(
     }).replace(/\//g, "-");
 
     const marginLeft = `${level * 2}rem`;
+    const isLiked = likedComments.includes(commentId);
+    const isDisliked = dislikedComments.includes(commentId);
 
     return (
         <div className="bg-white p-4 mb-4" style={{ marginLeft }}>
@@ -41,13 +55,35 @@ export default function CommentCard(
                 <p className="text-gray-600 text-sm">{formattedCommentDate}</p>
             </div>
             <p className="mt-2">{commentContent}</p>
-            <button
-                type="button"
-                onClick={() => onReplyClick(commentId)}
-                className="mt-4 text-blue-500 hover:underline"
-            >
-                返信
-            </button>
+            <div className="flex items-center mt-4">
+                <button
+                    className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
+                        isLiked ? "text-blue-500" : ""
+                    }`}
+                    onClick={() => onCommentVote(commentId, "like")}
+                    disabled={isLiked}
+                >
+                    <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2" />
+                    {likesCount}
+                </button>
+                <button
+                    className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
+                        isDisliked ? "text-red-500" : ""
+                    }`}
+                    onClick={() => onCommentVote(commentId, "dislike")}
+                    disabled={isDisliked}
+                >
+                    <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2" />
+                    {dislikesCount}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onReplyClick(commentId)}
+                    className="ml-4 text-blue-500 hover:underline"
+                >
+                    返信
+                </button>
+            </div>
         </div>
     );
 }

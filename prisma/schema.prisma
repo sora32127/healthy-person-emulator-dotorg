@@ -55,3 +55,14 @@ model FctPostVoteHisotry {
   @@id([voteDateGmt, voteUserIpHash, postId])
   @@map("fct_post_vote_history")
 }
+
+model FctCommentVoteHisotry {
+  commentVoteId Int @id @unique @map("comment_vote_id") @default(autoincrement())
+  commentId Int @map("comment_id")
+  voteType Int @map("vote_type")
+  postId Int @map("post_id")
+  commentVoteDateJst DateTime @map("comment_vote_date_jst")
+  voteUserIpHash String @map("vote_user_ip_hash")
+
+  @@map("fct_comment_vote_history")
+}
