@@ -1,4 +1,5 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { setVisitorCookieData } from "./visitor.server";
 
 const { getSession, commitSession, destroySession } = createCookieSessionStorage({
     cookie: {
@@ -13,3 +14,13 @@ const { getSession, commitSession, destroySession } = createCookieSessionStorage
 });
 
 export { getSession, commitSession, destroySession };
+
+export async function requireUserId(request: Request){
+    const session = await getSession(request.headers.get('Cookie'));
+    const userId = session.get('userId');
+    if (!userId || typeof userId !== 'string') {
+        const headers = await setVisitorCookieData({ redirectUrl: request.url });
+        throw redirect('/login', { headers });
+    }
+    return userId;
+}

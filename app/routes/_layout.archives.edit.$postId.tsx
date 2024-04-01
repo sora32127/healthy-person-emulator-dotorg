@@ -8,8 +8,11 @@ import { ClientOnly } from "remix-utils/client-only";
 import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
 import { marked } from 'marked';
+import { requireUserId } from "~/modules/session.server";
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
+  const userId = await requireUserId(request);
+  console.log(userId)
   const postId = params.postId;
 
   const postData = await prisma.userPostContent.findFirst({
