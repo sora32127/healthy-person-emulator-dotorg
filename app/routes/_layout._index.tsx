@@ -74,6 +74,19 @@ export async function loader() {
         select: { postId: true }
     })
 
+    const randomPosts = await prisma.userPostContent.findManyRandom(10, {
+        select : {
+            postId: true,
+            postTitle: true,
+            postDateJst: true,
+            postUrl: true,
+            countLikes: true,
+            countDislikes: true,
+        },
+        custom_uniqueKey: "postId"
+    })
+        
+
     const famedPosts = await prisma.userPostContent.findMany({
         where : { postId : { in : famedPostIds.map((post) => post.postId)}},
         select : {
@@ -92,6 +105,7 @@ export async function loader() {
     allPostIds = allPostIds.concat(recentVotedPosts.map((post) => post.postId));
     allPostIds = allPostIds.concat(communityPosts.map((post) => post.postId));
     allPostIds = allPostIds.concat(famedPosts.map((post) => post.postId));
+    allPostIds = allPostIds.concat(randomPosts.map((post) => post.postId));
     
 
     const allTagsNames = await prisma.dimTags.findMany({
@@ -134,17 +148,26 @@ export async function loader() {
     }
     );
 
+    const randomPostsWithTags = randomPosts.map((post) => {
+        const tagNames = allTagsNames
+            .filter((tag) => tag.postId === post.postId)
+            .map((tag) => tag.tagName);
+        return { ...post, tagNames };
+    }
+    );
+
     return json({
         mostRecentPosts: mostRecentPostsWithTags,
         recentVotedPosts: recentVotedPostsWithTags,
         communityPosts: communityPostsWithTags,
         famedPosts: famedPostsWithTags,
+        randomPosts: randomPostsWithTags,
     });
 }
 
 
 export default function Feed() {
-    const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts } = useLoaderData<typeof loader>();
+    const { mostRecentPosts, recentVotedPosts, randomPosts,communityPosts, famedPosts } = useLoaderData<typeof loader>();
     return (
         <>
         <H2>最新の投稿</H2>
@@ -186,6 +209,18 @@ export default function Feed() {
         最近いいねされた投稿を見る
         </NavLink>
         <H2>ランダム記事</H2>
+        {randomPosts.map((post) => (
+            <PostCard
+                key={post.postUrl}
+                postId={post.postId}
+                postTitle={post.postTitle}
+                postDateJst={post.postDateJst}
+                postUrl={post.postUrl}
+                tagNames={post.tagNames}
+                countLikes={post.countLikes}
+                countDislikes={post.countDislikes}
+            />
+        ))}
         <H2>コミュニティ選</H2>
         {communityPosts.map((post) => (
             <PostCard
