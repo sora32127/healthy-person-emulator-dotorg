@@ -6,8 +6,8 @@ import { H1, H2 } from "~/components/Headings";
 
 export const meta: MetaFunction = () => {
     return [
-      { title: "フィード" },
-      { name: "description", content: "Welcome to Remix!" },
+      { title: "トップページ" },
+      { name: "description", content: "現実世界のために" },
     ];
   };
 
@@ -90,7 +90,6 @@ export default function Feed() {
     const { mostRecentPosts, recentVotedPosts } = useLoaderData<typeof loader>();
     return (
         <>
-        <H1>フィード</H1>
         <H2>最新の投稿</H2>
         {mostRecentPosts.map((post) => (
             <PostCard
