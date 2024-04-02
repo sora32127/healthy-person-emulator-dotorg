@@ -180,7 +180,17 @@ export default function Component() {
                 {renderComments(comment.commentId, level + 1)}
             </div>
         ));
-};
+  };
+  const sortedTagNames = tagNames.sort((a, b) => {
+    if (a.tagName > b.tagName) {
+      return 1;
+    }
+    if (a.tagName < b.tagName) {
+      return -1;
+    }
+    return 0;
+  })
+
 
   return (
       <div>
@@ -200,7 +210,7 @@ export default function Component() {
         <div className="flex justify-start items-center mb-2">
           <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
-              {tagNames.map((tag) => (
+              {sortedTagNames.map((tag) => (
                   <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                       <TagCard tagName={tag.tagName} />
                   </span>

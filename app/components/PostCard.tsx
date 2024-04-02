@@ -36,6 +36,16 @@ export default function PostCard({
         hourCycle: "h23",
     }).replace(/\//g, "-");
 
+    tagNames.sort((a, b) => {
+        if (a > b) {
+            return 1;
+        }
+        if (a < b) {
+            return -1;
+        }
+        return 0;
+    });
+
     return (
         <div className="bg-white shadow-md rounded-md p-4 mb-4">
             <div className="flex justify-between items-center mb-2">
