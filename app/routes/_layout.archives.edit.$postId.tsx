@@ -60,6 +60,7 @@ export default function EditPost() {
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames.map(tag => tag.tagName));
   const [tagInputValue, setTagInputValue] = useState<string>("");
   const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
+  const oldTags = tagNames.map(tag => tag.tagName)
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -94,6 +95,8 @@ export default function EditPost() {
           <H1>投稿を編集する</H1>
           <Form method="post">
             <H2>タイトルを編集する</H2>
+            <p>変更前：{postData.postTitle}</p>
+            <p className="my-4">変更後：</p>
             <div className="mb-4">
               <input
                 type="text"
@@ -105,13 +108,20 @@ export default function EditPost() {
             </div>
             <div className="mb-4">
               <H2>タグを編集する</H2>
+              <div className="my-4">
+                <p className="my-4">変更前：</p>
+                {oldTags.flatMap(
+                  (tag) =>
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2">{tag}</span>
+                )}
+              </div>
               <div className="flex items-center">
                 <input
                   type="text"
                   value={tagInputValue}
                   onChange={handleTagInputChange}
                   className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="タグを入力"
+                  placeholder="タグを検索"
                 />
               </div>
               {tagSearchSuggestions.length > 0 && (
@@ -128,6 +138,7 @@ export default function EditPost() {
                 </ul>
               )}
               <div className="mt-2">
+                <p className="my-4">変更後：</p>
                 {selectedTags.map((tag) => (
                   <span
                     key={tag}
@@ -156,10 +167,10 @@ export default function EditPost() {
             <input type="hidden" name="postContent" value={markdownContent} />
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+              className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
               disabled={navigation.state === "submitting"}
             >
-              Save
+              変更を保存する
             </button>
           </Form>
         </div>
