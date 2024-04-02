@@ -81,20 +81,28 @@ export default function Login() {
                     {actionData?.status === 500 && (
                         <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
                     )}
-                    <div className="flex items-center justify-between">
+                    <div className="flex justify-between items-start">
                         <button
-                            type="submit"
-                            disabled={!email || !password}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+                        type="submit"
+                        disabled={!email || !password}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                         >
-                            ログイン
+                        ログイン
                         </button>
-                        <Link
-                            to="/signup"
-                            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-                        >
-                            ユーザー登録はこちら
-                        </Link>
+                        <div className="flex flex-col items-end">
+                            <Link
+                                to="/signup"
+                                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4 my-2"
+                            >
+                                ユーザー登録はこちら
+                            </Link>
+                            <Link
+                                to="/forgotPassword"
+                                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4"
+                            >
+                                パスワードを忘れた方はこちら
+                            </Link>
+                        </div>
                     </div>
                 </Form>
             </div>
