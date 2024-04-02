@@ -9,3 +9,5 @@ node_modules
 /blob-report/
 /playwright/.cache/
 .vscode
+localhost-key.pem
+localhost.pem

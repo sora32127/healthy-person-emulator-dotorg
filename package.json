@@ -19,6 +19,7 @@
     "@remix-run/react": "^2.8.1",
     "@remix-run/serve": "^2.8.1",
     "@supabase/supabase-js": "^2.40.0",
+    "@types/react-window": "^1.8.8",
     "@types/turndown": "^5.0.4",
     "@uiw/react-md-editor": "^4.0.4",
     "axios": "^1.6.8",
