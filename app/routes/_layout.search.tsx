@@ -268,12 +268,12 @@ export default function Component() {
                 type="text"
                 value={tagInputValue}
                 onChange={handleTagInputChange}
-                className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="タグを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-r"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
               >
                 検索
               </button>
@@ -285,12 +285,12 @@ export default function Component() {
                 type="text"
                 name="q"
                 defaultValue={query}
-                className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="検索キーワードを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-r"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
               >
                 検索
               </button>
@@ -302,12 +302,12 @@ export default function Component() {
                 type="text"
                 name="title"
                 defaultValue={title}
-                className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="タイトルを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-r"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
               >
                 検索
               </button>
