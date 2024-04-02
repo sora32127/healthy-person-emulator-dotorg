@@ -66,3 +66,12 @@ model FctCommentVoteHisotry {
 
   @@map("fct_comment_vote_history")
 }
+
+model userProfiles {
+  userId String @id @unique @map("user_id")
+  userName String @unique @map("user_name")
+  userCreatedAt DateTime @map("user_created_at") @default(now())
+  userEmail String @map("user_email")
+
+  @@map("user_profiles")
+}

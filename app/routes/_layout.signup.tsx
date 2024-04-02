@@ -3,19 +3,29 @@ import { H1 } from "~/components/Headings";
 import { supabase } from "~/modules/supabase.server";
 import { useActionData, Form } from "@remix-run/react";
 import { useState } from "react";
+import { prisma } from "~/modules/db.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const form = await request.formData();
   const email = form.get("email")?.toString();
   const password = form.get("password")?.toString();
   const username = form.get("username")?.toString();
-  console.log(email, password, username);
 
   if (!email || !password || !username) {
     return json({ status: 500, message: "Email, password and username are required" });
   }
 
-  const { error } = await supabase.auth.signUp({
+  const isUserNameExist = await prisma.userProfiles.findFirst({
+    where: {
+      userName: username,
+    },
+  });
+
+  if (isUserNameExist) {
+    return json({ status: 500, message: "ユーザー名が既に登録されています" });
+  }
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
@@ -24,7 +34,27 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ status: 500, message: error.message });
   }
 
-  return redirect("/login");
+  const userId = data.user?.id;
+
+  if (!userId ){
+    return json({ status: 500, message: "ユーザー登録に失敗しました" });
+  }
+
+  try {
+    console.log(userId, username, email)
+    await prisma.userProfiles.create({
+    data: {
+      userId: userId,
+      userName: username,
+      userEmail: email,
+    },
+  });
+  } catch (error) {
+    console.log(error)
+    return json({ status: 500, message: "ユーザー登録に失敗しました" });
+  } 
+
+  return redirect("/email");
 }
 
 export default function Component() {
