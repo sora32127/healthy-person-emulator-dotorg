@@ -201,7 +201,7 @@ export default function Component() {
           <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
               {tagNames.map((tag) => (
-                  <span key={tag.tagName} className="inline-block mt-3 text-sm font-semibold text-gray-500 mr-2">
+                  <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                       <TagCard tagName={tag.tagName} />
                   </span>
                   
