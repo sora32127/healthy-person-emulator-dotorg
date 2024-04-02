@@ -31,6 +31,7 @@
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.2",
     "react-dom": "^18.2.0",
+    "rehype-sanitize": "^6.0.0",
     "remix-utils": "^7.5.0",
     "styled-components": "^6.1.8",
     "turndown": "^7.1.3"
