@@ -66,6 +66,7 @@ export default function Component() {
   const submit = useSubmit();
   const fetcher = useFetcher();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null);
 
   const isLiked = likedPages.includes(postContent?.postId);
@@ -180,10 +181,10 @@ export default function Component() {
         ));
   };
   const sortedTagNames = tagNames.sort((a, b) => {
-    if (a.tagName > b.tagName) {
+    if (a.dimTag.tagName > b.dimTag.tagName) {
       return 1;
     }
-    if (a.tagName < b.tagName) {
+    if (a.dimTag.tagName < b.dimTag.tagName) {
       return -1;
     }
     return 0;
@@ -209,8 +210,8 @@ export default function Component() {
           <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
               {sortedTagNames.map((tag) => (
-                  <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
-                      <TagCard tagName={tag.tagName} />
+                  <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
+                      <TagCard tagName={tag.dimTag.tagName} />
                   </span>
                   
               ))}
