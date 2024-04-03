@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DynamicTextInput from '~/components/SubmitFormComponents/DynamicTextInput';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import SituationInput from '~/components/SubmitFormComponents/SituationInput';
