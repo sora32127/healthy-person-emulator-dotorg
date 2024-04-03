@@ -9,6 +9,7 @@ import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
 import { marked } from 'marked';
 import { requireUserId } from "~/modules/session.server";
+import * as diff from 'diff';
 
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
@@ -57,7 +58,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       editingUserName: nowEditingInfo.userName,
       postId,
       isEditing: true,
-      userName: null
+      userName: null,
+      editHistory: null,
     });
   }
     
@@ -111,6 +113,19 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   });
 
   const postMarkdown = NodeHtmlMarkdown.translate(postData.postContent);
+  const editHistory = await prisma.fctPostEditHistory.findMany({
+    select: {
+      postRevisionNumber: true,
+      postEditDateJst: true,
+      editorUserName: true,
+      postTitleBeforeEdit: true,
+      postTitleAfterEdit: true,
+      postContentBeforeEdit: true,
+      postContentAfterEdit: true,
+    },
+    where : { postId: Number(postId) },
+    orderBy : { postRevisionNumber: 'desc' },
+  });
 
   return json({
     postData,
@@ -121,11 +136,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     editingUserName:null,
     isEditing:false,
     postId,
+    editHistory,
   });
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch, editingUserName, isEditing, postId, userName } = useLoaderData<typeof loader>();
+  const { postData, postMarkdown, tagNames, allTagsForSearch, editingUserName, isEditing, postId, userName, editHistory } = useLoaderData<typeof loader>();
 
   if (isEditing){
     return (
@@ -273,6 +289,59 @@ export default function EditPost() {
             </button>
             <input type="hidden" name="userName" value={userName} />
           </Form>
+          <div className="mb-4">
+            <H2>編集履歴</H2>
+            <table className="table-auto w-full">
+              <thead>
+                <tr>
+                  <th className="px-1 py-2">リビジョン</th>
+                  <th className="px-1 py-2">編集日時</th>
+                  <th className="px-1 py-2">編集者</th>
+                  <th className="px-1 py-2">タイトル差分</th>
+                  <th className="px-1 py-2">本文差分</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editHistory && editHistory.map((edit) => (
+                  <tr key={edit.postRevisionNumber}>
+                    <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
+                    <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
+                    <td className="border px-2 py-2">{edit.editorUserName}</td>
+                    <td className="border px-2 py-2">
+                      {diff.diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit).map((part, index) => {
+                        if (part.added || part.removed) {
+                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
+                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
+                          const excerpt = part.value.slice(start, end);
+                          return (
+                            <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                              {excerpt}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+                    </td>
+                    <td className="border py-2">
+                      {diff.diffLines(edit.postContentBeforeEdit, edit.postContentAfterEdit).map((part, index) => {
+                        if (part.added || part.removed) {
+                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
+                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
+                          const excerpt = part.value.slice(start, end);
+                          return (
+                            <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                              {excerpt}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </ClientOnly>
@@ -360,7 +429,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,
         postContentBeforeEdit: latestPost.postContent,
-        postContentAfterEdit: postContent,
+        postContentAfterEdit: marked(postContent as string),
       },
     });
   
