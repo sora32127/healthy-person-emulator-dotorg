@@ -47,7 +47,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
             postId: true,
             postTitle: true,
             postDateJst: true,
-            postUrl: true,
             countLikes: true,
             countDislikes: true,
         },
@@ -87,7 +86,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
           postId: true,
           postTitle: true,
           postDateJst: true,
-          postUrl: true,
           countLikes: true,
           countDislikes: true,
         },
@@ -195,7 +193,6 @@ export default function Feed() {
           postId={post.postId}
           postTitle={post.postTitle}
           postDateJst={post.postDateJst}
-          postUrl={post.postUrl}
           tagNames={post.tagNames}
           countLikes={post.countLikes}
           countDislikes={post.countDislikes}

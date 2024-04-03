@@ -10,7 +10,6 @@ interface DimPostContentSearchResult {
   highlightedcontent: string;
   postid: number;
   posttitle: string;
-  posturl: string;
   postdatejst: string;
   countlikes: number;
   countdislikes: number;
@@ -53,7 +52,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: true,
         postTitle: true,
         postDateJst: true,
-        postUrl: true,
         countLikes: true,
         countDislikes: true,
         postContent: true,
@@ -75,7 +73,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: post.postId,
         postTitle: post.postTitle,
         postDateJst: post.postDateJst,
-        postUrl: post.postUrl,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -95,7 +92,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: true,
         postTitle: true,
         postDateJst: true,
-        postUrl: true,
         countLikes: true,
         countDislikes: true,
         postContent: true,
@@ -118,7 +114,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: post.postId,
         postTitle: post.postTitle,
         postDateJst: post.postDateJst,
-        postUrl: post.postUrl,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -136,7 +131,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: post.postid,
         postTitle: post.posttitle,
         postDateJst: post.postdatejst,
-        postUrl: post.posturl,
         countLikes: post.countlikes,
         countDislikes: post.countdislikes,
         highlightedContent: MakeReadbleHighlightText(post.highlightedcontent)
@@ -154,7 +148,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         postId: post.postId,
         postTitle: post.postTitle,
         postDateJst: post.postDateJst,
-        postUrl: post.postUrl,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -357,7 +350,6 @@ export default function Component() {
               postId={post.postId}
               postTitle={post.postTitle}
               postDateJst={post.postDateJst}
-              postUrl={post.postUrl}
               tagNames={post.tagNames}
               countLikes={post.countLikes}
               countDislikes={post.countDislikes}

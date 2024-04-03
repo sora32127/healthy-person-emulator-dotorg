@@ -20,7 +20,6 @@ export async function loader() {
             postId: true,
             postTitle: true,
             postDateJst: true,
-            postUrl: true,
             countLikes: true,
             countDislikes: true,
         },
@@ -46,7 +45,6 @@ export async function loader() {
             postId: true,
             postTitle: true,
             postDateJst: true,
-            postUrl: true,
             countLikes: true,
             countDislikes: true,
         },
@@ -63,7 +61,6 @@ export async function loader() {
             postId: true,
             postTitle: true,
             postDateJst: true,
-            postUrl: true,
             countLikes: true,
             countDislikes: true,
         }
@@ -81,7 +78,6 @@ export async function loader() {
             postId: true,
             postTitle: true,
             postDateJst: true,
-            postUrl: true,
             countLikes: true,
             countDislikes: true,
         }
@@ -151,11 +147,10 @@ export default function Feed() {
         <H2>最新の投稿</H2>
         {mostRecentPosts.map((post) => (
             <PostCard
-                key={post.postUrl}
+                key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
-                postUrl={post.postUrl}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -170,11 +165,10 @@ export default function Feed() {
         <H2>最近いいねされた投稿</H2>
         {recentVotedPosts.map((post) => (
             <PostCard
-                key={post.postUrl}
+                key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
-                postUrl={post.postUrl}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -189,11 +183,10 @@ export default function Feed() {
         <H2>コミュニティ選</H2>
         {communityPosts.map((post) => (
             <PostCard
-                key={post.postUrl}
+                key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
-                postUrl={post.postUrl}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -203,11 +196,10 @@ export default function Feed() {
         <H2>殿堂入り</H2>
         {famedPosts.map((post) => (
             <PostCard
-                key={post.postUrl}
+                key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}
-                postUrl={post.postUrl}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
