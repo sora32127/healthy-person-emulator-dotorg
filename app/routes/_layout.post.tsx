@@ -11,7 +11,7 @@ import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationChec
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
 import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
-import { Form, useLoaderData } from '@remix-run/react';
+import { Form, NavLink, useLoaderData } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
@@ -164,6 +164,11 @@ export default function Component() {
     <div className="templateSubmitForm">
         <Form method="post">
         <UserExplanation />
+        <br></br>
+        <NavLink
+            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4"
+            to="/freeStylePost"
+        >自由投稿フォームに移動</NavLink>
         <ClearLocalStorageButton clearInputs={clearInputs}/>
         <TextTypeSwitcher onToggle={handleToggle}/>
         <SituationInput
