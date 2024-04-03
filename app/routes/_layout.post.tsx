@@ -13,10 +13,30 @@ import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { prisma } from '~/modules/db.server';
+
+interface Tag {
+    tagName: string;
+    count: number;
+}
 
 export async function loader () {
     const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
-    return json({ CFTurnstileSiteKey });
+    const tags = await prisma.dimTags.groupBy({
+        by: ["tagName"],
+        _count: { postId: true },
+        orderBy: { _count: { postId: "desc" } },
+    });
+    
+    const allTagsOnlyForSearch: Tag[] = tags.map(
+        (tag: { tagName: string, _count: { postId: number } }) => {
+        return {
+            tagName: tag.tagName,
+            count: tag._count.postId
+        };
+    });
+
+    return json({ CFTurnstileSiteKey,  allTagsOnlyForSearch });
 }
 
 export default function Component() {
@@ -31,7 +51,7 @@ export default function Component() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [createdTags, setCreatedTags] = useState<string[]>([]);
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         const savedSituationValue = window.localStorage.getItem('situationValue');
         const initialSituationValue = JSON.parse(savedSituationValue || '{}');
         setSituationValues(initialSituationValue);
@@ -126,7 +146,7 @@ export default function Component() {
         setSelectedType('misDeed');
     };
 
-    const { CFTurnstileSiteKey } = useLoaderData<typeof loader>();
+    const { CFTurnstileSiteKey, allTagsOnlyForSearch } = useLoaderData<typeof loader>();
     
     
     return (
@@ -214,6 +234,7 @@ export default function Component() {
         <TagSelectionBox
             onTagsSelected={handleTagSelection}
             parentComponentStateValues={selectedTags}
+            allTagsOnlyForSearch={allTagsOnlyForSearch}
         />
         <br></br>
         <TagCreateBox
