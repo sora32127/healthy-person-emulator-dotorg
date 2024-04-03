@@ -261,7 +261,7 @@ export default function Component() {
             selectedTags={selectedTags}
             createdTags={createdTags}
             isValid={isValid}
-            CFTurnstileSiteKey={CFTurnstileSiteKey}
+            CFTurnstileSiteKey={CFTurnstileSiteKey || ""}
         />
     </div>
     )

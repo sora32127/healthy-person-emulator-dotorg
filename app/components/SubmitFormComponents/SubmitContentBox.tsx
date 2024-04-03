@@ -12,7 +12,7 @@ interface SubmitContentBoxProps {
   selectedTags: string[];
   createdTags: string[];
   isValid: boolean;
-  CF_TURNSTILE_SITEKEY: string;
+  CFTurnstileSiteKey: string;
 }
 
 const SubmitContentBox: React.FC<SubmitContentBoxProps> = ({
