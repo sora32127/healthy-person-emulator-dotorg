@@ -1,13 +1,58 @@
 import { Outlet, useNavigation } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
 import feedIcon from "~/src/assets/feed_icon.svg";
-import randomIcon from "~/src/assets/random_icon.svg"
+import randomIcon from "~/src/assets/random_icon.svg";
 import postIcon from "~/src/assets/post_icon.svg";
 import searchIcon from "~/src/assets/search_icon.svg";
 import menuIcon from "~/src/assets/menu_icon.svg";
+import donationIcon from "~/src/assets/donation_icon.svg";
+import guidelineIcon from "~/src/assets/guideline_icon.svg";
+import loginIcon from "~/src/assets/login_icon.svg";
+import logoutIcon from "~/src/assets/logout_icon.svg";
+import signupIcon from "~/src/assets/signup_icon.svg";
+import mypageIcon from "~/src/assets/mypage_icon.svg";
 
 export default function Component() {
   const transitionStatus = useNavigation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isLoggedIn = true;
+
+  const navItems = [
+    { to: "/", icon: feedIcon, text: "フィード" },
+    { to: "/random", icon: randomIcon, text: "ランダム" },
+    { to: "/post", icon: postIcon, text: "投稿" },
+    { to: "/search", icon: searchIcon, text: "検索" },
+  ];
+
+  const menuItems = [
+    { to: "/beSponsor", text: "寄付する", icon: donationIcon },
+    { to: "/readme", text: "ガイドライン", icon: guidelineIcon },
+    ...(isLoggedIn
+      ? [
+          { to: "/mypage", text: "マイページ", icon: mypageIcon },
+          { to: "/signout", text: "サインアウト", icon: logoutIcon },
+        ]
+      : [
+          { to: "/signup", text: "サインアップ", icon: signupIcon },
+          { to: "/login", text: "ログイン", icon: loginIcon },
+        ]),
+  ];
+
+  const renderNavItem = (item) => (
+    <NavLink
+      key={item.to}
+      to={item.to}
+      className={({ isActive }) =>
+        `block text-center text-gray-700 hover:text-blue-500 ${
+          isActive ? "text-blue-500 font-bold" : ""
+        }`
+      }
+    >
+      <img src={item.icon} alt={item.text} className="mx-auto" />
+      {item.text}
+    </NavLink>
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -19,76 +64,56 @@ export default function Component() {
       <div className="mx-4 mb-32 md:mt-32 md:mx-10 lg:mx-20 xl:mx-40 2xl:mx-60">
         <Outlet />
       </div>
-      
+
       <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
         <ul className="flex justify-around">
-          <li>
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `block text-center text-gray-700 hover:text-blue-500 ${
-                  isActive ? "text-blue-500 font-bold" : ""
-                }`
-              }
+          {navItems.map((item) => (
+            <li key={item.to}>{renderNavItem(item)}</li>
+          ))}
+          <li className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="block text-center text-gray-700 hover:text-blue-500"
             >
-              <img src={feedIcon} alt="Feed" className="mx-auto" />
-              フィード
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/random"
-              className={({ isActive }) =>
-                `block text-center text-gray-700 hover:text-blue-500 ${
-                  isActive ? "text-blue-500 font-bold" : ""
-                }`
-              }
-            >
-              <img src={randomIcon} alt="Random" className="mx-auto" />
-              ランダム
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/post"
-              className={({ isActive }) =>
-                `block text-center text-gray-700 hover:text-blue-500 ${
-                  isActive ? "text-blue-500 font-bold" : ""
-                }`
-              }
-            >
-              <img src={postIcon} alt="Post" className="mx-auto" />
-              投稿
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/search"
-              className={({ isActive }) =>
-                `block text-center text-gray-700 hover:text-blue-500 ${
-                  isActive ? "text-blue-500 font-bold" : ""
-                }`
-              }
-            >
-              <img src={searchIcon} alt="Search" className="mx-auto" />
-              検索
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/etc"
-              className={({ isActive }) =>
-                `block text-center text-gray-700 hover:text-blue-500 ${
-                  isActive ? "text-blue-500 font-bold" : ""
-                }`
-              }
-            >
-              <img src={menuIcon} alt="Etc" className="mx-auto" />
+              <img src={menuIcon} alt="Menu" className="mx-auto" />
               メニュー
-            </NavLink>
+            </button>
           </li>
+          {menuItems.map((item) => (
+            <li key={item.to} className="hidden md:block">
+              {renderNavItem(item)}
+            </li>
+          ))}
         </ul>
       </nav>
+      {isMenuOpen && (
+        <div className="fixed inset-0 bg-white z-40 md:hidden">
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute top-4 right-4 text-gray-700 hover:text-blue-500"
+          >
+            閉じる
+          </button>
+          <ul className="mt-16">
+            {menuItems.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `block px-4 py-2 text-gray-700 hover:text-blue-500 ${
+                      isActive ? "text-blue-500 font-bold" : ""
+                    }`
+                  }
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <img src={item.icon} alt={item.text} className="inline-block mr-2" />
+                  {item.text}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <footer className="bg-gray-100 py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center">
