@@ -75,3 +75,10 @@ model userProfiles {
 
   @@map("user_profiles")
 }
+
+model nowEditingPages {
+  postId Int @id @map("post_id") @unique
+  userName String @map("user_name") @unique
+  lastHeartBeatAtUTC DateTime @map("last_heart_beat_at_utc") @default(now())
+  @@map("now_editing_pages")
+}

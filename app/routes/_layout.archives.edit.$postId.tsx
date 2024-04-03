@@ -10,10 +10,76 @@ import { useState } from "react";
 import { marked } from 'marked';
 import { requireUserId } from "~/modules/session.server";
 
+
 export async function loader({ params, request }: LoaderFunctionArgs) {
+
+  // HTTPS証明書関連のエラーを無視するおまじない. ローカル開発環境で必要となる
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+  
   const userId = await requireUserId(request);
-  console.log(userId)
   const postId = params.postId;
+  const nowEditingInfo = await prisma.nowEditingPages.findUnique({
+    where : { postId: Number(postId) },
+    select : {
+      postId: true,
+      userName: true,
+      lastHeartBeatAtUTC: true
+    },
+  });
+
+  /*
+  記事が編集中かどうか判断するロジックは以下の通り
+  - nowEditingInfoがnullの場合、編集中でない
+  - nowEditingInfoが存在し、自分が編集中の場合、編集中でない
+  - nowEditingInfoが存在し、最終ロック時刻から5分以内の場合、編集中である
+  - nowEditingInfoが存在し、最終ロック時刻から5分以上経過している場合、編集中でない
+  */
+  let isEditing = nowEditingInfo ? new Date().getTime() - nowEditingInfo.lastHeartBeatAtUTC.getTime() <= 300000 : false;
+
+  if (nowEditingInfo){
+    const userName = await prisma.userProfiles.findUniqueOrThrow({
+      select: { userName: true },
+      where: { userId },
+    });
+    if (nowEditingInfo.userName === userName.userName){
+      isEditing = false;
+    }
+  }
+
+  if (isEditing && nowEditingInfo){
+    // モーダルを表示する：${nowEditingInfo.userName}さんが編集中です。
+    // 「戻る」を押してredirect(`/archives/${postId}`)する
+    return json({
+      postData: null,
+      postMarkdown: null,
+      tagNames: null,
+      allTagsForSearch: null,
+      editingUserName: nowEditingInfo.userName,
+      postId,
+      isEditing: true,
+      userName: null
+    });
+  }
+    
+
+  // 以下は編集中ではないことを前提とするロジック
+  if (nowEditingInfo){
+    await prisma.nowEditingPages.delete({
+      where: { postId: Number(postId) },
+    });
+  }
+  const userName = await prisma.userProfiles.findUniqueOrThrow({
+    select: { userName: true },
+    where: { userId },
+  });
+
+  await prisma.nowEditingPages.create({
+    data: {
+      postId: Number(postId),
+      userName: userName.userName,
+      lastHeartBeatAtUTC: new Date(),
+    },
+  });
 
   const postData = await prisma.userPostContent.findFirst({
     where: {
@@ -49,18 +115,43 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const postMarkdown = NodeHtmlMarkdown.translate(postData.postContent);
 
-  return json({ postData, tagNames, postMarkdown, allTagsForSearch });
+  return json({
+    postData,
+    tagNames,
+    postMarkdown,
+    allTagsForSearch,
+    userName: userName.userName,
+    editingUserName:null,
+    isEditing:false,
+    postId,
+  });
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch } = useLoaderData<typeof loader>();
+  const { postData, postMarkdown, tagNames, allTagsForSearch, editingUserName, isEditing, postId, userName } = useLoaderData<typeof loader>();
   const { postTitle } = postData;
+
+  if (isEditing){
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 shadow-lg">
+          <p className="text-xl font-bold mb-4">{editingUserName}さんが編集中です。</p>
+          <button
+            onClick={() => window.location.href = `/archives/${postId}`}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const [markdownContent, setMarkdownContent] = useState(postMarkdown);
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames.map(tag => tag.tagName));
   const [tagInputValue, setTagInputValue] = useState<string>("");
   const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
-  const oldTags = tagNames.map(tag => tag.tagName)
+  const oldTags = tagNames?.map(tag => tag.tagName)
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -85,6 +176,19 @@ export default function EditPost() {
   const handleTagRemove = (tagName: string) => {
     setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
   };
+
+  
+  
+  setInterval(() => {
+    const formData = new FormData();
+    formData.append("postId", postData.postId.toString());
+    formData.append("userName", userName || "");
+  
+    fetch("https://localhost:5173/api/edit/updateHeartBeat", {
+      method: "POST",
+      body: formData,
+    });
+  }, 10000);
 
   const navigation = useNavigation();
 
