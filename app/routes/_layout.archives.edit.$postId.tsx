@@ -93,23 +93,30 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     throw new Response("Post not found", { status: 404 });
   }
 
-  const tagNames = await prisma.dimTags.findMany({
+  let tagNames = await prisma.relPostTags.findMany({
+    select: {
+      dimTag: { select: { tagName: true } }
+    },
+    where: { postId: Number(postId) },
+  });
+  
+  tagNames = tagNames.map(tag => tag.dimTag.tagName);
+
+  const tags = await prisma.dimTags.findMany({
     select: {
       tagName: true,
+      _count: {
+        select: { relPostTags: true },
+      },
     },
-    where: {
-      postId: Number(postId),
+    orderBy: {
+      relPostTags: {
+        _count: "desc",
+      },
     },
   });
-
-  const allTags = await prisma.dimTags.groupBy({
-    by: ["tagName"],
-    _count: { postId: true },
-    orderBy: { _count: { postId: "desc" } },
-  });
-
-  const allTagsForSearch = allTags.map((tag: { tagName: string, _count: { postId: number } }) => {
-    return { tagName: tag.tagName, count: tag._count.postId };
+  const allTagsForSearch = tags.map((tag) => {
+    return { tagName: tag.tagName, count: tag._count.relPostTags };
   });
 
   const postMarkdown = NodeHtmlMarkdown.translate(postData.postContent);
@@ -159,10 +166,10 @@ export default function EditPost() {
   const { postTitle } = postData;
 
   const [markdownContent, setMarkdownContent] = useState(postMarkdown);
-  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames.map(tag => tag.tagName));
+  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
   const [tagInputValue, setTagInputValue] = useState<string>("");
   const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
-  const oldTags = tagNames?.map(tag => tag.tagName)
+  const oldTags = tagNames
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -399,7 +406,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       }
     })
     
-    await prisma.dimTags.deleteMany({ where: { postId } });
+    await prisma.relPostTags.deleteMany({ where: { postId } });
   
     for (const tag of tags) {
       const existingTag = await prisma.dimTags.findFirst({
@@ -407,16 +414,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
         orderBy: { tagId: 'desc' },
       });
 
-      const maxTagId = await prisma.dimTags.aggregate({ _max: { tagId: true } });
-      const tagId = existingTag ? existingTag.tagId : (maxTagId?._max?.tagId || 0) + 1 || 1;
-
-      await prisma.dimTags.create({
+      await prisma.relPostTags.create({
         data: {
-          tagId,
           postId,
-          tagName: tag,
+          tagId: existingTag?.tagId || 0
+        }
         },
-      });
+      );
     }
 
     await prisma.fctPostEditHistory.create({
