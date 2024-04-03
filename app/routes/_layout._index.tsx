@@ -2,7 +2,7 @@ import { MetaFunction, json } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
-import { H1, H2 } from "~/components/Headings";
+import { H2 } from "~/components/Headings";
 
 
 export const meta: MetaFunction = () => {
