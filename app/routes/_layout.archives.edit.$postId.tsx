@@ -1,6 +1,6 @@
 // _layout.archives.$postId.edit.tsx
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigation } from "@remix-run/react";
+import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { H1, H2 } from "~/components/Headings";
@@ -129,23 +129,21 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, editingUserName, isEditing, postId, userName } = useLoaderData<typeof loader>();
-  const { postTitle } = postData;
 
   if (isEditing){
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 shadow-lg">
           <p className="text-xl font-bold mb-4">{editingUserName}さんが編集中です。</p>
-          <button
-            onClick={() => window.location.href = `/archives/${postId}`}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
-          >
+          <NavLink to={`/archives/${postId}`} className="block w-full text-center text-white bg-blue-500 hover:bg-blue-600 py-2 rounded-md">
             戻る
-          </button>
+          </NavLink>
         </div>
       </div>
     );
   }
+
+  const { postTitle } = postData;
 
   const [markdownContent, setMarkdownContent] = useState(postMarkdown);
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames.map(tag => tag.tagName));
