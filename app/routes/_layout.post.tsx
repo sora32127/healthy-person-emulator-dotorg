@@ -6,14 +6,16 @@ import StaticTextInput from '~/components/SubmitFormComponents/StaticTextInput';
 import Preview from '~/components/SubmitFormComponents/Preview';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
-import SubmitContentBox from '~/components/SubmitFormComponents/SubmitContentBox';
 import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationCheckBox';
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
-import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
+import { Form, useLoaderData } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
+import { Turnstile } from '@marsidev/react-turnstile';
+import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+
 
 interface Tag {
     tagName: string;
@@ -22,19 +24,22 @@ interface Tag {
 
 export async function loader () {
     const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
-    const tags = await prisma.dimTags.groupBy({
-        by: ["tagName"],
-        _count: { postId: true },
-        orderBy: { _count: { postId: "desc" } },
-    });
-    
-    const allTagsOnlyForSearch: Tag[] = tags.map(
-        (tag: { tagName: string, _count: { postId: number } }) => {
-        return {
-            tagName: tag.tagName,
-            count: tag._count.postId
-        };
-    });
+    const tags = await prisma.dimTags.findMany({
+        select: {
+          tagName: true,
+          _count: {
+            select: { relPostTags: true },
+          },
+        },
+        orderBy: {
+          relPostTags: {
+            _count: "desc",
+          },
+        },
+      });
+      const allTagsOnlyForSearch: Tag[] = tags.map((tag) => {
+        return { tagName: tag.tagName, count: tag._count.relPostTags };
+      });
 
     return json({ CFTurnstileSiteKey,  allTagsOnlyForSearch });
 }
@@ -132,6 +137,12 @@ export default function Component() {
     setIsValid(result);
     };
 
+    const [isValidUser, setIsValidUser] = useState(false);
+
+    const handleTurnstileValidation = (isValid: boolean) => {
+        setIsValidUser(isValid);
+    };
+
     const clearInputs = () => {
         console.log("CLEARBUTTON")
         setSituationValues({});
@@ -151,6 +162,7 @@ export default function Component() {
     
     return (
     <div className="templateSubmitForm">
+        <Form method="post">
         <UserExplanation />
         <ClearLocalStorageButton clearInputs={clearInputs}/>
         <TextTypeSwitcher onToggle={handleToggle}/>
@@ -250,19 +262,167 @@ export default function Component() {
             counterFactualReflectionValues={counterFactualReflectionValues}
             onValidationResult={handleValidationResult}
         />
-        <SubmitContentBox
-            situationValues={situationValues}
-            assumptionValues={assumptionValues}
-            reflectionValues={reflectionValues}
-            counterFactualReflectionValues={counterFactualReflectionValues}
-            noteValues={noteValues}
-            titleValues={titleValues}
-            selectedType={selectedType}
-            selectedTags={selectedTags}
-            createdTags={createdTags}
-            isValid={isValid}
-            CFTurnstileSiteKey={CFTurnstileSiteKey || ""}
-        />
+        <Turnstile siteKey={CFTurnstileSiteKey} onSuccess={() => handleTurnstileValidation(true)}/>
+        <button
+            type="submit"
+            className={`rounded-md block w-full px-4 py-2 text-center text-white my-4 ${
+              isValid && isValidUser
+                ? 'bg-blue-500 hover:bg-blue-600'
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
+            disabled={!isValid || !isValidUser}
+        >
+        投稿する
+        </button>
+        <input type="hidden" name="situationValues" value={JSON.stringify(situationValues)} />
+        <input type="hidden" name="assumptionValues" value={JSON.stringify(assumptionValues)} />
+        <input type="hidden" name="reflectionValues" value={JSON.stringify(reflectionValues)} />
+        <input type="hidden" name="counterFactualReflectionValues" value={JSON.stringify(counterFactualReflectionValues)} />
+        <input type="hidden" name="noteValues" value={JSON.stringify(noteValues)} />
+        <input type="hidden" name="titleValues" value={JSON.stringify(titleValues)} />
+        <input type="hidden" name="selectedType" value={selectedType} />
+        <input type="hidden" name="selectedTags" value={JSON.stringify(selectedTags)} />
+        <input type="hidden" name="createdTags" value={JSON.stringify(createdTags)} />
+        </Form>
     </div>
     )
+}
+
+function removeEmptyString(array: string[]): string[] {
+    return array.filter((value) => !/^\s*$/.test(value));
+  }
+
+export async function action({ request }:ActionFunctionArgs ) {
+    const formData = await request.formData();
+    const situationValues = JSON.parse(formData.get('situationValues') as string);
+    let assumptionValues = JSON.parse(formData.get('assumptionValues') as string);
+    let reflectionValues = JSON.parse(formData.get('reflectionValues') as string);
+    let counterFactualReflectionValues = JSON.parse(formData.get('counterFactualReflectionValues') as string);
+    let noteValues = JSON.parse(formData.get('noteValues') as string);
+    const titleValues = JSON.parse(formData.get('titleValues') as string);
+    const selectedType = formData.get('selectedType') as string;
+    const selectedTags = JSON.parse(formData.get('selectedTags') as string);
+    const createdTags = JSON.parse(formData.get('createdTags') as string);
+    
+    assumptionValues = removeEmptyString(assumptionValues);
+    reflectionValues = removeEmptyString(reflectionValues);
+    counterFactualReflectionValues = removeEmptyString(counterFactualReflectionValues);
+    noteValues = removeEmptyString(noteValues);
+
+    const result = `
+        <h3>5W1H+Then状況説明</h3>
+        <table><tbody>
+          <tr><td>Who(誰が)</td><td>${situationValues.who || ''}</td></tr>
+          <tr><td>When(いつ)</td><td>${situationValues.when || ''}</td></tr>
+          <tr><td>Where(どこで)</td><td>${situationValues.where || ''}</td></tr>
+          <tr><td>Why(なぜ)</td><td>${situationValues.why || ''}</td></tr>
+          <tr><td>What(何を)</td><td>${situationValues.what || ''}</td></tr>
+          <tr><td>How(どのように)</td><td>${situationValues.how || ''}</td></tr>
+          <tr><td>Then(どうした)</td><td>${situationValues.then || ''}</td></tr>
+        </tbody></table>
+        ${assumptionValues.length > 0 ? `
+          <h3>前提条件</h3>
+          <ul>
+            ${assumptionValues.map((assumption: string) => `<li>${assumption}</li>`).join('')}
+          </ul>
+        ` : ''}
+        <h3>
+          ${selectedType == 'misDeed'
+            ? '健常行動ブレイクポイント'
+            : selectedType == 'goodDeed'
+            ? 'なぜやってよかったのか'
+            : ''}
+        </h3>
+        <ul>
+          ${reflectionValues.map((reflection: string) => `<li>${reflection}</li>`).join('')}
+        </ul>
+
+        <h3>
+          ${selectedType == 'misDeed'
+            ? 'どうすればよかったか'
+            : selectedType == 'goodDeed'
+            ? 'やらなかったらどうなっていたか'
+            : ''}
+        </h3>
+        <ul>
+          ${counterFactualReflectionValues.map((counterFactualReflection: string) => `<li>${counterFactualReflection}</li>`).join('')}
+        </ul>
+
+        ${noteValues.length > 0 ? `
+          <h3>備考</h3>
+          <ul>
+            ${noteValues.map((note: string) => `<li>${note}</li>`).join('')}
+          </ul>
+        ` : ''}
+      `;
+
+    const ip = getClientIPAddress(request) || "";
+    const postUserIpHash = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(ip)
+    );
+    const hashArray = Array.from(new Uint8Array(postUserIpHash));
+    const postUserIpHashString = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    const newPost = await prisma.$transaction(async (prisma) => {
+        const newPost = await prisma.dimPosts.create({
+            data: {
+                postAuthorIPHash: postUserIpHashString,
+                postDateJst: new Date(),
+                postDateGmt: new Date(),
+                postContent: result,
+                postTitle: titleValues.join(''),
+                countLikes: 0,
+                countDislikes: 0,
+                commentStatus: "open",
+            },
+        });
+        for (let i = 0; i < selectedTags.length; i++) {
+            let tagId
+            tagId = await prisma.dimTags.findFirst({
+                where: {
+                    tagName: selectedTags[i],
+                },
+            });
+            if (!tagId) {
+                tagId = await prisma.dimTags.create({
+                    data: {
+                        tagName: selectedTags[i],
+                    },
+                });
+            }
+            tagId = tagId.tagId
+            await prisma.relPostTags.create({
+                data: {
+                    postId: newPost.postId,
+                    tagId: tagId,
+                },
+            });
+        }
+        for (let i = 0; i < createdTags.length; i++) {
+            let tagId
+            tagId = await prisma.dimTags.findFirst({
+                where: {
+                    tagName: createdTags[i],
+                },
+            });
+            if (!tagId) {
+                tagId = await prisma.dimTags.create({
+                    data: {
+                        tagName: createdTags[i],
+                    },
+                });
+            }
+            tagId = tagId.tagId
+            await prisma.relPostTags.create({
+                data: {
+                    postId: newPost.postId,
+                    tagId: tagId,
+                },
+            });
+        }
+        return newPost
+    });
+
+    return redirect(`/archives/${newPost.postId}`);
 }

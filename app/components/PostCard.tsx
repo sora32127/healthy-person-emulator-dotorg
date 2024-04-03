@@ -10,7 +10,6 @@ interface PostCardProps {
     postId: number;
     postTitle: string;
     postDateJst: string;
-    postUrl: string;
     tagNames: string[];
     countLikes: number;
     countDislikes: number;

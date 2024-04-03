@@ -24,13 +24,14 @@ export async function loader({ request }:LoaderFunctionArgs){
         },
       });
     
-    const tagNames = await prisma.dimTags.findMany({
-        select: {
-          tagName: true,
-        },
+    const tagNames = await prisma.relPostTags.findMany({
         where: {
           postId: Number(postId),
         },
+        select: {
+          dimTag : { select: { tagName: true }
+        },
+      }
     });
 
     const comments = await prisma.dimComments.findMany({

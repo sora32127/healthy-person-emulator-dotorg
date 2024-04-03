@@ -74,7 +74,7 @@ model nowEditingPages {
 
 model DimPosts {
   postId Int @id @unique @map("post_id") @default(autoincrement())
-  postAuthorIPHash Decimal @map("post_author_hash")
+  postAuthorIPHash String @map("post_author_ip_hash")
   postDateJst DateTime @map("post_date_jst")
   postDateGmt DateTime @map("post_date_gmt")
   postContent String @map("post_content")
