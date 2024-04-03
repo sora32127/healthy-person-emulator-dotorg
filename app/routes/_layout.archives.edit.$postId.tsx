@@ -351,6 +351,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
   
     return updatedPost;
+  },
+  {
+    timeout : 20000,
   });
 
   return redirect(`/archives/${updatedPost.postId}`);
