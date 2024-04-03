@@ -18,12 +18,9 @@ export async function loader({ request }:LoaderFunctionArgs){
     // Wordpress時代のURLと合わせるため、以下の形式のURLを想定する
     // https://healthy-person-emulator.org/archives/${postId}?q...
     const postId = url.pathname.split("/")[2];
-    const postContent = await prisma.userPostContent.findFirst({
+    const postContent = await prisma.dimPosts.findFirst({
         where: {
           postId: Number(postId),
-        },
-        orderBy: {
-          postRevisionNumber: 'desc',
         },
       });
     
@@ -356,13 +353,13 @@ export async function action({ request }: ActionFunctionArgs) {
     });
 
     if (voteType === "like") {
-      await prisma.userPostContent.update({
-        where: { postId_postRevisionNumber: { postId, postRevisionNumber: 1 } },
+      await prisma.dimPosts.update({
+        where: { postId },
         data: { countLikes: { increment: 1 } },
       });
     } else {
-      await prisma.userPostContent.update({
-        where: { postId_postRevisionNumber: { postId, postRevisionNumber: 1 } },
+      await prisma.dimPosts.update({
+        where: { postId },
         data: { countDislikes: { increment: 1 } },
       });
     }

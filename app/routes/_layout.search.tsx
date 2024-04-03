@@ -6,7 +6,7 @@ import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { useState } from "react";
 
-interface UserPostContentSearchResult {
+interface DimPostContentSearchResult {
   highlightedcontent: string;
   postid: number;
   posttitle: string;
@@ -44,10 +44,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       select: { tagName: true, postId: true },
     });
     const postIds = allTagsForSearch.map((tag) => tag.postId);
-    const totalCount = await prisma.userPostContent.count({
+    const totalCount = await prisma.dimPosts.count({
       where: { postId: { in: postIds } },
     });
-    const searchPosts = await prisma.userPostContent.findMany({
+    const searchPosts = await prisma.dimPosts.findMany({
       where: { postId: { in: postIds } },
       select: {
         postId: true,
@@ -86,10 +86,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
   else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
-    const totalCount = await prisma.userPostContent.count({
+    const totalCount = await prisma.dimPosts.count({
       where: { postTitle: { contains: title } },
     });
-    const searchResults = await prisma.userPostContent.findMany({
+    const searchResults = await prisma.dimPosts.findMany({
       where: { postTitle: { contains: title } },
       select: {
         postId: true,
@@ -129,7 +129,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
   else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
-    const { data } = await supabase.rpc("search_post_contents", { keyword: query }) as { data: UserPostContentSearchResult[]};
+    const { data } = await supabase.rpc("search_post_contents", { keyword: query }) as { data: DimPostContentSearchResult[]};
     const count = data.length;
     const styledData = data.slice((pageNumber - 1) * 10, pageNumber * 10).map((post) => {
       return {

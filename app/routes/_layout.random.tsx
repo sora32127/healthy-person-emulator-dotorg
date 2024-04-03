@@ -5,14 +5,14 @@ import { prisma } from "~/modules/db.server";
 
 export async function loader(){
     /*
-    prisma.userPostContent.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
+    prisma.dimPosts.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
     */
-    const postCount = await prisma.userPostContent.count();
+    const postCount = await prisma.dimPosts.count();
     const randomPostOffset = Math.max(
         Math.floor(Math.random() * postCount) - 10,
         0
         );
-    const randomPosts = await prisma.userPostContent.findMany({
+    const randomPosts = await prisma.dimPosts.findMany({
         select : {
             postId: true,
             postTitle: true,

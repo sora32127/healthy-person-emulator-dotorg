@@ -81,12 +81,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     },
   });
 
-  const postData = await prisma.userPostContent.findFirst({
+  const postData = await prisma.dimPosts.findUnique({
     where: {
       postId: Number(postId),
-    },
-    orderBy: {
-      postRevisionNumber: "desc",
     },
   });
 
@@ -290,9 +287,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const postId = Number(params.postId);
 
-  const latestPost = await prisma.userPostContent.findFirst({
+  const latestPost = await prisma.dimPosts.findUnique({
     where: { postId },
-    orderBy: { postRevisionNumber: "desc" },
   });
 
   if (!latestPost) {

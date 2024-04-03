@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => {
   };
 
 export async function loader() {
-    const mostRecentPosts = await prisma.userPostContent.findMany({
+    const mostRecentPosts = await prisma.dimPosts.findMany({
         orderBy: { postDateJst: "desc" },
         take: 10,
         select: {
@@ -40,7 +40,7 @@ export async function loader() {
         take: 10,
     });
 
-    const recentVotedPosts = await prisma.userPostContent.findMany({
+    const recentVotedPosts = await prisma.dimPosts.findMany({
         where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
         select: {
             postId: true,
@@ -57,7 +57,7 @@ export async function loader() {
         select : { postId: true }
     })
 
-    const communityPosts = await prisma.userPostContent.findMany({
+    const communityPosts = await prisma.dimPosts.findMany({
         where : { postId : { in : communityPostIds.map((post) => post.postId)}},
         select : {
             postId: true,
@@ -73,11 +73,9 @@ export async function loader() {
         where : { tagName: { equals: "殿堂入り"}},
         select: { postId: true }
     })
-
-    
         
 
-    const famedPosts = await prisma.userPostContent.findMany({
+    const famedPosts = await prisma.dimPosts.findMany({
         where : { postId : { in : famedPostIds.map((post) => post.postId)}},
         select : {
             postId: true,

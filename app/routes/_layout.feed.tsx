@@ -41,7 +41,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         skip: (pagingNumber - 1) * 10,
     });
 
-    const recentVotedPosts = await prisma.userPostContent.findMany({
+    const recentVotedPosts = await prisma.dimPosts.findMany({
         where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
         select: {
             postId: true,
@@ -79,7 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
   else {
-    const mostRecentPosts = await prisma.userPostContent.findMany({
+    const mostRecentPosts = await prisma.dimPosts.findMany({
         orderBy: { postDateJst: "desc" },
         skip: (pagingNumber - 1) * 10,
         take: 10,
@@ -108,7 +108,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return { ...post, tagNames };
       });
 
-      totalCount = await prisma.userPostContent.count();
+      totalCount = await prisma.dimPosts.count();
   }
   
   return json({ 
