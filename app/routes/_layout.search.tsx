@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useSearchParams, Link } from "@remix-run/react";
+import { Form, useLoaderData, Link } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { supabase } from "~/modules/supabase.server";
@@ -25,23 +25,34 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const searchType = url.searchParams.get("t")
   const pageNumber = parseInt(url.searchParams.get("p") || "1");
-  const tags = await prisma.dimTags.groupBy({
-    by: ["tagName"],
-    _count: { postId: true },
-    orderBy: { _count: { postId: "desc" } },
+  const tags = await prisma.dimTags.findMany({
+    select: {
+      tagName: true,
+      _count: {
+        select: { relPostTags: true },
+      },
+    },
+    orderBy: {
+      relPostTags: {
+        _count: "desc",
+      },
+    },
   });
-
-  const allTagsOnlyForSearch: Tag[] = tags.map((tag: { tagName: string, _count: { postId: number } }) => {
-    return { tagName: tag.tagName, count: tag._count.postId };
+  const allTagsOnlyForSearch: Tag[] = tags.map((tag) => {
+    return { tagName: tag.tagName, count: tag._count.relPostTags };
   });
 
 
   if (searchType === "tag") {
     const tags = url.searchParams.get("tags")?.split("+") || [];
-    const allTagsForSearch = await prisma.dimTags.findMany({
-      where: { tagName: { in: tags } },
-      select: { tagName: true, postId: true },
-    });
+    const allTagsForSearch = await prisma.relPostTags.findMany({
+      select: {
+          postId: true,
+          dimTag: { select: { tagName: true } }
+      },
+      where : { dimTag : { tagName : { in : tags }}},
+  })
+
     const postIds = allTagsForSearch.map((tag) => tag.postId);
     const totalCount = await prisma.dimPosts.count({
       where: { postId: { in: postIds } },
@@ -60,15 +71,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
-    const allTags = await prisma.dimTags.findMany({
-      select: { tagName: true, postId: true },
-      where: { postId: { in: searchPosts.map((post) => post.postId) } }
-    });
+
+    const allTags = await prisma.relPostTags.findMany({
+      select: {
+          postId: true,
+          dimTag: { select: { tagName: true } }
+      },
+      where : { postId : { in : searchPosts.map((post) => post.postId)}}
+    })
 
     const searchResults = searchPosts.map((post) => {
       const tagNames = allTags
         .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.tagName);
+        .map((tag) => tag.dimTag.tagName);
       return {
         postId: post.postId,
         postTitle: post.postTitle,
@@ -79,7 +94,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return { data: searchResults, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags: tags.join("+") };
+    return json({ data: searchResults, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags: tags.join("+") });
   }
   else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
@@ -101,15 +116,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       take: 10,
     });
 
-    const allTags = await prisma.dimTags.findMany({
-      select: { tagName: true, postId: true },
-      where: { postId: { in: searchResults.map((post) => post.postId) } }
-    });
+    const allTags = await prisma.relPostTags.findMany({
+      select: {
+          postId: true,
+          dimTag: { select: { tagName: true } }
+      },
+      where : { postId : { in : searchResults.map((post) => post.postId)}}
+    })
 
     const searchResultsWithTags = searchResults.map((post) => {
       const tagNames = allTags
         .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.tagName);
+        .map((tag) => tag.dimTag.tagName);
       return {
         postId: post.postId,
         postTitle: post.postTitle,
@@ -120,7 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return { data: searchResultsWithTags, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, title };
+    return json({ data: searchResultsWithTags, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, title });
   }
   else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
@@ -136,14 +154,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         highlightedContent: MakeReadbleHighlightText(post.highlightedcontent)
       };
     });
-    const allTags = await prisma.dimTags.findMany({
-      select: { tagName: true, postId: true },
-      where: { postId: { in: styledData.map((post) => post.postId) } }
-    });
+    
+    const allTags = await prisma.relPostTags.findMany({
+      select: {
+          postId: true,
+          dimTag: { select: { tagName: true } }
+      },
+      where : { postId : { in : styledData.map((post) => post.postId)}}
+    })
     const searchResultsWithTags = styledData.map((post) => {
       const tagNames = allTags
         .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.tagName);
+        .map((tag) => tag.dimTag.tagName);
       return {
         postId: post.postId,
         postTitle: post.postTitle,
@@ -158,7 +180,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return { data: searchResultsWithTags, allTagsForSearch: allTagsOnlyForSearch, totalCount: count, pageNumber, searchType, query };
   }
   else {
-    return { data: [], allTagsForSearch: allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" };
+    return json({ data: [], allTagsForSearch: allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" });
   }
 };
 

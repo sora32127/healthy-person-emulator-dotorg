@@ -8,11 +8,18 @@ datasource db {
 }
 
 model DimTags {
-  tagId   Int    @map("tag_id")
-  postId Int @map("post_id")
+  tagId   Int    @map("tag_id") @id @unique @default(autoincrement())
   tagName String @map("tag_name")
-  @@id([tagId, postId])
+  relPostTags RelPostTags[] 
   @@map("dim_tags")
+}
+
+model RelPostTags {
+  postId Int @map("post_id")
+  tagId Int @map("tag_id")
+  dimTag DimTags @relation(fields: [tagId], references: [tagId])
+  @@id([postId, tagId])
+  @@map("rel_post_tags")
 }
 
 model DimComments {
@@ -73,7 +80,6 @@ model DimPosts {
   postContent String @map("post_content")
   postTitle String @map("post_title")
   commentStatus String @map("comment_status")
-  postUrl String @map("post_url")
   countLikes Int @map("count_likes")
   countDislikes Int @map("count_dislikes")
   uuid String @map("uuid") @default(uuid())

@@ -25,10 +25,10 @@ export async function loader(){
         take: 10,
     })
 
-    const allTags = await prisma.dimTags.findMany({
+    const allTags = await prisma.relPostTags.findMany({
         select: {
-            tagName: true,
-            postId: true
+            postId: true,
+            dimTag: { select: { tagName: true } }
         },
         where : { postId : { in : randomPosts.map((post) => post.postId)}}
     })
@@ -36,7 +36,7 @@ export async function loader(){
     const randomPostsWithTags = randomPosts.map((post) => {
         const tagNames = allTags
             .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.tagName);
+            .map((tag) => tag.dimTag.tagName);
         return { ...post, tagNames };
     }
     );
@@ -51,7 +51,7 @@ export default function Random() {
         <H1>ランダム記事</H1>
         {randomPosts.map((post) => (
             <PostCard
-                key={post.postUrl}
+                key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
                 postDateJst={post.postDateJst}

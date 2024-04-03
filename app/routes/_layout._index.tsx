@@ -50,8 +50,8 @@ export async function loader() {
         },
     });
 
-    const communityPostIds = await prisma.dimTags.findMany({
-        where: { tagName: { equals : "コミュニティ選"}},
+    const communityPostIds = await prisma.relPostTags.findMany({
+        where: { tagId: { equals: 986 } }, // コミュニティ選のtag_id
         select : { postId: true }
     })
 
@@ -66,8 +66,8 @@ export async function loader() {
         }
     })
 
-    const famedPostIds = await prisma.dimTags.findMany({
-        where : { tagName: { equals: "殿堂入り"}},
+    const famedPostIds = await prisma.relPostTags.findMany({
+        where : { tagId: { equals: 575 } }, // 殿堂入りのtag_id
         select: { postId: true }
     })
         
@@ -91,13 +91,22 @@ export async function loader() {
     allPostIds = allPostIds.concat(famedPosts.map((post) => post.postId));
     
 
-    const allTagsNames = await prisma.dimTags.findMany({
+    const allTagsJoinedWithPostIds = await prisma.relPostTags.findMany({
         select: {
             postId: true,
-            tagName: true,
+            dimTag: {
+                select: {
+                    tagName: true,
+                },
+            },
         },
         where: { postId: { in: allPostIds } },
     });
+    
+    const allTagsNames = allTagsJoinedWithPostIds.map((tag) => ({
+        postId: tag.postId,
+        tagName: tag.dimTag.tagName,
+    }));
 
     const mostRecentPostsWithTags = mostRecentPosts.map((post) => {
         const tagNames = allTagsNames
