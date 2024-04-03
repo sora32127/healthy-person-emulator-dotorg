@@ -20,6 +20,7 @@ model UserPostContent {
   postUrl            String   @map("post_url")
   countLikes        Int       @map("count_likes")
   countDislikes     Int       @map("count_dislikes")
+  uuid             String    @map("uuid") @default(uuid())
 
   @@id([postId, postRevisionNumber])
   @@map("user_post_contents")

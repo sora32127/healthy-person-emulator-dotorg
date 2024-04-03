@@ -4,7 +4,15 @@ import PostCard from "~/components/PostCard";
 import { prisma } from "~/modules/db.server";
 
 export async function loader(){
-    const randomPosts = await prisma.userPostContent.findManyRandom(10, {
+    /*
+    prisma.userPostContent.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
+    */
+    const postCount = await prisma.userPostContent.count();
+    const randomPostOffset = Math.max(
+        Math.floor(Math.random() * postCount) - 10,
+        0
+        );
+    const randomPosts = await prisma.userPostContent.findMany({
         select : {
             postId: true,
             postTitle: true,
@@ -13,7 +21,9 @@ export async function loader(){
             countLikes: true,
             countDislikes: true,
         },
-        custom_uniqueKey: "postId"
+        orderBy: { uuid : "asc"},
+        skip: randomPostOffset,
+        take: 10,
     })
 
     const allTags = await prisma.dimTags.findMany({
