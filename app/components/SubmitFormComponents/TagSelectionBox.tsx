@@ -87,6 +87,7 @@ const TagSelectionBox = ({
                     : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
                 }`}
                 onClick={() => handleTagClick(tag.tagName)}
+                type="button"
             >
                 {tag.tagName} ({tag.count})
             </button>
@@ -100,6 +101,7 @@ const TagSelectionBox = ({
                         key={tag}
                         className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer focus:outline-none"
                         onClick={() => handleRemoveSelectedTag(tag)}
+                        type="button"
                     >
                         {tag}
                         <svg
