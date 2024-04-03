@@ -1,7 +1,7 @@
 import { Outlet, useNavigation } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
 import feedIcon from "~/src/assets/feed_icon.svg";
-import guidelineIcon from "~/src/assets/guideline_icon.svg";
+import randomIcon from "~/src/assets/random_icon.svg"
 import postIcon from "~/src/assets/post_icon.svg";
 import searchIcon from "~/src/assets/search_icon.svg";
 import menuIcon from "~/src/assets/menu_icon.svg";
@@ -37,15 +37,15 @@ export default function Component() {
           </li>
           <li>
             <NavLink
-              to="/readme"
+              to="/random"
               className={({ isActive }) =>
                 `block text-center text-gray-700 hover:text-blue-500 ${
                   isActive ? "text-blue-500 font-bold" : ""
                 }`
               }
             >
-              <img src={guidelineIcon} alt="Readme" className="mx-auto" />
-              ガイドライン
+              <img src={randomIcon} alt="Random" className="mx-auto" />
+              ランダム
             </NavLink>
           </li>
           <li>
