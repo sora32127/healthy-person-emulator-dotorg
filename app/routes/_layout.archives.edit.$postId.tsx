@@ -271,6 +271,7 @@ export default function EditPost() {
             >
               変更を保存する
             </button>
+            <input type="hidden" name="userName" value={userName} />
           </Form>
         </div>
       )}
@@ -284,6 +285,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const postTitle = formData.get("postTitle")?.toString() || "";
   const postContent = formData.get("postContent")?.toString() || "";
   const tags = formData.getAll("tags") as string[];
+  const userName = formData.get("userName")?.toString() || "";
 
   const postId = Number(params.postId);
 
@@ -295,7 +297,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
     throw new Response("Post not found", { status: 404 });
   }
 
-  const newRevisionNumber = latestPost.postRevisionNumber + 1;
+  let newRevisionNumber: number;
+
+  try {
+    const latestRevisionNumber = await prisma.fctPostEditHistory.findFirstOrThrow({
+    select: { postRevisionNumber: true },
+    where: { postId },
+    orderBy: { postRevisionNumber: 'desc' },
+    })
+    newRevisionNumber = latestRevisionNumber.postRevisionNumber + 1;
+  } catch (e) {
+    newRevisionNumber = 1;
+  }
+
+
 
   // 通常のレンダラーでは、Markdownテーブルの一行目が<thead>タグで囲まれてしまうため、カスタムレンダラーを使用する
   const renderer = new marked.Renderer();
@@ -307,23 +322,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
   marked.use({ renderer });
 
   const updatedPost = await prisma.$transaction(async (prisma) => {
-    const updatedPost = await prisma.userPostContent.create({
+    const updatedPost = await prisma.dimPosts.update({
+      where: { postId },
       data: {
-        postId,
-        postRevisionNumber: newRevisionNumber,
-        postAuthorHash: latestPost.postAuthorHash,
-        postDateJst: new Date(),
-        postDateGmt: new Date(),
-        postContent: marked(postContent),
-        postTitle: postTitle,
-        postStatus: latestPost.postStatus,
-        commentStatus: latestPost.commentStatus,
-        postUrl: latestPost.postUrl,
-        countLikes: latestPost.countLikes,
-        countDislikes: latestPost.countDislikes,
-      },
-    });
-  
+        postTitle,
+        postContent: marked(postContent as string),
+      }
+    })
+    
     await prisma.dimTags.deleteMany({ where: { postId } });
   
     for (const tag of tags) {
@@ -343,6 +349,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
         },
       });
     }
+
+    await prisma.fctPostEditHistory.create({
+      data: {
+        postId,
+        postRevisionNumber: newRevisionNumber,
+        postEditDateJst: new Date(),
+        postEditDateGmt: new Date(),
+        editorUserName: userName,
+        postTitleBeforeEdit: latestPost.postTitle,
+        postTitleAfterEdit: postTitle,
+        postContentBeforeEdit: latestPost.postContent,
+        postContentAfterEdit: postContent,
+      },
+    });
   
     return updatedPost;
   },

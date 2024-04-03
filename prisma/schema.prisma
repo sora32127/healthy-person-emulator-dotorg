@@ -7,25 +7,6 @@ datasource db {
   url      = env("SUPABASE_CONNECTION_STRING")
 }
 
-model UserPostContent {
-  postId             Int       @map("post_id")
-  postRevisionNumber Int       @map("post_revision_number")
-  postAuthorHash     Decimal  @map("post_author_hash")
-  postDateJst        DateTime @map("post_date_jst")
-  postDateGmt        DateTime @map("post_date_gmt")
-  postContent        String   @map("post_content")
-  postTitle          String   @map("post_title")
-  postStatus         String   @map("post_status")
-  commentStatus      String   @map("comment_status")
-  postUrl            String   @map("post_url")
-  countLikes        Int       @map("count_likes")
-  countDislikes     Int       @map("count_dislikes")
-  uuid             String    @map("uuid") @default(uuid())
-
-  @@id([postId, postRevisionNumber])
-  @@map("user_post_contents")
-}
-
 model DimTags {
   tagId   Int    @map("tag_id")
   postId Int @map("post_id")
@@ -82,4 +63,35 @@ model nowEditingPages {
   userName String @map("user_name") @unique
   lastHeartBeatAtUTC DateTime @map("last_heart_beat_at_utc") @default(now())
   @@map("now_editing_pages")
+}
+
+model DimPosts {
+  postId Int @id @unique @map("post_id") @default(autoincrement())
+  postAuthorIPHash Decimal @map("post_author_hash")
+  postDateJst DateTime @map("post_date_jst")
+  postDateGmt DateTime @map("post_date_gmt")
+  postContent String @map("post_content")
+  postTitle String @map("post_title")
+  commentStatus String @map("comment_status")
+  postUrl String @map("post_url")
+  countLikes Int @map("count_likes")
+  countDislikes Int @map("count_dislikes")
+  uuid String @map("uuid") @default(uuid())
+
+  @@map("dim_posts")
+}
+
+model FctPostEditHistory {
+  postId Int @map("post_id")
+  postRevisionNumber Int @map("post_revision_number")
+  postEditDateJst DateTime @map("post_edit_date_jst")
+  postEditDateGmt DateTime @map("post_edit_date_gmt")
+  editorUserName String @map("editor_user_name")
+  postTitleBeforeEdit String @map("post_title_before_edit")
+  postTitleAfterEdit String @map("post_title_after_edit")
+  postContentBeforeEdit String @map("post_content_before_edit")
+  postContentAfterEdit String @map("post_content_after_edit")
+
+  @@id([postId, postRevisionNumber])
+  @@map("fct_post_edit_history")
 }
