@@ -15,6 +15,7 @@ import { Form, NavLink, useLoaderData } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { createEmbedding } from '~/modules/embedding.server';
 
 
 interface Tag {
@@ -426,7 +427,13 @@ export async function action({ request }:ActionFunctionArgs ) {
                 },
             });
         }
+        
         return newPost
+    });
+
+    await createEmbedding({
+        postId: Number(newPost.postId),
+        postContent: newPost.postContent
     });
 
     return redirect(`/archives/${newPost.postId}`);

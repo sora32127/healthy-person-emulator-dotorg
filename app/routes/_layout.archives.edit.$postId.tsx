@@ -10,6 +10,7 @@ import { useState } from "react";
 import { marked } from 'marked';
 import { requireUserId } from "~/modules/session.server";
 import * as diff from 'diff';
+import { createEmbedding } from "~/modules/embedding.server";
 
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
@@ -442,6 +443,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
   {
     timeout : 20000,
   });
+
+  await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent });
 
   return redirect(`/archives/${updatedPost.postId}`);
 }

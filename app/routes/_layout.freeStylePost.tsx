@@ -9,6 +9,7 @@ import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { prisma } from "~/modules/db.server";
 import { marked } from 'marked';
 import { ActionFunctionArgs } from "@remix-run/node";
+import { createEmbedding } from "~/modules/embedding.server";
 
 interface Tag {
     tagName: string;
@@ -259,6 +260,8 @@ export async function action({ request }: ActionFunctionArgs) {
         }
         return newPost;
     });
+
+    await createEmbedding({ postId: Number(newPost.postId), postContent: newPost.postContent });
 
     return redirect(`/archives/${newPost.postId}`);
 }
