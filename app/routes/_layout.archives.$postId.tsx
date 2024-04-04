@@ -11,6 +11,8 @@ import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import thumb_up from "~/src/assets/thumb_up.svg";
 import thumb_down from "~/src/assets/thumb_down.svg";
 import { commitSession, getSession } from "~/modules/session.server";
+import { supabase } from "~/modules/supabase.server";
+import { H2 } from "~/components/Headings";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -47,6 +49,18 @@ export async function loader({ request }:LoaderFunctionArgs){
           commentId: { in: comments.map((comment) => comment.commentId) },
         },
     });
+    const { data, error } = await supabase.rpc("search_similar_content", {
+      query_post_id: Number(postId),
+      match_threshold: 0,
+      match_count: 10,
+    });
+
+    let similarPosts = [];
+    if (error) {
+      console.error("Failed to fetch similar posts", error);
+    }else{
+      similarPosts = data.slice(1,);
+    }
 
     const session = await getSession(request.headers.get("Cookie"));
     const likedPages = session.get("likedPages") || [];
@@ -54,11 +68,11 @@ export async function loader({ request }:LoaderFunctionArgs){
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
 
-    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments });
+    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts });
 }
 
 export default function Component() {
-  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments } = useLoaderData<typeof loader>();
+  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts } = useLoaderData<typeof loader>();
 
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
@@ -242,6 +256,21 @@ export default function Component() {
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
         </div>
+        <H2>関連記事</H2>
+        <div>
+          <ul className="list-disc list-outside mb-4 ml-4">
+            {similarPosts.map((post: any) => (
+              <li key={post.post_id} className="my-2">
+                <NavLink
+                  to={`/archives/${post.post_id}`}
+                  className="text-blue-700 underline underline-offset-4"
+                >
+                  {post.post_title}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div>
           <NavLink
             to={`/archives/edit/${postContent?.postId}`}
@@ -289,6 +318,8 @@ export default function Component() {
       </div>
   );
 }
+
+
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();

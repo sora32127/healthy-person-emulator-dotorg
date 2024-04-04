@@ -61,7 +61,9 @@
     "postcss": "^8.4.38",
     "prisma": "^5.11.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.1.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.3",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1"
   },

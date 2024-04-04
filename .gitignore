@@ -11,3 +11,4 @@ node_modules
 .vscode
 localhost-key.pem
 localhost.pem
+/app/embeddingBatch.ts
