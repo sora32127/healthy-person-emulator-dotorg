@@ -13,34 +13,33 @@ export async function loader(){
         Math.floor(Math.random() * postCount) - 10,
         0
         );
-    const randomPosts = await prisma.dimPosts.findMany({
-        select : {
+    
+    const randomPostsRaw = await prisma.dimPosts.findMany({
+        select: {
             postId: true,
             postTitle: true,
             postDateJst: true,
             countLikes: true,
             countDislikes: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
         },
         orderBy: { uuid : "asc"},
         skip: randomPostOffset,
         take: 10,
     })
 
-    const allTags = await prisma.relPostTags.findMany({
-        select: {
-            postId: true,
-            dimTag: { select: { tagName: true } }
-        },
-        where : { postId : { in : randomPosts.map((post) => post.postId)}}
-    })
-
-    const randomPostsWithTags = randomPosts.map((post) => {
-        const tagNames = allTags
-            .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.dimTag.tagName);
+    const randomPosts = randomPostsRaw.map((post) => {
+        const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
         return { ...post, tagNames };
-    }
-    );
+    });
 
     const commentCount = await prisma.dimComments.count();
     const randomCommentOffset = Math.max(
@@ -62,7 +61,7 @@ export async function loader(){
         take: 10,
     });
 
-    return { randomPosts: randomPostsWithTags, randomComments }
+    return { randomPosts, randomComments }
 }
 
 export default function Random() {
