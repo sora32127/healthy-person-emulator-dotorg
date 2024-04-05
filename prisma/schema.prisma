@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
@@ -8,98 +8,128 @@ datasource db {
 }
 
 model DimTags {
-  tagId   Int    @map("tag_id") @id @unique @default(autoincrement())
-  tagName String @map("tag_name")
-  relPostTags RelPostTags[] 
+  tagId       Int           @id(map: "dim_tags_2_pkey") @unique(map: "dim_tags_2_tag_id_key") @default(autoincrement()) @map("tag_id")
+  tagName     String        @map("tag_name")
+  relPostTags RelPostTags[]
+
   @@map("dim_tags")
 }
 
 model RelPostTags {
-  postId Int @map("post_id")
-  tagId Int @map("tag_id")
-  dimTag DimTags @relation(fields: [tagId], references: [tagId])
-  @@id([postId, tagId])
+  postId    Int      @map("post_id")
+  tagId     Int      @map("tag_id")
+  dim_posts DimPosts @relation(fields: [postId], references: [postId], onDelete: Cascade, map: "public_rel_post_tags_post_id_fkey")
+  dimTag    DimTags  @relation(fields: [tagId], references: [tagId], onDelete: Cascade, map: "public_rel_post_tags_tag_id_fkey")
+
+  @@id([postId, tagId], map: "idx_28958_primary")
+  @@index([tagId], map: "idx_28958_term_taxonomy_id")
+  @@index([postId], map: "idx_dim_tags_post_id")
   @@map("rel_post_tags")
 }
 
 model DimComments {
-  commentId Int @id @unique @default(autoincrement()) @map("comment_id")
-  postId    Int @map("post_id")
-  commentAuthor String @map("comment_author")
-  commentAuthorIpHash String @map("comment_author_ip_hash")
-  commentDateJst DateTime @map("comment_date_jst")
-  commentDateGmt DateTime @map("comment_date_gmt")
-  commentContent String @map("comment_content")
-  commentParent Int @map("comment_parent")
-  uuid String @map("uuid") @default(uuid())
-  dimPosts DimPosts @relation(fields: [postId], references: [postId])
+  commentId                Int                     @id @unique @default(autoincrement()) @map("comment_id")
+  postId                   Int                     @map("post_id")
+  commentAuthor            String                  @default("Anonymous") @map("comment_author")
+  commentAuthorIpHash      String                  @default("") @map("comment_author_ip_hash") @db.VarChar(100)
+  commentDateJst           DateTime                @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("comment_date_jst") @db.Timestamptz(6)
+  commentDateGmt           DateTime                @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("comment_date_gmt") @db.Timestamptz(6)
+  commentContent           String                  @map("comment_content")
+  commentParent            Int                     @map("comment_parent")
+  uuid                     String                  @default(dbgenerated("gen_random_uuid()")) @map("uuid") @db.Uuid
+  dimPosts                 DimPosts                @relation(fields: [postId], references: [postId], onDelete: Cascade, map: "public_dim_comments_post_id_fkey")
+  fct_comment_vote_history FctCommentVoteHisotry[]
 
+  @@index([commentDateGmt], map: "idx_28782_comment_date_gmt")
+  @@index([commentParent], map: "idx_28782_comment_parent")
+  @@index([postId], map: "idx_28782_comment_post_id")
   @@map("dim_comments")
 }
 
 model FctPostVoteHisotry {
-  voteDateGmt DateTime @map("vote_date_gmt")
-  voteUserIpHash String @map("vote_user_ip_hash")
-  postId Int @map("post_id")
-  voteTypeInt Int @map("vote_type_int")
-  
-  @@id([voteDateGmt, voteUserIpHash, postId])
+  voteDateGmt    DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("vote_date_gmt") @db.Timestamptz(6)
+  voteUserIpHash String   @map("vote_user_ip_hash")
+  postId         Int      @map("post_id")
+  voteTypeInt    Int      @map("vote_type_int")
+  vote_date_jst  DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @db.Timestamptz(6)
+  postVoteId     Int      @id @unique @default(autoincrement()) @map("post_vote_id")
+  dim_posts      DimPosts @relation(fields: [postId], references: [postId], onDelete: NoAction, onUpdate: NoAction, map: "public_fct_post_vote_history_post_id_fkey")
+
+  @@index([voteDateGmt, voteTypeInt], map: "idx_fct_post_vote_history_vote_date_gmt_vote_type_int")
   @@map("fct_post_vote_history")
 }
 
 model FctCommentVoteHisotry {
-  commentVoteId Int @id @unique @map("comment_vote_id") @default(autoincrement())
-  commentId Int @map("comment_id")
-  voteType Int @map("vote_type")
-  postId Int @map("post_id")
-  commentVoteDateJst DateTime @map("comment_vote_date_jst")
-  voteUserIpHash String @map("vote_user_ip_hash")
+  commentVoteId         Int         @id @unique @default(autoincrement()) @map("comment_vote_id")
+  voteUserIpHash        String      @map("vote_user_ip_hash")
+  commentId             Int         @map("comment_id")
+  voteType              Int         @map("vote_type")
+  postId                Decimal     @default(0) @map("post_id") @db.Decimal
+  date                  BigInt      @default(0)
+  commentVoteDateJst    DateTime    @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("comment_vote_date_jst") @db.Timestamptz(6)
+  comment_vote_date_utc DateTime    @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  dim_comments          DimComments @relation(fields: [commentId], references: [commentId], onDelete: Cascade, map: "public_fct_comment_vote_history_comment_id_fkey")
 
+  @@index([commentId], map: "idx_29085_comment_id")
+  @@index([postId], map: "idx_29085_post_id")
+  @@index([voteUserIpHash], map: "idx_29085_user_id")
+  @@index([voteType], map: "idx_29085_vote_type")
   @@map("fct_comment_vote_history")
 }
 
 model userProfiles {
-  userId String @id @unique @map("user_id")
-  userName String @unique @map("user_name")
-  userCreatedAt DateTime @map("user_created_at") @default(now())
-  userEmail String @map("user_email")
+  userId            String            @id @map("user_id") @db.Uuid
+  userName          String            @unique @map("user_name")
+  userCreatedAt     DateTime          @default(now()) @map("user_created_at") @db.Timestamptz(6)
+  userEmail         String            @unique @map("user_email")
+  now_editing_pages nowEditingPages[]
 
   @@map("user_profiles")
 }
 
 model nowEditingPages {
-  postId Int @id @map("post_id") @unique
-  userName String @map("user_name") @unique
-  lastHeartBeatAtUTC DateTime @map("last_heart_beat_at_utc") @default(now())
+  postId             Int          @id @unique @default(autoincrement()) @map("post_id")
+  userName           String       @map("user_name")
+  lastHeartBeatAtUTC DateTime     @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("last_heart_beat_at_utc") @db.Timestamptz(6)
+  dim_posts          DimPosts     @relation(fields: [postId], references: [postId], onDelete: NoAction, onUpdate: NoAction, map: "public_now_editing_pages_post_id_fkey")
+  user_profiles      userProfiles @relation(fields: [userName], references: [userName], onDelete: Cascade, map: "public_now_editing_pages_user_name_fkey")
+
   @@map("now_editing_pages")
 }
 
 model DimPosts {
-  postId Int @id @unique @map("post_id") @default(autoincrement())
-  postAuthorIPHash String @map("post_author_ip_hash")
-  postDateJst DateTime @map("post_date_jst")
-  postDateGmt DateTime @map("post_date_gmt")
-  postContent String @map("post_content")
-  postTitle String @map("post_title")
-  commentStatus String @map("comment_status")
-  countLikes Int @map("count_likes")
-  countDislikes Int @map("count_dislikes")
-  uuid String @map("uuid") @default(uuid())
-  dimComments DimComments[]
+  postId                Int                    @id @unique @default(autoincrement()) @map("post_id")
+  postAuthorIPHash      String                 @map("post_author_ip_hash")
+  postDateJst           DateTime               @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_date_jst") @db.Timestamp(6)
+  postDateGmt           DateTime               @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_date_gmt") @db.Timestamp(6)
+  postContent           String                 @map("post_content")
+  postTitle             String                 @map("post_title") @db.VarChar(255)
+  commentStatus         String                 @map("comment_status") @db.VarChar(50)
+  countLikes            Int                    @default(0) @map("count_likes")
+  countDislikes         Int                    @default(0) @map("count_dislikes")
+  uuid                  String                 @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
+  content_embedding     Unsupported("vector")?
+  dimComments           DimComments[]
+  fct_post_edit_history FctPostEditHistory[]
+  fct_post_vote_history FctPostVoteHisotry[]
+  now_editing_pages     nowEditingPages?
+  rel_post_tags         RelPostTags[]
 
+  @@index([content_embedding])
   @@map("dim_posts")
 }
 
 model FctPostEditHistory {
-  postId Int @map("post_id")
-  postRevisionNumber Int @map("post_revision_number")
-  postEditDateJst DateTime @map("post_edit_date_jst")
-  postEditDateGmt DateTime @map("post_edit_date_gmt")
-  editorUserName String @map("editor_user_name")
-  postTitleBeforeEdit String @map("post_title_before_edit")
-  postTitleAfterEdit String @map("post_title_after_edit")
-  postContentBeforeEdit String @map("post_content_before_edit")
-  postContentAfterEdit String @map("post_content_after_edit")
+  postId                Int      @map("post_id")
+  postRevisionNumber    Int      @map("post_revision_number")
+  postEditDateJst       DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_edit_date_jst") @db.Timestamptz(6)
+  postEditDateGmt       DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_edit_date_gmt") @db.Timestamptz(6)
+  editorUserName        String   @map("editor_user_name") @db.VarChar(255)
+  postTitleBeforeEdit   String   @map("post_title_before_edit") @db.VarChar(255)
+  postTitleAfterEdit    String   @map("post_title_after_edit") @db.VarChar(255)
+  postContentBeforeEdit String   @map("post_content_before_edit")
+  postContentAfterEdit  String   @map("post_content_after_edit")
+  dim_posts             DimPosts @relation(fields: [postId], references: [postId], onDelete: Cascade, map: "public_fct_post_edit_history_post_id_fkey")
 
   @@id([postId, postRevisionNumber])
   @@map("fct_post_edit_history")

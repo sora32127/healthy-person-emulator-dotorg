@@ -1,4 +1,3 @@
-- 外部キー参照の導入
 - PlaywrightでE2Eテストを書く
 - Cloudflareの導入
 - 移行プランの策定
