@@ -3,6 +3,7 @@ import { prisma } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
+import CommentShowCard from "~/components/CommentShowCard";
 
 
 export const meta: MetaFunction = () => {
@@ -83,7 +84,22 @@ export async function loader() {
         }
     })
 
-    
+    const mostRecentComments = await prisma.dimComments.findMany({
+        orderBy: { commentDateJst: "desc" },
+        take: 10,
+        select: {
+            commentId: true,
+            postId: true,
+            commentContent: true,
+            commentDateJst: true,
+            commentAuthor: true,
+            dimPosts: {
+                select: {
+                    postTitle: true,
+                },
+            },
+        },
+    })
 
     let allPostIds = mostRecentPosts.map((post) => post.postId);
     allPostIds = allPostIds.concat(recentVotedPosts.map((post) => post.postId));
@@ -145,12 +161,13 @@ export async function loader() {
         recentVotedPosts: recentVotedPostsWithTags,
         communityPosts: communityPostsWithTags,
         famedPosts: famedPostsWithTags,
+        mostRecentComments,
     });
 }
 
 
 export default function Feed() {
-    const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts } = useLoaderData<typeof loader>();
+    const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
     return (
         <>
         <H2>最新の投稿</H2>
@@ -189,6 +206,17 @@ export default function Feed() {
         >
         最近いいねされた投稿を見る
         </NavLink>
+        <H2>最新のコメント</H2>
+        {mostRecentComments.map((comment) => (
+            <CommentShowCard
+                key={comment.commentId}
+                commentContent={comment.commentContent}
+                commentDateJst={comment.commentDateJst}
+                commentAuthor={comment.commentAuthor}
+                postId={comment.postId}
+                dimPosts={comment.dimPosts}
+            />
+        ))}
         <H2>コミュニティ選</H2>
         {communityPosts.map((post) => (
             <PostCard

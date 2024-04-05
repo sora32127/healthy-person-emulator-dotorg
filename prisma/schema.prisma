@@ -31,6 +31,7 @@ model DimComments {
   commentDateGmt DateTime @map("comment_date_gmt")
   commentContent String @map("comment_content")
   commentParent Int @map("comment_parent")
+  dimPosts DimPosts @relation(fields: [postId], references: [postId])
 
   @@map("dim_comments")
 }
@@ -83,6 +84,7 @@ model DimPosts {
   countLikes Int @map("count_likes")
   countDislikes Int @map("count_dislikes")
   uuid String @map("uuid") @default(uuid())
+  dimComments DimComments[]
 
   @@map("dim_posts")
 }
