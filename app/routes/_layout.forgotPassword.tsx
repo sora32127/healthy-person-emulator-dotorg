@@ -12,7 +12,10 @@ export async function action({ request }: ActionFunctionArgs) {
         return json({ status: 400, message: 'メールアドレスは必須です'});
     }
 
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "https://localhost:5173/api/auth/callback"});
+    const url = new URL(request.url);
+    const origin = url.origin;
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/api/auth/callback`});
 
 
     if (error) {
