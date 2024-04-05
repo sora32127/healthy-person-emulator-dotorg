@@ -26,16 +26,23 @@ export async function loader({ request }:LoaderFunctionArgs){
         where: {
           postId: Number(postId),
         },
-      });
-    
-    const tagNames = await prisma.relPostTags.findMany({
-        where: {
-          postId: Number(postId),
-        },
         select: {
-          dimTag : { select: { tagName: true }
+          postId: true,
+          postTitle: true,
+          postContent: true,
+          postDateJst: true,
+          countLikes: true,
+          countDislikes: true,
+          rel_post_tags: {
+            select: {
+              dimTag: {
+                select: {
+                  tagName: true,
+                },
+              },
+            },
+          },
         },
-      }
     });
 
     const comments = await prisma.dimComments.findMany({
@@ -87,15 +94,12 @@ export async function loader({ request }:LoaderFunctionArgs){
         postDateJst: "asc",
       },
     });
-    
 
-
-
-    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost });
+    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost });
 }
 
 export default function Component() {
-  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost } = useLoaderData<typeof loader>();
 
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
@@ -217,7 +221,7 @@ export default function Component() {
             </div>
         ));
   };
-  const sortedTagNames = tagNames.sort((a, b) => {
+  const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
     if (a.dimTag.tagName > b.dimTag.tagName) {
       return 1;
     }
@@ -246,7 +250,7 @@ export default function Component() {
         <div className="flex justify-start items-center mb-2">
           <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
           <div>
-              {sortedTagNames.map((tag) => (
+              {sortedTagNames && sortedTagNames.map((tag) => (
                   <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                       <TagCard tagName={tag.dimTag.tagName} />
                   </span>
