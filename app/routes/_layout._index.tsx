@@ -5,6 +5,15 @@ import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
 
+interface PostCardProps {
+    postId: number;
+    postTitle: string;
+    postDateJst: Date;
+    tagNames: string[];
+    countLikes: number;
+    countDislikes: number;
+}
+
 
 export const meta: MetaFunction = () => {
     return [
@@ -14,7 +23,7 @@ export const meta: MetaFunction = () => {
   };
 
 export async function loader() {
-    const mostRecentPosts = await prisma.dimPosts.findMany({
+    const mostRecentPostsRaw = await prisma.dimPosts.findMany({
         orderBy: { postDateJst: "desc" },
         take: 10,
         select: {
@@ -23,6 +32,15 @@ export async function loader() {
             postDateJst: true,
             countLikes: true,
             countDislikes: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
@@ -40,7 +58,7 @@ export async function loader() {
         take: 10,
     });
 
-    const recentVotedPosts = await prisma.dimPosts.findMany({
+    const recentVotedPostsRaw = await prisma.dimPosts.findMany({
         where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
         select: {
             postId: true,
@@ -48,41 +66,83 @@ export async function loader() {
             postDateJst: true,
             countLikes: true,
             countDislikes: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
-    const communityPostIds = await prisma.relPostTags.findMany({
+    const communityPostsRaw = await prisma.relPostTags.findMany({
         where: { tagId: { equals: 986 } }, // コミュニティ選のtag_id
-        select : { postId: true }
-    })
-
-    const communityPosts = await prisma.dimPosts.findMany({
-        where : { postId : { in : communityPostIds.map((post) => post.postId)}},
         select : {
-            postId: true,
-            postTitle: true,
-            postDateJst: true,
-            countLikes: true,
-            countDislikes: true,
-        }
-    })
+            dim_posts: {
+                select : {
+                    postId: true,
+                    postTitle: true,
+                    postDateJst: true,
+                    countLikes: true,
+                    countDislikes: true,
+                    rel_post_tags: {
+                    select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
+        },
+    }}});
 
-    const famedPostIds = await prisma.relPostTags.findMany({
-        where : { tagId: { equals: 575 } }, // 殿堂入りのtag_id
-        select: { postId: true }
-    })
-        
-
-    const famedPosts = await prisma.dimPosts.findMany({
-        where : { postId : { in : famedPostIds.map((post) => post.postId)}},
+    const famedPostsRaw = await prisma.relPostTags.findMany({
+        where: { tagId: { equals: 575 } }, // コミュニティ選のtag_id
         select : {
-            postId: true,
-            postTitle: true,
-            postDateJst: true,
-            countLikes: true,
-            countDislikes: true,
-        }
-    })
+            dim_posts: {
+                select : {
+                    postId: true,
+                    postTitle: true,
+                    postDateJst: true,
+                    countLikes: true,
+                    countDislikes: true,
+                    rel_post_tags: {
+                    select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
+        },
+    }}});
+
+    const mostRecentPosts: PostCardProps[] = mostRecentPostsRaw.map((post) => {
+        const tagNames = post.rel_post_tags.map((tag) => tag.dimTag.tagName);
+        return { ...post, tagNames };
+    });
+
+    const recentVotedPosts: PostCardProps[] = recentVotedPostsRaw.map((post) => {
+        const tagNames = post.rel_post_tags.map((tag) => tag.dimTag.tagName);
+        return { ...post, tagNames };
+    });
+
+    const communityPosts: PostCardProps[] = communityPostsRaw.map((post) => {
+        const tagNames = post.dim_posts.rel_post_tags.map((tag) => tag.dimTag.tagName);
+        return { ...post.dim_posts, tagNames };
+    });
+
+    const famedPosts: PostCardProps[] = famedPostsRaw.map((post) => {
+        const tagNames = post.dim_posts.rel_post_tags.map((tag) => tag.dimTag.tagName);
+        return { ...post.dim_posts, tagNames };
+    }
+    );
+
 
     const mostRecentComments = await prisma.dimComments.findMany({
         orderBy: { commentDateJst: "desc" },
@@ -101,66 +161,11 @@ export async function loader() {
         },
     })
 
-    let allPostIds = mostRecentPosts.map((post) => post.postId);
-    allPostIds = allPostIds.concat(recentVotedPosts.map((post) => post.postId));
-    allPostIds = allPostIds.concat(communityPosts.map((post) => post.postId));
-    allPostIds = allPostIds.concat(famedPosts.map((post) => post.postId));
-    
-
-    const allTagsJoinedWithPostIds = await prisma.relPostTags.findMany({
-        select: {
-            postId: true,
-            dimTag: {
-                select: {
-                    tagName: true,
-                },
-            },
-        },
-        where: { postId: { in: allPostIds } },
-    });
-    
-    const allTagsNames = allTagsJoinedWithPostIds.map((tag) => ({
-        postId: tag.postId,
-        tagName: tag.dimTag.tagName,
-    }));
-
-    const mostRecentPostsWithTags = mostRecentPosts.map((post) => {
-        const tagNames = allTagsNames
-            .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.tagName);
-        return { ...post, tagNames };
-    }
-    );
-
-    const recentVotedPostsWithTags = recentVotedPosts.map((post) => {
-        const tagNames = allTagsNames
-            .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.tagName);
-        return { ...post, tagNames };
-    }
-    );
-
-    const communityPostsWithTags = communityPosts.map((post) => {
-        const tagNames = allTagsNames
-            .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.tagName);
-        return { ...post, tagNames };
-    }
-    );
-
-    const famedPostsWithTags = famedPosts.map((post) => {
-        const tagNames = allTagsNames
-            .filter((tag) => tag.postId === post.postId)
-            .map((tag) => tag.tagName);
-        return { ...post, tagNames };
-    }
-    );
-
     return json({
-        mostRecentPosts: mostRecentPostsWithTags,
-        recentVotedPosts: recentVotedPostsWithTags,
-        communityPosts: communityPostsWithTags,
-        famedPosts: famedPostsWithTags,
+        mostRecentPosts,
+        recentVotedPosts,
+        communityPosts,
+        famedPosts,
         mostRecentComments,
     });
 }
