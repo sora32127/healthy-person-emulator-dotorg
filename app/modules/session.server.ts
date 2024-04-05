@@ -19,7 +19,11 @@ export async function requireUserId(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
     const userId = session.get('userId');
     if (!userId || typeof userId !== 'string') {
-        const headers = await setVisitorCookieData({ redirectUrl: request.url });
+        const url = new URL(request.url)
+        const pathName = url.pathname
+        const headers = await setVisitorCookieData({
+            redirectUrl: pathName
+        });
         throw redirect('/login', { headers });
     }
     return userId;
