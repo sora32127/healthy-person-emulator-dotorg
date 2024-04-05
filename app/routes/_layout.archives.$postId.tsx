@@ -13,6 +13,8 @@ import thumb_down from "~/src/assets/thumb_down.svg";
 import { commitSession, getSession } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H2 } from "~/components/Headings";
+import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
+import arrowBackIcon from "~/src/assets/arrow_back.svg";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -68,11 +70,32 @@ export async function loader({ request }:LoaderFunctionArgs){
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
 
-    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts });
+    const prevPost = await prisma.dimPosts.findFirst({
+      where: {
+        postDateJst: { lt: postContent?.postDateJst },
+      },
+      orderBy: {
+        postDateJst: "desc",
+      },
+    });
+    
+    const nextPost = await prisma.dimPosts.findFirst({
+      where: {
+        postDateJst: { gt: postContent?.postDateJst },
+      },
+      orderBy: {
+        postDateJst: "asc",
+      },
+    });
+    
+
+
+
+    return json({ postContent, tagNames, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost });
 }
 
 export default function Component() {
-  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts } = useLoaderData<typeof loader>();
+  const { postContent, tagNames, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost } = useLoaderData<typeof loader>();
 
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
@@ -270,6 +293,30 @@ export default function Component() {
               </li>
             ))}
           </ul>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          {nextPost && (
+            <div className="flex items-center mb-4 md:mb-0">
+              <img src={arrowForwardIcon} alt="Next post" className="h-5 w-5 mr-2" />
+              <NavLink
+                to={`/archives/${nextPost.postId}`}
+                className="text-blue-700 underline underline-offset-4"
+              >
+                {nextPost.postTitle}
+              </NavLink>
+            </div>
+          )}
+          {prevPost && (
+            <div className="flex items-center">
+              <NavLink
+                to={`/archives/${prevPost.postId}`}
+                className="text-blue-700 underline underline-offset-4 mr-2"
+              >
+                {prevPost.postTitle}
+              </NavLink>
+              <img src={arrowBackIcon} alt="Previous post" className="h-5 w-5" />
+            </div>
+          )}
         </div>
         <div>
           <NavLink
