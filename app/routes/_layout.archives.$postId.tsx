@@ -286,7 +286,7 @@ export default function Component() {
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
-            {similarPosts.map((post: any) => (
+            {similarPosts.map((post: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <li key={post.post_id} className="my-2">
                 <NavLink
                   to={`/archives/${post.post_id}`}
@@ -322,7 +322,7 @@ export default function Component() {
             </div>
           )}
         </div>
-        <div>
+        <div className="my-6">
           <NavLink
             to={`/archives/edit/${postContent?.postId}`}
             className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
