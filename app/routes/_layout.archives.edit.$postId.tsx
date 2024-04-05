@@ -88,21 +88,29 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     where: {
       postId: Number(postId),
     },
+    select: {
+      postId: true,
+      postTitle: true,
+      postContent: true,
+      rel_post_tags: {
+        select: {
+          dimTag: {
+            select: {
+              tagName: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!postData) {
     throw new Response("Post not found", { status: 404 });
   }
 
-  let tagNames = await prisma.relPostTags.findMany({
-    select: {
-      dimTag: { select: { tagName: true } }
-    },
-    where: { postId: Number(postId) },
-  });
+  const tagNames = postData.rel_post_tags.map((rel) => rel.dimTag.tagName);
   
-  tagNames = tagNames.map(tag => tag.dimTag.tagName);
-
+  
   const tags = await prisma.dimTags.findMany({
     select: {
       tagName: true,
@@ -116,6 +124,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       },
     },
   });
+
   const allTagsForSearch = tags.map((tag) => {
     return { tagName: tag.tagName, count: tag._count.relPostTags };
   });
