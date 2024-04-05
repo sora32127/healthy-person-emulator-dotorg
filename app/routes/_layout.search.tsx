@@ -45,45 +45,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (searchType === "tag") {
     const tags = url.searchParams.get("tags")?.split("+") || [];
-    const allTagsForSearch = await prisma.relPostTags.findMany({
-      select: {
-          postId: true,
-          dimTag: { select: { tagName: true } }
-      },
-      where : { dimTag : { tagName : { in : tags }}},
-  })
-
-    const postIds = allTagsForSearch.map((tag) => tag.postId);
-    const totalCount = await prisma.dimPosts.count({
-      where: { postId: { in: postIds } },
+    const totalCount = await prisma.relPostTags.count({
+      where: { dimTag: { tagName: { in: tags } } },
     });
-    const searchPosts = await prisma.dimPosts.findMany({
-      where: { postId: { in: postIds } },
+
+    const searchResultsRaw = await prisma.dimPosts.findMany({
       select: {
         postId: true,
         postTitle: true,
         postDateJst: true,
         countLikes: true,
         countDislikes: true,
-        postContent: true,
+        rel_post_tags: {
+          select: {
+            dimTag: {
+              select: {
+                tagName: true,
+              },
+            },
+          },
+        },
       },
+      where: { rel_post_tags: { some: { dimTag: { tagName: { in: tags } } } } },
       orderBy: { postDateJst: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
 
-    const allTags = await prisma.relPostTags.findMany({
-      select: {
-          postId: true,
-          dimTag: { select: { tagName: true } }
-      },
-      where : { postId : { in : searchPosts.map((post) => post.postId)}}
-    })
-
-    const searchResults = searchPosts.map((post) => {
-      const tagNames = allTags
-        .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.dimTag.tagName);
+    const searchResults = searchResultsRaw.map((post) => {
+      const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
       return {
         postId: post.postId,
         postTitle: post.postTitle,
@@ -94,14 +84,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return json({ data: searchResults, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags: tags.join("+") });
+    return json({ data: searchResults, allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags: tags.join("+") });
+
   }
   else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
     const totalCount = await prisma.dimPosts.count({
       where: { postTitle: { contains: title } },
     });
-    const searchResults = await prisma.dimPosts.findMany({
+    const searchResultsRaw = await prisma.dimPosts.findMany({
       where: { postTitle: { contains: title } },
       select: {
         postId: true,
@@ -110,24 +101,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         countLikes: true,
         countDislikes: true,
         postContent: true,
+        rel_post_tags: {
+          select: {
+            dimTag: {
+              select: {
+                tagName: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { postDateJst: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
 
-    const allTags = await prisma.relPostTags.findMany({
-      select: {
-          postId: true,
-          dimTag: { select: { tagName: true } }
-      },
-      where : { postId : { in : searchResults.map((post) => post.postId)}}
-    })
-
-    const searchResultsWithTags = searchResults.map((post) => {
-      const tagNames = allTags
-        .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.dimTag.tagName);
+    const searchResults = searchResultsRaw.map((post) => {
+      const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
       return {
         postId: post.postId,
         postTitle: post.postTitle,
@@ -138,11 +128,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return json({ data: searchResultsWithTags, allTagsForSearch: allTagsOnlyForSearch, totalCount, pageNumber, searchType, title });
+    return json({ data: searchResults, allTagsOnlyForSearch, totalCount, pageNumber, searchType, title });
   }
   else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
     const { data } = await supabase.rpc("search_post_contents", { keyword: query }) as { data: DimPostContentSearchResult[]};
+    if (!data) {
+      return json({ data: [], allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" });
+    }
     const count = data.length;
     const styledData = data.slice((pageNumber - 1) * 10, pageNumber * 10).map((post) => {
       return {
@@ -162,6 +155,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       where : { postId : { in : styledData.map((post) => post.postId)}}
     })
+    
     const searchResultsWithTags = styledData.map((post) => {
       const tagNames = allTags
         .filter((tag) => tag.postId === post.postId)
@@ -177,10 +171,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return { data: searchResultsWithTags, allTagsForSearch: allTagsOnlyForSearch, totalCount: count, pageNumber, searchType, query };
+    return { data: searchResultsWithTags, allTagsOnlyForSearch, totalCount: count, pageNumber, searchType, query };
   }
   else {
-    return json({ data: [], allTagsForSearch: allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" });
+    return json({ data: [], allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" });
   }
 };
 
@@ -219,7 +213,7 @@ type SearchType = "tag" | "fullText" | "title";
 
 
 export default function Component() {
-  const { data, allTagsForSearch, totalCount, pageNumber, searchType, tags, title, query } = useLoaderData<typeof loader>();
+  const { data, allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags, title, query } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInputValue, setTagInputValue] = useState<string>("");
   const [tagSearchSuggestions, setTagSearchSuggestions] = useState<Tag[]>([]);
@@ -232,7 +226,7 @@ export default function Component() {
     setTagInputValue(value);
 
     if (value.length > 0){
-      const filteredTagSearchSuggestions = allTagsForSearch.filter((tag: Tag) => tag.tagName.includes(value));
+      const filteredTagSearchSuggestions = allTagsOnlyForSearch.filter((tag: Tag) => tag.tagName.includes(value));
       setTagSearchSuggestions(filteredTagSearchSuggestions);
     }else{
       setTagSearchSuggestions([]);
