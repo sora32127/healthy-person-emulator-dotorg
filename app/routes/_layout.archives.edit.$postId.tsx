@@ -241,11 +241,15 @@ export default function EditPost() {
             <div className="mb-4">
               <H2>タグを編集する</H2>
               <div className="my-4">
-                <p className="my-4">変更前：</p>
-                {oldTags.flatMap(
+              <div className="mt-2">
+              <p className="my-4">変更前：</p>
+              <div className="flex flex-wrap">
+                {oldTags.map(
                   (tag) =>
-                  <span className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2">{tag}</span>
+                  <span className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2">{tag}</span>
                 )}
+              </div>
+              </div>
               </div>
               <div className="flex items-center">
                 <input
@@ -270,11 +274,12 @@ export default function EditPost() {
                 </ul>
               )}
               <div className="mt-2">
-                <p className="my-4">変更後：</p>
+              <p className="my-4">変更後：</p>
+              <div className="flex flex-wrap">
                 {selectedTags.map((tag) => (
                   <span
                     key={tag}
-                    className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2"
+                    className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
                   >
                     <input type="hidden" name="tags" value={tag} />
                     {tag}
@@ -288,6 +293,7 @@ export default function EditPost() {
                   </span>
                 ))}
               </div>
+            </div>
             </div>
             <div className="mb-4">
               <H2>本文を編集する</H2>
