@@ -1,4 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
+import CommentShowCard from "~/components/CommentShowCard";
 import { H1 } from "~/components/Headings";
 import PostCard from "~/components/PostCard";
 import { prisma } from "~/modules/db.server";
@@ -41,11 +42,31 @@ export async function loader(){
     }
     );
 
-    return { randomPosts: randomPostsWithTags }
+    const commentCount = await prisma.dimComments.count();
+    const randomCommentOffset = Math.max(
+        Math.floor(Math.random() * commentCount) - 10,
+        0
+    );
+
+    const randomComments = await prisma.dimComments.findMany({
+        select: {
+            commentId: true,
+            commentContent: true,
+            commentDateJst: true,
+            commentAuthor: true,
+            postId: true,
+            dimPosts: { select: { postTitle: true } },
+        },
+        orderBy: { uuid: "asc" },
+        skip: randomCommentOffset,
+        take: 10,
+    });
+
+    return { randomPosts: randomPostsWithTags, randomComments }
 }
 
 export default function Random() {
-    const { randomPosts } = useLoaderData<typeof loader>();
+    const { randomPosts, randomComments } = useLoaderData<typeof loader>();
     return (
         <>
         <H1>ランダム記事</H1>
@@ -58,6 +79,17 @@ export default function Random() {
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
+            />
+        ))}
+        <H1>ランダムコメント</H1>
+        {randomComments.map((comment) => (
+            <CommentShowCard
+                key={comment.commentId}
+                commentContent={comment.commentContent}
+                commentDateJst={comment.commentDateJst}
+                commentAuthor={comment.commentAuthor}
+                postId={comment.postId}
+                dimPosts={comment.dimPosts}
             />
         ))}
         </>
