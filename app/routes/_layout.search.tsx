@@ -5,6 +5,7 @@ import { supabase } from "~/modules/supabase.server";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { useState } from "react";
+import { title } from "process";
 
 interface DimPostContentSearchResult {
   highlightedcontent: string;
@@ -84,7 +85,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return json({ data: searchResults, allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags: tags.join("+") });
+    return json({
+      data: searchResults,
+      allTagsOnlyForSearch,
+      totalCount,
+      pageNumber,
+      searchType,
+      tags: tags.join("+"),
+      title: null,
+      query: null,
+    });
 
   }
   else if (searchType === "title") {
@@ -128,7 +138,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return json({ data: searchResults, allTagsOnlyForSearch, totalCount, pageNumber, searchType, title });
+    return json({
+      data: searchResults,
+      allTagsOnlyForSearch,
+      totalCount,
+      pageNumber,
+      searchType,
+      tags: null,
+      title,
+      query: null,
+    });
   }
   else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
@@ -155,7 +174,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       where : { postId : { in : styledData.map((post) => post.postId)}}
     })
-    
+
     const searchResultsWithTags = styledData.map((post) => {
       const tagNames = allTags
         .filter((tag) => tag.postId === post.postId)
@@ -171,10 +190,28 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     });
 
-    return { data: searchResultsWithTags, allTagsOnlyForSearch, totalCount: count, pageNumber, searchType, query };
+    return json({
+      data: searchResultsWithTags,
+      allTagsOnlyForSearch,
+      totalCount: count,
+      pageNumber,
+      searchType,
+      tags: null,
+      title: null,
+      query
+    });
   }
   else {
-    return json({ data: [], allTagsOnlyForSearch, totalCount: 0, pageNumber: 1, searchType: null, query: "" });
+    return json({
+      data: [],
+      allTagsOnlyForSearch,
+      totalCount: 0,
+      pageNumber: 1,
+      searchType: null,
+      tags: null,
+      title: null,
+      query: null,
+    });
   }
 };
 
