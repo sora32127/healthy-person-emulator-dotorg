@@ -1,4 +1,4 @@
-import { Outlet, useNavigation } from "@remix-run/react";
+import { Outlet, useLoaderData, useNavigation } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import feedIcon from "~/src/assets/feed_icon.svg";
@@ -12,11 +12,23 @@ import loginIcon from "~/src/assets/login_icon.svg";
 import logoutIcon from "~/src/assets/logout_icon.svg";
 import signupIcon from "~/src/assets/signup_icon.svg";
 import mypageIcon from "~/src/assets/mypage_icon.svg";
+import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { getSession } from "~/modules/session.server";
+
+export async function loader({ request }: LoaderFunctionArgs){
+  const session = await getSession(request.headers.get("Cookie"));
+  const userId = session.get("userId");
+  if (userId) {
+    return json({ isLoggedIn: true });
+  } else {
+    return json({ isLoggedIn: false });
+  }
+}
 
 export default function Component() {
   const transitionStatus = useNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isLoggedIn = true;
+  const { isLoggedIn } = useLoaderData<typeof loader>();
 
   const navItems = [
     { to: "/", icon: feedIcon, text: "フィード" },
@@ -31,7 +43,7 @@ export default function Component() {
     ...(isLoggedIn
       ? [
           { to: "/mypage", text: "マイページ", icon: mypageIcon },
-          { to: "/signout", text: "サインアウト", icon: logoutIcon },
+          { to: "/logout", text: "ログアウト", icon: logoutIcon },
         ]
       : [
           { to: "/signup", text: "サインアップ", icon: signupIcon },
