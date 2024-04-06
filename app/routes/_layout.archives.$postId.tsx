@@ -34,6 +34,7 @@ export async function loader({ request }:LoaderFunctionArgs){
           postDateGmt: true,
           countLikes: true,
           countDislikes: true,
+          commentStatus: true,
           rel_post_tags: {
             select: {
               dimTag: {
@@ -190,6 +191,7 @@ export default function Component() {
             likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
             dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
+            isCommentOpen={isCommentOpen}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -205,6 +207,18 @@ export default function Component() {
       action: "/api/delete/post",
     });
   };
+
+  const isCommentOpen = postContent?.commentStatus === "open";
+
+  const handleCommentStatus = async () => {
+    const formData = new FormData();
+    formData.append("postId", postContent?.postId.toString() || "");
+
+    await submit(formData, {
+      method: "post",
+      action: `/api/update/commentstatus`,
+    });
+  }
 
   const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
     if (a.dimTag.tagName > b.dimTag.tagName) {
@@ -223,10 +237,17 @@ export default function Component() {
         <div className="my-6">
           <button
             onClick={handleDeletePost}
-            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-20 w-full"
+            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
           >
             記事を削除する
           </button>
+          <button
+            onClick={handleCommentStatus}
+            className="bg-purple-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
+          >
+            コメントステータスを変更
+          </button>
+
         </div>
         )}
         <p className="flex my-1">
@@ -332,6 +353,7 @@ export default function Component() {
           onCommentAuthorChange={setCommentAuthor}
           onCommentContentChange={setCommentContent}
           onSubmit={handleCommentSubmit}
+          isCommentOpen={isCommentOpen}
         />
       </div>
       <div>

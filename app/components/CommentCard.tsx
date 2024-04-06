@@ -19,6 +19,7 @@ interface CommentCardProps {
   dislikesCount: number;
   postId: number;
   isAdmin: boolean;
+  isCommentOpen: boolean;
 }
 
 export default function CommentCard({
@@ -34,6 +35,7 @@ export default function CommentCard({
   dislikesCount,
   postId,
   isAdmin,
+  isCommentOpen,
 }: CommentCardProps) {
 
   const formattedCommentDate = new Date(commentDateGmt).toLocaleString(
@@ -132,6 +134,7 @@ export default function CommentCard({
                 onCommentAuthorChange={setReplyAuthor}
                 onCommentContentChange={setReplyContent}
                 onSubmit={handleReplyCommentSubmit}
+                isCommentOpen={isCommentOpen}
             />
         )}
         </div>

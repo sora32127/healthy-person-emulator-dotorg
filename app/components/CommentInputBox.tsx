@@ -7,6 +7,7 @@ interface CommentInputBoxProps {
   onCommentAuthorChange: (value: string) => void;
   onCommentContentChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isCommentOpen: boolean;
 }
 
 export default function CommentInputBox({
@@ -15,6 +16,7 @@ export default function CommentInputBox({
   onCommentAuthorChange,
   onCommentContentChange,
   onSubmit,
+  isCommentOpen,
 }: CommentInputBoxProps) {
   return (
     <Form onSubmit={onSubmit}>
@@ -44,7 +46,12 @@ export default function CommentInputBox({
       </div>
       <button
         type="submit"
-        className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+        className={`px-4 py-2 mx-1 w-full ${
+          isCommentOpen
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+        } rounded`}
+        disabled={!isCommentOpen}
       >
         {"コメント"}
       </button>
