@@ -90,9 +90,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       totalCount,
       pageNumber,
       searchType,
-      tags: tags.join("+"),
+      tags: tags,
       title: null,
       query: null,
+      url,
     });
 
   }
@@ -146,6 +147,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       tags: null,
       title,
       query: null,
+      url,
     });
   }
   else if (searchType === "fullText") {
@@ -197,7 +199,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       searchType,
       tags: null,
       title: null,
-      query
+      query,
+      url,
     });
   }
   else {
@@ -210,6 +213,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       tags: null,
       title: null,
       query: null,
+      url,
     });
   }
 };
@@ -461,3 +465,61 @@ export default function Component() {
     </div>
   );
 }
+
+
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data){
+    return { title: "Loading..." };
+  }
+
+  const searchType = data.searchType || ""
+  const searchTags = data.tags || [];
+  const searchTitle = data.title || "";
+  const searchQueryText = data.query || "";
+  
+  let title
+
+  if (searchType === "tag") {
+    title = `タグ検索: ${searchTags.join(", ")}`;
+  } else if (searchType === "title") {
+    title = `タイトル検索: ${searchTitle}`;
+  } else if (searchType === "fullText") {
+    title = `全文検索: ${searchQueryText}`;
+  } else {
+    title = "検索";
+  }
+
+  const description = "検索"
+
+  const ogLocale = "ja_JP";
+  const ogSiteName = "健常者エミュレータ事例集";
+  const ogType = "article";
+  const ogTitle = title;
+  const ogDescription = description;
+  const ogUrl = data.url
+
+  const twitterCard = "summary"
+  const twitterSite = "@helthypersonemu"
+  const twitterTitle = title
+  const twitterDescription = description
+  const twitterCreator = "@helthypersonemu"
+  const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+
+  return [
+    { title },
+    { description },
+    { property: "og:title", content: ogTitle },
+    { property: "og:description", content: ogDescription },
+    { property: "og:locale", content: ogLocale },
+    { property: "og:site_name", content: ogSiteName },
+    { property: "og:type", content: ogType },
+    { property: "og:url", content: ogUrl },
+    { name: "twitter:card", content: twitterCard },
+    { name: "twitter:site", content: twitterSite },
+    { name: "twitter:title", content: twitterTitle },
+    { name: "twitter:description", content: twitterDescription },
+    { name: "twitter:creator", content: twitterCreator },
+    { name: "twitter:image", content: twitterImage },
+  ];
+};

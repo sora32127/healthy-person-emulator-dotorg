@@ -1,5 +1,5 @@
 // _layout.archives.$postId.edit.tsx
-import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"
@@ -450,4 +450,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent });
 
   return redirect(`/archives/${updatedPost.postId}`);
+}
+
+export const meta : MetaFunction = () => {
+  return [
+    { title : "編集"}
+  ]
 }

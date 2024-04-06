@@ -1,6 +1,6 @@
 import { Form, useLoaderData } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
-import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 
@@ -111,6 +111,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     posts: postData, 
     currentPage: pagingNumber,
     totalCount,
+    likeFromHour,
   });
 }
 
@@ -149,10 +150,8 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Feed() {
-  const { posts, currentPage, totalCount } = useLoaderData<typeof loader>();
+  const { posts, currentPage, totalCount, likeFromHour } = useLoaderData<typeof loader>();
   const totalPages = Math.ceil(totalCount / 10);
-  const url = new URL(window.location.href);
-  const likeFrom = url.searchParams.get("likeFrom");
 
   return (
     <div>
@@ -164,7 +163,7 @@ export default function Feed() {
             name="action"
             value="sortByNew"
             className={`px-4 py-2 mr-2 ${
-              !likeFrom
+              !likeFromHour
                 ? "bg-blue-500 text-white"
                 : "bg-white text-blue-500 border border-blue-500"
             } rounded`}
@@ -176,7 +175,7 @@ export default function Feed() {
             name="action"
             value="sortByLikes"
             className={`px-4 py-2 ${
-              likeFrom
+              likeFromHour
                 ? "bg-blue-500 text-white"
                 : "bg-white text-blue-500 border border-blue-500"
             } rounded`}
@@ -260,3 +259,61 @@ export default function Feed() {
     </div>
   );
 }
+
+export const meta: MetaFunction = ({ location }) => {
+  if (!location){
+    return { title: "Loading..." };
+  }
+  //https://localhost:5173/feed?likeFrom=24&likeTo=0&p=2
+
+  const searchQuery = new URLSearchParams(location.search);
+  const pageNumber = searchQuery.get("p")
+  const likeFrom = searchQuery.get("likeFrom")
+  const likeTo = searchQuery.get("likeTo")
+  
+  let title
+
+  if (!likeFrom){
+    title = pageNumber ? `フィード - ページ${pageNumber}` : "フィード"
+  }else {
+    title = `いいね順 - ${likeFrom}時間前～${likeTo}時間前`
+  }
+
+  const description = "フィード"
+
+  const ogLocale = "ja_JP";
+  const ogSiteName = "健常者エミュレータ事例集";
+  const ogType = "article";
+  const ogTitle = title;
+  const ogDescription = description;
+  let ogUrl
+  if (likeFrom){
+    ogUrl = `https://healthy-person-emulator.org/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${pageNumber}`;
+  } else {
+    ogUrl = `https://healthy-person-emulator.org/feed?p=${pageNumber}`;
+  }
+
+  const twitterCard = "summary"
+  const twitterSite = "@helthypersonemu"
+  const twitterTitle = title
+  const twitterDescription = description
+  const twitterCreator = "@helthypersonemu"
+  const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+
+  return [
+    { title },
+    { description },
+    { property: "og:title", content: ogTitle },
+    { property: "og:description", content: ogDescription },
+    { property: "og:locale", content: ogLocale },
+    { property: "og:site_name", content: ogSiteName },
+    { property: "og:type", content: ogType },
+    { property: "og:url", content: ogUrl },
+    { name: "twitter:card", content: twitterCard },
+    { name: "twitter:site", content: twitterSite },
+    { name: "twitter:title", content: twitterTitle },
+    { name: "twitter:description", content: twitterDescription },
+    { name: "twitter:creator", content: twitterCreator },
+    { name: "twitter:image", content: twitterImage },
+  ];
+};
