@@ -125,7 +125,7 @@ export default function Component() {
           </ul>
         </div>
       )}
-      <footer className="bg-gray-100 py-8">
+      <footer className="bg-gray-100 py-8 md:pb-0">
       <div className="container mx-auto px-4">
         <div className="flex justify-center items-center">
           <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
