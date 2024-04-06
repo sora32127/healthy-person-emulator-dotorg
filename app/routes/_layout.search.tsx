@@ -1,11 +1,10 @@
-import { Form, useLoaderData, Link, NavLink } from "@remix-run/react";
+import { Form, useLoaderData, NavLink } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { supabase } from "~/modules/supabase.server";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { useState } from "react";
-import { title } from "process";
 
 interface DimPostContentSearchResult {
   highlightedcontent: string;
