@@ -67,7 +67,7 @@ export default function Component() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {transitionStatus.state === "loading" && (
+      {transitionStatus.state === "loading" || transitionStatus.state === "submitting" && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 z-50 flex items-center justify-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-solid rounded-full animate-spin"></div>
         </div>
