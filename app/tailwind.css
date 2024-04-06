@@ -42,6 +42,10 @@ h1 {
   @apply text-lg;
 }
 
+.postContent a {
+  @apply text-blue-600 underline underline-offset-4;
+}
+
 .templateSubmitForm {
   background-color: #fff;
   border-radius: 0.5rem;
