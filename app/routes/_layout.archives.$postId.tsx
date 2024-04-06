@@ -16,6 +16,7 @@ import { H2 } from "~/components/Headings";
 import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
 import arrowBackIcon from "~/src/assets/arrow_back.svg";
 import CommentInputBox from "~/components/CommentInputBox";
+import ShareButtons from "~/components/ShareButtons";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -345,6 +346,9 @@ export default function Component() {
           >
             編集する
           </NavLink>
+        </div>
+        <div className="my-4">
+        <ShareButtons />
         </div>
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
