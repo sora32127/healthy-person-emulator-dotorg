@@ -1,7 +1,7 @@
 import React from "react";
 
 export const H1: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    return <h1 className="text-4xl font-bold mt-16 mb-6">{children}</h1>;
+    return <h1 className="text-3xl font-bold mt-16 mb-6 text-center">{children}</h1>;
 };
 
 export const H2: React.FC<{ children: React.ReactNode }> = ({ children }) => {

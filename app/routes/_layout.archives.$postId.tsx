@@ -12,7 +12,7 @@ import thumb_up from "~/src/assets/thumb_up.svg";
 import thumb_down from "~/src/assets/thumb_down.svg";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
-import { H2 } from "~/components/Headings";
+import { H1, H2 } from "~/components/Headings";
 import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
 import arrowBackIcon from "~/src/assets/arrow_back.svg";
 import CommentInputBox from "~/components/CommentInputBox";
@@ -234,7 +234,7 @@ export default function Component() {
 
   return (
       <div>
-        <h1>{postContent && postContent.postTitle}</h1>
+        <H1>{postContent && postContent.postTitle}</H1>
         {isAdmin && (
         <div className="my-6">
           <button
