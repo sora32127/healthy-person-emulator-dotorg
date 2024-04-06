@@ -174,7 +174,7 @@ export async function loader() {
 export default function Feed() {
     const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
     return (
-        <>
+        <div>
         <H2>最新の投稿</H2>
         {mostRecentPosts.map((post) => (
             <PostCard
@@ -247,6 +247,6 @@ export default function Feed() {
                 countDislikes={post.countDislikes}
             />
         ))}
-    </>
+    </div>
     );
 }
