@@ -11,7 +11,7 @@ import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationChec
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
 import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
-import { Form, NavLink, useLoaderData } from '@remix-run/react';
+import { Form, MetaFunction, NavLink, useLoaderData } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
@@ -436,3 +436,38 @@ export async function action({ request }:ActionFunctionArgs ) {
 
     return redirect(`/archives/${newPost.postId}`);
 }
+
+export const meta: MetaFunction = () => {
+    const title = "投稿する";
+    const description = "テンプレートに沿って投稿する";
+    const ogLocale = "ja_JP";
+    const ogSiteName = "健常者エミュレータ事例集";
+    const ogType = "article";
+    const ogTitle = title;
+    const ogDescription = description;
+    const ogUrl = `https://healthy-person-emulator.org/post`;
+    const twitterCard = "summary"
+    const twitterSite = "@helthypersonemu"
+    const twitterTitle = title
+    const twitterDescription = description
+    const twitterCreator = "@helthypersonemu"
+    const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+  
+    return [
+      { title },
+      { description },
+      { property: "og:title", content: ogTitle },
+      { property: "og:description", content: ogDescription },
+      { property: "og:locale", content: ogLocale },
+      { property: "og:site_name", content: ogSiteName },
+      { property: "og:type", content: ogType },
+      { property: "og:url", content: ogUrl },
+      { name: "twitter:card", content: twitterCard },
+      { name: "twitter:site", content: twitterSite },
+      { name: "twitter:title", content: twitterTitle },
+      { name: "twitter:description", content: twitterDescription },
+      { name: "twitter:creator", content: twitterCreator },
+      { name: "twitter:image", content: twitterImage },
+    ];
+  };
+  
