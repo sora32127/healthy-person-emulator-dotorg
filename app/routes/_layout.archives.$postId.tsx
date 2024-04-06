@@ -300,6 +300,14 @@ export default function Component() {
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
         </div>
+        <div className="my-6">
+          <NavLink
+            to={`/archives/edit/${postContent?.postId}`}
+            className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
+          >
+            編集する
+          </NavLink>
+        </div>
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
@@ -315,7 +323,7 @@ export default function Component() {
             ))}
           </ul>
         </div>
-        <div className="flex flex-col md:flex-row justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-center my-20">
           {nextPost && (
             <div className="flex items-center mb-4 md:mb-0">
               <img src={arrowForwardIcon} alt="Next post" className="h-5 w-5 mr-2" />
@@ -339,14 +347,7 @@ export default function Component() {
             </div>
           )}
         </div>
-        <div className="my-6">
-          <NavLink
-            to={`/archives/edit/${postContent?.postId}`}
-            className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
-          >
-            編集する
-          </NavLink>
-        </div>
+        
         <div className="my-4">
         <ShareButtons />
         </div>

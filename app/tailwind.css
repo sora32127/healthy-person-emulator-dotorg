@@ -46,6 +46,11 @@ h1 {
   @apply text-blue-600 underline underline-offset-4;
 }
 
+.markdownEditorPreview th {
+  @apply bg-gray-100 text-left font-semibold 
+
+}
+
 .templateSubmitForm {
   background-color: #fff;
   border-radius: 0.5rem;
