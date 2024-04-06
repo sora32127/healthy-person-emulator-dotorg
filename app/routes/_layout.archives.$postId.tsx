@@ -10,7 +10,7 @@ import { useState } from "react";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import thumb_up from "~/src/assets/thumb_up.svg";
 import thumb_down from "~/src/assets/thumb_down.svg";
-import { commitSession, getSession } from "~/modules/session.server";
+import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H2 } from "~/components/Headings";
 import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
@@ -105,11 +105,13 @@ export async function loader({ request }:LoaderFunctionArgs){
       },
     });
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost });
+    const isAdmin = await isAdminLogin(request);
+
+    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin } = useLoaderData<typeof loader>();
 
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
@@ -193,6 +195,16 @@ export default function Component() {
       ));
   };
 
+  const handleDeletePost = async () => {
+    const formData = new FormData();
+    formData.append("postId", postContent?.postId.toString() || "");
+
+    await submit(formData, {
+      method: "post",
+      action: "/api/delete/post",
+    });
+  };
+
   const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
     if (a.dimTag.tagName > b.dimTag.tagName) {
       return 1;
@@ -203,10 +215,19 @@ export default function Component() {
     return 0;
   })
 
-
   return (
       <div>
         <h1>{postContent && postContent.postTitle}</h1>
+        {isAdmin && (
+        <div className="my-6">
+          <button
+            onClick={handleDeletePost}
+            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-20 w-full"
+          >
+            記事を削除する
+          </button>
+        </div>
+        )}
         <p className="flex my-1">
             <img src={clockIcon} alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
             {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
