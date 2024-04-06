@@ -13,6 +13,7 @@ import logoutIcon from "~/src/assets/logout_icon.svg";
 import signupIcon from "~/src/assets/signup_icon.svg";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
+import topLogo from "~/src/assets/top_logo.svg";
 
 export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
@@ -124,22 +125,34 @@ export default function Component() {
           </ul>
         </div>
       )}
-      <footer className="bg-gray-100 py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center">
-            <h2 className="text-2xl font-bold mb-4">健常者エミュレータ事例集</h2>
-            <nav className="mb-4">
-              <NavLink
-                to="/dummy-contact-url"
-                className="text-gray-700 hover:text-blue-500"
-              >
-                管理人に連絡する
-              </NavLink>
-            </nav>
-            <p className="text-gray-600 text-center">&copy; {new Date().getFullYear()} All rights reserved.</p>
+      <footer className="bg-gray-100 py-8">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-center items-center">
+          <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
+          <div className="flex flex-col space-y-2 ml-2">
+            <NavLink
+              to="https://twitter.com/contradiction29"
+              className="text-gray-700 hover:text-blue-500"
+            >
+              管理人に連絡
+            </NavLink>
+            <NavLink
+              to="https://github.com/sora32127/healthy-person-emulator-dotorg"
+              className="text-gray-700 hover:text-blue-500"
+            >
+              Contribute
+            </NavLink>
+            <NavLink
+              to="/privacyPolicy"
+              className="text-gray-700 hover:text-blue-500"
+            >
+              プライバシー・ポリシー/免責事項
+            </NavLink>
           </div>
         </div>
-      </footer>
+        <p className="text-gray-600 text-center mt-4">&copy; {new Date().getFullYear()} All rights reserved.</p>
+      </div>
+    </footer>
     </div>
   );
 }
