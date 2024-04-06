@@ -14,10 +14,6 @@ import { createEmbedding } from "~/modules/embedding.server";
 
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-
-  // HTTPS証明書関連のエラーを無視するおまじない. ローカル開発環境で必要となる
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-  
   const userId = await requireUserId(request);
   const postId = params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({
