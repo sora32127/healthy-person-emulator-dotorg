@@ -151,7 +151,7 @@ export async function loader() {
             commentId: true,
             postId: true,
             commentContent: true,
-            commentDateJst: true,
+            commentDateGmt: true,
             commentAuthor: true,
             dimPosts: {
                 select: {
@@ -216,7 +216,7 @@ export default function Feed() {
             <CommentShowCard
                 key={comment.commentId}
                 commentContent={comment.commentContent}
-                commentDateJst={comment.commentDateJst}
+                commentDateGmt={comment.commentDateGmt}
                 commentAuthor={comment.commentAuthor}
                 postId={comment.postId}
                 dimPosts={comment.dimPosts}

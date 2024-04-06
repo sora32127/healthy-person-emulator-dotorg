@@ -4,7 +4,7 @@ import articleIcon from "~/src/assets/article_icon.svg";
 
 interface CommentShowCardProps {
    commentContent: string;
-   commentDateJst: string;
+   commentDateGmt: string;
    commentAuthor: string;
    postId: number;
    dimPosts: {
@@ -14,12 +14,12 @@ interface CommentShowCardProps {
 
 export default function CommentShowCard({
    commentContent,
-   commentDateJst,
+   commentDateGmt,
    commentAuthor,
    postId,
    dimPosts,
 }: CommentShowCardProps) {
-   const formattedCommentDate = new Date(commentDateJst).toLocaleString("ja-JP", {
+   const formattedCommentDate = new Date(commentDateGmt).toLocaleString("ja-JP", {
        year: "numeric",
        month: "2-digit",
        day: "2-digit",

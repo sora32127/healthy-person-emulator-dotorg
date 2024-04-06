@@ -179,7 +179,7 @@ export default function Component() {
             commentId={comment.commentId}
             postId={postContent?.postId || 0}
             commentContent={comment.commentContent}
-            commentDateJst={comment.commentDateJst}
+            commentDateGmt={comment.commentDateGmt}
             commentAuthor={comment.commentAuthor}
             level={level}
             onCommentVote={handleCommentVote}

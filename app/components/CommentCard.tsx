@@ -8,7 +8,7 @@ import { useSubmit } from "@remix-run/react";
 
 interface CommentCardProps {
   commentId: number;
-  commentDateJst: string;
+  commentDateGmt: string;
   commentAuthor: string;
   commentContent: string;
   level: number;
@@ -22,7 +22,7 @@ interface CommentCardProps {
 
 export default function CommentCard({
   commentId,
-  commentDateJst,
+  commentDateGmt,
   commentAuthor,
   commentContent,
   level,
@@ -34,7 +34,7 @@ export default function CommentCard({
   postId,
 }: CommentCardProps) {
 
-  const formattedCommentDate = new Date(commentDateJst).toLocaleString(
+  const formattedCommentDate = new Date(commentDateGmt).toLocaleString(
     "ja-JP",
     {
       year: "numeric",
