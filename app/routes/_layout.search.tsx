@@ -1,4 +1,4 @@
-import { Form, useLoaderData, Link } from "@remix-run/react";
+import { Form, useLoaderData, Link, NavLink } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import { ActionFunctionArgs, LoaderFunctionArgs, json, redirect } from "@remix-run/node";
 import { supabase } from "~/modules/supabase.server";
@@ -411,7 +411,7 @@ export default function Component() {
             />
           ))}
           <div className="flex justify-center mt-8">
-            <Link
+            <NavLink
               to={getPaginationLink(1)}
               className={`px-4 py-2 mx-1 ${
                 pageNumber === 1
@@ -420,8 +420,8 @@ export default function Component() {
               } rounded`}
             >
               最初
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               to={getPaginationLink(pageNumber - 1)}
               className={`px-4 py-2 mx-1 ${
                 pageNumber === 1
@@ -430,11 +430,11 @@ export default function Component() {
               } rounded`}
             >
               前へ
-            </Link>
+            </NavLink>
             <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
               {pageNumber} / {totalPages}
             </span>
-            <Link
+            <NavLink
               to={getPaginationLink(pageNumber + 1)}
               className={`px-4 py-2 mx-1 ${
                 pageNumber === totalPages
@@ -443,8 +443,8 @@ export default function Component() {
               } rounded`}
             >
               次へ
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               to={getPaginationLink(totalPages)}
               className={`px-4 py-2 mx-1 ${
                 pageNumber === totalPages
@@ -453,7 +453,7 @@ export default function Component() {
               } rounded`}
             >
               最後
-            </Link>
+            </NavLink>
           </div>
         </>
       ) : (
