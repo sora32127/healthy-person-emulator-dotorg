@@ -11,7 +11,7 @@ interface DimPostContentSearchResult {
   highlightedcontent: string;
   postid: number;
   posttitle: string;
-  postDateGmt: string;
+  postdategmt: string;
   countlikes: number;
   countdislikes: number;
 }
@@ -160,7 +160,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         postId: post.postid,
         postTitle: post.posttitle,
-        postDateGmt: post.postDateGmt,
+        postDateGmt: post.postdategmt,
         countLikes: post.countlikes,
         countDislikes: post.countdislikes,
         highlightedContent: MakeReadbleHighlightText(post.highlightedcontent)
