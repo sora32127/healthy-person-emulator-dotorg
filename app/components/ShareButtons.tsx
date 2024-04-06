@@ -16,7 +16,7 @@ export default function ShareButtons() {
                     height="20"
                     />
             </a>
-                <script type="text/javascript" src="https://b.st-hatena.com/js/bookmark_button.js"></script>
+                <script type="text/javascript" async src="https://b.st-hatena.com/js/bookmark_button.js"></script>
         </div>
     );
 }
