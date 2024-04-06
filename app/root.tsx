@@ -1,9 +1,12 @@
 import {
   Links,
   Meta,
+  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
+  useRouteError,
 } from "@remix-run/react";
 
 import type { LinksFunction } from "@remix-run/node";
@@ -42,4 +45,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <div className="container mx-auto px-4 text-center">
+        <h1 className="text-4xl font-bold mt-32 mb-8">お探しのページは見つかりませんでした</h1>
+        <NavLink to="/" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          トップページに戻る
+        </NavLink>
+      </div>
+    );
+  } else {
+    console.error(error);
+    return (
+      <div className="container mx-auto px-4">
+        <h1 className="text-4xl font-bold text-center mt-32 mb-8">不明なエラーが発生しました</h1>
+        <pre className="bg-red-100 p-4 mb-8 overflow-auto">{error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}</pre>
+        <div className="text-center">
+          <NavLink to="/" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            トップページに戻る
+          </NavLink>
+        </div>
+      </div>
+    );
+  }
 }

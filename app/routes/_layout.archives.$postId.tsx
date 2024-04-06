@@ -45,6 +45,12 @@ export async function loader({ request }:LoaderFunctionArgs){
         },
     });
 
+    if (!postContent) {
+      throw new Response("Post not found", {
+        status: 404,
+      })
+    }
+
     const comments = await prisma.dimComments.findMany({
         where: {
           postId: Number(postId),
