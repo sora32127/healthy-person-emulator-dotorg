@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, Form, useFetcher } from "@remix-run/react";
+import { useLoaderData, NavLink, useSubmit, useFetcher } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -177,12 +177,11 @@ export default function Component() {
         <div key={comment.commentId}>
           <CommentCard
             commentId={comment.commentId}
-            commentParentId={comment.commentParent || 0}
+            postId={postContent?.postId || 0}
             commentContent={comment.commentContent}
             commentDateJst={comment.commentDateJst}
             commentAuthor={comment.commentAuthor}
             level={level}
-            onCommentSubmit={handleCommentSubmit}
             onCommentVote={handleCommentVote}
             likedComments={likedComments}
             dislikedComments={dislikedComments}
@@ -311,7 +310,6 @@ export default function Component() {
           onCommentAuthorChange={setCommentAuthor}
           onCommentContentChange={setCommentContent}
           onSubmit={handleCommentSubmit}
-          submitLabel="コメントを投稿"
         />
       </div>
       <div>
@@ -322,30 +320,6 @@ export default function Component() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-
-  if (request.url.includes("/api/create/comment")) {
-    const formData = await request.formData();
-    const postId = formData.get("postId")?.toString();
-    const commentAuthor = formData.get("commentAuthor")?.toString();
-    const commentContent = formData.get("commentContent")?.toString() || "";
-    const commentParent = Number(formData.get("parentCommentId")) || 0;
-
-    try {
-        await prisma.dimComments.create({
-            data: {
-                postId: Number(postId),
-                commentAuthor,
-                commentContent,
-                commentParent
-            },
-        });
-    }
-    catch (e) {
-        console.error(e);
-        return new Response("Internal Server Error", { status: 500 });
-    }
-  }
-
   const formData = await request.formData();
   const postId = Number(formData.get("postId"));
   const voteType = formData.get("voteType")?.toString();

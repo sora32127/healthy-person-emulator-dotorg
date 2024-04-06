@@ -2,6 +2,9 @@
 import clockIcon from "~/src/assets/clock_icon.svg";
 import thumb_up from "~/src/assets/thumb_up.svg";
 import thumb_down from "~/src/assets/thumb_down.svg";
+import { useState } from "react";
+import CommentInputBox from "./CommentInputBox";
+import { useSubmit } from "@remix-run/react";
 
 interface CommentCardProps {
   commentId: number;
@@ -14,6 +17,7 @@ interface CommentCardProps {
   dislikedComments: number[];
   likesCount: number;
   dislikesCount: number;
+  postId: number;
 }
 
 export default function CommentCard({
@@ -27,6 +31,7 @@ export default function CommentCard({
   dislikedComments,
   likesCount,
   dislikesCount,
+  postId,
 }: CommentCardProps) {
 
   const formattedCommentDate = new Date(commentDateJst).toLocaleString(
@@ -45,6 +50,31 @@ export default function CommentCard({
   const marginLeft = `${level * 2}rem`;
   const isLiked = likedComments.includes(commentId);
   const isDisliked = dislikedComments.includes(commentId);
+
+  const [isReplyBoxShown, setIsReplyBoxShown] = useState(false);
+  const [replyAuthor, setReplyAuthor] = useState("Anonymous");
+  const [replyContent, setReplyContent] = useState("");
+
+  const submit = useSubmit();
+
+  const handleReplyCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append("postId", postId.toString());
+    formData.append("commentAuthor", replyAuthor);
+    formData.append("commentContent", replyContent);
+    formData.append("commentParent", commentId.toString());
+
+    await submit(formData, {
+      method: "post",
+      action: `/api/create/comment`,
+    });
+
+    setReplyAuthor("");
+    setReplyContent("");
+    setIsReplyBoxShown(false);
+  };
 
   return (
     <div className="bg-white p-4 mb-4" style={{ marginLeft }}>
@@ -76,6 +106,23 @@ export default function CommentCard({
           {dislikesCount}
         </button>
       </div>
+    <button
+        className="mt-2 text-blue-500"
+        onClick={() => setIsReplyBoxShown(!isReplyBoxShown)}
+    >
+        {isReplyBoxShown ? "キャンセル" : "返信"}
+    </button>
+        <div className="ml-2">
+        {isReplyBoxShown && (
+            <CommentInputBox
+                commentAuthor={replyAuthor}
+                commentContent={replyContent}
+                onCommentAuthorChange={setReplyAuthor}
+                onCommentContentChange={setReplyContent}
+                onSubmit={handleReplyCommentSubmit}
+            />
+        )}
+        </div>
     </div>
   );
 }
