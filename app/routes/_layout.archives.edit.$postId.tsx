@@ -33,10 +33,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   記事が編集中かどうか判断するロジックは以下の通り
   - nowEditingInfoがnullの場合、編集中でない
   - nowEditingInfoが存在し、自分が編集中の場合、編集中でない
-  - nowEditingInfoが存在し、最終ロック時刻から5分以内の場合、編集中である
-  - nowEditingInfoが存在し、最終ロック時刻から5分以上経過している場合、編集中でない
+  - nowEditingInfoが存在し、最終ロック時刻から30分以上経過している場合、編集中でない
+  - それ以外の場合は編集中と判断する。つまりは以下の場合：
+    - nowEditingInfoが存在する
+    - なおかつ、自分以外のユーザー名が格納されている
+    - なおかつ、lasteHeartBeatAtUTCから30分以内である
   */
-  let isEditing = nowEditingInfo ? new Date().getTime() - nowEditingInfo.lastHeartBeatAtUTC.getTime() <= 300000 : false;
+ console.log(new Date().getTime())
+  let isEditing = nowEditingInfo ? new Date().getTime() - nowEditingInfo.lastHeartBeatAtUTC.getTime() <= 1000 * 60 * 30 : false;
 
   if (nowEditingInfo){
     const userName = await prisma.userProfiles.findUniqueOrThrow({
@@ -203,19 +207,6 @@ export default function EditPost() {
   const handleTagRemove = (tagName: string) => {
     setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
   };
-
-  
-  
-  setInterval(() => {
-    const formData = new FormData();
-    formData.append("postId", postData.postId.toString());
-    formData.append("userName", userName || "");
-  
-    fetch("https://localhost:5173/api/edit/updateHeartBeat", {
-      method: "POST",
-      body: formData,
-    });
-  }, 10000);
 
   const navigation = useNavigation();
 
