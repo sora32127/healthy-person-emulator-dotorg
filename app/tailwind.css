@@ -6,43 +6,43 @@ h1 {
   @apply text-4xl font-bold;
 }
 
-.postContent h3 {
+.postContent h3, .markdownEditorPreview h3 {
   @apply text-xl font-bold mb-2;
 }
 
-.postContent h4 {
+.postContent h4, .markdownEditorPreview h4 {
   @apply text-lg font-bold mb-2;
 }
 
-.postContent h5 {
+.postContent h5, .markdownEditorPreview h5 {
   @apply text-lg font-bold mb-2;
 }
 
-.postContent table {
+.postContent table, .markdownEditorPreview table {
   @apply w-full border-collapse mb-4;
 }
 
-.postContent table td {
+.postContent table td, .markdownEditorPreview table td {
   @apply border border-gray-300 px-4 py-2;
 }
 
-.postContent table td:first-child {
+.postContent table td:first-child, .markdownEditorPreview table td:first-child {
   @apply font-bold;
 }
 
-.postContent ul {
+.postContent ul, .markdownEditorPreview ul{
   @apply list-disc list-outside mb-4 ml-4;
 }
 
-.postContent li {
+.postContent li, .markdownEditorPreview li {
   @apply mb-1;
 }
 
-.postContent {
+.postContent, .markdownEditorPreview {
   @apply text-lg;
 }
 
-.postContent a {
+.postContent a, .markdownEditorPreview a{
   @apply text-blue-600 underline underline-offset-4;
 }
 
@@ -75,8 +75,4 @@ h1 {
 
 .templateSubmitForm p {
   color: #4a5568;
-}
-
-.markdownEditorPreview ul {
-  @apply list-disc list-outside mb-4 ml-4;
 }
