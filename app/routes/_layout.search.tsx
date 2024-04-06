@@ -44,7 +44,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 
   if (searchType === "tag") {
-    const tags = url.searchParams.get("tags")?.split("+") || [];
+    const tags = url.searchParams.get("tags")?.split(" ") || [];
     const totalCount = await prisma.relPostTags.count({
       where: { dimTag: { tagName: { in: tags } } },
     });
