@@ -31,7 +31,7 @@ export async function loader({ request }:LoaderFunctionArgs){
           postId: true,
           postTitle: true,
           postContent: true,
-          postDateJst: true,
+          postDateGmt: true,
           countLikes: true,
           countDislikes: true,
           rel_post_tags: {
@@ -89,19 +89,19 @@ export async function loader({ request }:LoaderFunctionArgs){
 
     const prevPost = await prisma.dimPosts.findFirst({
       where: {
-        postDateJst: { lt: postContent?.postDateJst },
+        postDateGmt: { lt: postContent?.postDateGmt },
       },
       orderBy: {
-        postDateJst: "desc",
+        postDateGmt: "desc",
       },
     });
     
     const nextPost = await prisma.dimPosts.findFirst({
       where: {
-        postDateJst: { gt: postContent?.postDateJst },
+        postDateGmt: { gt: postContent?.postDateGmt },
       },
       orderBy: {
-        postDateJst: "asc",
+        postDateGmt: "asc",
       },
     });
 
@@ -209,7 +209,7 @@ export default function Component() {
         <h1>{postContent && postContent.postTitle}</h1>
         <p className="flex my-1">
             <img src={clockIcon} alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
-            {postContent && new Date(postContent.postDateJst).toLocaleString("ja-JP", {
+            {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",

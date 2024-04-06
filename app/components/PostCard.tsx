@@ -9,7 +9,7 @@ import thumbDownIcon from "~/src/assets/thumb_down.svg";
 interface PostCardProps {
     postId: number;
     postTitle: string;
-    postDateJst: string;
+    postDateGmt: string;
     tagNames: string[];
     countLikes: number;
     countDislikes: number;
@@ -19,13 +19,13 @@ interface PostCardProps {
 export default function PostCard({
     postId,
     postTitle,
-    postDateJst,
+    postDateGmt,
     tagNames,
     countLikes,
     countDislikes,
     highLightedText,
 }: PostCardProps) {
-    const formattedPostDate = new Date(postDateJst).toLocaleString("ja-JP", {
+    const formattedPostDate = new Date(postDateGmt).toLocaleString("ja-JP", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",

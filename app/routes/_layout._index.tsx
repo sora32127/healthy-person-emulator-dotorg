@@ -8,7 +8,7 @@ import CommentShowCard from "~/components/CommentShowCard";
 interface PostCardProps {
     postId: number;
     postTitle: string;
-    postDateJst: Date;
+    postDateGmt: Date;
     tagNames: string[];
     countLikes: number;
     countDislikes: number;
@@ -24,12 +24,12 @@ export const meta: MetaFunction = () => {
 
 export async function loader() {
     const mostRecentPostsRaw = await prisma.dimPosts.findMany({
-        orderBy: { postDateJst: "desc" },
+        orderBy: { postDateGmt: "desc" },
         take: 10,
         select: {
             postId: true,
             postTitle: true,
-            postDateJst: true,
+            postDateGmt: true,
             countLikes: true,
             countDislikes: true,
             rel_post_tags: {
@@ -63,7 +63,7 @@ export async function loader() {
         select: {
             postId: true,
             postTitle: true,
-            postDateJst: true,
+            postDateGmt: true,
             countLikes: true,
             countDislikes: true,
             rel_post_tags: {
@@ -85,7 +85,7 @@ export async function loader() {
                 select : {
                     postId: true,
                     postTitle: true,
-                    postDateJst: true,
+                    postDateGmt: true,
                     countLikes: true,
                     countDislikes: true,
                     rel_post_tags: {
@@ -107,7 +107,7 @@ export async function loader() {
                 select : {
                     postId: true,
                     postTitle: true,
-                    postDateJst: true,
+                    postDateGmt: true,
                     countLikes: true,
                     countDislikes: true,
                     rel_post_tags: {
@@ -181,7 +181,7 @@ export default function Feed() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateJst={post.postDateJst}
+                postDateGmt={post.postDateGmt}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -199,7 +199,7 @@ export default function Feed() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateJst={post.postDateJst}
+                postDateGmt={post.postDateGmt}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -228,7 +228,7 @@ export default function Feed() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateJst={post.postDateJst}
+                postDateGmt={post.postDateGmt}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
@@ -241,7 +241,7 @@ export default function Feed() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateJst={post.postDateJst}
+                postDateGmt={post.postDateGmt}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
