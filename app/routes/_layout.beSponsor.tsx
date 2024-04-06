@@ -1,4 +1,5 @@
 import { NavLink } from '@remix-run/react';
+import stripeQRCode from '~/src/assets/stripe_qr_code.png';
 
 export default function BeSponsor() {
     return (
@@ -22,6 +23,10 @@ export default function BeSponsor() {
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-md block w-full">サポートする
             </NavLink>
           </button>
+          <div className="text-center mt-6">
+            <p>以下のQRコードから支払うことも可能です。</p>
+            <img src={stripeQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
+          </div>
         </div>
     );
 }
