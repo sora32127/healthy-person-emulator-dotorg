@@ -11,7 +11,6 @@ import guidelineIcon from "~/src/assets/guideline_icon.svg";
 import loginIcon from "~/src/assets/login_icon.svg";
 import logoutIcon from "~/src/assets/logout_icon.svg";
 import signupIcon from "~/src/assets/signup_icon.svg";
-import mypageIcon from "~/src/assets/mypage_icon.svg";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
 
@@ -42,7 +41,6 @@ export default function Component() {
     { to: "/readme", text: "ガイドライン", icon: guidelineIcon },
     ...(isLoggedIn
       ? [
-          { to: "/mypage", text: "マイページ", icon: mypageIcon },
           { to: "/logout", text: "ログアウト", icon: logoutIcon },
         ]
       : [
@@ -51,7 +49,7 @@ export default function Component() {
         ]),
   ];
 
-  const renderNavItem = (item) => (
+  const renderNavItem = (item: { to: string; icon: string; text: string }): JSX.Element => (
     <NavLink
       key={item.to}
       to={item.to}
