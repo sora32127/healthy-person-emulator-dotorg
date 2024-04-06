@@ -80,7 +80,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     data: {
       postId: Number(postId),
       userName: userName.userName,
-      lastHeartBeatAtUTC: new Date(),
     },
   });
 
@@ -443,8 +442,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
       data: {
         postId,
         postRevisionNumber: newRevisionNumber,
-        postEditDateJst: new Date(),
-        postEditDateGmt: new Date(),
         editorUserName: userName,
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,

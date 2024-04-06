@@ -388,15 +388,10 @@ export async function action({ request }: ActionFunctionArgs) {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  const localDate = new Date();
-  const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
-
   if (commentId) {
-    console.log(localDate, voteUserIpHashString, commentId, postId, voteType);
     await prisma.$transaction(async (prisma) => {
         await prisma.fctCommentVoteHisotry.create({
             data: {
-                commentVoteDateJst: localDate,
                 voteUserIpHash: voteUserIpHashString,
                 commentId,
                 postId,
@@ -429,7 +424,6 @@ export async function action({ request }: ActionFunctionArgs) {
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHisotry.create({
       data: {
-        voteDateGmt: utcDate,
         voteUserIpHash: voteUserIpHashString,
         postId,
         voteTypeInt: voteType === "like" ? 1 : -1,

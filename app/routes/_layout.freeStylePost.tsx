@@ -232,8 +232,6 @@ export async function action({ request }: ActionFunctionArgs) {
                 postTitle: title,
                 postContent: marked(markdownContent as string),
                 postAuthorIPHash: postUserIpHashString,
-                postDateJst: new Date(),
-                postDateGmt: new Date(),
                 countLikes: 0,
                 countDislikes: 0,
                 commentStatus: 'open',

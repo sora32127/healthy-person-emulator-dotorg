@@ -374,8 +374,6 @@ export async function action({ request }:ActionFunctionArgs ) {
         const newPost = await prisma.dimPosts.create({
             data: {
                 postAuthorIPHash: postUserIpHashString,
-                postDateJst: new Date(),
-                postDateGmt: new Date(),
                 postContent: result,
                 postTitle: titleValues.join(''),
                 countLikes: 0,
