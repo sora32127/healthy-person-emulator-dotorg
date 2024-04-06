@@ -11,7 +11,7 @@ interface DimPostContentSearchResult {
   highlightedcontent: string;
   postid: number;
   posttitle: string;
-  postdatejst: string;
+  postDateGmt: string;
   countlikes: number;
   countdislikes: number;
 }
@@ -54,7 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       select: {
         postId: true,
         postTitle: true,
-        postDateJst: true,
+        postDateGmt: true,
         countLikes: true,
         countDislikes: true,
         rel_post_tags: {
@@ -68,7 +68,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
       },
       where: { rel_post_tags: { some: { dimTag: { tagName: { in: tags } } } } },
-      orderBy: { postDateJst: "desc" },
+      orderBy: { postDateGmt: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -78,7 +78,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         postId: post.postId,
         postTitle: post.postTitle,
-        postDateJst: post.postDateJst,
+        postDateGmt: post.postDateGmt,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -107,7 +107,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       select: {
         postId: true,
         postTitle: true,
-        postDateJst: true,
+        postDateGmt: true,
         countLikes: true,
         countDislikes: true,
         postContent: true,
@@ -121,7 +121,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           },
         },
       },
-      orderBy: { postDateJst: "desc" },
+      orderBy: { postDateGmt: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -131,7 +131,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         postId: post.postId,
         postTitle: post.postTitle,
-        postDateJst: post.postDateJst,
+        postDateGmt: post.postDateGmt,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -160,7 +160,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         postId: post.postid,
         postTitle: post.posttitle,
-        postDateJst: post.postdatejst,
+        postDateGmt: post.postDateGmt,
         countLikes: post.countlikes,
         countDislikes: post.countdislikes,
         highlightedContent: MakeReadbleHighlightText(post.highlightedcontent)
@@ -182,7 +182,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return {
         postId: post.postId,
         postTitle: post.postTitle,
-        postDateJst: post.postDateJst,
+        postDateGmt: post.postDateGmt,
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
         tagNames,
@@ -402,7 +402,7 @@ export default function Component() {
             <PostCard
               postId={post.postId}
               postTitle={post.postTitle}
-              postDateJst={post.postDateJst}
+              postDateGmt={post.postDateGmt}
               tagNames={post.tagNames}
               countLikes={post.countLikes}
               countDislikes={post.countDislikes}

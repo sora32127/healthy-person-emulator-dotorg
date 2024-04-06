@@ -18,7 +18,7 @@ export async function loader(){
         select: {
             postId: true,
             postTitle: true,
-            postDateJst: true,
+            postDateGmt: true,
             countLikes: true,
             countDislikes: true,
             rel_post_tags: {
@@ -74,7 +74,7 @@ export default function Random() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateJst={post.postDateJst}
+                postDateGmt={post.postDateGmt}
                 tagNames={post.tagNames}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
