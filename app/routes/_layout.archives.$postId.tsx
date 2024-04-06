@@ -15,6 +15,7 @@ import { supabase } from "~/modules/supabase.server";
 import { H2 } from "~/components/Headings";
 import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
 import arrowBackIcon from "~/src/assets/arrow_back.svg";
+import CommentInputBox from "~/components/CommentInputBox";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -54,6 +55,9 @@ export async function loader({ request }:LoaderFunctionArgs){
     const comments = await prisma.dimComments.findMany({
         where: {
           postId: Number(postId),
+        },
+        orderBy: {
+          commentDateJst: "desc",
         },
     });
 
@@ -109,7 +113,7 @@ export default function Component() {
 
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
-  const [replyTo, setReplyTo] = useState<number | null>(null);
+
   const submit = useSubmit();
   const fetcher = useFetcher();
 
@@ -144,16 +148,14 @@ export default function Component() {
     formData.append("postId", postContent?.postId.toString() || "");
     formData.append("commentAuthor", commentAuthor);
     formData.append("commentContent", commentContent);
-    formData.append("commentParent", replyTo ? replyTo.toString() : "0");
 
     await submit(formData, {
       method: "post",
-      action: `/archives/${postContent?.postId}`,
+      action: `/api/create/comment`,
     });
-  };
 
-  const handleReplyClick = (commentId: number) => {
-    setReplyTo(commentId);
+    setCommentAuthor("Anonymous");
+    setCommentContent("");
   };
   
   const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
@@ -170,63 +172,28 @@ export default function Component() {
 
   const renderComments = (parentId: number = 0, level: number = 0) => {
     return comments
-        .filter((comment) => comment.commentParent === parentId)
-        .map((comment) => (
-            <div key={comment.commentId}>
-                <CommentCard
-                    commentId={comment.commentId}
-                    commentContent={comment.commentContent}
-                    commentDateJst={comment.commentDateJst}
-                    commentAuthor={comment.commentAuthor}
-                    commentParentId={comment.commentParent}
-                    level={level}
-                    onReplyClick={handleReplyClick}
-                    onCommentVote={handleCommentVote}
-                    likedComments={likedComments}
-                    dislikedComments={dislikedComments}
-                    likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
-                    dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
-                />
-                {replyTo === comment.commentId && (
-                  <div className="ml-8">
-                    <Form onSubmit={handleCommentSubmit}>
-                      <div className="mb-4">
-                        <label htmlFor="replyAuthor" className="block mb-2">
-                          名前
-                        </label>
-                        <input
-                          type="text"
-                          id="replyAuthor"
-                          value={commentAuthor}
-                          onChange={(e) => setCommentAuthor(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label htmlFor="replyContent" className="block mb-2">
-                          返信
-                        </label>
-                        <textarea
-                          id="replyContent"
-                          value={commentContent}
-                          onChange={(e) => setCommentContent(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          rows={4}
-                        ></textarea>
-                      </div>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                      >
-                        返信を投稿
-                      </button>
-                    </Form>
-                  </div>
-                )}
-                {renderComments(comment.commentId, level + 1)}
-            </div>
-        ));
+      .filter((comment) => comment.commentParent === parentId)
+      .map((comment) => (
+        <div key={comment.commentId}>
+          <CommentCard
+            commentId={comment.commentId}
+            commentParentId={comment.commentParent || 0}
+            commentContent={comment.commentContent}
+            commentDateJst={comment.commentDateJst}
+            commentAuthor={comment.commentAuthor}
+            level={level}
+            onCommentSubmit={handleCommentSubmit}
+            onCommentVote={handleCommentVote}
+            likedComments={likedComments}
+            dislikedComments={dislikedComments}
+            likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
+            dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
+          />
+          {renderComments(comment.commentId, level + 1)}
+        </div>
+      ));
   };
+
   const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
     if (a.dimTag.tagName > b.dimTag.tagName) {
       return 1;
@@ -337,48 +304,48 @@ export default function Component() {
           </NavLink>
         </div>
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
-          <Form onSubmit={handleCommentSubmit}>
-            <div className="mb-4">
-              <label htmlFor="commentAuthor" className="block mb-2">
-                名前
-              </label>
-              <input
-                type="text"
-                id="commentAuthor"
-                value={commentAuthor}
-                onChange={(e) => setCommentAuthor(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-              <label htmlFor="commentContent" className="block mb-2">
-                コメント
-              </label>
-              <textarea
-                id="commentContent"
-                value={commentContent}
-                onChange={(e) => setCommentContent(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
-              ></textarea>
-              <button
-                type="submit"
-                className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-              >
-                コメントを投稿
-              </button>
-            </Form>
-          </div>
-        <div>
-            {renderComments()}
-        </div>
+        <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
+        <CommentInputBox
+          commentAuthor={commentAuthor}
+          commentContent={commentContent}
+          onCommentAuthorChange={setCommentAuthor}
+          onCommentContentChange={setCommentContent}
+          onSubmit={handleCommentSubmit}
+          submitLabel="コメントを投稿"
+        />
       </div>
+      <div>
+        {renderComments()}
+      </div>
+    </div>
   );
 }
 
-
-
 export async function action({ request }: ActionFunctionArgs) {
+
+  if (request.url.includes("/api/create/comment")) {
+    const formData = await request.formData();
+    const postId = formData.get("postId")?.toString();
+    const commentAuthor = formData.get("commentAuthor")?.toString();
+    const commentContent = formData.get("commentContent")?.toString() || "";
+    const commentParent = Number(formData.get("parentCommentId")) || 0;
+
+    try {
+        await prisma.dimComments.create({
+            data: {
+                postId: Number(postId),
+                commentAuthor,
+                commentContent,
+                commentParent
+            },
+        });
+    }
+    catch (e) {
+        console.error(e);
+        return new Response("Internal Server Error", { status: 500 });
+    }
+  }
+
   const formData = await request.formData();
   const postId = Number(formData.get("postId"));
   const voteType = formData.get("voteType")?.toString();
@@ -463,5 +430,6 @@ export async function action({ request }: ActionFunctionArgs) {
         "Set-Cookie": await commitSession(session),
       },
     }
+  
   );
 }
