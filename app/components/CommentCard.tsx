@@ -18,6 +18,7 @@ interface CommentCardProps {
   likesCount: number;
   dislikesCount: number;
   postId: number;
+  isAdmin: boolean;
 }
 
 export default function CommentCard({
@@ -32,6 +33,7 @@ export default function CommentCard({
   likesCount,
   dislikesCount,
   postId,
+  isAdmin,
 }: CommentCardProps) {
 
   const formattedCommentDate = new Date(commentDateGmt).toLocaleString(
@@ -75,6 +77,16 @@ export default function CommentCard({
     setReplyContent("");
     setIsReplyBoxShown(false);
   };
+
+  const handleCommentDelete = async () => {
+    const formData = new FormData();
+    formData.append("commentId", commentId.toString());
+    formData.append("postId", postId.toString());
+    await submit(formData, {
+      method: "post",
+      action: `/api/delete/comment`,
+    });
+  }
 
   return (
     <div className="bg-white p-4 mb-4" style={{ marginLeft }}>
@@ -123,6 +135,14 @@ export default function CommentCard({
             />
         )}
         </div>
+      {isAdmin && (
+        <button
+          className="mt-2 text-red-500"
+          onClick={handleCommentDelete}
+        >
+          削除
+        </button>
+      )}
     </div>
   );
 }

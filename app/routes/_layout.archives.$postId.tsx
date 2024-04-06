@@ -189,6 +189,7 @@ export default function Component() {
             dislikedComments={dislikedComments}
             likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
             dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
+            isAdmin={isAdmin}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
