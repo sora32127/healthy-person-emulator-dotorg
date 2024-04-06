@@ -51,7 +51,7 @@ export async function loader(){
         select: {
             commentId: true,
             commentContent: true,
-            commentDateJst: true,
+            commentDateGmt: true,
             commentAuthor: true,
             postId: true,
             dimPosts: { select: { postTitle: true } },
@@ -85,7 +85,7 @@ export default function Random() {
             <CommentShowCard
                 key={comment.commentId}
                 commentContent={comment.commentContent}
-                commentDateJst={comment.commentDateJst}
+                commentDateGmt={comment.commentDateGmt}
                 commentAuthor={comment.commentAuthor}
                 postId={comment.postId}
                 dimPosts={comment.dimPosts}
