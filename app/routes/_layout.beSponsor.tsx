@@ -1,10 +1,11 @@
 import { MetaFunction, NavLink } from '@remix-run/react';
+import { H1 } from '~/components/Headings';
 import stripeQRCode from '~/src/assets/stripe_qr_code.png';
 
 export default function BeSponsor() {
     return (
-        <div>
-          <h1 className='text-center my-5'>サポートする</h1>
+        <div className='text-center'>
+          <H1>サポーターになる</H1>
           <p>
             健常者エミュレータ事例集は、誰もが暗黙知にアクセスできる社会を実現するプロジェクトです。
             私たちは、一人でも多くの人々に知識を届け、より良い社会の実現に貢献したいと考えています。
