@@ -41,29 +41,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
         skip: (pagingNumber - 1) * 10,
     });
 
-    const recentVotedPosts = await prisma.dimPosts.findMany({
+    const recentVotedPostsRaw = await prisma.dimPosts.findMany({
         where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
         select: {
             postId: true,
             postTitle: true,
-            postDateJst: true,
+            postDateGmt: true,
             countLikes: true,
             countDislikes: true,
+            rel_post_tags: {
+            select: {
+                dimTag: {
+                  select: {
+                      tagName: true,
+                  },
+                },
+              },
+            },
         },
     });
 
-    const allTagNames = await prisma.dimTags.findMany({
-        select: {
-            postId: true,
-            tagName: true,
-        },
-        where: { postId: { in: recentVotedPosts.map((post) => post.postId) } },
-    });
-
-    postData = recentVotedPosts.map((post) => {
-        const tagNames = allTagNames
-        .filter((tag) => tag.postId === post.postId)
-        .map((tag) => tag.tagName);
+    postData = recentVotedPostsRaw.map((post) => {
+        const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
         return { ...post, tagNames };
     });
 
@@ -79,32 +78,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
   else {
     const mostRecentPosts = await prisma.dimPosts.findMany({
-        orderBy: { postDateJst: "desc" },
+        orderBy: { postDateGmt: "desc" },
         skip: (pagingNumber - 1) * 10,
         take: 10,
         select: {
           postId: true,
           postTitle: true,
-          postDateJst: true,
+          postDateGmt: true,
           countLikes: true,
           countDislikes: true,
-        },
+          rel_post_tags: {
+            select: {
+              dimTag: {
+                select: {
+                  tagName: true,
+                },
+              },
+            },
+          },
+          }
       });
 
-      const allTagNames = await prisma.dimTags.findMany({
-        select: {
-          postId: true,
-          tagName: true,
-        },
-        where: { postId: { in: mostRecentPosts.map((post) => post.postId) } },
-      });
-    
       postData = mostRecentPosts.map((post) => {
-        const tagNames = allTagNames
-          .filter((tag) => tag.postId === post.postId)
-          .map((tag) => tag.tagName);
-        return { ...post, tagNames };
-      });
+          const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
+          return { ...post, tagNames };
+      })
 
       totalCount = await prisma.dimPosts.count();
   }
@@ -192,7 +190,7 @@ export default function Feed() {
           key={post.postId}
           postId={post.postId}
           postTitle={post.postTitle}
-          postDateJst={post.postDateJst}
+          postDateGmt={post.postDateGmt}
           tagNames={post.tagNames}
           countLikes={post.countLikes}
           countDislikes={post.countDislikes}
