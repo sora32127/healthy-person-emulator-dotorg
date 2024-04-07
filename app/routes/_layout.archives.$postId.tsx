@@ -235,23 +235,7 @@ export default function Component() {
   return (
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        {isAdmin && (
-        <div className="my-6">
-          <button
-            onClick={handleDeletePost}
-            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
-          >
-            記事を削除する
-          </button>
-          <button
-            onClick={handleCommentStatus}
-            className="bg-purple-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
-          >
-            コメントステータスを変更
-          </button>
-
-        </div>
-        )}
+        
         <p className="flex my-1">
             <img src={clockIcon} alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
             {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
@@ -347,7 +331,6 @@ export default function Component() {
             </div>
           )}
         </div>
-        
         <div className="my-4">
         <ShareButtons />
         </div>
@@ -365,6 +348,23 @@ export default function Component() {
       <div>
         {renderComments()}
       </div>
+      {isAdmin && (
+        <div className="my-40">
+          <button
+            onClick={handleDeletePost}
+            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
+          >
+            記事を削除する
+          </button>
+          <button
+            onClick={handleCommentStatus}
+            className="bg-purple-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
+          >
+            コメントステータスを変更
+          </button>
+
+        </div>
+        )}
     </div>
   );
 }
