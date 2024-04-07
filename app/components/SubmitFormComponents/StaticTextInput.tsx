@@ -33,7 +33,7 @@ function StaticTextInput({
             placeholder={placeholder}
             value={parentComponentStateValues[i] || ""}
             onChange={(e) => handleInputChange(i, e.target.value)}
-            className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+            className={`w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none ${title}-${i}`}
             rows={4}
           />
         </div>
