@@ -426,18 +426,20 @@ export default function Component() {
     </Form>
       {data && data.length > 0 ? (
         <>
-          {data.map((post: any) => (
-            <PostCard
-              postId={post.postId}
-              postTitle={post.postTitle}
-              postDateGmt={post.postDateGmt}
-              tagNames={post.tagNames}
-              countLikes={post.countLikes}
-              countDislikes={post.countDislikes}
-              highLightedText={post.highlightedContent}
-              key={post.postUrl}
-            />
-          ))}
+          <div className="search-result">
+            {data.map((post: any) => (
+              <PostCard
+                postId={post.postId}
+                postTitle={post.postTitle}
+                postDateGmt={post.postDateGmt}
+                tagNames={post.tagNames}
+                countLikes={post.countLikes}
+                countDislikes={post.countDislikes}
+                highLightedText={post.highlightedContent}
+                key={post.postUrl}
+              />
+            ))}
+          </div>
           <div className="flex justify-center mt-8">
             <NavLink
               to={getPaginationLink(1)}
@@ -445,7 +447,7 @@ export default function Component() {
                 pageNumber === 1
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
-              } rounded`}
+              } rounded search-go-to-first-page`}
             >
               最初
             </NavLink>
@@ -455,7 +457,7 @@ export default function Component() {
                 pageNumber === 1
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
-              } rounded`}
+              } rounded search-go-to-previous-page`}
             >
               前へ
             </NavLink>
@@ -468,7 +470,7 @@ export default function Component() {
                 pageNumber === totalPages
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
-              } rounded`}
+              } rounded search-go-to-next-page`}
             >
               次へ
             </NavLink>
@@ -478,7 +480,7 @@ export default function Component() {
                 pageNumber === totalPages
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
-              } rounded`}
+              } rounded search-go-to-last-page`}
             >
               最後
             </NavLink>
