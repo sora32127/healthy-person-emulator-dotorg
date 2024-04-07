@@ -8,7 +8,7 @@ datasource db {
 }
 
 model DimTags {
-  tagId       Int           @id(map: "dim_tags_2_pkey") @unique(map: "dim_tags_2_tag_id_key") @default(autoincrement()) @map("tag_id")
+  tagId       Int           @id @default(autoincrement()) @map("tag_id")
   tagName     String        @map("tag_name")
   relPostTags RelPostTags[]
 
