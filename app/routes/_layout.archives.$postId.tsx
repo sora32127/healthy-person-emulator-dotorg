@@ -264,21 +264,21 @@ export default function Component() {
           <button
             className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
               isLiked ? "text-blue-500" : ""
-            }`}
+            } post-like-button`}
             onClick={() => handleVote("like")}
             disabled={isLiked}
           >
-            <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2" />
+            <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2 post-like-count" />
             {postContent?.countLikes}
           </button>
           <button
             className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
               isDisliked ? "text-red-500" : ""
-            }`}
+            } post-dislike-button`}
             onClick={() => handleVote("dislike")}
             disabled={isDisliked}
           >
-            <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2" />
+            <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2 post-dislike-count" />
             {postContent?.countDislikes}
           </button>
         </div>
