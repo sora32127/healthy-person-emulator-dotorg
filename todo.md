@@ -1,4 +1,2 @@
-- PlaywrightでE2Eテストを書く
-- Cloudflareの導入
-- 移行プランの策定
+- たまにdenied for schema publicとか出るので、それの対処法を調べる
 - embeddingをやる
