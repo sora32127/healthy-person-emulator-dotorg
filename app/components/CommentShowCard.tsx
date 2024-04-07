@@ -32,16 +32,16 @@ export default function CommentShowCard({
    return (
        <div className="bg-white shadow-md rounded-md p-4 mb-4">
            <div className="flex justify-between items-center mb-2">
-               <p className="text-gray-600 text-sm">{formattedCommentDate}</p>
-               <span className="text-lg font-bold text-gray-800">{commentAuthor}</span>
+               <p className="text-gray-600 text-sm comment-timestamp">{formattedCommentDate}</p>
+               <span className="text-lg font-bold text-gray-800 comment-author">{commentAuthor}</span>
            </div>
            <div className="flex mb-2">
                <img src={commentIcon} alt="Comment icon" className="h-5 w-5 inline-block mr-2" />
-               <p className="text-gray-700">{commentContent}</p>
+               <p className="text-gray-700 comment-content">{commentContent}</p>
            </div>
            <div className="flex items-center">
                <img src={articleIcon} alt="Article icon" className="h-5 w-5 inline-block mr-2" />
-               <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 underline underline-offset-4 decoration-blue-700">{dimPosts.postTitle}</NavLink>
+               <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 underline underline-offset-4 decoration-blue-700 post-title">{dimPosts.postTitle}</NavLink>
            </div>
        </div>
    );

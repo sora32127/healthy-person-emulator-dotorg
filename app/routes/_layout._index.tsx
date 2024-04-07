@@ -175,78 +175,87 @@ export default function Feed() {
     const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
     return (
         <div>
-        <H2>最新の投稿</H2>
-        {mostRecentPosts.map((post) => (
-            <PostCard
-                key={post.postId}
-                postId={post.postId}
-                postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt}
-                tagNames={post.tagNames}
-                countLikes={post.countLikes}
-                countDislikes={post.countDislikes}
-            />
-        ))}
-        <NavLink
-            to="/feed?p=2"
-            className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
-        >
-        最新の投稿を見る
-        </NavLink>
-        <H2>最近いいねされた投稿</H2>
-        {recentVotedPosts.map((post) => (
-            <PostCard
-                key={post.postId}
-                postId={post.postId}
-                postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt}
-                tagNames={post.tagNames}
-                countLikes={post.countLikes}
-                countDislikes={post.countDislikes}
-            />
-        ))}
-        <NavLink
-            to="/feed?p=2&likeFrom=24&likeTo=0"
-            className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
-        >
-        最近いいねされた投稿を見る
-        </NavLink>
-        <H2>最新のコメント</H2>
-        {mostRecentComments.map((comment) => (
-            <CommentShowCard
-                key={comment.commentId}
-                commentContent={comment.commentContent}
-                commentDateGmt={comment.commentDateGmt}
-                commentAuthor={comment.commentAuthor}
-                postId={comment.postId}
-                dimPosts={comment.dimPosts}
-            />
-        ))}
-        <H2>コミュニティ選</H2>
-        {communityPosts.map((post) => (
-            <PostCard
-                key={post.postId}
-                postId={post.postId}
-                postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt}
-                tagNames={post.tagNames}
-                countLikes={post.countLikes}
-                countDislikes={post.countDislikes}
-            />
-        ))}
-
-        <H2>殿堂入り</H2>
-        {famedPosts.map((post) => (
-            <PostCard
-                key={post.postId}
-                postId={post.postId}
-                postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt}
-                tagNames={post.tagNames}
-                countLikes={post.countLikes}
-                countDislikes={post.countDislikes}
-            />
-        ))}
+            <div className="latest-posts">
+                <H2>最新の投稿</H2>
+                {mostRecentPosts.map((post) => (
+                    <PostCard
+                        key={post.postId}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tagNames}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                    />
+                ))}
+                <NavLink
+                    to="/feed?p=2"
+                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+                >
+                最新の投稿を見る
+                </NavLink>
+            </div>
+            <div className="recent-voted-posts">
+            <H2>最近いいねされた投稿</H2>
+                {recentVotedPosts.map((post) => (
+                    <PostCard
+                        key={post.postId}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tagNames}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                    />
+                ))}
+                <NavLink
+                    to="/feed?p=2&likeFrom=24&likeTo=0"
+                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+                >
+                最近いいねされた投稿を見る
+                </NavLink>
+            </div>
+            <div className="recent-comments">
+                <H2>最新のコメント</H2>
+                {mostRecentComments.map((comment) => (
+                    <CommentShowCard
+                        key={comment.commentId}
+                        commentContent={comment.commentContent}
+                        commentDateGmt={comment.commentDateGmt}
+                        commentAuthor={comment.commentAuthor}
+                        postId={comment.postId}
+                        dimPosts={comment.dimPosts}
+                    />
+                ))}
+            </div>
+            <div className="community-posts">
+                <H2>コミュニティ選</H2>
+                {communityPosts.map((post) => (
+                    <PostCard
+                        key={post.postId}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tagNames}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                    />
+                ))}
+            </div>
+            <div className="famed-posts">
+                <H2>殿堂入り</H2>
+                {famedPosts.map((post) => (
+                    <PostCard
+                        key={post.postId}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tagNames}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                    />
+                ))}
+            </div>
     </div>
     );
 }

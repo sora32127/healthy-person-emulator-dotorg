@@ -48,10 +48,10 @@ export default function PostCard({
     return (
         <div className="bg-white shadow-md rounded-md p-4 mb-4">
             <div className="flex justify-between items-center mb-2">
-                <p className="text-gray-600 text-sm">{formattedPostDate}</p>
+                <p className="text-gray-600 text-sm post-timestamp">{formattedPostDate}</p>
             </div>
             <img src = {articleIcon} alt = "Article icon" className = "h-5 w-5 inline-block mr-2" />
-            <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700">{postTitle}</NavLink>
+            <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700 post-title">{postTitle}</NavLink>
             {highLightedText && (
                 <p className="text-gray-700">{parse(highLightedText)}</p>
             )}
