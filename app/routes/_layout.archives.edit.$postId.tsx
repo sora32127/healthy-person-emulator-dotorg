@@ -35,7 +35,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     - なおかつ、自分以外のユーザー名が格納されている
     - なおかつ、lasteHeartBeatAtUTCから30分以内である
   */
- console.log(new Date().getTime())
   let isEditing = nowEditingInfo ? new Date().getTime() - nowEditingInfo.lastHeartBeatAtUTC.getTime() <= 1000 * 60 * 30 : false;
 
   if (nowEditingInfo){
@@ -221,7 +220,7 @@ export default function EditPost() {
                 id="postTitle"
                 name="postTitle"
                 defaultValue={postTitle}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 edit-post-title"
               />
             </div>
             <div className="mb-4">
@@ -242,7 +241,7 @@ export default function EditPost() {
                   type="text"
                   value={tagInputValue}
                   onChange={handleTagInputChange}
-                  className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 edit-tag-search-input"
                   placeholder="タグを検索"
                 />
               </div>
@@ -251,7 +250,7 @@ export default function EditPost() {
                   {tagSearchSuggestions.map((tag) => (
                     <li
                       key={tag.tagName}
-                      className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                      className={`px-4 py-2 cursor-pointer hover:bg-gray-100 edit-tag-${tag.tagName}`}
                       onClick={() => handleTagSelect(tag.tagName)}
                     >
                       {tag.tagName} ({tag.count})
@@ -272,7 +271,7 @@ export default function EditPost() {
                     <button
                       type="button"
                       onClick={() => handleTagRemove(tag)}
-                      className="ml-2"
+                      className="ml-2 edit-tag-remove-button"
                     >
                       x
                     </button>
@@ -291,7 +290,7 @@ export default function EditPost() {
             <input type="hidden" name="postContent" value={markdownContent} />
             <button
               type="submit"
-              className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+              className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600 edit-post-submit-button"
               disabled={navigation.state === "submitting"}
             >
               変更を保存する
