@@ -233,6 +233,7 @@ export default function Component() {
   })
 
   return (
+    <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
         
@@ -366,6 +367,7 @@ export default function Component() {
         </div>
         )}
     </div>
+  </>
   );
 }
 
