@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
 import { commitSession, getSession } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
@@ -108,4 +108,11 @@ export default function Login() {
             </div>
         </div>
     );
+}
+
+
+export const meta : MetaFunction = () => {
+    return [
+        { title: 'ログイン'}
+    ]
 }
