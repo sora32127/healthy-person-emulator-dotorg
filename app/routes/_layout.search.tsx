@@ -44,7 +44,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 
   if (searchType === "tag") {
-    const tagNames = url.searchParams.get("tags")?.split(" ") || [];
+    const tagNamesBySpace = url.searchParams.get("tags")?.split(" ") || [];
+    // 「次へ」「前へ」のリンクを押したとき、なぜかカンマ区切りでタグが渡されるので、その対策である
+    const tagNamesByComma = url.searchParams.get("tags")?.split(",") || [];
+    const tagNames = tagNamesBySpace.length > tagNamesByComma.length ? tagNamesBySpace : tagNamesByComma;
+
     const relatedTags = await prisma.relPostTags.findMany({
       select: {
         postId: true,
@@ -426,7 +430,7 @@ export default function Component() {
     </Form>
       {data && data.length > 0 ? (
         <>
-          <div className="search-result">
+          <div className="search-results">
             {data.map((post: any) => (
               <PostCard
                 postId={post.postId}
