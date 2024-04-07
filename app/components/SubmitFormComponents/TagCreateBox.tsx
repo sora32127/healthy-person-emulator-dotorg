@@ -35,7 +35,7 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
           value={tagInput}
           onChange={handleTagInputChange}
           placeholder="タグを入力..."
-          className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+          className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none tag-create-box-input"
         />
       </div>
       <button
