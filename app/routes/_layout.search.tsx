@@ -399,7 +399,7 @@ export default function Component() {
                 {tagSearchSuggestions.map((tag) => (
                   <li
                     key={tag.tagName}
-                    className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 tag-select"
                     onClick={() => handleTagSelect(tag.tagName)}
                   >
                     {tag.tagName} ({tag.count})
