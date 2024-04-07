@@ -44,11 +44,37 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 
   if (searchType === "tag") {
-    const tags = url.searchParams.get("tags")?.split(" ") || [];
-    const totalCount = await prisma.relPostTags.count({
-      where: { dimTag: { tagName: { in: tags } } },
+    const tagNames = url.searchParams.get("tags")?.split(" ") || [];
+    const relatedTags = await prisma.relPostTags.findMany({
+      select: {
+        postId: true,
+        dimTag: { select: { tagName: true } },
+      },
+      where: { dimTag: { tagName: { in: tagNames } } },
     });
-
+  
+    // relatedTagsは{ postId: 35261, dimTag: { tagName: 'Twitter' } }のような形式で、一レコードで一つのタグ名しか持っていない
+    // postIdごとにタグ名をすべて持っている形式に変換する
+    const postIdTagsMap = relatedTags.reduce((acc, cur) => {
+      const { postId, dimTag } = cur;
+      if (acc[postId]) {
+        acc[postId].push(dimTag.tagName);
+      } else {
+        acc[postId] = [dimTag.tagName];
+      }
+      return acc;
+    }, {} as Record<number, string[]>);
+  
+  
+    // タグ名が全て含まれているpostIdのみを抽出
+    const filteredPostIds = Object.entries(postIdTagsMap)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    .filter(([_, postTags]) => tagNames.every((tag) => postTags.includes(tag)))
+    .map(([postId]) => Number(postId));
+  
+  
+    const totalCount = filteredPostIds.length;
+  
     const searchResultsRaw = await prisma.dimPosts.findMany({
       select: {
         postId: true,
@@ -66,12 +92,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           },
         },
       },
-      where: { rel_post_tags: { some: { dimTag: { tagName: { in: tags } } } } },
+      where: { postId: { in: filteredPostIds } },
       orderBy: { postDateGmt: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
-
+  
     const searchResults = searchResultsRaw.map((post) => {
       const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
       return {
@@ -83,19 +109,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         tagNames,
       };
     });
-
+  
     return json({
       data: searchResults,
       allTagsOnlyForSearch,
       totalCount,
       pageNumber,
       searchType,
-      tags: tags,
+      tags: tagNames,
       title: null,
       query: null,
       url,
     });
-
   }
   else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
