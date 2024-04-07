@@ -68,31 +68,35 @@ export async function loader(){
 export default function Random() {
     const { randomPosts, randomComments } = useLoaderData<typeof loader>();
     return (
-        <>
-        <H1>ランダム記事</H1>
-        {randomPosts.map((post) => (
-            <PostCard
-                key={post.postId}
-                postId={post.postId}
-                postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt}
-                tagNames={post.tagNames}
-                countLikes={post.countLikes}
-                countDislikes={post.countDislikes}
-            />
-        ))}
-        <H1>ランダムコメント</H1>
-        {randomComments.map((comment) => (
-            <CommentShowCard
-                key={comment.commentId}
-                commentContent={comment.commentContent}
-                commentDateGmt={comment.commentDateGmt}
-                commentAuthor={comment.commentAuthor}
-                postId={comment.postId}
-                dimPosts={comment.dimPosts}
-            />
-        ))}
-        </>
+        <div>
+            <div className="random-posts">
+                <H1>ランダム記事</H1>
+                {randomPosts.map((post) => (
+                    <PostCard
+                        key={post.postId}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tagNames}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                    />
+                ))}
+            </div>
+            <div className="random-comments">
+                <H1>ランダムコメント</H1>
+                {randomComments.map((comment) => (
+                    <CommentShowCard
+                        key={comment.commentId}
+                        commentContent={comment.commentContent}
+                        commentDateGmt={comment.commentDateGmt}
+                        commentAuthor={comment.commentAuthor}
+                        postId={comment.postId}
+                        dimPosts={comment.dimPosts}
+                    />
+                ))}
+                </div>
+        </div>
     );
 }
 

@@ -156,34 +156,37 @@ export default function Feed() {
   return (
     <div>
       <H1>フィード</H1>
-      <Form method="post" className="mb-4">
-        <div className="flex items-center">
-          <button
-            type="submit"
-            name="action"
-            value="sortByNew"
-            className={`px-4 py-2 mr-2 ${
-              !likeFromHour
-                ? "bg-blue-500 text-white"
-                : "bg-white text-blue-500 border border-blue-500"
-            } rounded`}
-          >
-            新着順
-          </button>
-          <button
-            type="submit"
-            name="action"
-            value="sortByLikes"
-            className={`px-4 py-2 ${
-              likeFromHour
-                ? "bg-blue-500 text-white"
-                : "bg-white text-blue-500 border border-blue-500"
-            } rounded`}
-          >
-            いいね順
-          </button>
-        </div>
-      </Form>
+      <div className="feed-type-select">
+        <Form method="post" className="mb-4">
+          <div className="flex items-center">
+            <button
+              type="submit"
+              name="action"
+              value="sortByNew"
+              className={`px-4 py-2 mr-2 ${
+                !likeFromHour
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-blue-500 border border-blue-500"
+              } rounded`}
+            >
+              新着順
+            </button>
+            <button
+              type="submit"
+              name="action"
+              value="sortByLikes"
+              className={`px-4 py-2 ${
+                likeFromHour
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-blue-500 border border-blue-500"
+              } rounded`}
+            >
+              いいね順
+            </button>
+          </div>
+        </Form>
+      </div>
+      <div className="feed-posts">
       {posts.map((post) => (
         <PostCard
           key={post.postId}
@@ -195,7 +198,8 @@ export default function Feed() {
           countDislikes={post.countDislikes}
         />
       ))}
-      <div className="flex justify-center mt-8">
+      </div>
+      <div className="flex justify-center mt-8 feed-navigation">
         <Form method="post" className="flex items-center">
           <input type="hidden" name="currentPage" value={currentPage} />
           <input type="hidden" name="totalPages" value={totalPages} />
@@ -208,7 +212,7 @@ export default function Feed() {
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
-            } rounded`}
+            } rounded feed-goto-first-page`}
           >
             最初
           </button>
@@ -221,7 +225,7 @@ export default function Feed() {
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
-            } rounded`}
+            } rounded feed-goto-back-page`}
           >
             前へ
           </button>
@@ -237,7 +241,7 @@ export default function Feed() {
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
-            } rounded`}
+            } rounded feed-goto-next-page`}
           >
             次へ
           </button>
@@ -250,7 +254,7 @@ export default function Feed() {
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
-            } rounded`}
+            } rounded feed-goto-last-page`}
           >
             最後
           </button>
