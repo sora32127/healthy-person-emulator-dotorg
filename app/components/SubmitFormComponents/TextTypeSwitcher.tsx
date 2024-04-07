@@ -23,6 +23,7 @@ const ToggleButton: React.FC<{
       value={value}
       onClick={onChange}
       className={`${baseStyle} ${checked ? checkedStyle : uncheckedStyle} text-white`}
+      type='button'
     >
       {children}
     </button>
