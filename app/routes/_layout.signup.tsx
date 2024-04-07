@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { H1 } from "~/components/Headings";
 import { supabase } from "~/modules/supabase.server";
 import { useActionData, Form } from "@remix-run/react";
@@ -197,4 +197,10 @@ export default function Component() {
       )}
     </div>
   );
+}
+
+export const meta : MetaFunction = () => {
+  return [
+      { title: 'サインアップ'}
+  ]
 }
