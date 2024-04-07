@@ -80,7 +80,7 @@ const TagSelectionBox = ({
             <ul className="space-y-2 max-h-80 overflow-y-auto">
             {filteredTags.map(tag => (
             <button
-                key={tag.tagName}
+                key={`${tag.tagName}-${tag.count}`}
                 className={`px-4 py-2 rounded-lg cursor-pointer focus:outline-none ${
                 parentComponentStateValues.includes(tag.tagName)
                     ? 'text-white bg-blue-500'
