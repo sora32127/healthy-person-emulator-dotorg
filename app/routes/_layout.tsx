@@ -66,6 +66,7 @@ export default function Component() {
   );
 
   return (
+    <>
     <div className="flex flex-col min-h-screen">
       {transitionStatus.state === "loading" || transitionStatus.state === "submitting" && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 z-50 flex items-center justify-center">
@@ -125,34 +126,36 @@ export default function Component() {
           </ul>
         </div>
       )}
-      <footer className="bg-gray-100 py-8 md:pb-0">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-center items-center">
-          <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
-          <div className="flex flex-col space-y-2 ml-2">
-            <NavLink
-              to="https://twitter.com/contradiction29"
-              className="text-gray-700 hover:text-blue-500"
-            >
-              管理人に連絡
-            </NavLink>
-            <NavLink
-              to="https://github.com/sora32127/healthy-person-emulator-dotorg"
-              className="text-gray-700 hover:text-blue-500"
-            >
-              Contribute
-            </NavLink>
-            <NavLink
-              to="/privacyPolicy"
-              className="text-gray-700 hover:text-blue-500"
-            >
-              プライバシー・ポリシー/免責事項
-            </NavLink>
-          </div>
-        </div>
-        <p className="text-gray-600 text-center mt-4">&copy; {new Date().getFullYear()} All rights reserved.</p>
-      </div>
-    </footer>
     </div>
+    <footer className="bg-gray-100 py-8 md:pb-0">
+    <div className="container mx-auto px-4">
+      <div className="flex justify-center items-center">
+        <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
+        <div className="flex flex-col space-y-2 ml-2">
+          <NavLink
+            to="https://twitter.com/contradiction29"
+            className="text-gray-700 hover:text-blue-500"
+          >
+            管理人に連絡
+          </NavLink>
+          <NavLink
+            to="https://github.com/sora32127/healthy-person-emulator-dotorg"
+            className="text-gray-700 hover:text-blue-500"
+          >
+            Contribute
+          </NavLink>
+          <NavLink
+            to="/privacyPolicy"
+            className="text-gray-700 hover:text-blue-500"
+          >
+            プライバシー・ポリシー/免責事項
+          </NavLink>
+        </div>
+      </div>
+      <p className="text-gray-600 text-center mt-4">&copy; {new Date().getFullYear()} All rights reserved.</p>
+    </div>
+  </footer>
+  </>
+    
   );
 }
