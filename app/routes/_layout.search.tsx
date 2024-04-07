@@ -301,62 +301,62 @@ export default function Component() {
       <H1>検索</H1>
       <Form action="/search" method="post" className="mb-8">
         <input type="hidden" name="searchType" value={currentSearchType} />
-        <div className="flex items-center">
+        <div className="flex flex-col md:flex-row items-center">
           <select
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className="border border-gray-300 rounded px-4 py-2 mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
           >
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
           {currentSearchType === "tag" && (
-            <div className="flex items-center w-full">
+            <div className="w-full md:flex-row">
               <input
                 type="text"
                 value={tagInputValue}
                 onChange={handleTagInputChange}
-                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
                 placeholder="タグを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               >
                 検索
               </button>
             </div>
           )}
           {currentSearchType === "fullText" && (
-            <div className="flex items-center w-full">
+            <div className="w-full md:flex-1">
               <input
                 type="text"
                 name="q"
                 defaultValue={query}
-                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
                 placeholder="検索キーワードを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               >
                 検索
               </button>
             </div>
           )}
           {currentSearchType === "title" && (
-            <div className="flex items-center w-full">
+            <div className="w-full md:flex-1">
               <input
                 type="text"
                 name="title"
                 defaultValue={title}
-                className="border border-gray-300 rounded-l px-4 py-2 w-5/6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
                 placeholder="タイトルを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mx-2"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               >
                 検索
               </button>
@@ -398,7 +398,7 @@ export default function Component() {
             </div>
           </div>
         )}
-      </Form>
+    </Form>
       {data && data.length > 0 ? (
         <>
           {data.map((post: any) => (
