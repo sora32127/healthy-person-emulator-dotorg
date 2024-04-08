@@ -323,6 +323,21 @@ export default function Component() {
         : `&text=${encodeURIComponent(query)}`
     }`;
   };
+
+  const searchResultTitlePresentation = () => {
+    if (searchType === "tag") {
+      if (!tags){
+        return null;
+      }
+      return `タグ検索: ${tags.join(", ")}`;
+    } else if (searchType === "title") {
+      return `タイトル検索: ${title}`;
+    } else if (searchType === "fullText") {
+      return `全文検索: ${query}`;
+    } else {
+      return null;
+    }
+  }
   
 
   return (
@@ -428,6 +443,7 @@ export default function Component() {
           </div>
         )}
     </Form>
+      <p className="text-lg mb-4 font-bold">{searchResultTitlePresentation()}</p>
       {data && data.length > 0 ? (
         <>
           <div className="search-results">
