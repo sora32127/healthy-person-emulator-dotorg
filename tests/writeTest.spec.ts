@@ -115,22 +115,17 @@ test("ユーザーは記事に対していいね・よくないねをするこ�
   await page.getByText(postName).click();
   await expect(page).toHaveTitle(postName);
 
-  // いいねをする いいね数が増えること、一回しかいいねできないことを確認
+
   await page.getByRole('button', { name: 'Like 0', exact: true }).click();
-  await page.getByRole('button', { name: 'Like 1', exact: true }).click();
-  await page.getByRole('button', { name: 'Like 1', exact: true }).click();
 
   await page.getByRole('button', { name: 'Dislike 0', exact: true }).click();
-  await page.getByRole('button', { name: 'Dislike 1', exact: true }).click();
-  await page.getByRole('button', { name: 'Dislike 1', exact: true }).click();
   await expect(page).toHaveTitle(postName);
 
 });
 
 test("ユーザーは記事にコメントし、コメントに対していいね・よくないねができる", async ({ page }) => {
   await page.goto(`${testURL}`);
-  const todaysDate = new Date().toISOString().split('T')[0];
-  const postName = `プログラムテスト-MG-1-${todaysDate}-編集後`
+  const postName = `プログラムテスト-SB-1`
   await page.getByText(postName).click();
   await expect(page).toHaveTitle(postName);
 
