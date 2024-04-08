@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return { ...post, tagNames };
     });
 
-    totalCount = await prisma.fctPostVoteHisotry.count({
+    const voteData = await prisma.fctPostVoteHisotry.findMany({
         where: {
             voteDateGmt: {
             gte: gteDate,
@@ -74,7 +74,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
             },
             voteTypeInt: { in: [1] },
         },
+        select: {
+            postId: true,
+        },
     });
+
+    totalCount = new Set(voteData.map((post) => post.postId)).size;
   }
   else {
     const mostRecentPosts = await prisma.dimPosts.findMany({
