@@ -34,9 +34,11 @@ export async function createEmbedding({ postId, postContent } : CreateEmbeddingI
 
     const parsedResponse = await response.json();
     const embedding = Array.from(parsedResponse.data[0].embedding)
+    const tokenCount = parsedResponse.usage.total_tokens
 
     const { error } = await supabase.from("dim_posts").update({
-        content_embedding: embedding
+        content_embedding: embedding,
+        token_count : tokenCount
     }).eq("post_id", postId);
 
 
