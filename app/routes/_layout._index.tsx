@@ -48,8 +48,8 @@ export async function loader() {
         by: ["postId"],
         where: { 
             voteDateGmt : { 
-                gte: new Date("2024-03-12"),
-                lte: new Date("2024-03-13")
+                gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+                lte: new Date(),
             },
             voteTypeInt : { in : [1]}
         },
