@@ -127,8 +127,15 @@ export default function Component() {
 
   const isLiked = likedPages.includes(postContent?.postId);
   const isDisliked = dislikedPages.includes(postContent?.postId);
+  const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
+  const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
 
   const handleVote = async (voteType: "like" | "dislike") => {
+    if (voteType === "like") {
+      setIsPageLikeButtonPushed(true);
+    } else if (voteType === "dislike") {
+      setIsPageDislikeButtonPushed(true);
+    }
     if (isLiked && isDisliked) {
       return;
     }
@@ -266,7 +273,7 @@ export default function Component() {
               isLiked ? "text-blue-500" : ""
             } post-like-button`}
             onClick={() => handleVote("like")}
-            disabled={isLiked}
+            disabled={isPageLikeButtonPushed}
           >
             <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2 post-like-count" />
             {postContent?.countLikes}
@@ -276,7 +283,7 @@ export default function Component() {
               isDisliked ? "text-red-500" : ""
             } post-dislike-button`}
             onClick={() => handleVote("dislike")}
-            disabled={isDisliked}
+            disabled={isPageDislikeButtonPushed}
           >
             <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2 post-dislike-count" />
             {postContent?.countDislikes}
