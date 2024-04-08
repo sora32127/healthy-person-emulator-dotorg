@@ -12,3 +12,4 @@ node_modules
 localhost-key.pem
 localhost.pem
 /app/embeddingBatch.ts
+/docs/secretvariables.md

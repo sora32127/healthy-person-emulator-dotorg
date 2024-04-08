@@ -1,2 +1,1 @@
-- たまにdenied for schema publicとか出るので、それの対処法を調べる
 - embeddingをやる
