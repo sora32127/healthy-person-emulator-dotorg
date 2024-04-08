@@ -381,50 +381,39 @@ export async function action({ request }:ActionFunctionArgs ) {
                 commentStatus: "open",
             },
         });
-        for (let i = 0; i < selectedTags.length; i++) {
-            let tagId
-            tagId = await prisma.dimTags.findFirst({
-                where: {
-                    tagName: selectedTags[i],
+        const uniqueTags = [...new Set([...selectedTags, ...createdTags])];
+        const existingTags = await prisma.dimTags.findMany({
+            where: {
+                tagName: {
+                    in: uniqueTags,
                 },
-            });
-            if (!tagId) {
-                tagId = await prisma.dimTags.create({
+            },
+        });
+
+        const existingTagNames = existingTags.map((tag) => tag.tagName);
+        const newTagNames = uniqueTags.filter((tag) => !existingTagNames.includes(tag));
+
+        const newTags = await Promise.all(
+            newTagNames.map((tagName) =>
+                prisma.dimTags.create({
                     data: {
-                        tagName: selectedTags[i],
+                        tagName,
                     },
-                });
-            }
-            tagId = tagId.tagId
-            await prisma.relPostTags.create({
-                data: {
-                    postId: newPost.postId,
-                    tagId: tagId,
-                },
-            });
-        }
-        for (let i = 0; i < createdTags.length; i++) {
-            let tagId
-            tagId = await prisma.dimTags.findFirst({
-                where: {
-                    tagName: createdTags[i],
-                },
-            });
-            if (!tagId) {
-                tagId = await prisma.dimTags.create({
+                })
+            )
+        );
+
+        const allTags = [...existingTags, ...newTags];
+        await Promise.all(
+            allTags.map((tag) =>
+                prisma.relPostTags.create({
                     data: {
-                        tagName: createdTags[i],
+                        postId: newPost.postId,
+                        tagId: tag.tagId,
                     },
-                });
-            }
-            tagId = tagId.tagId
-            await prisma.relPostTags.create({
-                data: {
-                    postId: newPost.postId,
-                    tagId: tagId,
-                },
-            });
-        }
+                })
+            )
+        );
         
         return newPost
     });
