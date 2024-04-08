@@ -65,7 +65,6 @@ model FctCommentVoteHisotry {
   commentId             Int         @map("comment_id")
   voteType              Int         @map("vote_type")
   postId                Decimal     @default(0) @map("post_id") @db.Decimal
-  date                  BigInt      @default(0)
   commentVoteDateJst    DateTime    @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("comment_vote_date_jst") @db.Timestamptz(6)
   comment_vote_date_utc DateTime    @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   dim_comments          DimComments @relation(fields: [commentId], references: [commentId], onDelete: Cascade, map: "public_fct_comment_vote_history_comment_id_fkey")
