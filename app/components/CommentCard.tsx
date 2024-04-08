@@ -59,6 +59,9 @@ export default function CommentCard({
   const [replyAuthor, setReplyAuthor] = useState("Anonymous");
   const [replyContent, setReplyContent] = useState("");
 
+  const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
+  const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
+
   const submit = useSubmit();
 
   const handleReplyCommentSubmit = async (e: React.FormEvent) => {
@@ -103,8 +106,8 @@ export default function CommentCard({
           className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
             isLiked ? "text-blue-500" : ""
           }`}
-          onClick={() => onCommentVote(commentId, "like")}
-          disabled={isLiked}
+          onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
+          disabled={isCommentLikeButtonPushed}
         >
           <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2" />
           {likesCount}
@@ -113,8 +116,8 @@ export default function CommentCard({
           className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
             isDisliked ? "text-red-500" : ""
           }`}
-          onClick={() => onCommentVote(commentId, "dislike")}
-          disabled={isDisliked}
+          onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
+          disabled={isCommentDislikeButtonPushed}
         >
           <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2" />
           {dislikesCount}
