@@ -333,7 +333,10 @@ export default function Component() {
           )}
         </div>
         <div className="my-4">
-        <ShareButtons />
+            <ShareButtons
+              currentURL={`https://healthy-person-emulator.org/archives/${postContent?.postId}`}
+              postTitle={postContent?.postTitle || ""}
+            />
         </div>
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>

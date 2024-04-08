@@ -1,49 +1,38 @@
-import { useEffect } from "react";
+import XLogo from "~/src/assets/X_logo_2023_(white).png";
 
-export default function ShareButtons() {
-    useEffect(() => {
-        const twitterScript = document.createElement("script");
-        twitterScript.src = "https://platform.twitter.com/widgets.js";
-        twitterScript.async = true;
-        document.body.appendChild(twitterScript);
+interface ShareButtonsProps {
+    currentURL: string;
+    postTitle: string;
+}
 
-        const hatenaScript = document.createElement("script");
-        hatenaScript.src = "https://b.st-hatena.com/js/bookmark_button.js";
-        hatenaScript.type = "text/javascript";
-        hatenaScript.dataset.scripttype = "module";
-        document.body.appendChild(hatenaScript);
-
-        return () => {
-            document.body.removeChild(twitterScript);
-            document.body.removeChild(hatenaScript);
-        };
-    }, []);
+export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProps) {
+    const twitterShareText = encodeURIComponent(`${postTitle}-健常者エミュレータ事例集`);
+    const url = new URL(currentURL);
+    const hatenaBlogUrl = url.hostname + url.pathname;
 
     return (
         <div className="flex justify-center items-center space-x-4">
-            <a
-                href="https://twitter.com/share?ref_src=twsrc%5Etfw"
-                className="twitter-share-button"
-                data-size="large"
-                data-lang="ja"
-                data-show-count="false"
-            >
-                Tweet
-            </a>
-            <a
-                href="https://b.hatena.ne.jp/entry/"
-                className="hatena-bookmark-button"
-                data-hatena-bookmark-layout="vertical-normal"
-                data-hatena-bookmark-lang="ja"
-                title="このエントリーをはてなブックマークに追加"
-            >
-                <img
-                    src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png"
-                    alt="このエントリーをはてなブックマークに追加"
-                    width="20"
-                    height="20"
-                />
-            </a>
+            <button type="button" className="bg-black flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
+                <a
+                    href={`https://twitter.com/intent/tweet?text=${twitterShareText}&url=${encodeURIComponent(currentURL)}`}
+                    className="flex items-center"
+                >
+                    <img src={XLogo} alt="X" width="20" height="20" />
+                    <p className="text-white pl-2">シェア</p>
+                </a>
+           </button>
+           <button type="button">
+                <a
+                    href={`https://b.hatena.ne.jp/entry/s/${hatenaBlogUrl}`}
+                >
+                    <img
+                        src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png"
+                        alt="このエントリーをはてなブックマークに追加"
+                        width="40"
+                        height="40"
+                    />
+                </a>
+            </button>
         </div>
     );
 }
