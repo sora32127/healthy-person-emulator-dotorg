@@ -101,7 +101,7 @@ export default function Component() {
 }
 
 export const meta: MetaFunction = () => {
-    const title = "ガイドライン";
+    const title = "サイト説明";
     const description = "サイトの趣旨の説明";
     const ogLocale = "ja_JP";
     const ogSiteName = "健常者エミュレータ事例集";

@@ -188,7 +188,7 @@ test('ユーザーは寄付ページを閲覧できる', async ({ page }) => {
   await expect(page).toHaveTitle(/KENJOUSYA emulator/);
 });
 
-test('ユーザーはガイドラインページを閲覧できる', async ({ page }) => {
+test('ユーザーはサイト説明ページを閲覧できる', async ({ page }) => {
   await page.goto(`${testURL}/readme`);
-  await expect(page).toHaveTitle(/ガイドライン/);
+  await expect(page).toHaveTitle(/サイト説明/);
 });

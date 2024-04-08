@@ -2,7 +2,7 @@ import { MetaFunction, json } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
-import { H2 } from "~/components/Headings";
+import { H1, H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
 
 interface PostCardProps {
@@ -174,6 +174,9 @@ export async function loader() {
 export default function Feed() {
     const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
     return (
+        <>
+        <H1>トップページ</H1>
+        <p>サイトの詳細に関しては<NavLink to="/readme" className="text-blue-600 underline underline-offset-4">サイト説明</NavLink>をご覧ください</p>
         <div>
             <div className="latest-posts">
                 <H2>最新の投稿</H2>
@@ -256,6 +259,7 @@ export default function Feed() {
                     />
                 ))}
             </div>
-    </div>
+        </div>
+    </>
     );
 }

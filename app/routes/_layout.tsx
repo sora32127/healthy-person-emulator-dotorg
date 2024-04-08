@@ -39,7 +39,7 @@ export default function Component() {
 
   const menuItems = [
     { to: "/beSponsor", text: "寄付する", icon: donationIcon },
-    { to: "/readme", text: "ガイドライン", icon: guidelineIcon },
+    { to: "/readme", text: "サイト説明", icon: guidelineIcon },
     ...(isLoggedIn
       ? [
           { to: "/logout", text: "ログアウト", icon: logoutIcon },
