@@ -67,7 +67,7 @@ export default function Component() {
   return (
     <>
     <div className="flex flex-col min-h-screen">
-      <div className="mx-4 mb-32 md:mt-32 md:mx-10 lg:mx-20 xl:mx-40 2xl:mx-60">
+      <div className="mx-4 mb-32 md:mt-32 md:mx-20 lg:mx-40 xl:mx-80 2xl:mx-96">
         <Outlet />
       </div>
       <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
