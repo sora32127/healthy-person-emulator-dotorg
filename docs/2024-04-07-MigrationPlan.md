@@ -20,12 +20,10 @@
 - 投稿フォームの閉鎖も同時に行う
 - 実際の動作は以下の通り
   - LightSailのコンソールからインスタンスを停止する
+    - 削除はしない
   - CloudflareのコンソールからPagesを削除する
 
-## ドメインのVercelへの移行
-- Vercelのコンソールからドメインを追加する
-- CloudflareのコンソールからDNSの設定を変更する
-- [参考](https://zenn.dev/keitakn/articles/add-cloudflare-domain-to-vercel)
+
 
 ## データ移行
 - プレ移行 04/08
@@ -201,6 +199,10 @@ COMMIT;
   commit;
   
   ```
+## ドメインのVercelへの移行
+- Vercelのコンソールからドメインを追加する
+- CloudflareのコンソールからDNSの設定を変更する
+- [参考](https://zenn.dev/keitakn/articles/add-cloudflare-domain-to-vercel)
 
 ## Twitter更新通知Botの取得元変更
 - あとは`sls deploy --stage prod`を実行するだけ
