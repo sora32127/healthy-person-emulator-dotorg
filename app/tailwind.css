@@ -30,11 +30,11 @@ h1 {
   @apply font-bold;
 }
 
-.postContent ul, .markdownEditorPreview ul{
+.postContent ul, .markdownEditorPreview ul, .templateSubmitForm ul{
   @apply list-disc list-outside mb-4 ml-4;
 }
 
-.postContent li, .markdownEditorPreview li {
+.postContent li, .markdownEditorPreview li, .templateSubmitForm li {
   @apply mb-1;
 }
 
@@ -49,24 +49,4 @@ h1 {
 .markdownEditorPreview th {
   @apply bg-gray-100 text-left font-semibold 
 
-}
-
-.templateSubmitForm h1 {
-  margin-bottom: 1rem;
-}
-
-.templateSubmitForm ul {
-  list-style-type: disc;
-  list-style-position: outside;
-  margin-bottom: 1.5rem;
-  margin-left: 1.5rem;
-  margin-right: 1.5rem;
-}
-
-.templateSubmitForm li {
-  margin-bottom: 0.5rem;
-}
-
-.templateSubmitForm h2 {
-  margin-bottom: 1rem;
 }
