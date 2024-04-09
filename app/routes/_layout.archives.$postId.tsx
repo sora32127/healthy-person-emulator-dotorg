@@ -274,7 +274,7 @@ export default function Component() {
               isLiked ? "text-blue-500 font-bold" : ""
             } post-like-button`}
             onClick={() => handleVote("like")}
-            disabled={isPageLikeButtonPushed}
+            disabled={isPageLikeButtonPushed || isLiked}
           >
             <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2 post-like-count" />
             {postContent?.countLikes}
@@ -284,7 +284,7 @@ export default function Component() {
               isDisliked ? "text-red-500 font-bold" : ""
             } post-dislike-button`}
             onClick={() => handleVote("dislike")}
-            disabled={isPageDislikeButtonPushed}
+            disabled={isPageDislikeButtonPushed || isDisliked}
           >
             <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2 post-dislike-count" />
             {postContent?.countDislikes}

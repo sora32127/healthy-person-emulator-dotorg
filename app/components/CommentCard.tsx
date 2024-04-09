@@ -107,7 +107,7 @@ export default function CommentCard({
             isLiked ? "text-blue-500 fonr-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
-          disabled={isCommentLikeButtonPushed}
+          disabled={isCommentLikeButtonPushed || isLiked}
         >
           <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2" />
           {likesCount}
@@ -117,7 +117,7 @@ export default function CommentCard({
             isDisliked ? "text-red-500 font-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
-          disabled={isCommentDislikeButtonPushed}
+          disabled={isCommentDislikeButtonPushed || isDisliked}
         >
           <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2" />
           {dislikesCount}
