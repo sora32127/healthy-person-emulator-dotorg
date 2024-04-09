@@ -60,7 +60,7 @@ export default function Component() {
         }`
       }
     >
-      <img src={item.icon} alt={item.text} className="mx-auto" />
+      <img src={item.icon} alt={item.text} className="mx-auto w-6 h-6 md:w-8 md:h-8" />
       {item.text}
     </NavLink>
   );
@@ -81,7 +81,7 @@ export default function Component() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="block text-center text-gray-700 hover:text-blue-500"
             >
-              <img src={menuIcon} alt="Menu" className="mx-auto" />
+              <img src={menuIcon} alt="Menu" className="mx-auto w-6 h-6" />
               メニュー
             </button>
           </li>
@@ -112,7 +112,7 @@ export default function Component() {
                   }
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <img src={item.icon} alt={item.text} className="inline-block mr-2" />
+                  <img src={item.icon} alt={item.text} className="inline-block mr-2 w-6 h-6" />
                   {item.text}
                 </NavLink>
               </li>
