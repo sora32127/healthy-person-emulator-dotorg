@@ -204,5 +204,8 @@ COMMIT;
 - CloudflareのコンソールからDNSの設定を変更する
 - [参考](https://zenn.dev/keitakn/articles/add-cloudflare-domain-to-vercel)
 
+## Cloudflare TurnStyleのキー変更
+- Vercelの環境変数設定からやるだけ
+
 ## Twitter更新通知Botの取得元変更
 - あとは`sls deploy --stage prod`を実行するだけ
