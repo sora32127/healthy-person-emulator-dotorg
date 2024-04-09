@@ -152,7 +152,7 @@ export default function Component() {
           </NavLink>
         </div>
       </div>
-      <p className="text-gray-600 text-center mt-4">&copy; {new Date().getFullYear()} All rights reserved.</p>
+      <p className="text-gray-600 text-center mt-4 pb-16 mb:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
     </div>
   </footer>
   </>
