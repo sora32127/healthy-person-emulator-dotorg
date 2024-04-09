@@ -59,7 +59,7 @@ export default function Component() {
         }`
       }
     >
-      <img src={item.icon} alt={item.text} className="mx-auto w-6 h-6 md:w-8 md:h-8" />
+      <img src={item.icon} alt={item.text} className="mx-6 w-6 h-6 md:w-8 md:h-8" />
       {item.text}
     </NavLink>
   );
@@ -71,7 +71,7 @@ export default function Component() {
         <Outlet />
       </div>
       <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
-        <ul className="flex justify-around">
+        <ul className="flex justify-between">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
           ))}
@@ -80,7 +80,7 @@ export default function Component() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="block text-center text-gray-700 hover:text-blue-500"
             >
-              <img src={menuIcon} alt="Menu" className="mx-auto w-6 h-6" />
+              <img src={menuIcon} alt="Menu" className="mx-6 w-6 h-6" />
               メニュー
             </button>
           </li>
