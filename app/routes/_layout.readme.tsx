@@ -11,7 +11,7 @@ export default function Component() {
                 <li>このサイトは、現実世界に存在する暗黙の知識を集積することで、知識のギャップを解消し、ユーザー全体でよりよい生活を築いていくために生まれました</li>
                 <li>暗黙の知識を言語化して集積し、健常者エミュレータを動作させ、現実世界を生きる糧とするのが目的です</li>
                 <li>健常者エミュレータが何なのかは<a href="https://contradiction29.hatenablog.com/entry/2021/06/30/210154">管理人が書いた文章</a>を参照してください</li>
-                <li>問い合わせは管理人<a href="https://twitter.com/contradiction29">@contradiction29のXのDM</a>までお願いします</li>
+                <li>問い合わせは管理人<a href="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088">@contradiction29のXのDM</a>までお願いします</li>
             </ul>
             <H2>ユーザーガイドライン</H2>
             <p>健常者エミュレータ事例集に対して、記事やコメントの投稿、記事の編集を行うユーザーに対しては、以下のガイドラインに則って行動することが求められます。</p>
