@@ -132,16 +132,22 @@ export default function Component() {
             管理人に連絡
           </NavLink>
           <NavLink
-            to="https://github.com/sora32127/healthy-person-emulator-dotorg"
+            to="/readme"
             className="text-gray-700 hover:text-blue-500"
           >
-            Contribute
+            サイト説明
           </NavLink>
           <NavLink
             to="/privacyPolicy"
             className="text-gray-700 hover:text-blue-500"
           >
             プライバシー・ポリシー/免責事項
+          </NavLink>
+          <NavLink
+            to="/beSponsor"
+            className="text-gray-700 hover:text-blue-500"
+          >
+            寄付する
           </NavLink>
         </div>
       </div>
