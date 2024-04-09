@@ -25,17 +25,16 @@
 
 
 
-## データ移行
-- プレ移行 04/08
-  - 移行のチュートリアルが目的
-  - 既存WordpressサイトのデータをSupabaseに移管する
-  - 既存Supabaseのデータを一度すべてTruncateする
-  - 既存WordpressサイトのデータをSupabaseに移行する
-    - wp_**テーブルからINSERT文でデータを移行する
-    - likebtnデータのみCSV形式で移行する
-    - この際に利用したINSERT文を残しておく
-- 本移行 04/09
-  - サイトを閉鎖したうえでの実行
+## データ移行手順
+- ユーザー向け通知の実施
+- LightStartからメンテナンスモードに移行
+- Cloudflare Pagesから投稿フォームを削除
+- Supabase用にデータを移行、likebtnデータをダウンロード
+- Supabase用のデータ移行が完了次第、LightSailインスタンスを停止
+- likebtnデータをSupabaseに移行
+- Supabase用のデータ移行が完了次第、bitnami_wordpressスキーマのデータをpublicスキーマに移行
+- Vercelにドメインを移行
+- 直IPで接続し、問題なく動作することを確認
 
 ### 移行プロセス詳細
 - 既存データをSupabase内部に移動
