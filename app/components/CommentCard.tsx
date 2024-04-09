@@ -104,7 +104,7 @@ export default function CommentCard({
       <div className="flex items-center mt-4">
         <button
           className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
-            isLiked ? "text-blue-500" : ""
+            isLiked ? "text-blue-500 fonr-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
           disabled={isCommentLikeButtonPushed}
@@ -114,7 +114,7 @@ export default function CommentCard({
         </button>
         <button
           className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
-            isDisliked ? "text-red-500" : ""
+            isDisliked ? "text-red-500 font-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
           disabled={isCommentDislikeButtonPushed}

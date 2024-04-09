@@ -270,7 +270,7 @@ export default function Component() {
         <div className="flex items-center p-2 rounded">
           <button
             className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
-              isLiked ? "text-blue-500" : ""
+              isLiked ? "text-blue-500 font-bold" : ""
             } post-like-button`}
             onClick={() => handleVote("like")}
             disabled={isPageLikeButtonPushed}
@@ -280,7 +280,7 @@ export default function Component() {
           </button>
           <button
             className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
-              isDisliked ? "text-red-500" : ""
+              isDisliked ? "text-red-500 font-bold" : ""
             } post-dislike-button`}
             onClick={() => handleVote("dislike")}
             disabled={isPageDislikeButtonPushed}
