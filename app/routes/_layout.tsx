@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, useNavigation } from "@remix-run/react";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import feedIcon from "~/src/assets/feed_icon.svg";
@@ -26,7 +26,6 @@ export async function loader({ request }: LoaderFunctionArgs){
 }
 
 export default function Component() {
-  const transitionStatus = useNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isLoggedIn } = useLoaderData<typeof loader>();
 
