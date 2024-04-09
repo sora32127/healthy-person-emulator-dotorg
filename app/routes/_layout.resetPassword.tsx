@@ -26,6 +26,22 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function ResetPassword() {
     const actionData = useActionData<typeof action>();
     const [password, setPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+
+    const isDisabled = !password || passwordError !== '';
+
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newPassword = e.target.value;
+        setPassword(newPassword);
+
+        if (newPassword.length < 8) {
+            setPasswordError("パスワードは8文字以上で設定してください。");
+        } else if (!/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+            setPasswordError("パスワードには英文字と数字を含める必要があります。");
+        } else {
+            setPasswordError("");
+        }
+    };
 
     return (
         <div className="flex justify-center items-center h-screen">
@@ -44,9 +60,12 @@ export default function ResetPassword() {
                             name="password"
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={handlePasswordChange}
                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         />
+                        {passwordError && (
+                            <p className="text-red-500 text-xs italic">{passwordError}</p>
+                        )}
                     </div>
                     {actionData?.status === 200 && (
                         <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
@@ -60,7 +79,7 @@ export default function ResetPassword() {
                     <div className="flex justify-center">
                         <button
                             type="submit"
-                            disabled={!password}
+                            disabled={isDisabled}
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                         >
                             パスワードを更新
