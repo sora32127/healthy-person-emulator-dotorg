@@ -19,7 +19,7 @@ export default function MarkdownEditor({ defaultValue, handleValueChange }: Mark
           rehypePlugins: [[rehypeSanitize]],
         }}
         preview='edit'
-        commands={[ commands.title3, commands.bold, commands.italic, commands.link, commands.unorderedListCommand, commands.orderedListCommand, commands.table  ]}
+        commands={[ commands.title1, commands.title2, commands.title3, commands.bold, commands.italic, commands.link, commands.unorderedListCommand, commands.orderedListCommand, commands.table  ]}
         extraCommands={[commands.codeEdit]}
         height={600}
       />
