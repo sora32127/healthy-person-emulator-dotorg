@@ -213,7 +213,7 @@ export default function Feed() {
             name="action"
             value="firstPage"
             disabled={currentPage === 1}
-            className={`px-4 py-2 mx-1 ${
+            className={`px-2 py-2 mx-1 ${
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
@@ -226,7 +226,7 @@ export default function Feed() {
             name="action"
             value="prevPage"
             disabled={currentPage === 1}
-            className={`px-4 py-2 mx-1 ${
+            className={`px-2 py-2 mx-1 ${
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
@@ -234,7 +234,7 @@ export default function Feed() {
           >
             前へ
           </button>
-          <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
+          <span className="px-2 py-2 mx-1 bg-white text-blue-500 rounded">
             {currentPage} / {totalPages}
           </span>
           <button
@@ -242,7 +242,7 @@ export default function Feed() {
             name="action"
             value="nextPage"
             disabled={currentPage === totalPages}
-            className={`px-4 py-2 mx-1 ${
+            className={`px-2 py-2 mx-1 ${
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"
@@ -255,7 +255,7 @@ export default function Feed() {
             name="action"
             value="lastPage"
             disabled={currentPage === totalPages}
-            className={`px-4 py-2 mx-1 ${
+            className={`px-2 py-2 mx-1 ${
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-blue-500 text-white"

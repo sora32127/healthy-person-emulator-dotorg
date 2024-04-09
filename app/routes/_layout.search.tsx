@@ -463,7 +463,7 @@ export default function Component() {
           <div className="flex justify-center mt-8">
             <NavLink
               to={getPaginationLink(1)}
-              className={`px-4 py-2 mx-1 ${
+              className={`px-2 py-2 mx-1 ${
                 pageNumber === 1
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
@@ -473,7 +473,7 @@ export default function Component() {
             </NavLink>
             <NavLink
               to={getPaginationLink(pageNumber - 1)}
-              className={`px-4 py-2 mx-1 ${
+              className={`px-2 py-2 mx-1 ${
                 pageNumber === 1
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
@@ -486,7 +486,7 @@ export default function Component() {
             </span>
             <NavLink
               to={getPaginationLink(pageNumber + 1)}
-              className={`px-4 py-2 mx-1 ${
+              className={`px-2 py-2 mx-1 ${
                 pageNumber === totalPages
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
@@ -496,7 +496,7 @@ export default function Component() {
             </NavLink>
             <NavLink
               to={getPaginationLink(totalPages)}
-              className={`px-4 py-2 mx-1 ${
+              className={`px-2 py-2 mx-1 ${
                 pageNumber === totalPages
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-blue-500 text-white"
