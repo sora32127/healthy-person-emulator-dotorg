@@ -126,7 +126,7 @@ export default function Component() {
         <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
         <div className="flex flex-col space-y-2 ml-2">
           <NavLink
-            to="https://twitter.com/contradiction29"
+            to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088"
             className="text-gray-700 hover:text-blue-500"
           >
             管理人に連絡
