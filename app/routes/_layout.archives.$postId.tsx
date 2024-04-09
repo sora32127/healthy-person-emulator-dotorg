@@ -101,6 +101,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const nextPost = await prisma.dimPosts.findFirst({
       where: {
         postDateGmt: { gt: postContent?.postDateGmt },
+        postId: { not: postContent?.postId }, // 同じ記事が表示されないようにする
       },
       orderBy: {
         postDateGmt: "asc",
@@ -316,7 +317,7 @@ export default function Component() {
           </ul>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center my-20">
-          {nextPost && (
+          {nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
               <img src={arrowForwardIcon} alt="Next post" className="h-5 w-5 mr-2" />
               <NavLink
@@ -326,8 +327,8 @@ export default function Component() {
                 {nextPost.postTitle}
               </NavLink>
             </div>
-          )}
-          {prevPost && (
+          ): (<div></div>)}
+          {prevPost ? (
             <div className="flex items-center">
               <NavLink
                 to={`/archives/${prevPost.postId}`}
@@ -337,7 +338,7 @@ export default function Component() {
               </NavLink>
               <img src={arrowBackIcon} alt="Previous post" className="h-5 w-5" />
             </div>
-          )}
+          ): <div></div>}
         </div>
         <div className="my-8">
             <ShareButtons
