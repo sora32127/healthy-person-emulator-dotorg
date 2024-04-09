@@ -249,26 +249,50 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
+  const action = formData.get("action");
+  const currentPage = parseInt(formData.get("currentPage") as string);
+  const totalPages = parseInt(formData.get("totalPages") as string);
   const searchType = formData.get("searchType") as SearchType;
-  const query = formData.get("q") || "";
-  const title = formData.get("title") || "";
-  const tags = formData.getAll("tags") as string[];
-  const pageNumber = formData.get("p") || "1";
+  const tags = formData.get("tags")?.toString().split("+") || [];
+  const title = formData.get("title")?.toString() || "";
+  const query = formData.get("query")?.toString() || "";
+  console.log({action, currentPage, totalPages, searchType, tags, title, query})
 
-  const encodedQuery = encodeURIComponent(query.toString());
-  const encodedTitle = encodeURIComponent(title.toString());
+  const encodedQuery = encodeURIComponent(query);
+  const encodedTitle = encodeURIComponent(title);
   const encodedTags = tags.map((tag) => encodeURIComponent(tag)).join('+');
 
-  if (searchType === "tag" && tags.length > 0) {
-    return redirect(`/search?t=tag&tags=${encodedTags}&p=${pageNumber}`);
-  }
-  else if (searchType === "fullText" && query !== "") {
-    return redirect(`/search?t=fullText&text=${encodedQuery}&p=${pageNumber}`);
-  }
-  else if (searchType === "title" && title !== "") {
-    return redirect(`/search?t=title&title=${encodedTitle}&p=${pageNumber}`);
-  }
-  else {
+  if (action === "firstSearch") {
+    return redirect(`/search?t=${searchType}&p=1${
+      searchType === "tag" ? `&tags=${encodedTags}` :
+      searchType === "title" ? `&title=${encodedTitle}` :
+      searchType === "fullText" ? `&text=${encodedQuery}` : ""
+    }`);
+  } else if (action === "firstPage") {
+    return redirect(`/search?t=${searchType}&p=1${
+      searchType === "tag" ? `&tags=${encodedTags}` :
+      searchType === "title" ? `&title=${encodedTitle}` :
+      searchType === "fullText" ? `&text=${encodedQuery}` : ""
+    }`);
+  } else if (action === "prevPage") {
+    return redirect(`/search?t=${searchType}&p=${currentPage - 1}${
+      searchType === "tag" ? `&tags=${encodedTags}` :
+      searchType === "title" ? `&title=${encodedTitle}` :
+      searchType === "fullText" ? `&text=${encodedQuery}` : ""
+    }`);
+  } else if (action === "nextPage") {
+    return redirect(`/search?t=${searchType}&p=${currentPage + 1}${
+      searchType === "tag" ? `&tags=${encodedTags}` :
+      searchType === "title" ? `&title=${encodedTitle}` :
+      searchType === "fullText" ? `&text=${encodedQuery}` : ""
+    }`);
+  } else if (action === "lastPage") {
+    return redirect(`/search?t=${searchType}&p=${totalPages}${
+      searchType === "tag" ? `&tags=${encodedTags}` :
+      searchType === "title" ? `&title=${encodedTitle}` :
+      searchType === "fullText" ? `&text=${encodedQuery}` : ""
+    }`);
+  } else {
     return redirect("/search");
   }
 };
@@ -283,10 +307,14 @@ type SearchType = "tag" | "fullText" | "title";
 
 export default function Component() {
   const { data, allTagsOnlyForSearch, totalCount, pageNumber, searchType, tags, title, query } = useLoaderData<typeof loader>();
+
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInputValue, setTagInputValue] = useState<string>("");
   const [tagSearchSuggestions, setTagSearchSuggestions] = useState<Tag[]>([]);
   const [currentSearchType, setCurrentSearchType] = useState<SearchType>(searchType || "tag");
+
+  const [queryText, setQueryText] = useState<string>("");
+  const [titleText, setTitleText] = useState<string>("");
 
   const totalPages = Math.ceil(totalCount / 10);
 
@@ -313,16 +341,6 @@ export default function Component() {
   const handleTagRemove = (tagName: string) => {
     setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
   }
-
-  const getPaginationLink = (page: number) => {
-    return `/search?t=${searchType}&p=${page}${
-      searchType === "tag"
-        ? `&tags=${tags}`
-        : searchType === "title"
-        ? `&title=${encodeURIComponent(title)}`
-        : `&text=${encodeURIComponent(query)}`
-    }`;
-  };
 
   const searchResultTitlePresentation = () => {
     if (searchType === "tag") {
@@ -367,9 +385,12 @@ export default function Component() {
               <button
                 type="submit"
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                name="action"
+                value="firstSearch"
               >
                 検索
               </button>
+              <input type="hidden" name="tags" value={selectedTags.join("+")} />
             </div>
           )}
           {currentSearchType === "fullText" && (
@@ -377,16 +398,20 @@ export default function Component() {
               <input
                 type="text"
                 name="q"
-                defaultValue={query}
+                defaultValue={queryText}
+                onChange={(e) => setQueryText(e.target.value)}
                 className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
                 placeholder="検索キーワードを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"                
+                name="action"
+                value="firstSearch"
               >
                 検索
               </button>
+              <input type="hidden" name="query" value={queryText} />
             </div>
           )}
           {currentSearchType === "title" && (
@@ -394,16 +419,20 @@ export default function Component() {
               <input
                 type="text"
                 name="title"
-                defaultValue={title}
+                defaultValue={titleText}
+                onChange={(e) => setTitleText(e.target.value)}
                 className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
                 placeholder="タイトルを入力"
               />
               <button
                 type="submit"
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                name="action"
+                value="firstSearch"
               >
                 検索
               </button>
+              <input type="hidden" name="title" value={titleText} />
             </div>
           )}
         </div>
@@ -461,49 +490,69 @@ export default function Component() {
             ))}
           </div>
           <div className="flex justify-center mt-8">
-            <NavLink
-              to={getPaginationLink(1)}
-              className={`px-2 py-2 mx-1 ${
-                pageNumber === 1
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white"
-              } rounded search-go-to-first-page`}
-            >
-              最初
-            </NavLink>
-            <NavLink
-              to={getPaginationLink(pageNumber - 1)}
-              className={`px-2 py-2 mx-1 ${
-                pageNumber === 1
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white"
-              } rounded search-go-to-previous-page`}
-            >
-              前へ
-            </NavLink>
-            <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
-              {pageNumber} / {totalPages}
-            </span>
-            <NavLink
-              to={getPaginationLink(pageNumber + 1)}
-              className={`px-2 py-2 mx-1 ${
-                pageNumber === totalPages
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white"
-              } rounded search-go-to-next-page`}
-            >
-              次へ
-            </NavLink>
-            <NavLink
-              to={getPaginationLink(totalPages)}
-              className={`px-2 py-2 mx-1 ${
-                pageNumber === totalPages
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-500 text-white"
-              } rounded search-go-to-last-page`}
-            >
-              最後
-            </NavLink>
+            <Form method="post" className="flex items-center">
+              <input type="hidden" name="currentPage" value={pageNumber} />
+              <input type="hidden" name="totalPages" value={totalPages} />
+              <input type="hidden" name="searchType" value={searchType} />
+              <input type="hidden" name="tags" value={tags?.join("+")} />
+              <input type="hidden" name="title" value={title} />
+              <input type="hidden" name="query" value={query} />
+              <button
+                type="submit"
+                name="action"
+                value="firstPage"
+                disabled={pageNumber === 1}
+                className={`px-2 py-2 mx-1 ${
+                  pageNumber === 1
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 text-white"
+                } rounded search-go-to-first-page`}
+              >
+                最初
+              </button>
+              <button
+                type="submit"
+                name="action"
+                value="prevPage"
+                disabled={pageNumber === 1}
+                className={`px-2 py-2 mx-1 ${
+                  pageNumber === 1
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 text-white"
+                } rounded search-go-to-previous-page`}
+              >
+                前へ
+              </button>
+              <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
+                {pageNumber} / {totalPages}
+              </span>
+              <button
+                type="submit"
+                name="action"
+                value="nextPage"
+                disabled={pageNumber === totalPages}
+                className={`px-2 py-2 mx-1 ${
+                  pageNumber === totalPages
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 text-white"
+                } rounded search-go-to-next-page`}
+              >
+                次へ
+              </button>
+              <button
+                type="submit"
+                name="action"
+                value="lastPage"
+                disabled={pageNumber === totalPages}
+                className={`px-2 py-2 mx-1 ${
+                  pageNumber === totalPages
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-500 text-white"
+                } rounded search-go-to-last-page`}
+              >
+                最後
+              </button>
+            </Form>
           </div>
         </>
       ) : (
