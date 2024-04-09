@@ -54,13 +54,13 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `block text-center text-gray-700 hover:text-blue-500 ${
+        `flex flex-col items-center justify-center text-gray-700 hover:text-blue-500 ${
           isActive ? "text-blue-500 font-bold" : ""
         }`
       }
     >
-      <img src={item.icon} alt={item.text} className="mx-6 w-6 h-6 md:w-8 md:h-8" />
-      {item.text}
+      <img src={item.icon} alt={item.text} className="w-6 h-6 md:w-8 md:h-8 mx-8" />
+      <p className="text-xs md:text-sm">{item.text}</p>
     </NavLink>
   );
 
@@ -78,10 +78,10 @@ export default function Component() {
           <li className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="block text-center text-gray-700 hover:text-blue-500"
+              className="flex flex-col items-center justify-center text-gray-700 hover:text-blue-500"
             >
-              <img src={menuIcon} alt="Menu" className="mx-6 w-6 h-6" />
-              メニュー
+              <img src={menuIcon} alt="Menu" className="w-6 h-6 mx-8" />
+              <p className="text-xs">メニュー</p>
             </button>
           </li>
           {menuItems.map((item) => (
