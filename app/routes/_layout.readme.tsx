@@ -4,7 +4,7 @@ import { H1, H2, H3 } from "~/components/Headings";
 
 export default function Component() {
     return (
-        <div className="postContent md:shadow md:px-4 py-4">
+        <div className="postContent">
             <H1>サイト説明</H1>
             <H2>健常者エミュレータ事例集とは</H2>
             <ul>
