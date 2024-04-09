@@ -1,3 +1,4 @@
+import { NavLink } from "@remix-run/react";
 import { H1, H2 } from "../Headings";
 
 const UserExplanation = () => {
@@ -8,7 +9,7 @@ const UserExplanation = () => {
                 <li>このフォームは、健常者エミュレータ事例集への投稿を促進するために作成されました。</li>
                 <li>上から順にフォームへ入力することにより、過去の経験を整理することが可能です。</li>
                 <li>入力した内容は端末内に保存されます。途中で入力を止めた場合でも、後から再開できます。</li>
-                <li>投稿ボタンを押した時点で、以下の利用規約に同意したこととみなします。</li>
+                <li>投稿ボタンを押した時点で、以下の利用規約および<NavLink to="/privacyPolicy" className="text-blue-600 underline underline-offset-4">プライバシーポリシー・免責事項</NavLink>に同意したこととみなします。</li>
             </ul>
             <H2>利用規約</H2>
             <ul>
