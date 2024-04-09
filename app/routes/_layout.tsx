@@ -1,7 +1,7 @@
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
-import feedIcon from "~/src/assets/feed_icon.svg";
+import homeIcon from "~/src/assets/home_icon.svg";
 import randomIcon from "~/src/assets/random_icon.svg";
 import postIcon from "~/src/assets/post_icon.svg";
 import searchIcon from "~/src/assets/search_icon.svg";
@@ -30,7 +30,7 @@ export default function Component() {
   const { isLoggedIn } = useLoaderData<typeof loader>();
 
   const navItems = [
-    { to: "/", icon: feedIcon, text: "フィード" },
+    { to: "/", icon: homeIcon, text: "トップ" },
     { to: "/random", icon: randomIcon, text: "ランダム" },
     { to: "/post", icon: postIcon, text: "投稿" },
     { to: "/search", icon: searchIcon, text: "検索" },
