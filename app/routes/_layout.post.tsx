@@ -171,7 +171,7 @@ export default function Component() {
             to="/freeStylePost"
         >自由投稿フォームに移動</NavLink>
         <ClearLocalStorageButton clearInputs={clearInputs}/>
-        <TextTypeSwitcher onToggle={handleToggle}/>
+        <TextTypeSwitcher onToggle={handleToggle} parentComponentStateValue={selectedType}/>
         <SituationInput
             onInputChange={handleSituationChange}
             parentComponentStateValues={situationValues}

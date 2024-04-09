@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { H3 } from '../Headings';
 
 interface ToggleButtonProps {
   onToggle: (selectedType: string) => void;
+  parentComponentStateValue: string;
 }
 
 const ToggleButton: React.FC<{
@@ -30,14 +30,8 @@ const ToggleButton: React.FC<{
   );
 };
 
-const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle }: ToggleButtonProps) => {
-  const [selectedType, setSelectedType] = useState('misDeed');
-
-  const toggleSelection = (type: string) => {
-    setSelectedType(type);
-    onToggle(type);
-  };
-
+const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle, parentComponentStateValue }: ToggleButtonProps) => {
+  
   return (
     <div className="mb-4">
     <H3>投稿タイプを選択</H3>
@@ -45,17 +39,17 @@ const TextTypeSwitcher: React.FC<ToggleButtonProps> = ({ onToggle }: ToggleButto
       <div className="flex mt-4">
         <ToggleButton
           id="1"
-          checked={selectedType === 'goodDeed'}
+          checked={parentComponentStateValue == 'goodDeed'}
           value="goodDeed"
-          onChange={() => toggleSelection('goodDeed')}
+          onChange={() => onToggle('goodDeed')}
         >
           結果善
         </ToggleButton>
         <ToggleButton
           id="2"
-          checked={selectedType === 'misDeed'}
+          checked={parentComponentStateValue == 'misDeed'}
           value="misDeed"
-          onChange={() => toggleSelection('misDeed')}
+          onChange={() => onToggle('misDeed')}
         >
           結果悪
         </ToggleButton>
