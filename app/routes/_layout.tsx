@@ -68,15 +68,9 @@ export default function Component() {
   return (
     <>
     <div className="flex flex-col min-h-screen">
-      {(transitionStatus.state != "idle")  && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-solid rounded-full animate-spin"></div>
-        </div>
-      )}
       <div className="mx-4 mb-32 md:mt-32 md:mx-10 lg:mx-20 xl:mx-40 2xl:mx-60">
         <Outlet />
       </div>
-
       <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
         <ul className="flex justify-around">
           {navItems.map((item) => (

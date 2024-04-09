@@ -26,6 +26,7 @@
     "@uiw/react-md-editor": "^4.0.4",
     "@vercel/speed-insights": "^1.0.10",
     "axios": "^1.6.8",
+    "clsx": "^2.1.0",
     "crypto-js": "^4.2.0",
     "diff": "^5.2.0",
     "html-react-parser": "^5.1.9",

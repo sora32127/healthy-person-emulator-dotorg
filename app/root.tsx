@@ -18,6 +18,7 @@ import { SpeedInsights } from "@vercel/speed-insights/remix"
 
 import * as gtag from "~/modules/gtags.client"
 import { useEffect } from "react";
+import { PageTransitionProgressBar } from "./components/PageTransitionProgressBar";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -58,6 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <PageTransitionProgressBar />
         {children}
         <ScrollRestoration />
         <Scripts />
