@@ -32,7 +32,7 @@ export default function Component() {
   const navItems = [
     { to: "/", icon: homeIcon, text: "トップ" },
     { to: "/random", icon: randomIcon, text: "ランダム" },
-    { to: "/post", icon: postIcon, text: "投稿" },
+    { to: "/post", icon: postIcon, text: "投稿する" },
     { to: "/search", icon: searchIcon, text: "検索" },
   ];
 
