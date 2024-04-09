@@ -51,14 +51,6 @@ h1 {
 
 }
 
-.templateSubmitForm {
-  background-color: #fff;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
 .templateSubmitForm h1 {
   margin-bottom: 1rem;
 }
@@ -67,7 +59,6 @@ h1 {
   list-style-type: disc;
   list-style-position: inside;
   margin-bottom: 1.5rem;
-  color: #4a5568;
 }
 
 .templateSubmitForm li {
@@ -76,8 +67,4 @@ h1 {
 
 .templateSubmitForm h2 {
   margin-bottom: 1rem;
-}
-
-.templateSubmitForm p {
-  color: #4a5568;
 }
