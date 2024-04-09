@@ -50,18 +50,22 @@ export default function PostCard({
             <div className="flex justify-between items-center mb-2">
                 <p className="text-gray-600 text-sm post-timestamp">{formattedPostDate}</p>
             </div>
-            <img src = {articleIcon} alt = "Article icon" className = "h-5 w-5 inline-block mr-2" />
-            <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700 post-title">{postTitle}</NavLink>
+            <div className="flex items-center mb-2">
+                <img src={articleIcon} alt="Article icon" className="h-5 w-5 mr-2" />
+                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700 post-title">{postTitle}</NavLink>
+            </div>
             {highLightedText && (
                 <p className="text-gray-700">{parse(highLightedText)}</p>
             )}
-            <div className="mt-2">
-                <img src={tagIcon} alt="Tag icon" className="h-5 w-5 inline-block mr-2" />
-                {tagNames && tagNames.map((tag, index) => (
-                <span key={index} className="inline-block text-sm font-semibold mr-1">
-                    <TagCard tagName={tag} />
-                </span>
-                ))}
+            <div className="mt-2 flex items-center">
+                <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
+                <div className="flex flex-wrap">
+                    {tagNames && tagNames.map((tag, index) => (
+                        <span key={index} className="inline-block text-sm font-semibold mr-1 mb-1">
+                            <TagCard tagName={tag} />
+                        </span>
+                    ))}
+                </div>
             </div>
             <div className="flex items-center mt-2">
                 <div className="flex items-center mr-4">
