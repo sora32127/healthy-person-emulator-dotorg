@@ -8,6 +8,7 @@ interface CommentInputBoxProps {
   onCommentContentChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   isCommentOpen: boolean;
+  commentParentId: number;
 }
 
 export default function CommentInputBox({
@@ -17,9 +18,10 @@ export default function CommentInputBox({
   onCommentContentChange,
   onSubmit,
   isCommentOpen,
+  commentParentId,
 }: CommentInputBoxProps) {
   return (
-    <Form onSubmit={onSubmit}>
+    <Form onSubmit={onSubmit} preventScrollReset>
       <div className="mb-4">
         <label htmlFor="commentAuthor" className="block mb-2">
           名前
@@ -54,6 +56,7 @@ export default function CommentInputBox({
         disabled={!isCommentOpen}
       >
         {"コメント"}
+      <input type="hidden" name="commentParentId" value={commentParentId} />
       </button>
     </Form>
   );

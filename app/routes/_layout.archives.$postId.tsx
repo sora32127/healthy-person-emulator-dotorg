@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { useLoaderData, NavLink, useSubmit, useFetcher } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
@@ -123,34 +123,27 @@ export default function Component() {
   const submit = useSubmit();
   const fetcher = useFetcher();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null);
-
   const isLiked = likedPages.includes(postContent?.postId);
   const isDisliked = dislikedPages.includes(postContent?.postId);
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
 
-  const handleVote = async (voteType: "like" | "dislike") => {
+  const handleVoteOnClient = async (voteType: "like" | "dislike") => {
+    console.log("handleVote")
     if (voteType === "like") {
       setIsPageLikeButtonPushed(true);
     } else if (voteType === "dislike") {
       setIsPageDislikeButtonPushed(true);
     }
-    if (isLiked && isDisliked) {
-      return;
-    }
-
     const formData = new FormData();
     formData.append("postId", postContent?.postId.toString() || "");
     formData.append("voteType", voteType);
+    formData.append("action", "votePost");
 
     fetcher.submit(formData, {
       method: "post",
       action: `/archives/${postContent?.postId}`,
     });
-
-    setUserVote(voteType);
   };
 
 
@@ -161,10 +154,11 @@ export default function Component() {
     formData.append("postId", postContent?.postId.toString() || "");
     formData.append("commentAuthor", commentAuthor);
     formData.append("commentContent", commentContent);
+    formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
-      action: `/api/create/comment`,
+      action: `/archives/${postContent?.postId}`,
     });
 
     setCommentAuthor("Anonymous");
@@ -273,8 +267,9 @@ export default function Component() {
             className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
               isLiked ? "text-blue-500 font-bold" : ""
             } post-like-button`}
-            onClick={() => handleVote("like")}
+            onClick={() => handleVoteOnClient("like")}
             disabled={isPageLikeButtonPushed || isLiked}
+            type="submit"
           >
             <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2 post-like-count" />
             {postContent?.countLikes}
@@ -283,7 +278,7 @@ export default function Component() {
             className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
               isDisliked ? "text-red-500 font-bold" : ""
             } post-dislike-button`}
-            onClick={() => handleVote("dislike")}
+            onClick={() => handleVoteOnClient("dislike")}
             disabled={isPageDislikeButtonPushed || isDisliked}
           >
             <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2 post-dislike-count" />
@@ -356,6 +351,7 @@ export default function Component() {
           onCommentContentChange={setCommentContent}
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
+          commentParentId={0}
         />
       </div>
       <div>
@@ -366,12 +362,18 @@ export default function Component() {
           <button
             onClick={handleDeletePost}
             className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
+            type="submit"
+            name="action"
+            value="deletePost"
           >
             記事を削除する
           </button>
           <button
             onClick={handleCommentStatus}
             className="bg-purple-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
+            type="submit"
+            name="action"
+            value="changeCommentStatus"
           >
             コメントステータスを変更
           </button>
@@ -385,73 +387,64 @@ export default function Component() {
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
+  const action = formData.get("action");
   const postId = Number(formData.get("postId"));
-  const voteType = formData.get("voteType")?.toString();
-  const commentId = Number(formData.get("commentId"));
-
   const ip = getClientIPAddress(request) || "";
-  const voteUserIpHash = await crypto.subtle.digest(
+  const userIpHashString = await getUserIpHashString(ip);
+
+  switch (action) {
+    case "votePost":
+      return handleVotePost(formData, postId, userIpHashString, request);
+    case "voteComment":
+      return handleVoteComment(formData, postId, userIpHashString, request);
+    case "submitComment":
+      return handleSubmitComment(formData, postId);
+    case "deletePost":
+      return handleDeletePost(postId, request);
+    case "changeCommentStatus":
+      return handleChangeCommentStatus(postId, request);
+    case "deleteComment":
+      return handleDeleteComment(formData, postId, request);
+    default:
+      return json({ error: "Invalid action" }, { status: 400 });
+  }
+}
+
+async function getUserIpHashString(ip: string) {
+  const userIpHash = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(ip)
   );
-  const hashArray = Array.from(new Uint8Array(voteUserIpHash));
-  const voteUserIpHashString = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const hashArray = Array.from(new Uint8Array(userIpHash));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
-  if (commentId) {
-    await prisma.$transaction(async (prisma) => {
-        await prisma.fctCommentVoteHisotry.create({
-            data: {
-                voteUserIpHash: voteUserIpHashString,
-                commentId,
-                postId,
-                voteType: voteType === "like" ? 1 : -1,
-            },
-        });
-    });
-
-    const session = await getSession(request.headers.get("Cookie"));
-    if (voteType === "like") {
-        session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
-    } else if (voteType === "dislike") {
-        session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
-    }
-
-    return json(
-        { success: true },
-        {
-            headers: {
-                "Set-Cookie": await commitSession(session),
-            },
-        }
-    );
-  }
-
+async function handleVotePost(
+  formData: FormData,
+  postId: number,
+  userIpHashString: string,
+  request: Request
+) {
+  const voteType = formData.get("voteType")?.toString();
   if (voteType !== "like" && voteType !== "dislike") {
-    return json({ error: "無効な投票タイプです。" }, { status: 400 });
+    return json({ error: "Invalid vote type" }, { status: 400 });
   }
 
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHisotry.create({
       data: {
-        voteUserIpHash: voteUserIpHashString,
+        voteUserIpHash: userIpHashString,
         postId,
         voteTypeInt: voteType === "like" ? 1 : -1,
       },
     });
-
-    if (voteType === "like") {
-      await prisma.dimPosts.update({
-        where: { postId },
-        data: { countLikes: { increment: 1 } },
-      });
-    } else {
-      await prisma.dimPosts.update({
-        where: { postId },
-        data: { countDislikes: { increment: 1 } },
-      });
-    }
+    const updateData = voteType === "like" 
+      ? { countLikes: { increment: 1 } }
+      : { countDislikes: { increment: 1 } };
+    await prisma.dimPosts.update({
+      where: { postId },
+      data: updateData,
+    });
   });
 
   const session = await getSession(request.headers.get("Cookie"));
@@ -460,7 +453,6 @@ export async function action({ request }: ActionFunctionArgs) {
   } else if (voteType === "dislike") {
     session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
   }
-
   return json(
     { success: true },
     {
@@ -468,8 +460,122 @@ export async function action({ request }: ActionFunctionArgs) {
         "Set-Cookie": await commitSession(session),
       },
     }
-  
   );
+}
+
+async function handleVoteComment(
+  formData: FormData,
+  postId: number,
+  userIpHashString: string,
+  request: Request
+) {
+  const voteType = formData.get("voteType")?.toString();
+  const commentId = Number(formData.get("commentId"));
+  await prisma.$transaction(async (prisma) => {
+    await prisma.fctCommentVoteHisotry.create({
+      data: {
+        voteUserIpHash: userIpHashString,
+        commentId,
+        postId,
+        voteType: voteType === "like" ? 1 : -1,
+      },
+    });
+  });
+
+  const session = await getSession(request.headers.get("Cookie"));
+  if (voteType === "like") {
+    session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
+  } else if (voteType === "dislike") {
+    session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
+  }
+  return json(
+    { success: true },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
+}
+
+async function handleSubmitComment(formData: FormData, postId: number) {
+  const commentAuthor = formData.get("commentAuthor")?.toString();
+  const commentContent = formData.get("commentContent")?.toString() || "";
+  const commentParent = Number(formData.get("commentParentId")) || 0;
+
+  try {
+    await prisma.dimComments.create({
+      data: {
+        postId: Number(postId),
+        commentAuthor,
+        commentContent,
+        commentParent
+      },
+    });
+    return json({ success: true });
+  }
+  catch (e) {
+    console.error(e);
+    return json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+async function handleDeletePost(postId: number, request: Request) {
+  const isAdmin = await isAdminLogin(request);
+  if (!isAdmin) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  try {
+    await prisma.dimPosts.delete({ where: { postId } });
+    return redirect("/");
+  } catch (e) {
+    console.error(e);
+    return json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+async function handleChangeCommentStatus(postId: number, request: Request) {
+  const isAdmin = await isAdminLogin(request);
+  if (!isAdmin) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const nowCommentStatus = await prisma.dimPosts.findFirst({
+      where: { postId },
+      select: { commentStatus: true },
+    });
+    if (!nowCommentStatus) {
+      return new Response("Not Found", { status: 404 });
+    }
+    const newCommentStatus = nowCommentStatus.commentStatus === "open" ? "closed" : "open";
+    await prisma.dimPosts.update({
+      where: { postId },
+      data: { commentStatus: newCommentStatus },
+    });
+  } catch (e) {
+    console.error(e);
+    return json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+async function handleDeleteComment(formData: FormData, postId: number, request: Request) {
+  const isAdmin = await isAdminLogin(request);
+  if (!isAdmin) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const commentId = Number(formData.get("commentId"));
+
+  try {
+    await prisma.dimComments.update({
+      where: { commentId },
+      data: { commentContent: "(このコメントは管理者により削除されました)" },
+    });
+    return json({ success: true });
+  } catch (e) {
+    console.error(e);
+    return new Response("Internal Server Error", { status: 500 });
+  }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

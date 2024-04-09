@@ -71,11 +71,12 @@ export default function CommentCard({
     formData.append("postId", postId.toString());
     formData.append("commentAuthor", replyAuthor);
     formData.append("commentContent", replyContent);
-    formData.append("commentParent", commentId.toString());
+    formData.append("commentParentId", commentId.toString());
+    formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
-      action: `/api/create/comment`,
+      action: `/archives/${postId}`,
     });
 
     setReplyAuthor("");
@@ -87,9 +88,10 @@ export default function CommentCard({
     const formData = new FormData();
     formData.append("commentId", commentId.toString());
     formData.append("postId", postId.toString());
+    formData.append("action", "deleteComment");
     await submit(formData, {
       method: "post",
-      action: `/api/delete/comment`,
+      action: `/archives/${postId}`,
     });
   }
 
@@ -138,6 +140,7 @@ export default function CommentCard({
                 onCommentContentChange={setReplyContent}
                 onSubmit={handleReplyCommentSubmit}
                 isCommentOpen={isCommentOpen}
+                commentParentId={commentId}
             />
         )}
         </div>
