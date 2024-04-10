@@ -7,15 +7,15 @@ h1 {
 }
 
 .postContent h3, .markdownEditorPreview h3 {
-  @apply text-xl font-bold mb-2;
+  @apply text-xl font-bold mb-6 mt-10 border-b border-gray-800 pb-2;
 }
 
 .postContent h4, .markdownEditorPreview h4 {
-  @apply text-lg font-bold mb-2;
+  @apply text-lg font-bold mb-4 mt-10 border-b border-gray-800 pb-2;
 }
 
 .postContent h5, .markdownEditorPreview h5 {
-  @apply text-lg font-bold mb-2;
+  @apply text-lg font-bold mb-4 mt-10 border-b border-gray-800 pb-2; 
 }
 
 .postContent table, .markdownEditorPreview table {
@@ -31,7 +31,7 @@ h1 {
 }
 
 .postContent ul, .markdownEditorPreview ul, .templateSubmitForm ul{
-  @apply list-disc list-outside mb-4 ml-4;
+  @apply list-disc list-outside mb-4 ml-8;
 }
 
 .postContent li, .markdownEditorPreview li, .templateSubmitForm li {
