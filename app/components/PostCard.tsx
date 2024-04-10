@@ -46,7 +46,7 @@ export default function PostCard({
     });
 
     return (
-        <div className="bg-white shadow-md rounded-md p-4 mb-4">
+        <div className="bg-white border-2 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-center mb-2">
                 <p className="text-gray-600 text-sm post-timestamp">{formattedPostDate}</p>
             </div>
