@@ -206,10 +206,11 @@ export default function Component() {
   const handleDeletePost = async () => {
     const formData = new FormData();
     formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("action", "deletePost");
 
     await submit(formData, {
       method: "post",
-      action: "/api/delete/post",
+      action: `/archives/${postContent?.postId}`,
     });
   };
 
