@@ -273,7 +273,6 @@ export const meta: MetaFunction = ({ location }) => {
   if (!location){
     return { title: "Loading..." };
   }
-  //https://localhost:5173/feed?likeFrom=24&likeTo=0&p=2
 
   const searchQuery = new URLSearchParams(location.search);
   const pageNumber = searchQuery.get("p")
