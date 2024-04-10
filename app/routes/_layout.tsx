@@ -33,11 +33,11 @@ export default function Component() {
     { to: "/", icon: homeIcon, text: "トップ" },
     { to: "/random", icon: randomIcon, text: "ランダム" },
     { to: "/post", icon: postIcon, text: "投稿する" },
-    { to: "/search", icon: searchIcon, text: "検索" },
+    { to: "/search", icon: searchIcon, text: "検索する" },
   ];
 
   const menuItems = [
-    { to: "/beSponsor", text: "寄付する", icon: donationIcon },
+    { to: "/support", text: "サポートする", icon: donationIcon },
     { to: "/readme", text: "サイト説明", icon: guidelineIcon },
     ...(isLoggedIn
       ? [

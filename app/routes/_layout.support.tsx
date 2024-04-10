@@ -5,9 +5,9 @@ import stripeQRCode from '~/src/assets/stripe_qr_code.png';
 export default function BeSponsor() {
     return (
         <div className='text-center'>
-          <H1>サポーターになる</H1>
+          <H1>サポートする</H1>
           <p>
-            健常者エミュレータ事例集は、誰もが暗黙知にアクセスできる社会を実現するプロジェクトです。
+            健常者エミュレータ事例集は、個人の属性に寄らず誰もが暗黙知にアクセスできる社会を実現するプロジェクトです。
             私たちは、一人でも多くの人々に知識を届け、より良い社会の実現に貢献したいと考えています。
           </p>
           <p>
