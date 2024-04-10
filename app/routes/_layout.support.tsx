@@ -39,7 +39,7 @@ export const meta: MetaFunction = () => {
   const ogType = "article";
   const ogTitle = title;
   const ogDescription = description;
-  const ogUrl = `https://healthy-person-emulator.org/beSponsor`;
+  const ogUrl = `https://healthy-person-emulator.org/support`;
   const twitterCard = "summary"
   const twitterSite = "@helthypersonemu"
   const twitterTitle = title

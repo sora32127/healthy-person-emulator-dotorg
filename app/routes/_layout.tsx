@@ -144,7 +144,7 @@ export default function Component() {
             プライバシー・ポリシー/免責事項
           </NavLink>
           <NavLink
-            to="/beSponsor"
+            to="/support"
             className="text-gray-700 hover:text-blue-500"
           >
             寄付する
