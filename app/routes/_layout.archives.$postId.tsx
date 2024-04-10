@@ -218,10 +218,11 @@ export default function Component() {
   const handleCommentStatus = async () => {
     const formData = new FormData();
     formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("action", "changeCommentStatus");
 
     await submit(formData, {
       method: "post",
-      action: `/api/update/commentstatus`,
+      action: `/archives/${postContent?.postId}`,
     });
   }
 
@@ -555,6 +556,7 @@ async function handleChangeCommentStatus(postId: number, request: Request) {
       where: { postId },
       data: { commentStatus: newCommentStatus },
     });
+    return json({ success: true });
   } catch (e) {
     console.error(e);
     return json({ error: "Internal Server Error" }, { status: 500 });
