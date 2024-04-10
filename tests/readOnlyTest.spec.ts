@@ -182,8 +182,8 @@ test('ユーザーは記事を検索できる', async ({ page }) => {
 });
 
 test('ユーザーは寄付ページを閲覧できる', async ({ page }) => {
-  await page.goto(`${testURL}/beSponsor`);
-  await expect(page).toHaveTitle(/スポンサーになる/);
+  await page.goto(`${testURL}/support`);
+  await expect(page).toHaveTitle(/サポートする/);
   await page.getByRole('button', { name: 'サポートする' }).click();
   await expect(page).toHaveTitle(/KENJOUSYA emulator/);
 });
