@@ -170,6 +170,7 @@ export default function Component() {
     formData.append("postId", postContent?.postId.toString() || "");
     formData.append("commentId", commentId.toString());
     formData.append("voteType", voteType);
+    formData.append("action", "voteComment");
 
     fetcher.submit(formData, {
         method: "post",
@@ -469,6 +470,7 @@ async function handleVoteComment(
   userIpHashString: string,
   request: Request
 ) {
+  console.log("handleVoteComment")
   const voteType = formData.get("voteType")?.toString();
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
