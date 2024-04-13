@@ -1,10 +1,12 @@
 generator client {
   provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("SUPABASE_CONNECTION_STRING")
+  extensions = [vector]
 }
 
 model DimTags {
@@ -96,6 +98,7 @@ model nowEditingPages {
   @@map("now_editing_pages")
 }
 
+// content_embeddingとtoken_countはprismaでは使わず、supabaseのクライアントを使って操作する想定となっている
 model DimPosts {
   postId                Int                    @id @unique @default(autoincrement()) @map("post_id")
   postAuthorIPHash      String                 @map("post_author_ip_hash")

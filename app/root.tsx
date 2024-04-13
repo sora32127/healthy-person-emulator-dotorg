@@ -31,9 +31,9 @@ export const links: LinksFunction = () => [
 ];
 
 export async function loader() {
-  const gaTrackingId = process.env.NODE_ENV !== "development" ? process.env.GA_TRACKING_ID : "";
+  const gaTrackingId = process.env.NODE_ENV !== "development" ? process.env.GA_TRACKING_ID : null;
   return json({
-    gaTrackingId,
+    gaTrackingId : gaTrackingId ?? ""
   });
 }
 
