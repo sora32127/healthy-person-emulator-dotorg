@@ -8,6 +8,8 @@
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
+    "seed": "npx tsx prisma/seed.ts",
+    "reset:db": "npx prisma migrate reset -f && npx prisma db push",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -22,6 +24,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "clsx": "^2.1.0",
     "crypto-js": "^4.2.0",
+    "csv-parse": "^5.5.5",
     "diff": "^5.2.0",
     "html-react-parser": "^5.1.9",
     "is-ip": "^5.0.1",

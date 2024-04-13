@@ -32,4 +32,6 @@ npx supabase init
 npx supabase start
 touch .env
 supabase status | awk '/API URL/ {print "SUPABASE_URL="$NF} /anon key/ {print "SUPABASE_ANON_KEY="$NF} /service_role key/ {print "SUPABASE_SERVICE_ROLE_KEY="$NF} /DB URL/ {print "SUPABASE_CONNECTION_STRING="$NF}' > .env
-npx prisma db push
+npm run reset:db
+npm run seed
+echo -e "\e[32mローカル開発環境のセットアップが完了しました。\e[0m"
