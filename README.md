@@ -20,7 +20,7 @@
    * 健常者エミュレータ事例集は、情報過多を避けるため、シンプルなデザインを採用する
    * ユーザーが目に入る情報量を減らすことで、疲れているとき、あるいは精神にダメージがあるときでも利用しやすいメディアを目指す
 
-# 技術スタック
+## 技術スタック
 - フレームワーク：[Remix](https://remix.run/)
 - ビルド：[Vite](https://vitejs.dev/)
 - インフラ：[Vercel](https://vercel.com/)
@@ -29,8 +29,27 @@
 - ORM : [Prisma](https://www.prisma.io/)
 - CSS : [Tailwind CSS](https://tailwindcss.com/)
 
-# 活用したアセット
+## 活用したアセット
 - [Google Fonts](https://fonts.google.com/)
 
-# 参考にしたデザイン
+## 参考にしたデザイン
 - [デジタル庁デザインシステム1.4.1](https://www.figma.com/community/file/1255349027535859598/design-system-1-4-1)
+
+# ローカル開発環境セットアップ
+
+## 手順
+1. リポジトリをクローン
+```bash
+git clone https://github.com/sora32127/healthy-person-emulator-dotorg.git
+cd healthy-person-emulator-dotorg
+```
+2. セットアップスクリプトを起動
+```bash
+/bin/bash localdev.sh
+```
+3. 開発サーバーの立ち上げ
+```
+npm run dev
+```
+## 参考ドキュメント
+- [Supabase : Local Development](https://supabase.com/docs/guides/cli/local-development)
