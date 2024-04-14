@@ -111,6 +111,7 @@ model DimPosts {
   countDislikes         Int                    @default(0) @map("count_dislikes")
   uuid                  String                 @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
   content_embedding     Unsupported("vector")?
+  ogpImageUrl           String?                @map("ogp_image_url")
   dimComments           DimComments[]
   fct_post_edit_history FctPostEditHistory[]
   fct_post_vote_history FctPostVoteHisotry[]

@@ -36,6 +36,7 @@ export async function loader({ request }:LoaderFunctionArgs){
           countLikes: true,
           countDislikes: true,
           commentStatus: true,
+          ogpImageUrl: true,
           rel_post_tags: {
             select: {
               dimTag: {
@@ -595,12 +596,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const ogTitle = title;
   const ogDescription = description;
   const ogUrl = `https://healthy-person-emulator.org/archives/${data.postContent?.postId}`;
-  const twitterCard = "summary"
+  const twitterCard = "summary_large_image"
   const twitterSite = "@helthypersonemu"
   const twitterTitle = title
   const twitterDescription = description
   const twitterCreator = "@helthypersonemu"
-  const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+  const twitterImage = data.postContent?.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
 
   return [
     { title },
