@@ -612,6 +612,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: "og:site_name", content: ogSiteName },
     { property: "og:type", content: ogType },
     { property: "og:url", content: ogUrl },
+    { property: "og:image", content: twitterImage},
     { name: "twitter:card", content: twitterCard },
     { name: "twitter:site", content: twitterSite },
     { name: "twitter:title", content: twitterTitle },
