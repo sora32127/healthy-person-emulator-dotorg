@@ -102,7 +102,7 @@ export default function CommentCard({
         <img src={clockIcon} alt="Comment Date" className="h-5 w-5 mr-2" />
         <p className="text-gray-600 text-sm">{formattedCommentDate}</p>
       </div>
-      <p className="mt-2 whitespace-pre">{commentContent}</p>
+      <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
       <div className="flex items-center mt-4">
         <button
           className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
