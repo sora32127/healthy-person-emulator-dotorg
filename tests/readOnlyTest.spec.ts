@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, Locator } from '@playwright/test';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -8,57 +8,65 @@ if (!testURL) {
 }
 
 
-test('ユーザーはトップページを閲覧できる', async ({ page }) => {
-  await page.goto(testURL);
-  await expect(page).toHaveTitle(/トップページ/);
-
-  // latest-posts
-  const latestPostsDiv = page.locator('.latest-posts');
-  const latestPostsChildDivs = await latestPostsDiv.locator('> div').count();
-  expect(latestPostsChildDivs).toBe(10);
-
-  // recent-voted-posts
-  const recentVotedPostsDiv = page.locator('.recent-voted-posts');
-  const recentVotedPostsChildDivs = await recentVotedPostsDiv.locator('> div').count();
-  expect(recentVotedPostsChildDivs).toBe(10);
-
-  // recent-comments
-  const recentCommentsDiv = page.locator('.recent-comments');
-  const recentCommentsChildDivs = await recentCommentsDiv.locator('> div').count();
-  expect(recentCommentsChildDivs).toBe(10);
-
-  // community-posts
-  const communityPostsDiv = page.locator('.community-posts');
-  const communityPostsChildDivs = await communityPostsDiv.locator('> div').count();
-  expect(communityPostsChildDivs).toBe(24);
-
-  // famed-posts
-  const famedPostsDiv = page.locator('.famed-posts');
-  const famedPostsChildDivs = await famedPostsDiv.locator('> div').count();
-  expect(famedPostsChildDivs).toBe(6);
-
-  // famed-postsを利用し、PostCardが正しく表示されているか確認
-  const firstFamedPost = await famedPostsDiv.locator('> div').nth(0);
-  const firstFamedPostTimestamp = await firstFamedPost.locator(".post-timestamp").first().textContent();
-  expect(firstFamedPostTimestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  const firstFamedPostTitle = await firstFamedPost.locator(".post-title").first().textContent();
-  expect(firstFamedPostTitle).not.toBe('');
-  const firstFamedPostTags = await firstFamedPost.locator(".post-tag").count();
-  expect(firstFamedPostTags).toBeGreaterThan(0);
-
-  // 最新のコメントが正しく表示されているか確認
-  const firstRecentComment = await recentCommentsDiv.locator('> div').nth(0);
-  const firstRecentCommentTimestamp = await firstRecentComment.locator(".comment-timestamp").first().textContent();
-  expect(firstRecentCommentTimestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  const firstRecentCommentAuthor = await firstRecentComment.locator(".comment-author").first().textContent();
-  expect(firstRecentCommentAuthor).not.toBe('');
-  const firstRecentCommentContent = await firstRecentComment.locator(".comment-content").first().textContent();
-  expect(firstRecentCommentContent).not.toBe('');
-  const firstRecentCommentPostTitle = await firstRecentComment.locator(".post-title").first().textContent();
-  expect(firstRecentCommentPostTitle).not.toBe('');
+test.describe('ユーザーはトップページを閲覧できる', () => {
+  test('トップページが正しく表示されている', async ({ page }) => {
+    await page.goto(testURL);
+    await expect(page).toHaveTitle(/トップページ/);
+  });
+  test('各セクションの要素数が正しい', async ({ page }) => {
+    await page.goto(testURL);
+    await expect(page).toHaveTitle(/トップページ/);
+    
+    const sections = [
+      { name: 'latest-posts', expectedCount: 10 },
+      { name: 'recent-voted-posts', expectedCount: 10 },
+      { name: 'recent-comments', expectedCount: 10 },
+      { name: 'community-posts', expectedCount: 24 },
+      { name: 'famed-posts', expectedCount: 6 },
+    ];
   
+    for (const section of sections) {
+      const sectionDiv = page.locator(`.${section.name}`);
+      const childDivs = await sectionDiv.locator('> div').count();
+      expect(childDivs).toBe(section.expectedCount);
+    }
+  });
 
+  test('PostCardが正しく表示されている', async ({ page }) => {
+    await page.goto(testURL);
+    await verifyPostCard(page.locator('.famed-posts').locator('> div').nth(0));
+  });
+
+  test('CommentShowCardが正しく表示されている', async ({ page }) => {
+    await page.goto(testURL);
+    await verifyComment(page.locator('.recent-comments').locator('> div').nth(0));
+  });
 });
+
+async function verifyPostCard(postCard: Locator) {
+  const timestamp = await postCard.locator(".post-timestamp").first().textContent();
+  expect(timestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+
+  const title = await postCard.locator(".post-title").first().textContent();
+  expect(title).not.toBe('');
+
+  const tags = await postCard.locator(".post-tag").count();
+  expect(tags).toBeGreaterThan(0);
+}
+
+async function verifyComment(comment: Locator) {
+  const timestamp = await comment.locator(".comment-timestamp").first().textContent();
+  expect(timestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+
+  const author = await comment.locator(".comment-author").first().textContent();
+  expect(author).not.toBe('');
+
+  const content = await comment.locator(".comment-content").first().textContent();
+  expect(content).not.toBe('');
+
+  const postTitle = await comment.locator(".post-title").first().textContent();
+  expect(postTitle).not.toBe('');
+}
 
 test('ユーザーはフィードページを閲覧できる', async ({ page }) => {
   // 新着順フィードページ
