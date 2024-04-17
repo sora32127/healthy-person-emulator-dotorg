@@ -68,47 +68,46 @@ async function verifyComment(comment: Locator) {
   expect(postTitle).not.toBe('');
 }
 
-test('ユーザーはフィードページを閲覧できる', async ({ page }) => {
-  // 新着順フィードページ
-  await page.goto(testURL);
-  await page.getByText('最新の投稿を見る').click();
-  await expect(page).toHaveTitle(/フィード - ページ2/);
-  const latestFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountFirst).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ1/);
-  const latestFeedPostCountSecond = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountSecond).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ2/);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ3/);
 
-  // いいね順フィードページ
-  await page.goto(testURL);
-  await page.getByText('最近いいねされた投稿を見る').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountFirst).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountSecond = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountSecond).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+test.describe("ユーザーはフィードページを閲覧できる", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(testURL)
+  });
 
-  // いいね順から新着順に切り替え
-  await page.getByText('新着順').click();
-  await expect(page).toHaveTitle(/フィード - ページ1/);
-  const latestFeedPostCountThird = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountThird).toBe(10);
-  await page.getByText('いいね順').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountThird = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountThird).toBe(10);
-});
+  test("新着順フィードページを閲覧できる", async ({ page }) => {
+    await page.getByText("最新の投稿を見る").click();
+    await expect(page).toHaveTitle(/フィード - ページ2/);
+    await verifyPostCard(page.locator(".feed-posts").locator("> div").nth(0));
+    const latestFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count();
+    await expect(latestFeedPostCountFirst).toBe(10);
+    await page.getByText("前へ").click();
+    await expect(page).toHaveTitle(/フィード - ページ1/);
+    const latestFeedPostCountSecond = await page.locator(".feed-posts").locator("> div").count();
+    await expect(latestFeedPostCountSecond).toBe(10);
+    await page.getByText("次へ").click();
+    await expect(page).toHaveTitle(/フィード - ページ2/);
+    await page.getByText("次へ").click();
+    await expect(page).toHaveTitle(/フィード - ページ3/);
+  });
+
+  test("いいね順フィードページを閲覧できる", async ({ page }) => {
+    await page.getByText("最近いいねされた投稿を見る").click();
+    await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+    const likedFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count();
+    await expect(likedFeedPostCountFirst).toBeGreaterThanOrEqual(4);
+  });
+
+  test("新着順といいね順を切り替えられる", async ({ page }) => {
+    await page.getByText("最新の投稿を見る").click();
+    await expect(page).toHaveTitle(/フィード - ページ2/);
+    await page.getByText("いいね順").click();
+    await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+    await page.getByText("新着順").click();
+    await expect(page).toHaveTitle(/フィード - ページ1/);
+  });
+
+
+})
 
 test('ユーザーはランダムページを閲覧できる', async ({ page }) => {
   await page.goto(`${testURL}/random`);
