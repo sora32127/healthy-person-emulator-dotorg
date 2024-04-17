@@ -118,6 +118,18 @@ test('ユーザーはランダムページを閲覧できる', async ({ page }) 
   await expect(randomCommentsCount).toBe(10);
 });
 
+test('ユーザーは寄付ページを閲覧できる', async ({ page }) => {
+  await page.goto(`${testURL}/support`);
+  await expect(page).toHaveTitle(/サポートする/);
+  await page.getByRole('button', { name: 'サポートする' }).click();
+  await expect(page).toHaveTitle(/KENJOUSYA emulator/);
+});
+
+test('ユーザーはサイト説明ページを閲覧できる', async ({ page }) => {
+  await page.goto(`${testURL}/readme`);
+  await expect(page).toHaveTitle(/サイト説明/);
+});
+
 test('ユーザーは記事を検索できる', async ({ page }) => {
   await page.goto(`${testURL}/search`);
   await expect(page).toHaveTitle(/検索/);
@@ -188,14 +200,3 @@ test('ユーザーは記事を検索できる', async ({ page }) => {
   await expect(SearchResultTitleCountSecond).toBe(10);
 });
 
-test('ユーザーは寄付ページを閲覧できる', async ({ page }) => {
-  await page.goto(`${testURL}/support`);
-  await expect(page).toHaveTitle(/サポートする/);
-  await page.getByRole('button', { name: 'サポートする' }).click();
-  await expect(page).toHaveTitle(/KENJOUSYA emulator/);
-});
-
-test('ユーザーはサイト説明ページを閲覧できる', async ({ page }) => {
-  await page.goto(`${testURL}/readme`);
-  await expect(page).toHaveTitle(/サイト説明/);
-});
