@@ -130,73 +130,75 @@ test('ユーザーはサイト説明ページを閲覧できる', async ({ page 
   await expect(page).toHaveTitle(/サイト説明/);
 });
 
-test('ユーザーは記事を検索できる', async ({ page }) => {
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('tag');
+test.describe('ユーザーは記事を検索できる', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${testURL}/search`);
+    await expect(page).toHaveTitle(/検索/);
+  });
 
-  // タグ検索 - 一つのタグで検索
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('T');
-  await page.getByText(/Twitter/).click();
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
-  const SearchResultTagCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
-  const SearchResultTagCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountSecond).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
+  test('タグ検索 - 一つのタグで検索できる', async ({ page }) => {
+    await searchByTag(page, 'Twitter');
+    await verifySearchResults(page, /タグ検索: Twitter/, 10);
+    await navigateToNextPage(page);
+    await verifySearchResults(page, /タグ検索: Twitter/, 10);
+    await navigateToPreviousPage(page);
+  });
 
-  // タグ検索 - 複数のタグで検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('tag');
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('T');
-  await page.getByText(/Twitter/).click();
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('やらないほ');
-  await page.getByText(/やらないほうがよいこと/).click();
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter, やらないほうがよいこと/);
-  const SearchResultTagCountThird = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountThird).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter, やらないほうがよいこと/);
-  const SearchResultTagCountFourth = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountFourth).toBe(10);
+  test('タグ検索 - 複数のタグで検索できる', async ({ page }) => {
+    await searchByTag(page, 'Twitter');
+    await searchByTag(page, 'やらないほうがよいこと');
+    await verifySearchResults(page, /タグ検索: Twitter, やらないほうがよいこと/, 10);
+    await navigateToNextPage(page);
+    await verifySearchResults(page, /タグ検索: Twitter, やらないほうがよいこと/, 10);
+  });
 
-  // 全文検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('fullText');
-  await page.getByPlaceholder('検索キーワードを入力').click();
-  await page.getByPlaceholder('検索キーワードを入力').fill('ASD');
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/全文検索: ASD/);
-  const SearchResultFullTextCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultFullTextCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/全文検索: ASD/);
-  const SearchResultFullTextCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultFullTextCountSecond).toBe(10);
+  test('全文検索できる', async ({ page }) => {
+    await searchByFullText(page, 'ASD');
+    await verifySearchResults(page, /全文検索: ASD/, 10);
+    await navigateToNextPage(page);
+    await verifySearchResults(page, /全文検索: ASD/, 10);
+  });
 
-  // タイトル検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('title');
-  await page.getByPlaceholder('タイトルを入力').click();
-  await page.getByPlaceholder('タイトルを入力').fill('Twitter');
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タイトル検索: Twitter/);
-  const SearchResultTitleCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTitleCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タイトル検索: Twitter/);
-  const SearchResultTitleCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTitleCountSecond).toBe(10);
+  test('タイトル検索できる', async ({ page }) => {
+    await searchByTitle(page, 'Twitter');
+    await verifySearchResults(page, /タイトル検索: Twitter/, 10);
+    await navigateToNextPage(page);
+    await verifySearchResults(page, /タイトル検索: Twitter/, 10);
+  });
 });
 
+async function searchByTag(page: Page, tag: string) {
+  await page.getByRole('combobox').selectOption('tag');
+  await page.getByPlaceholder('タグを入力').click();
+  await page.getByPlaceholder('タグを入力').fill(tag.charAt(0));
+  await page.getByText(tag).click();
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function searchByFullText(page: Page, keyword: string) {
+  await page.getByRole('combobox').selectOption('fullText');
+  await page.getByPlaceholder('検索キーワードを入力').click();
+  await page.getByPlaceholder('検索キーワードを入力').fill(keyword);
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function searchByTitle(page: Page, title: string) {
+  await page.getByRole('combobox').selectOption('title');
+  await page.getByPlaceholder('タイトルを入力').click();
+  await page.getByPlaceholder('タイトルを入力').fill(title);
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function verifySearchResults(page: Page, expectedTitle: RegExp, expectedCount: number) {
+  await expect(page).toHaveTitle(expectedTitle);
+  const searchResultCount = await page.locator(".search-results").locator("> div").count();
+  await expect(searchResultCount).toBe(expectedCount);
+}
+
+async function navigateToNextPage(page: Page) {
+  await page.getByText('次へ').click();
+}
+
+async function navigateToPreviousPage(page: Page) {
+  await page.getByText('前へ').click();
+}
