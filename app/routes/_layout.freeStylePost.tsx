@@ -10,6 +10,7 @@ import { prisma } from "~/modules/db.server";
 import { marked } from 'marked';
 import { ActionFunctionArgs } from "@remix-run/node";
 import { createEmbedding } from "~/modules/embedding.server";
+import ClearLocalStorageButton from "~/components/SubmitFormComponents/ClearLocalStorageButton";
 
 interface Tag {
     tagName: string;
@@ -82,12 +83,6 @@ export default function FreeStylePost() {
         setIsValidUser(isValidUser);
     };
 
-    const [showConfirmation, setShowConfirmation] = useState(false);
-
-    const handleClearInputs = () => {
-        setShowConfirmation(true);
-    };
-
     const handleConfirmClear = () => {
         setTitle('');
         setMarkdownContent('');
@@ -95,12 +90,8 @@ export default function FreeStylePost() {
         window.localStorage.removeItem('titleFS');
         window.localStorage.removeItem('markdownContentFS');
         window.localStorage.removeItem('selectedTags');
-        setShowConfirmation(false);
     };
 
-    const handleCancelClear = () => {
-        setShowConfirmation(false);
-    };
 
     const isButtonDisabled = !title || !markdownContent || !isValidUser;
 
@@ -112,20 +103,14 @@ export default function FreeStylePost() {
                     <H1>自由記述投稿</H1>
                     <p>テンプレートを利用しない、自由形式の記事投稿が可能です。</p>
                     <Form method="post">
-                    <button
-                            type="button"
-                            onClick={handleClearInputs}
-                            className="inline-flex items-center px-4 py-2 my-4 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            入力内容をクリア
-                    </button>
+                    <ClearLocalStorageButton clearInputs={handleConfirmClear} />
                     <H2>記事タイトル</H2>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => handleTitleChange(e.target.value)}
                         placeholder="記事タイトルを入力..."
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none mb-4"
+                        className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
                     />
                     {!title && <p className="text-red-500">タイトルを入力してください。</p>}
                     <H2>記事本文</H2>
@@ -144,7 +129,7 @@ export default function FreeStylePost() {
                         className={`rounded-md block w-full px-4 py-2 text-center text-white my-4 ${
                         isButtonDisabled
                             ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-500 hover:bg-blue-600'
+                            : 'bg-primary'
                         }`}
                         disabled={isButtonDisabled}
                     >
@@ -154,48 +139,6 @@ export default function FreeStylePost() {
                     <input type="hidden" name="markdownContent" value={markdownContent} />
                     <input type="hidden" name="selectedTags" value={selectedTags.join(',')} />
                     </Form>
-                    {showConfirmation && (
-                        <div className="fixed z-10 inset-0 overflow-y-auto">
-                            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                                <div className="fixed inset-0 transition-opacity">
-                                    <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-                                </div>
-                                <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>&#8203;
-                                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                        <div className="sm:flex sm:items-start">
-                                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                                                    入力内容のクリア
-                                                </h3>
-                                                <div className="mt-2">
-                                                    <p className="text-sm text-gray-500">
-                                                        本当に入力内容をクリアしますか？この操作は元に戻せません。
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                        <button
-                                            type="button"
-                                            onClick={handleConfirmClear}
-                                            className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                                        >
-                                            はい
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleCancelClear}
-                                            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                        >
-                                            戻る
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
         </ClientOnly>
