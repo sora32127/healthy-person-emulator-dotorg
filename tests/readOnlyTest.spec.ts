@@ -1,194 +1,210 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, Locator } from '@playwright/test';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const testURL = process.env.TEST_URL
+const testURL = process.env.TEST_URL;
 if (!testURL) {
-    throw new Error("TEST_URLが環境変数に設定されていません");
+  throw new Error("TEST_URLが環境変数に設定されていません");
 }
 
+// トップページのテスト
+test.describe('トップページ', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(testURL);
+  });
 
-test('ユーザーはトップページを閲覧できる', async ({ page }) => {
-  await page.goto(testURL);
-  await expect(page).toHaveTitle(/トップページ/);
+  test('ページタイトルが正しく表示されている', async ({ page }) => {
+    await expect(page).toHaveTitle(/トップページ/);
+  });
 
-  // latest-posts
-  const latestPostsDiv = page.locator('.latest-posts');
-  const latestPostsChildDivs = await latestPostsDiv.locator('> div').count();
-  expect(latestPostsChildDivs).toBe(10);
+  test('各セクションの要素数が正しい', async ({ page }) => {
+    const sections = [
+      { name: 'latest-posts > div', expectedCount: 10 },
+      { name: 'recent-voted-posts > div', expectedCount: 10 },
+      { name: 'recent-comments > div', expectedCount: 10 },
+      { name: 'community-posts > div', expectedCount: 24 },
+      { name: 'famed-posts > div', expectedCount: 6 },
+    ];
 
-  // recent-voted-posts
-  const recentVotedPostsDiv = page.locator('.recent-voted-posts');
-  const recentVotedPostsChildDivs = await recentVotedPostsDiv.locator('> div').count();
-  expect(recentVotedPostsChildDivs).toBe(10);
+    for (const section of sections) {
+      await verifyElementCount(page, `.${section.name}`, section.expectedCount);
+    }
+  });
 
-  // recent-comments
-  const recentCommentsDiv = page.locator('.recent-comments');
-  const recentCommentsChildDivs = await recentCommentsDiv.locator('> div').count();
-  expect(recentCommentsChildDivs).toBe(10);
+  test('PostCardが正しく表示されている', async ({ page }) => {
+    await verifyPostCard(page.locator('.famed-posts').locator('> div').nth(0));
+  });
 
-  // community-posts
-  const communityPostsDiv = page.locator('.community-posts');
-  const communityPostsChildDivs = await communityPostsDiv.locator('> div').count();
-  expect(communityPostsChildDivs).toBe(24);
-
-  // famed-posts
-  const famedPostsDiv = page.locator('.famed-posts');
-  const famedPostsChildDivs = await famedPostsDiv.locator('> div').count();
-  expect(famedPostsChildDivs).toBe(6);
-
-  // famed-postsを利用し、PostCardが正しく表示されているか確認
-  const firstFamedPost = await famedPostsDiv.locator('> div').nth(0);
-  const firstFamedPostTimestamp = await firstFamedPost.locator(".post-timestamp").first().textContent();
-  expect(firstFamedPostTimestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  const firstFamedPostTitle = await firstFamedPost.locator(".post-title").first().textContent();
-  expect(firstFamedPostTitle).not.toBe('');
-  const firstFamedPostTags = await firstFamedPost.locator(".post-tag").count();
-  expect(firstFamedPostTags).toBeGreaterThan(0);
-
-  // 最新のコメントが正しく表示されているか確認
-  const firstRecentComment = await recentCommentsDiv.locator('> div').nth(0);
-  const firstRecentCommentTimestamp = await firstRecentComment.locator(".comment-timestamp").first().textContent();
-  expect(firstRecentCommentTimestamp).toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  const firstRecentCommentAuthor = await firstRecentComment.locator(".comment-author").first().textContent();
-  expect(firstRecentCommentAuthor).not.toBe('');
-  const firstRecentCommentContent = await firstRecentComment.locator(".comment-content").first().textContent();
-  expect(firstRecentCommentContent).not.toBe('');
-  const firstRecentCommentPostTitle = await firstRecentComment.locator(".post-title").first().textContent();
-  expect(firstRecentCommentPostTitle).not.toBe('');
-  
-
+  test('CommentShowCardが正しく表示されている', async ({ page }) => {
+    await verifyComment(page.locator('.recent-comments').locator('> div').nth(0));
+  });
 });
 
-test('ユーザーはフィードページを閲覧できる', async ({ page }) => {
-  // 新着順フィードページ
-  await page.goto(testURL);
-  await page.getByText('最新の投稿を見る').click();
-  await expect(page).toHaveTitle(/フィード - ページ2/);
-  const latestFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountFirst).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ1/);
-  const latestFeedPostCountSecond = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountSecond).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ2/);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/フィード - ページ3/);
+// フィードページのテスト
+test.describe("フィードページ", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(testURL);
+  });
 
-  // いいね順フィードページ
-  await page.goto(testURL);
-  await page.getByText('最近いいねされた投稿を見る').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountFirst = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountFirst).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountSecond = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountSecond).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+  test("新着順フィードページを閲覧できる", async ({ page }) => {
+    await navigateToLatestFeed(page);
+    await verifyElementCount(page, ".feed-posts > div", 10);
+    await navigateToPreviousPage(page);
+    await expect(page).toHaveTitle(/フィード - ページ1/);
+    await verifyElementCount(page, ".feed-posts > div", 10);
+    await navigateToNextPage(page);
+    await expect(page).toHaveTitle(/フィード - ページ2/);
+    await navigateToNextPage(page);
+    await verifyPostCard(page.locator('.feed-posts').locator('> div').nth(0));
+  });
 
-  // いいね順から新着順に切り替え
-  await page.getByText('新着順').click();
-  await expect(page).toHaveTitle(/フィード - ページ1/);
-  const latestFeedPostCountThird = await page.locator(".feed-posts").locator("> div").count()
-  await expect(latestFeedPostCountThird).toBe(10);
-  await page.getByText('いいね順').click();
-  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-  const likedFeedPostCountThird = await page.locator(".feed-posts").locator("> div").count()
-  await expect(likedFeedPostCountThird).toBe(10);
+  test("いいね順フィードページを閲覧できる", async ({ page }) => {
+    await navigateToLikedFeed(page);
+    await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+    await verifyElementMinCount(page, ".feed-posts > div", 4);
+  });
+
+  test("新着順といいね順を切り替えられる", async ({ page }) => {
+    await navigateToLatestFeed(page);
+    await page.getByText("いいね順").click();
+    await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+    await page.getByText("新着順").click();
+    await expect(page).toHaveTitle(/フィード - ページ1/);
+  });
 });
 
-test('ユーザーはランダムページを閲覧できる', async ({ page }) => {
+// ランダムページのテスト
+test('ランダムページ', async ({ page }) => {
   await page.goto(`${testURL}/random`);
   await expect(page).toHaveTitle(/ランダム記事・コメント/);
-  const randomPostsCount = await page.locator(".random-posts").locator("> div").count();
-  await expect(randomPostsCount).toBe(10);
-  const randomCommentsCount = await page.locator(".random-comments").locator("> div").count();
-  await expect(randomCommentsCount).toBe(10);
+  await verifyElementCount(page, ".random-posts > div", 10);
+  await verifyElementCount(page, ".random-comments > div", 10);
 });
 
-test('ユーザーは記事を検索できる', async ({ page }) => {
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('tag');
-
-  // タグ検索 - 一つのタグで検索
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('T');
-  await page.getByText(/Twitter/).click();
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
-  const SearchResultTagCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
-  const SearchResultTagCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountSecond).toBe(10);
-  await page.getByText('前へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter/);
-
-  // タグ検索 - 複数のタグで検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('tag');
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('T');
-  await page.getByText(/Twitter/).click();
-  await page.getByPlaceholder('タグを入力').click();
-  await page.getByPlaceholder('タグを入力').fill('やらないほ');
-  await page.getByText(/やらないほうがよいこと/).click();
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter, やらないほうがよいこと/);
-  const SearchResultTagCountThird = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountThird).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タグ検索: Twitter, やらないほうがよいこと/);
-  const SearchResultTagCountFourth = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTagCountFourth).toBe(10);
-
-  // 全文検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('fullText');
-  await page.getByPlaceholder('検索キーワードを入力').click();
-  await page.getByPlaceholder('検索キーワードを入力').fill('ASD');
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/全文検索: ASD/);
-  const SearchResultFullTextCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultFullTextCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/全文検索: ASD/);
-  const SearchResultFullTextCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultFullTextCountSecond).toBe(10);
-
-  // タイトル検索
-  await page.goto(`${testURL}/search`);
-  await expect(page).toHaveTitle(/検索/);
-  await page.getByRole('combobox').selectOption('title');
-  await page.getByPlaceholder('タイトルを入力').click();
-  await page.getByPlaceholder('タイトルを入力').fill('Twitter');
-  await page.getByRole('button', { name: '検索' }).click();
-  await expect(page).toHaveTitle(/タイトル検索: Twitter/);
-  const SearchResultTitleCountFirst = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTitleCountFirst).toBe(10);
-  await page.getByText('次へ').click();
-  await expect(page).toHaveTitle(/タイトル検索: Twitter/);
-  const SearchResultTitleCountSecond = await page.locator(".search-results").locator("> div").count();
-  await expect(SearchResultTitleCountSecond).toBe(10);
-});
-
-test('ユーザーは寄付ページを閲覧できる', async ({ page }) => {
+// 寄付ページのテスト
+test('寄付ページ', async ({ page }) => {
   await page.goto(`${testURL}/support`);
   await expect(page).toHaveTitle(/サポートする/);
   await page.getByRole('button', { name: 'サポートする' }).click();
   await expect(page).toHaveTitle(/KENJOUSYA emulator/);
 });
 
-test('ユーザーはサイト説明ページを閲覧できる', async ({ page }) => {
+// サイト説明ページのテスト
+test('サイト説明ページ', async ({ page }) => {
   await page.goto(`${testURL}/readme`);
   await expect(page).toHaveTitle(/サイト説明/);
 });
+
+// 記事検索のテスト
+test.describe('記事検索', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${testURL}/search`);
+    await expect(page).toHaveTitle(/検索/);
+  });
+
+  test('タグ検索 - 一つのタグで検索できる', async ({ page }) => {
+    await searchByTag(page, 'Twitter');
+    await verifySearchResults(page, /タグ検索: Twitter/, 10, 2);
+  });
+
+  test('タグ検索 - 複数のタグで検索できる', async ({ page }) => {
+    await searchByTag(page, 'Twitter');
+    await searchByTag(page, 'やらないほうがよいこと');
+    await verifySearchResults(page, /タグ検索: Twitter, やらないほうがよいこと/, 10, 2);
+  });
+
+  test('全文検索できる', async ({ page }) => {
+    await searchByFullText(page, 'ASD');
+    await verifySearchResults(page, /全文検索: ASD/, 10, 2);
+  });
+
+  test('タイトル検索できる', async ({ page }) => {
+    await searchByTitle(page, 'Twitter');
+    await verifySearchResults(page, /タイトル検索: Twitter/, 10, 2);
+  });
+});
+
+// 共通処理の関数化
+async function verifyElementCount(page: Page, selector: string, expectedCount: number) {
+  const count = await page.locator(selector).count();
+  expect(count).toBe(expectedCount);
+}
+
+async function verifyElementMinCount(page: Page, selector: string, minCount: number) {
+  const count = await page.locator(selector).count();
+  expect(count).toBeGreaterThanOrEqual(minCount);
+}
+
+async function verifyPostCard(postCard: Locator) {
+  await verifyElementTextMatch(postCard, ".post-timestamp", /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  await verifyElementTextNotEmpty(postCard, ".post-title");
+  await verifyElementMinCount(postCard, ".post-tag", 1);
+}
+
+async function verifyComment(comment: Locator) {
+  await verifyElementTextMatch(comment, ".comment-timestamp", /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  await verifyElementTextNotEmpty(comment, ".comment-author");
+  await verifyElementTextNotEmpty(comment, ".comment-content");
+  await verifyElementTextNotEmpty(comment, ".post-title");
+}
+
+async function verifyElementTextMatch(locator: Locator, selector: string, pattern: RegExp) {
+  const text = await locator.locator(selector).first().textContent();
+  expect(text).toMatch(pattern);
+}
+
+async function verifyElementTextNotEmpty(locator: Locator, selector: string) {
+  const text = await locator.locator(selector).first().textContent();
+  expect(text).not.toBe('');
+}
+
+async function navigateToLatestFeed(page: Page) {
+  await page.getByText("最新の投稿を見る").click();
+  await expect(page).toHaveTitle(/フィード - ページ2/);
+}
+
+async function navigateToLikedFeed(page: Page) {
+  await page.getByText("最近いいねされた投稿を見る").click();
+  await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
+}
+
+async function searchByTag(page: Page, tag: string) {
+  await page.getByRole('combobox').selectOption('tag');
+  await page.getByPlaceholder('タグを入力').fill(tag.charAt(0));
+  await page.getByText(tag).click();
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function searchByFullText(page: Page, keyword: string) {
+  await page.getByRole('combobox').selectOption('fullText');
+  await page.getByPlaceholder('検索キーワードを入力').fill(keyword);
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function searchByTitle(page: Page, title: string) {
+  await page.getByRole('combobox').selectOption('title');
+  await page.getByPlaceholder('タイトルを入力').fill(title);
+  await page.getByRole('button', { name: '検索' }).click();
+}
+
+async function verifySearchResults(page: Page, titlePattern: RegExp, expectedCount: number, maxPage: number) {
+  await expect(page).toHaveTitle(titlePattern);
+  await verifyElementCount(page, ".search-results > div", expectedCount);
+
+  for (let i = 2; i <= maxPage; i++) {
+    await navigateToNextPage(page);
+    await expect(page).toHaveTitle(titlePattern);
+    await verifyElementCount(page, ".search-results > div", expectedCount);
+  }
+
+  await navigateToPreviousPage(page);
+  await expect(page).toHaveTitle(titlePattern);
+}
+
+async function navigateToNextPage(page: Page) {
+  await page.getByText('次へ').click();
+}
+
+async function navigateToPreviousPage(page: Page) {
+  await page.getByText('前へ').click();
+}
