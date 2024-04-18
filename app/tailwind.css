@@ -43,10 +43,10 @@ h1 {
 }
 
 .postContent a, .markdownEditorPreview a{
-  @apply text-blue-600 underline underline-offset-4;
+  @apply text-info underline underline-offset-4;
 }
 
 .markdownEditorPreview th {
-  @apply bg-gray-100 text-left font-semibold 
+  @apply bg-base-200 text-left font-semibold 
 
 }
