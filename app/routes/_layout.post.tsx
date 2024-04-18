@@ -16,7 +16,6 @@ import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
 import { createEmbedding } from '~/modules/embedding.server';
-import ThemeSwitcher from '~/components/ThemeSwitcher';
 
 
 interface Tag {
@@ -164,7 +163,6 @@ export default function Component() {
     
     return (
     <div className="templateSubmitForm">
-        <ThemeSwitcher />
         <Form method="post">
         <UserExplanation />
         <br></br>
