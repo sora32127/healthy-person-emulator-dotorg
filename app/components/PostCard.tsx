@@ -46,16 +46,16 @@ export default function PostCard({
     });
 
     return (
-        <div className="bg-white border-2 rounded-lg p-4 mb-4">
+        <div className="bg-base-200 border-2 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-center mb-2">
-                <p className="text-gray-600 text-sm post-timestamp">{formattedPostDate}</p>
+                <p className="text-base-content text-sm post-timestamp">{formattedPostDate}</p>
             </div>
             <div className="flex items-center mb-2">
                 <img src={articleIcon} alt="Article icon" className="h-5 w-5 mr-2" />
-                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-blue-600 hover:underline underline underline-offset-4 decoration-blue-700 post-title">{postTitle}</NavLink>
+                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
             </div>
             {highLightedText && (
-                <p className="text-gray-700">{parse(highLightedText)}</p>
+                <p className="neutral-content">{parse(highLightedText)}</p>
             )}
             <div className="mt-2 flex items-center">
                 <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
@@ -70,11 +70,11 @@ export default function PostCard({
             <div className="flex items-center mt-2">
                 <div className="flex items-center mr-4">
                     <img src={thumbUpIcon} alt="Thumb up" className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm text-gray-600 ml-1">{countLikes}</span>
+                    <span className="text-sm text-base-content ml-1">{countLikes}</span>
                 </div>
                 <div className="flex items-center">
                     <img src={thumbDownIcon} alt="Thumb down" className="h-5 w-5 text-red-500" />
-                    <span className="text-sm text-gray-600 ml-1">{countDislikes}</span>
+                    <span className="text-sm text-base-content ml-1">{countDislikes}</span>
                 </div>
             </div>
         </div>
