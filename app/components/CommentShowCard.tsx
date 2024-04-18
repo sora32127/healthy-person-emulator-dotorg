@@ -30,7 +30,7 @@ export default function CommentShowCard({
   }).replace(/\//g, "-");
 
   return (
-      <div className="bg-base-200 border-2 rounded-lg p-4 mb-4">
+      <div className="bg-base-100 border-2 rounded-lg p-4 mb-4">
           <div className="flex justify-between items-center mb-2">
               <p className="text-base-content text-sm comment-timestamp">{formattedCommentDate}</p>
               <span className="text-lg font-bold text-base-content comment-author">{commentAuthor}</span>
