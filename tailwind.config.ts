@@ -12,6 +12,9 @@ export default {
       "lg" : "16px",
     }
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["nord", "sunset"]
+  }
 } satisfies Config
 
