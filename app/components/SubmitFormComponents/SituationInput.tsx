@@ -117,7 +117,7 @@ const SituationInput = ({
           <div key={index} className="mb-4">
             <label
               htmlFor={data.key}
-              className="block text-gray-700 font-bold mb-2"
+              className="block font-bold mb-2"
             >
               {data.description}
             </label>
@@ -127,7 +127,7 @@ const SituationInput = ({
               value={parentComponentStateValues[data.key] || ""}
               rows={data.rows}
               onChange={(e) => handleInputChange(data.key, e.target.value)}
-              className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+              className="w-full px-3 py-2 text-base-content border rounded-lg focus:outline-none placeholder-slate-500"
             />
           </div>
         ))}

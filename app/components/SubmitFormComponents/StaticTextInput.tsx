@@ -33,7 +33,7 @@ function StaticTextInput({
             placeholder={placeholder}
             value={parentComponentStateValues[i] || ""}
             onChange={(e) => handleInputChange(i, e.target.value)}
-            className={`w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none ${title}-${i}`}
+            className={`w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none ${title}-${i}`}
             rows={4}
           />
         </div>
@@ -45,7 +45,7 @@ function StaticTextInput({
   return (
     <div className="mb-8">
       {title && <h3 className="text-2xl font-bold mb-4">{title}</h3>}
-      {description && <p className="text-gray-600 mb-4">{description}</p>}
+      {description && <p className="mb-4">{description}</p>}
       <Form className="space-y-4">{renderTextInputs()}</Form>
     </div>
   );
