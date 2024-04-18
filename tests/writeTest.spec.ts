@@ -14,10 +14,10 @@ async function gotoTestPostPage(page: Page, pattern: string = "MG") {
   await expect(page).toHaveTitle(/トップページ/);
   let postLink;
   if (pattern == "SB"){
-    postLink = await page.getByRole('link', { name: /プログラムテスト-SB/});
+    postLink = await page.getByRole('link', { name: /プログラムテスト-SB/}).nth(0);
     
   } else {
-    postLink = await page.getByRole('link', { name: /プログラムテスト-MG/});
+    postLink = await page.getByRole('link', { name: /プログラムテスト-MG/}).nth(0);
   }
   const postUrl = await postLink.getAttribute('href');
   if (postUrl) {
