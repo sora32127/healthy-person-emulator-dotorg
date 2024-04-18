@@ -71,7 +71,7 @@ export default function Component() {
       <div className="mx-4 mb-32 md:mt-32 md:mx-20 lg:mx-40 xl:mx-80 2xl:mx-96">
         <Outlet />
       </div>
-      <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
+      <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto md:px-10">
         <ul className="flex justify-between items-center">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
