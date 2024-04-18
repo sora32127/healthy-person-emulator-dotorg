@@ -40,7 +40,7 @@ async function login(page: Page) {
 }
 
 test.describe('ユーザーはテンプレートから記事を投稿できる', () => {
-  test.setTimeout(960000);
+  test.setTimeout(10000);
   test.beforeEach(async ({ page }) => {
     await page.goto(`${testURL}/post`);
     await expect(page).toHaveTitle(/投稿/);
@@ -100,7 +100,7 @@ test.describe('ユーザーはテンプレートから記事を投稿できる',
 });
 
 test.describe("ユーザーはログインして記事を編集できる", () => {
-  test.setTimeout(480000);
+  test.setTimeout(10000);
   test.describe.configure({ retries: 2 });
 
   test("ユーザーはログインしていない状態で記事を編集できない", async ({ page }) => {
