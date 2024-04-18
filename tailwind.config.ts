@@ -14,7 +14,26 @@ export default {
   },
   plugins: [require("daisyui")],
   daisyui: {
-    themes: ["light", "dark"]
+    themes: [
+      {
+        light: {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          ...require("daisyui/src/theming/themes")["light"],
+          primary: "#0017C1",
+          secondary: "#264AF4",
+          tertiary: "#00118F",
+        },
+      },
+      {
+        dark: {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          ...require("daisyui/src/theming/themes")["dark"],
+          primary: "#0017C1",
+          secondary: "#264AF4",
+          tertiary: "#00118F",
+        },
+      },
+    ],
   }
 } satisfies Config
 
