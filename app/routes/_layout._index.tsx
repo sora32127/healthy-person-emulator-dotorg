@@ -4,7 +4,6 @@ import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H1, H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
-import ThemeSwitcher from "~/components/ThemeSwitcher";
 
 interface PostCardProps {
     postId: number;
@@ -177,7 +176,6 @@ export default function Feed() {
     return (
         <>
         <H1>トップページ</H1>
-        <ThemeSwitcher />
         <p>サイトの詳細に関しては<NavLink to="/readme" className="text-info underline underline-offset-4">サイト説明</NavLink>をご覧ください</p>
         <div>
             <div className="latest-posts">

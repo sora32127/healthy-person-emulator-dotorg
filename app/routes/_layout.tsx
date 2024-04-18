@@ -14,6 +14,7 @@ import signupIcon from "~/src/assets/signup_icon.svg";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
 import topLogo from "~/src/assets/top_logo.svg";
+import ThemeSwitcher from "~/components/ThemeSwitcher";
 
 export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
@@ -71,7 +72,7 @@ export default function Component() {
         <Outlet />
       </div>
       <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
-        <ul className="flex justify-between">
+        <ul className="flex justify-between items-center">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
           ))}
@@ -89,17 +90,23 @@ export default function Component() {
               {renderNavItem(item)}
             </li>
           ))}
+          <li className="hidden md:block md:mr-3">
+            <ThemeSwitcher />
+          </li>
         </ul>
       </nav>
       {isMenuOpen && (
         <div className="fixed inset-0 bg-base-100 z-40 md:hidden">
-          <button
-            onClick={() => setIsMenuOpen(false)}
-            className="absolute top-4 right-4"
-          >
-            閉じる
-          </button>
-          <ul className="mt-16">
+          <div className="flex justify-between p-4">
+            <ThemeSwitcher />
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="ml-4"
+            >
+              閉じる
+            </button>
+          </div>
+          <ul className="mt-8">
             {menuItems.map((item) => (
               <li key={item.to}>
                 <NavLink
