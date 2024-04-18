@@ -35,6 +35,8 @@ jobs:
         run : npx playwright test
         env :
           TEST_URL : ${{ steps.waitFor200.outputs.url }}
+          LOGIN_TEST_EMAIL : ${{ secrets.LOGIN_TEST_EMAIL }}
+          LOGIN_TEST_PASSWORD : ${{ secrets.LOGIN_TEST_PASSWORD }}
 
       - name : Upload Playwright report
         uses : actions/upload-artifact@v3
