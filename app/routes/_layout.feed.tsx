@@ -216,7 +216,7 @@ export default function Feed() {
             className={`px-2 py-2 mx-1 ${
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-500 text-white"
+                : "bg-primary text-white"
             } rounded feed-goto-first-page`}
           >
             最初
@@ -229,12 +229,12 @@ export default function Feed() {
             className={`px-2 py-2 mx-1 ${
               currentPage === 1
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-500 text-white"
+                : "bg-primary text-white"
             } rounded feed-goto-back-page`}
           >
             前へ
           </button>
-          <span className="px-2 py-2 mx-1 bg-white text-blue-500 rounded">
+          <span className="px-2 py-2 mx-1 rounded">
             {currentPage} / {totalPages}
           </span>
           <button
@@ -245,7 +245,7 @@ export default function Feed() {
             className={`px-2 py-2 mx-1 ${
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-500 text-white"
+                : "bg-primary text-white"
             } rounded feed-goto-next-page`}
           >
             次へ
@@ -258,7 +258,7 @@ export default function Feed() {
             className={`px-2 py-2 mx-1 ${
               currentPage === totalPages
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-500 text-white"
+                : "bg-primary text-white"
             } rounded feed-goto-last-page`}
           >
             最後
