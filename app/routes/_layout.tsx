@@ -70,7 +70,7 @@ export default function Component() {
       <div className="mx-4 mb-32 md:mt-32 md:mx-20 lg:mx-40 xl:mx-80 2xl:mx-96">
         <Outlet />
       </div>
-      <nav className="fixed py-4 bottom-0 bg-white shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
+      <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto">
         <ul className="flex justify-between">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
@@ -120,7 +120,7 @@ export default function Component() {
         </div>
       )}
     </div>
-    <footer className="bg-gray-100 py-8 md:pb-0">
+    <footer className="bg-base-100 py-8 md:pb-0">
     <div className="container mx-auto px-4">
       <div className="flex justify-center items-center">
         <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
