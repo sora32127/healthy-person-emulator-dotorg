@@ -17,7 +17,6 @@ import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
 import arrowBackIcon from "~/src/assets/arrow_back.svg";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
-import ThemeSwitcher from "~/components/ThemeSwitcher";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -242,7 +241,6 @@ export default function Component() {
   return (
     <>
       <div>
-        <ThemeSwitcher />
         <H1>{postContent && postContent.postTitle}</H1>
         
         <p className="flex my-1">
