@@ -17,6 +17,7 @@ import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
 import arrowBackIcon from "~/src/assets/arrow_back.svg";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
+import ThemeSwitcher from "~/components/ThemeSwitcher";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -241,6 +242,7 @@ export default function Component() {
   return (
     <>
       <div>
+        <ThemeSwitcher />
         <H1>{postContent && postContent.postTitle}</H1>
         
         <p className="flex my-1">
@@ -268,7 +270,7 @@ export default function Component() {
         </div>
         <div className="flex items-center p-2 rounded">
           <button
-            className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
+            className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
               isLiked ? "text-blue-500 font-bold" : ""
             } post-like-button`}
             onClick={() => handleVoteOnClient("like")}
@@ -279,7 +281,7 @@ export default function Component() {
             {postContent?.countLikes}
           </button>
           <button
-            className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
+            className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
               isDisliked ? "text-red-500 font-bold" : ""
             } post-dislike-button`}
             onClick={() => handleVoteOnClient("dislike")}
@@ -295,7 +297,7 @@ export default function Component() {
         <div className="my-6">
           <NavLink
             to={`/archives/edit/${postContent?.postId}`}
-            className="bg-blue-500 text-white rounded px-4 py-2 mx-1 my-20"
+            className="bg-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
           </NavLink>
@@ -307,7 +309,7 @@ export default function Component() {
               <li key={post.post_id} className="my-2">
                 <NavLink
                   to={`/archives/${post.post_id}`}
-                  className="text-blue-700 underline underline-offset-4"
+                  className="text-info underline underline-offset-4"
                 >
                   {post.post_title}
                 </NavLink>
@@ -321,7 +323,7 @@ export default function Component() {
               <img src={arrowForwardIcon} alt="Next post" className="h-5 w-5 mr-2" />
               <NavLink
                 to={`/archives/${nextPost.postId}`}
-                className="text-blue-700 underline underline-offset-4"
+                className="text-info underline underline-offset-4"
               >
                 {nextPost.postTitle}
               </NavLink>
@@ -331,7 +333,7 @@ export default function Component() {
             <div className="flex items-center">
               <NavLink
                 to={`/archives/${prevPost.postId}`}
-                className="text-blue-700 underline underline-offset-4 mr-2"
+                className="text-info underline underline-offset-4 mr-2"
               >
                 {prevPost.postTitle}
               </NavLink>
