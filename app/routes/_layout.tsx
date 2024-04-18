@@ -54,7 +54,7 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `flex flex-col items-center justify-center text-gray-700 hover:text-blue-500 ${
+        `flex flex-col items-center justify-center text-base-content ${
           isActive ? "text-blue-500 font-bold" : ""
         }`
       }
@@ -127,31 +127,31 @@ export default function Component() {
         <div className="flex flex-col space-y-2 ml-2">
           <NavLink
             to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088"
-            className="text-gray-700 hover:text-blue-500"
+            className="text-base-content"
           >
             管理人に連絡
           </NavLink>
           <NavLink
             to="/readme"
-            className="text-gray-700 hover:text-blue-500"
+            className="text-base-content"
           >
             サイト説明
           </NavLink>
           <NavLink
             to="/privacyPolicy"
-            className="text-gray-700 hover:text-blue-500"
+            className="text-base-content"
           >
             プライバシー・ポリシー/免責事項
           </NavLink>
           <NavLink
             to="/support"
-            className="text-gray-700 hover:text-blue-500"
+            className="text-base-content"
           >
             寄付する
           </NavLink>
         </div>
       </div>
-      <p className="text-gray-600 text-center mt-4 pb-16 mb:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
+      <p className="text-base-content text-center mt-4 pb-16 mb:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
     </div>
   </footer>
   </>
