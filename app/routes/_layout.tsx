@@ -78,7 +78,7 @@ export default function Component() {
           <li className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex flex-col items-center justify-center text-gray-700 hover:text-blue-500"
+              className="flex flex-col items-center justify-center hover:text-blue-500"
             >
               <img src={menuIcon} alt="Menu" className="w-6 h-6 mx-8" />
               <p className="text-xs">メニュー</p>
@@ -92,10 +92,10 @@ export default function Component() {
         </ul>
       </nav>
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-white z-40 md:hidden">
+        <div className="fixed inset-0 bg-base-100 z-40 md:hidden">
           <button
             onClick={() => setIsMenuOpen(false)}
-            className="absolute top-4 right-4 text-gray-700 hover:text-blue-500"
+            className="absolute top-4 right-4"
           >
             閉じる
           </button>
@@ -105,7 +105,7 @@ export default function Component() {
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    `block px-4 py-2 text-gray-700 hover:text-blue-500 ${
+                    `block px-4 py-2 ${
                       isActive ? "text-blue-500 font-bold" : ""
                     }`
                   }
