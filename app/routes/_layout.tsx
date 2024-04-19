@@ -61,7 +61,7 @@ export default function Component() {
         ]),
   ];
 
-  const renderNavItem = (item: { to: string; icon: JSX.Element; text: string }): JSX.Element => (
+  const renderNavItem = (item: { to: string; icon: React.ComponentType; text: string }): JSX.Element => (
     <NavLink
       key={item.to}
       to={item.to}
@@ -71,7 +71,7 @@ export default function Component() {
         }`
       }
     >
-      {item.icon()} 
+      <item.icon />
       <p className="text-xs md:text-sm">{item.text}</p>
     </NavLink>
   );
