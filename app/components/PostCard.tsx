@@ -50,16 +50,16 @@ export default function PostCard({
             <div className="flex justify-between items-center mb-2">
                 <p className="text-base-content text-sm post-timestamp">{formattedPostDate}</p>
             </div>
-            <div className="flex items-center mb-2">
-                <ArticleIcon />
-                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title ml-2">{postTitle}</NavLink>
+            <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
+                <ArticleIcon/>
+                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
             </div>
             {highLightedText && (
                 <p className="neutral-content">{parse(highLightedText)}</p>
             )}
-            <div className="mt-2 flex items-center">
-                <TagIcon />
-                <div className="flex flex-wrap ml-2">
+            <div className="grid grid-cols-[auto_1fr] gap-2 mt-2 items-center">
+                <TagIcon/>
+                <div className="flex flex-wrap items-center">
                     {tagNames && tagNames.map((tag, index) => (
                         <span key={index} className="inline-block text-sm font-semibold mr-1 mb-1">
                             <TagCard tagName={tag} />
@@ -69,11 +69,11 @@ export default function PostCard({
             </div>
             <div className="flex items-center mt-2">
                 <div className="flex items-center mr-4">
-                    <ThumbsUpIcon />
+                    <ThumbsUpIcon/>
                     <span className="text-sm text-base-content ml-1">{countLikes}</span>
                 </div>
                 <div className="flex items-center">
-                    <ThumbsDownIcon />
+                    <ThumbsDownIcon/>
                     <span className="text-sm text-base-content ml-1">{countDislikes}</span>
                 </div>
             </div>
