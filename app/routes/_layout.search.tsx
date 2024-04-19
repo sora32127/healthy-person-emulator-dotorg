@@ -392,7 +392,7 @@ export default function SearchPage() {
           <select
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className=" rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+            className=" rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary"
           >
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
@@ -404,7 +404,7 @@ export default function SearchPage() {
                 type="text"
                 value={tagInputValue}
                 onChange={handleTagInputChange}
-                className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
+                className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
                 placeholder="タグを入力"
               />
               <button
@@ -425,7 +425,7 @@ export default function SearchPage() {
                 name="q"
                 defaultValue={queryText}
                 onChange={(e) => setQueryText(e.target.value)}
-                className="rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 placeholder-slate-500"
+                className="rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-2 border-secondary"
                 placeholder="検索キーワードを入力"
               />
               <button
@@ -446,7 +446,7 @@ export default function SearchPage() {
             name="title"
             defaultValue={titleText}
             onChange={(e) => setTitleText(e.target.value)}
-            className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
+            className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
             placeholder="タイトルを入力"
             />
             <button
