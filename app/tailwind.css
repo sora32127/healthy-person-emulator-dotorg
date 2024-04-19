@@ -50,3 +50,7 @@ h1 {
   @apply bg-base-200 text-left font-semibold 
 
 }
+
+svg {
+  @apply fill-current;
+}
