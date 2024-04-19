@@ -170,8 +170,8 @@ export default function Feed() {
               value="sortByNew"
               className={`px-4 py-2 mr-2 ${
                 !likeFromHour
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-blue-500 border border-blue-500"
+                  ? "bg-base-200 text-base-content border-4 border-info  focus:outline-info"
+                  : "bg-base-200 text-base-content focus:outline-info"
               } rounded`}
             >
               新着順
@@ -182,8 +182,8 @@ export default function Feed() {
               value="sortByLikes"
               className={`px-4 py-2 ${
                 likeFromHour
-                  ? "bg-blue-500 text-white"
-                  : "bg-white text-blue-500 border border-blue-500"
+                  ? "bg-base-200 text-base-content border-4 border-info  focus:outline-info"
+                  : "bg-base-200 text-base-content focus:outline-info"
               } rounded`}
             >
               いいね順
