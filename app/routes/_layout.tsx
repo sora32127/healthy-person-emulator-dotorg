@@ -15,6 +15,16 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
 import topLogo from "~/src/assets/top_logo.svg";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
+import HomeIcon from "~/components/icons/HomeIcon";
+import RandomIcon from "~/components/icons/RandomIcon";
+import PostIcon from "~/components/icons/PostIcon";
+import SearchIcon from "~/components/icons/SearchIcon";
+import DonationIcon from "~/components/icons/DonationIcon";
+import GuidelineIcon from "~/components/icons/GuidelineIcon";
+import LogoutIcon from "~/components/icons/LogoutIcon";
+import SignupIcon from "~/components/icons/SignupIcon";
+import LoginIcon from "~/components/icons/LoginIcon";
+import MenuIcon from "~/components/icons/MenuIcon";
 
 export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
@@ -31,26 +41,26 @@ export default function Component() {
   const { isLoggedIn } = useLoaderData<typeof loader>();
 
   const navItems = [
-    { to: "/", icon: homeIcon, text: "トップ" },
-    { to: "/random", icon: randomIcon, text: "ランダム" },
-    { to: "/post", icon: postIcon, text: "投稿する" },
-    { to: "/search", icon: searchIcon, text: "検索する" },
+    { to: "/", icon: HomeIcon, text: "トップ" },
+    { to: "/random", icon: RandomIcon, text: "ランダム" },
+    { to: "/post", icon: PostIcon, text: "投稿する" },
+    { to: "/search", icon: SearchIcon, text: "検索する" },
   ];
 
   const menuItems = [
-    { to: "/support", text: "サポートする", icon: donationIcon },
-    { to: "/readme", text: "サイト説明", icon: guidelineIcon },
+    { to: "/support", text: "サポートする", icon: DonationIcon },
+    { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     ...(isLoggedIn
       ? [
-          { to: "/logout", text: "ログアウト", icon: logoutIcon },
+          { to: "/logout", text: "ログアウト", icon: LogoutIcon },
         ]
       : [
-          { to: "/signup", text: "サインアップ", icon: signupIcon },
-          { to: "/login", text: "ログイン", icon: loginIcon },
+          { to: "/signup", text: "サインアップ", icon: SignupIcon },
+          { to: "/login", text: "ログイン", icon: LoginIcon },
         ]),
   ];
 
-  const renderNavItem = (item: { to: string; icon: string; text: string }): JSX.Element => (
+  const renderNavItem = (item: { to: string; icon: JSX.Element; text: string }): JSX.Element => (
     <NavLink
       key={item.to}
       to={item.to}
@@ -60,7 +70,7 @@ export default function Component() {
         }`
       }
     >
-      <img src={item.icon} alt={item.text} className="w-6 h-6 md:w-8 md:h-8 mx-8" />
+      {item.icon()} 
       <p className="text-xs md:text-sm">{item.text}</p>
     </NavLink>
   );
@@ -81,7 +91,7 @@ export default function Component() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="flex flex-col items-center justify-center hover:text-blue-500"
             >
-              <img src={menuIcon} alt="Menu" className="w-6 h-6 mx-8" />
+              <MenuIcon />
               <p className="text-xs">メニュー</p>
             </button>
           </li>
@@ -118,8 +128,10 @@ export default function Component() {
                   }
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <img src={item.icon} alt={item.text} className="inline-block mr-2 w-6 h-6" />
+                  <div className="flex">
+                  {item.icon()}
                   {item.text}
+                  </div>
                 </NavLink>
               </li>
             ))}
