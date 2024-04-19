@@ -47,7 +47,7 @@ h1 {
 }
 
 .markdownEditorPreview th {
-  @apply bg-base-200 text-left font-semibold 
+  @apply bg-inherit text-left font-normal 
 
 }
 
