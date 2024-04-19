@@ -1,6 +1,6 @@
 import { NavLink } from "@remix-run/react";
-import commentIcon from "~/src/assets/comment_icon.svg";
-import articleIcon from "~/src/assets/article_icon.svg";
+import CommentIcon from "./icons/CommentIcon";
+import ArticleIcon from "./icons/ArticleIcon";
 
 interface CommentShowCardProps {
   commentContent: string;
@@ -36,12 +36,12 @@ export default function CommentShowCard({
               <span className="text-lg font-bold text-base-content comment-author">{commentAuthor}</span>
           </div>
           <div className="flex items-center mb-2">
-              <img src={commentIcon} alt="Comment icon" className="h-5 w-5 mr-2" />
-              <p className="text-base-content comment-content">{commentContent}</p>
+              <CommentIcon />
+              <p className="text-base-content comment-content ml-2">{commentContent}</p>
           </div>
           <div className="flex items-center">
-              <img src={articleIcon} alt="Article icon" className="h-5 w-5 mr-2" />
-              <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{dimPosts.postTitle}</NavLink>
+              <ArticleIcon />
+              <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title ml-2">{dimPosts.postTitle}</NavLink>
           </div>
       </div>
   );
