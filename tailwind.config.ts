@@ -22,6 +22,7 @@ export default {
           primary: "#0017C1",
           secondary: "#264AF4",
           tertiary: "#00118F",
+          info: "#00118F"
         },
       },
       {
