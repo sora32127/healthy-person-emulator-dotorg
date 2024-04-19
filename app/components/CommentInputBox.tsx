@@ -50,7 +50,7 @@ export default function CommentInputBox({
         type="submit"
         className={`px-4 py-2 mx-1 w-full ${
           isCommentOpen
-            ? "bg-blue-500 text-white"
+            ? "bg-primary text-white"
             : "bg-gray-200 text-gray-500 cursor-not-allowed"
         } rounded`}
         disabled={!isCommentOpen}

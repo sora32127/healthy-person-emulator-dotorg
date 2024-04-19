@@ -11,8 +11,8 @@ export default function BeSponsor() {
           <p>暗黙知を共有できる場所を作るためには、サーバー代をはじめとしたある程度の金銭が必要です。現在、健常者エミュレータ事例集の運営には以下のコストがかかっています。</p>
           <br></br>
           <ul className="list-disc list-inside text-center">
-            <li><a href="https://supabase.com/pricing" className='text-blue-600 underline underline-offset-4'>Supabase Pro Plan</a>: $25/月</li>
-            <li><a href="https://vercel.com/pricing" className='text-blue-600 underline underline-offset-4'>Vercel Pro Plan</a> : $20/月</li>
+            <li><a href="https://supabase.com/pricing" className='text-info underline underline-offset-4'>Supabase Pro Plan</a>: $25/月</li>
+            <li><a href="https://vercel.com/pricing" className='text-info underline underline-offset-4'>Vercel Pro Plan</a> : $20/月</li>
             <li>ドメイン代(Cloudflare) : $10.11/年</li>
           </ul>
           <br></br>
@@ -20,7 +20,7 @@ export default function BeSponsor() {
           <button className="mt-8 w-full">
             <NavLink to ="https://buy.stripe.com/8wM3cG2Diemj5Qk5kk"
               role="link"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-md block w-full">サポートする
+              className="bg-primary text-white font-bold py-2 px-8 rounded-md block w-full">サポートする
             </NavLink>
           </button>
           <div className="text-center mt-6">

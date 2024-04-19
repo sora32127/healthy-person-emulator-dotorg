@@ -26,7 +26,7 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
     <div className="mb-8">
       <h3 className="text-2xl font-bold mb-4">タグ作成</h3>
       <div className="mb-4">
-        <label htmlFor="tagInput" className="block text-gray-700 font-bold mb-2">
+        <label htmlFor="tagInput" className="block font-bold mb-2">
           新しいタグを入力してください
         </label>
         <input
@@ -35,7 +35,7 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
           value={tagInput}
           onChange={handleTagInputChange}
           placeholder="タグを入力..."
-          className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none tag-create-box-input"
+          className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none tag-create-box-input"
         />
       </div>
       <button

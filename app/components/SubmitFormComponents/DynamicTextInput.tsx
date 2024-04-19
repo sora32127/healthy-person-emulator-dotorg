@@ -29,7 +29,7 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
 
   return (
     <div className="mb-8">
-      {description && <p className="text-gray-600 mb-4">{description}</p>}
+      {description && <p className="mb-4">{description}</p>}
       <Form className="space-y-4">
         {parentComponentStateValues.map((value, index) => (
           <div key={`input-${index}`} className="flex items-center space-x-2">
@@ -38,7 +38,7 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
               id={`input-${index}`}
               value={value}
               onChange={(e) => handleInputChange(index, e.target.value)}
-              className="flex-grow px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+              className="flex-grow px-3 py-2 border rounded-lg focus:outline-none"
             />
             <button
               type="button"

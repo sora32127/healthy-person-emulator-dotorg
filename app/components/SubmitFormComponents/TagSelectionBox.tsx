@@ -45,13 +45,13 @@ const TagSelectionBox = ({
     return (
         <div className="mb-8">
             <h3 className="text-2xl font-bold mb-4">タグ選択</h3>
-            <p className="text-gray-600 mb-4">タグを選択してください。</p>
+            <p className="mb-4">タグを選択してください。</p>
             <input
                 type="text"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 placeholder="タグを検索..."
-                className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none mb-4"
+                className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
             />
             <div className="flex space-x-2 mb-4">
                 <button

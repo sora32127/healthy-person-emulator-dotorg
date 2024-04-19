@@ -47,11 +47,11 @@ export default function Login() {
     return (
         <div className="flex justify-center items-center h-screen">
             <div className="w-full max-w-md">
-                <Form method="post" className="bg-white rounded px-8 pt-6 pb-8 mb-4">
+                <Form method="post" className="rounded px-8 pt-6 pb-8 mb-4">
                     <H1>ログイン</H1>
                     <p>記事の編集にはログインが必要です</p>
                     <div className="my-4">
-                        <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+                        <label htmlFor="email" className="block text-base-content text-sm font-bold mb-2">
                             メールアドレス:
                         </label>
                         <input
@@ -60,11 +60,11 @@ export default function Login() {
                             type="text"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                         />
                     </div>
                     <div className="mb-6">
-                        <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+                        <label htmlFor="password" className="block text-base-content text-sm font-bold mb-2">
                             パスワード:
                         </label>
                         <input
@@ -73,33 +73,33 @@ export default function Login() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                         />
                     </div>
                     {actionData?.status === 400 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error-content text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error-content text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-between items-start">
                         <button
                         type="submit"
                         disabled={!email || !password}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+                        className="bg-primary font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 text-white"
                         >
                         ログイン
                         </button>
                         <div className="flex flex-col items-end">
                             <Link
                                 to="/signup"
-                                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4 my-2"
+                                className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4 my-2"
                             >
                                 ユーザー登録はこちら
                             </Link>
                             <Link
                                 to="/forgotPassword"
-                                className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4"
+                                className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
                             >
                                 パスワードを忘れた方はこちら
                             </Link>

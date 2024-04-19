@@ -392,7 +392,7 @@ export default function SearchPage() {
           <select
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className="border border-gray-300 rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+            className=" rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary"
           >
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
@@ -404,12 +404,12 @@ export default function SearchPage() {
                 type="text"
                 value={tagInputValue}
                 onChange={handleTagInputChange}
-                className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
+                className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
                 placeholder="タグを入力"
               />
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
                 name="action"
                 value="firstSearch"
               >
@@ -425,12 +425,12 @@ export default function SearchPage() {
                 name="q"
                 defaultValue={queryText}
                 onChange={(e) => setQueryText(e.target.value)}
-                className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
+                className="rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-2 border-secondary"
                 placeholder="検索キーワードを入力"
               />
               <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
               >
@@ -446,12 +446,12 @@ export default function SearchPage() {
             name="title"
             defaultValue={titleText}
             onChange={(e) => setTitleText(e.target.value)}
-            className="border border-gray-300 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6"
+            className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
             placeholder="タイトルを入力"
             />
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
             >
@@ -468,7 +468,7 @@ export default function SearchPage() {
             {tagSuggestions.map((tag) => (
               <li
               key={tag.tagName+tag.count}
-              className="px-4 py-2 cursor-pointer hover:bg-gray-100 tag-select"
+              className="px-4 py-2 hover:border-2 hover:border-info tag-select"
               onClick={() => handleTagSelect(tag.tagName)}
               >
               {tag.tagName} ({tag.count})
@@ -521,7 +521,8 @@ export default function SearchPage() {
         value="firstPage"
         disabled={pageNumber === 1}
         className={`px-2 py-2 mx-1 ${pageNumber === 1?
-          "bg-gray-200 text-gray-500 cursor-not-allowed": "bg-blue-500 text-white"}
+          "bg-gray-200 text-gray-500 cursor-not-allowed":
+          "bg-primary text-white"}
           rounded search-go-to-first-page`}
         >
         最初
@@ -533,12 +534,12 @@ export default function SearchPage() {
         disabled={pageNumber === 1}
         className={`px-2 py-2 mx-1 ${pageNumber === 1?
         "bg-gray-200 text-gray-500 cursor-not-allowed":
-        "bg-blue-500 text-white"}
+        "bg-primary text-white"}
         rounded search-go-to-previous-page`}
         >
         前へ
       </button>
-      <span className="px-4 py-2 mx-1 bg-white text-blue-500 rounded">
+      <span className="px-4 py-2 mx-1">
       {pageNumber} / {totalPages}
       </span>
       <button
@@ -547,7 +548,7 @@ export default function SearchPage() {
       value="nextPage"
       disabled={pageNumber === totalPages}
       className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "bg-blue-500 text-white"}
+      "bg-primary text-white"}
       rounded search-go-to-next-page`}
         >
         次へ
@@ -558,7 +559,7 @@ export default function SearchPage() {
       value="lastPage"
       disabled={pageNumber === totalPages}
       className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "bg-blue-500 text-white"}
+      "bg-primary text-white"}
       rounded search-go-to-last-page`}
         >
         最後

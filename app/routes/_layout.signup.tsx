@@ -97,7 +97,7 @@ export default function Component() {
         <div className="mb-4">
           <label
             htmlFor="username"
-            className="block mb-2 font-bold text-gray-700"
+            className="block mb-2 font-bold text-base-content"
           >
             ユーザー名:
           </label>
@@ -105,7 +105,7 @@ export default function Component() {
             type="text"
             id="username"
             name="username"
-            className={`w-full px-3 py-2 text-gray-700 border rounded-md focus:outline-none ${
+            className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
               userName ? "focus:border-blue-500" : "border-red-500"
             }`}
             value={userName}
@@ -117,14 +117,14 @@ export default function Component() {
           )}
         </div>
         <div className="mb-4">
-          <label htmlFor="email" className="block mb-2 font-bold text-gray-700">
+          <label htmlFor="email" className="block mb-2 font-bold text-base-content">
             メールアドレス:
           </label>
           <input
             type="email"
             id="email"
             name="email"
-            className={`w-full px-3 py-2 text-gray-700 border rounded-md focus:outline-none ${
+            className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
               email ? "focus:border-blue-500" : "border-red-500"
             }`}
             value={email}
@@ -138,7 +138,7 @@ export default function Component() {
         <div className="mb-6">
           <label
             htmlFor="password"
-            className="block mb-2 font-bold text-gray-700"
+            className="block mb-2 font-bold text-base-content"
           >
             パスワード:
           </label>
@@ -146,7 +146,7 @@ export default function Component() {
             type="password"
             id="password"
             name="password"
-            className={`w-full px-3 py-2 text-gray-700 border rounded-md focus:outline-none ${
+            className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
               password ? "focus:border-blue-500" : "border-red-500"
             }`}
             value={password}
@@ -161,7 +161,7 @@ export default function Component() {
           <button
             type="submit"
             className={`px-4 py-2 font-bold text-white rounded-md focus:outline-none ${
-              isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+              isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-primary"
             }`}
             disabled={isDisabled || isRegistering}
           >
@@ -170,8 +170,8 @@ export default function Component() {
         </div>
       </Form>
       {isRegistering && (
-        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-500 bg-opacity-50">
-          <div className="bg-white p-8 rounded-md">
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-base-200 bg-opacity-50">
+          <div className="bg-base-300 p-8 rounded-md">
             {actionData?.status === 200 ? (
               <div>
                 <p className="text-green-500 mb-4">{actionData.message}</p>

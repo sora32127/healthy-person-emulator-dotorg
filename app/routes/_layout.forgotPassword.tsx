@@ -36,10 +36,10 @@ export default function ForgotPassword() {
     return (
         <div className="flex justify-center items-center h-screen">
             <div className="w-full max-w-md">
-                <Form method="post" className="bg-white rounded px-8 pt-6 pb-8 mb-4">
+                <Form method="post" className="rounded px-8 pt-6 pb-8 mb-4">
                     <H1>パスワードをリセットする</H1>
                     <div className="mb-4">
-                        <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+                        <label htmlFor="email" className="block text-sm font-bold mb-2">
                             メールアドレス:
                         </label>
                         <input
@@ -48,7 +48,7 @@ export default function ForgotPassword() {
                             type="text"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                         />
                     </div>
                     {actionData?.status === 200 && (
@@ -64,13 +64,13 @@ export default function ForgotPassword() {
                         <button
                             type="submit"
                             disabled={!email}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+                            className="bg-primary text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                         >
                             リセットリクエストを送信
                         </button>
                         <Link
                             to="/login"
-                            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4"
+                            className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
                         >
                             ログインはこちら
                         </Link>

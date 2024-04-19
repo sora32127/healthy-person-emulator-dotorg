@@ -176,7 +176,7 @@ export default function Feed() {
     return (
         <>
         <H1>トップページ</H1>
-        <p>サイトの詳細に関しては<NavLink to="/readme" className="text-blue-600 underline underline-offset-4">サイト説明</NavLink>をご覧ください</p>
+        <p>サイトの詳細に関しては<NavLink to="/readme" className="text-info underline underline-offset-4">サイト説明</NavLink>をご覧ください</p>
         <div>
             <div className="latest-posts">
                 <H2>最新の投稿</H2>
@@ -193,7 +193,7 @@ export default function Feed() {
                 ))}
                 <NavLink
                     to="/feed?p=2"
-                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary"
                 >
                 最新の投稿を見る
                 </NavLink>
@@ -213,7 +213,7 @@ export default function Feed() {
                 ))}
                 <NavLink
                     to="/feed?p=2&likeFrom=24&likeTo=0"
-                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600"
+                    className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary"
                 >
                 最近いいねされた投稿を見る
                 </NavLink>

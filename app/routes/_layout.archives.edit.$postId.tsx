@@ -241,7 +241,7 @@ export default function EditPost() {
                   type="text"
                   value={tagInputValue}
                   onChange={handleTagInputChange}
-                  className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 edit-tag-search-input"
+                  className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 edit-tag-search-input placeholder-slate-500"
                   placeholder="タグを検索"
                 />
               </div>
@@ -290,7 +290,7 @@ export default function EditPost() {
             <input type="hidden" name="postContent" value={markdownContent} />
             <button
               type="submit"
-              className="rounded-md block w-full px-4 py-2 text-center text-white bg-blue-500 hover:bg-blue-600 edit-post-submit-button"
+              className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary edit-post-submit-button"
               disabled={navigation.state === "submitting"}
             >
               変更を保存する

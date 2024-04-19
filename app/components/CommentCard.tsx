@@ -1,10 +1,9 @@
-// CommentCard.tsx
-import clockIcon from "~/src/assets/clock_icon.svg";
-import thumb_up from "~/src/assets/thumb_up.svg";
-import thumb_down from "~/src/assets/thumb_down.svg";
 import { useState } from "react";
 import CommentInputBox from "./CommentInputBox";
 import { useSubmit } from "@remix-run/react";
+import ClockIcon from "./icons/ClockIcon";
+import ThumbsUpIcon from "./icons/ThumbsUpIcon";
+import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 
 interface CommentCardProps {
   commentId: number;
@@ -96,33 +95,37 @@ export default function CommentCard({
   }
 
   return (
-    <div className="bg-white p-4 mb-4" style={{ marginLeft }}>
+    <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
       <div className="flex items-center">
-        <p className="text-green-900 font-bold mr-4">{commentAuthor}</p>
-        <img src={clockIcon} alt="Comment Date" className="h-5 w-5 mr-2" />
-        <p className="text-gray-600 text-sm">{formattedCommentDate}</p>
+        <p className="text-green-700 font-bold mr-4">{commentAuthor}</p>
+        <ClockIcon  />
+        <p className="text-sm ml-2">{formattedCommentDate}</p>
       </div>
       <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
       <div className="flex items-center mt-4">
         <button
-          className={`flex items-center mr-4 bg-gray-200 rounded-md px-2 py-2 ${
+          className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
             isLiked ? "text-blue-500 fonr-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
           disabled={isCommentLikeButtonPushed || isLiked}
         >
-          <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2" />
+          <ThumbsUpIcon />
+          <p className="ml-2">
           {likesCount}
+          </p>
         </button>
         <button
-          className={`flex items-center bg-gray-200 rounded-md px-2 py-2 ${
+          className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
             isDisliked ? "text-red-500 font-bold" : ""
           }`}
           onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
           disabled={isCommentDislikeButtonPushed || isDisliked}
         >
-          <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2" />
+          <ThumbsDownIcon />
+          <p className="ml-2">
           {dislikesCount}
+          </p>
         </button>
       </div>
     <button

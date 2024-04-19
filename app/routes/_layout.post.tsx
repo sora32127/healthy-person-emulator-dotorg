@@ -167,7 +167,7 @@ export default function Component() {
         <UserExplanation />
         <br></br>
         <NavLink
-            className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800 underline underline-offset-4"
+            className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
             to="/freeStylePost"
         >自由投稿フォームに移動</NavLink>
         <ClearLocalStorageButton clearInputs={clearInputs}/>
