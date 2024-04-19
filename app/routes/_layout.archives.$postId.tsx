@@ -242,11 +242,13 @@ export default function Component() {
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        
-        <p className="flex my-1">
-            <ClockIcon />
-            <p className="ml-2">
-            {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
+        <div>
+          <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
+            <div className="w-6 h-6">
+              <ClockIcon />
+            </div>
+            <p>
+              {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
                 year: "numeric",
                 month: "2-digit",
                 day: "2-digit",
@@ -254,18 +256,20 @@ export default function Component() {
                 minute: "2-digit",
                 second: "2-digit",
                 hourCycle: "h23",
-            }).replace(/\//g, "-")}
+              }).replace(/\//g, "-")}
             </p>
-        </p>
-        <div className="flex justify-start items-center mb-2">
-          <TagIcon />
-          <div className="ml-2">
+          </div>
+          <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
+            <div className="w-6 h-6">
+              <TagIcon />
+            </div>
+            <div>
               {sortedTagNames && sortedTagNames.map((tag) => (
-                  <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
-                      <TagCard tagName={tag.dimTag.tagName} />
-                  </span>
-                  
+                <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
+                  <TagCard tagName={tag.dimTag.tagName} />
+                </span>
               ))}
+            </div>
           </div>
         </div>
         <div className="flex items-center p-2 rounded">
