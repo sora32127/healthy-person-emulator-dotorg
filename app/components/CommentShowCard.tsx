@@ -35,13 +35,17 @@ export default function CommentShowCard({
               <p className="text-base-content text-sm comment-timestamp">{formattedCommentDate}</p>
               <span className="text-lg font-bold text-base-content comment-author">{commentAuthor}</span>
           </div>
-          <div className="flex items-center mb-2">
-              <CommentIcon />
-              <p className="text-base-content comment-content ml-2">{commentContent}</p>
+          <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
+              <div className="w-6 h-6">
+                  <CommentIcon />
+              </div>
+              <p className="text-base-content comment-content">{commentContent}</p>
           </div>
-          <div className="flex items-center">
-              <ArticleIcon />
-              <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title ml-2">{dimPosts.postTitle}</NavLink>
+          <div className="grid grid-cols-[auto_1fr] gap-2 items-center">
+              <div className="w-6 h-6">
+                  <ArticleIcon />
+              </div>
+              <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{dimPosts.postTitle}</NavLink>
           </div>
       </div>
   );
