@@ -4,20 +4,19 @@ import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
-import clockIcon from "~/src/assets/clock_icon.svg";
-import tagIcon from "~/src/assets/tag_icon.svg";
 import { useState } from "react";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
-import thumb_up from "~/src/assets/thumb_up.svg";
-import thumb_down from "~/src/assets/thumb_down.svg";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H1, H2 } from "~/components/Headings";
-import arrowForwardIcon from "~/src/assets/arrow_forward.svg";
-import arrowBackIcon from "~/src/assets/arrow_back.svg";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
 import ArrowBackIcon from "~/components/icons/ArrowBackIcon";
+import ClockIcon from "~/components/icons/ClockIcon";
+import TagIcon from "~/components/icons/TagIcon";
+import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
+import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
+import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -245,7 +244,8 @@ export default function Component() {
         <H1>{postContent && postContent.postTitle}</H1>
         
         <p className="flex my-1">
-            <img src={clockIcon} alt="Post date" className="h-5 w-5 mr-2 mt-0.5" />
+            <ClockIcon />
+            <p className="ml-2">
             {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
                 year: "numeric",
                 month: "2-digit",
@@ -255,10 +255,11 @@ export default function Component() {
                 second: "2-digit",
                 hourCycle: "h23",
             }).replace(/\//g, "-")}
+            </p>
         </p>
         <div className="flex justify-start items-center mb-2">
-          <img src={tagIcon} alt="Tag icon" className="h-5 w-5 mr-2" />
-          <div>
+          <TagIcon />
+          <div className="ml-2">
               {sortedTagNames && sortedTagNames.map((tag) => (
                   <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                       <TagCard tagName={tag.dimTag.tagName} />
@@ -276,8 +277,10 @@ export default function Component() {
             disabled={isPageLikeButtonPushed || isLiked}
             type="submit"
           >
-            <img src={thumb_up} alt="Like" className="h-5 w-5 mr-2 post-like-count" />
+            <ThumbsUpIcon />
+            <p className="ml-2">
             {postContent?.countLikes}
+            </p>
           </button>
           <button
             className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
@@ -286,8 +289,10 @@ export default function Component() {
             onClick={() => handleVoteOnClient("dislike")}
             disabled={isPageDislikeButtonPushed || isDisliked}
           >
-            <img src={thumb_down} alt="Dislike" className="h-5 w-5 mr-2 post-dislike-count" />
+            <ThumbsDownIcon />
+            <p className="ml-2">
             {postContent?.countDislikes}
+            </p>
           </button>
         </div>
         <div className="postContent">
@@ -319,7 +324,7 @@ export default function Component() {
         <div className="flex flex-col md:flex-row justify-between items-center my-20">
           {nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
-              <img src={arrowForwardIcon} alt="Next post" className="h-5 w-5 mr-2" />
+              <ArrowForwardIcon />
               <NavLink
                 to={`/archives/${nextPost.postId}`}
                 className="text-info underline underline-offset-4"
