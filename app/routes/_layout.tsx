@@ -25,6 +25,7 @@ import LogoutIcon from "~/components/icons/LogoutIcon";
 import SignupIcon from "~/components/icons/SignupIcon";
 import LoginIcon from "~/components/icons/LoginIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
+import TopIcon from "~/components/icons/TopIcon";
 
 export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
@@ -142,7 +143,7 @@ export default function Component() {
     <footer className="bg-base-100 py-8 md:pb-0">
     <div className="container mx-auto px-4">
       <div className="flex justify-center items-center">
-        <img src={topLogo} alt="Top Logo" className="h-auto w-48 mr-2" />
+        <TopIcon />
         <div className="flex flex-col space-y-2 ml-2">
           <NavLink
             to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088"
