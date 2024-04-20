@@ -56,7 +56,7 @@ export default function Component() {
       to={item.to}
       className={({ isActive }) =>
         `flex flex-col items-center justify-center text-base-content ${
-          isActive ? "text-blue-500 font-bold" : ""
+          isActive ? "text-info font-bold" : ""
         }`
       }
     >

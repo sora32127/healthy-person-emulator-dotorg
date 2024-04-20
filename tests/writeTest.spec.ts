@@ -137,8 +137,9 @@ test.describe("ユーザーはログインして記事を編集できる", () =>
 
 test("ユーザーは記事に対していいね・よくないねをすることができる", async ({ page }) => {
   await gotoTestPostPage(page);
-  await page.getByRole('button', { name: 'Like 0', exact: true }).click();
-  await page.getByRole('button', { name: 'Dislike 0', exact: true }).click();
+
+  await page.locator(".post-like-button").click();
+  await page.locator(".post-dislike-button").click();
   await expect(page).toHaveTitle(/プログラムテスト/);
 });
 
@@ -147,7 +148,7 @@ test("ユーザーは記事にコメントし、コメントに対していい�
   await page.getByLabel('コメント').fill('Test Comment');
   await page.getByRole('button', { name: 'コメント' }).click();
   await expect(page).toHaveTitle(/プログラムテスト/);
-  await page.getByRole('button', { name: 'Like 0', exact: true }).click();
-  await page.getByRole('button', { name: 'Dislike 0', exact: true }).click();
+  await page.locator(".comment-like-button").click();
+  await page.locator(".comment-dislike-button").click();
   await expect(page).toHaveTitle(/プログラムテスト/);
 });
