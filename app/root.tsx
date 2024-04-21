@@ -11,7 +11,6 @@ import {
 
 import type { LinksFunction } from "@remix-run/node";
 import stylesheet from "~/tailwind.css?url";
-import { SpeedInsights } from "@vercel/speed-insights/remix"
 import { PageTransitionProgressBar } from "./components/PageTransitionProgressBar";
 
 export const links: LinksFunction = () => [
@@ -40,7 +39,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <SpeedInsights />
       </body>
     </html>
   );
