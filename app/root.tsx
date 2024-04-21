@@ -6,18 +6,12 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
-  json,
-  useLoaderData,
-  useLocation,
   useRouteError,
 } from "@remix-run/react";
 
 import type { LinksFunction } from "@remix-run/node";
 import stylesheet from "~/tailwind.css?url";
 import { SpeedInsights } from "@vercel/speed-insights/remix"
-
-import * as gtag from "~/modules/gtags.client"
-import { useEffect } from "react";
 import { PageTransitionProgressBar } from "./components/PageTransitionProgressBar";
 
 export const links: LinksFunction = () => [
@@ -30,25 +24,8 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export async function loader() {
-  const gaTrackingId = process.env.NODE_ENV !== "development" ? process.env.GA_TRACKING_ID : null;
-  return json({
-    gaTrackingId : gaTrackingId ?? ""
-  });
-}
-
-
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { gaTrackingId } = useLoaderData<typeof loader>();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (gaTrackingId?.length) {
-      gtag.pageview(location.pathname, gaTrackingId);
-    }
-  }, [location, gaTrackingId]);
-
   return (
     <html lang="ja">
       <head>
@@ -64,28 +41,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ScrollRestoration />
         <Scripts />
         <SpeedInsights />
-        {!gaTrackingId ? null : (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaTrackingId}`}
-            />
-            <script
-              async
-              id="gtag-init"
-              dangerouslySetInnerHTML={{
-                __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaTrackingId}', {
-                  page_path: window.location.pathname,
-                });
-              `,
-              }}
-            />
-          </>
-        )}
       </body>
     </html>
   );
