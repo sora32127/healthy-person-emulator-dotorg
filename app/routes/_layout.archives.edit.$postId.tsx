@@ -20,7 +20,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     where : { postId: Number(postId) },
     select : {
       postId: true,
-      userName: true,
+      userId: true,
       lastHeartBeatAtUTC: true
     },
   });
@@ -39,10 +39,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   if (nowEditingInfo){
     const userName = await prisma.userProfiles.findUniqueOrThrow({
-      select: { userName: true },
+      select: { userId: true },
       where: { userId },
     });
-    if (nowEditingInfo.userName === userName.userName){
+    if (nowEditingInfo.userId === userName.userId){
       isEditing = false;
     }
   }
@@ -55,7 +55,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       postMarkdown: null,
       tagNames: null,
       allTagsForSearch: null,
-      editingUserName: nowEditingInfo.userName,
+      editingUserName: nowEditingInfo.userId,
       postId,
       isEditing: true,
       userName: null,
@@ -71,14 +71,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     });
   }
   const userName = await prisma.userProfiles.findUniqueOrThrow({
-    select: { userName: true },
+    select: { userId: true },
     where: { userId },
   });
 
   await prisma.nowEditingPages.create({
     data: {
       postId: Number(postId),
-      userName: userName.userName,
+      userId: userName.userId,
     },
   });
 
@@ -147,7 +147,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     tagNames,
     postMarkdown,
     allTagsForSearch,
-    userName: userName.userName,
+    userName: userName.userId,
     editingUserName:null,
     isEditing:false,
     postId,
