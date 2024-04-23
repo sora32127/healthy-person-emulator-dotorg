@@ -45,7 +45,7 @@ export default function CommentShowCard({
               <div className="w-6 h-6">
                   <ArticleIcon />
               </div>
-              <NavLink to={`/archives/${postId}`} className="text-lg font-bold text-info underline underline-offset-4 post-title">{dimPosts.postTitle}</NavLink>
+              <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{dimPosts.postTitle}</NavLink>
           </div>
       </div>
   );
