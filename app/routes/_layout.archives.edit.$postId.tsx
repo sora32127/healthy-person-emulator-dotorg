@@ -132,7 +132,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     select: {
       postRevisionNumber: true,
       postEditDateJst: true,
-      editorUserName: true,
+      editorUserId: true,
       postTitleBeforeEdit: true,
       postTitleAfterEdit: true,
       postContentBeforeEdit: true,
@@ -314,7 +314,7 @@ export default function EditPost() {
                   <tr key={edit.postRevisionNumber}>
                     <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
                     <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
-                    <td className="border px-2 py-2">{edit.editorUserName}</td>
+                    <td className="border px-2 py-2">{edit.editorUserId.slice(0,8)}</td>
                     <td className="border px-2 py-2">
                       {diff.diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit).map((part, index) => {
                         if (part.added || part.removed) {
