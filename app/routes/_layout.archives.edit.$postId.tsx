@@ -8,7 +8,7 @@ import { ClientOnly } from "remix-utils/client-only";
 import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
 import { marked } from 'marked';
-import { requireUserId } from "~/modules/session.server";
+import { getSession, requireUserId } from "~/modules/session.server";
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 
@@ -20,7 +20,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     where : { postId: Number(postId) },
     select : {
       postId: true,
-      userName: true,
+      userId: true,
       lastHeartBeatAtUTC: true
     },
   });
@@ -39,10 +39,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   if (nowEditingInfo){
     const userName = await prisma.userProfiles.findUniqueOrThrow({
-      select: { userName: true },
+      select: { userId: true },
       where: { userId },
     });
-    if (nowEditingInfo.userName === userName.userName){
+    if (nowEditingInfo.userId === userName.userId){
       isEditing = false;
     }
   }
@@ -55,7 +55,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       postMarkdown: null,
       tagNames: null,
       allTagsForSearch: null,
-      editingUserName: nowEditingInfo.userName,
+      editingUserName: nowEditingInfo.userId,
       postId,
       isEditing: true,
       userName: null,
@@ -71,14 +71,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     });
   }
   const userName = await prisma.userProfiles.findUniqueOrThrow({
-    select: { userName: true },
+    select: { userId: true },
     where: { userId },
   });
 
   await prisma.nowEditingPages.create({
     data: {
       postId: Number(postId),
-      userName: userName.userName,
+      userId: userName.userId,
     },
   });
 
@@ -132,7 +132,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     select: {
       postRevisionNumber: true,
       postEditDateJst: true,
-      editorUserName: true,
+      editorUserId: true,
       postTitleBeforeEdit: true,
       postTitleAfterEdit: true,
       postContentBeforeEdit: true,
@@ -147,7 +147,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     tagNames,
     postMarkdown,
     allTagsForSearch,
-    userName: userName.userName,
+    userName: userName.userId,
     editingUserName:null,
     isEditing:false,
     postId,
@@ -314,7 +314,7 @@ export default function EditPost() {
                   <tr key={edit.postRevisionNumber}>
                     <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
                     <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
-                    <td className="border px-2 py-2">{edit.editorUserName}</td>
+                    <td className="border px-2 py-2">{edit.editorUserId.slice(0,8)}</td>
                     <td className="border px-2 py-2">
                       {diff.diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit).map((part, index) => {
                         if (part.added || part.removed) {
@@ -363,6 +363,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const postContent = formData.get("postContent")?.toString() || "";
   const tags = formData.getAll("tags") as string[];
   const userName = formData.get("userName")?.toString() || "";
+  const session = await getSession(request.headers.get('Cookie'));
+  const userId = session.get('userId');
 
   const postId = Number(params.postId);
 
@@ -429,6 +431,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         postId,
         postRevisionNumber: newRevisionNumber,
         editorUserName: userName,
+        editorUserId: userId,
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,
         postContentBeforeEdit: latestPost.postContent,

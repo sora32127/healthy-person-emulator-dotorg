@@ -80,7 +80,6 @@ model FctCommentVoteHisotry {
 
 model userProfiles {
   userId            String            @id @map("user_id") @db.Uuid
-  userName          String            @unique @map("user_name")
   userCreatedAt     DateTime          @default(now()) @map("user_created_at") @db.Timestamptz(6)
   userEmail         String            @unique @map("user_email")
   now_editing_pages nowEditingPages[]
@@ -90,10 +89,10 @@ model userProfiles {
 
 model nowEditingPages {
   postId             Int          @id @unique @default(autoincrement()) @map("post_id")
-  userName           String       @map("user_name")
+  userId           String       @map("user_id")
   lastHeartBeatAtUTC DateTime     @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("last_heart_beat_at_utc") @db.Timestamptz(6)
   dim_posts          DimPosts     @relation(fields: [postId], references: [postId], onDelete: Cascade, onUpdate: Cascade, map: "public_now_editing_pages_post_id_fkey")
-  user_profiles      userProfiles @relation(fields: [userName], references: [userName], onDelete: Cascade, map: "public_now_editing_pages_user_name_fkey")
+  user_profiles      userProfiles @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "public_now_editing_pages_user_id_fkey")
 
   @@map("now_editing_pages")
 }
@@ -127,7 +126,7 @@ model FctPostEditHistory {
   postRevisionNumber    Int      @map("post_revision_number")
   postEditDateJst       DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_edit_date_jst") @db.Timestamptz(6)
   postEditDateGmt       DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_edit_date_gmt") @db.Timestamptz(6)
-  editorUserName        String   @map("editor_user_name") @db.VarChar(255)
+  editorUserId          String   @map("editor_user_id")
   postTitleBeforeEdit   String   @map("post_title_before_edit") @db.VarChar(255)
   postTitleAfterEdit    String   @map("post_title_after_edit") @db.VarChar(255)
   postContentBeforeEdit String   @map("post_content_before_edit")
