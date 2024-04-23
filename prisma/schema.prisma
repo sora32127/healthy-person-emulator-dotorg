@@ -128,6 +128,7 @@ model FctPostEditHistory {
   postEditDateJst       DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_edit_date_jst") @db.Timestamptz(6)
   postEditDateGmt       DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_edit_date_gmt") @db.Timestamptz(6)
   editorUserName        String   @map("editor_user_name") @db.VarChar(255)
+  editorUserId          String   @map("editor_user_id")
   postTitleBeforeEdit   String   @map("post_title_before_edit") @db.VarChar(255)
   postTitleAfterEdit    String   @map("post_title_after_edit") @db.VarChar(255)
   postContentBeforeEdit String   @map("post_content_before_edit")

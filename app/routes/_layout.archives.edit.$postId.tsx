@@ -8,7 +8,7 @@ import { ClientOnly } from "remix-utils/client-only";
 import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
 import { marked } from 'marked';
-import { requireUserId } from "~/modules/session.server";
+import { getSession, requireUserId } from "~/modules/session.server";
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 
@@ -363,6 +363,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const postContent = formData.get("postContent")?.toString() || "";
   const tags = formData.getAll("tags") as string[];
   const userName = formData.get("userName")?.toString() || "";
+  const session = await getSession(request.headers.get('Cookie'));
+  const userId = session.get('userId');
 
   const postId = Number(params.postId);
 
@@ -429,6 +431,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         postId,
         postRevisionNumber: newRevisionNumber,
         editorUserName: userName,
+        editorUserId: userId,
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,
         postContentBeforeEdit: latestPost.postContent,
