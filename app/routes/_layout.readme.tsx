@@ -51,6 +51,18 @@ export default function Component() {
             <li><a href="https://t.co/SOg8HEB1Ga">Discordの招待リンク</a>から入ることが可能です。判断に迷った場合や、議論したいことがある場合などに使ってください。</li>
             <li>このサーバーでは、おすすめの記事を紹介しあったり、どのように行動するべきか議論が行われたりしています。</li>
         </ul>
+        <H2>SNS連携について</H2>
+        <ul>
+            <li>健常者エミュレータ事例集に投稿された記事は、以下の経路でSNSにも自動投稿されます</li>
+            <ul>
+                <li><a href="https://twitter.com/helthypersonemu">Twitter/X</a></li>
+                <li><a href="https://bsky.app/profile/helthypersonemu.bsky.social">Bluesky</a></li>
+            </ul>
+            <li>SNSに投稿される際は、5W1H+Then状況説明の箇所が画像として表示されます</li>
+            <li>10分に一回の頻度で更新されます</li>
+        </ul>
+
+
         <H2>開発について</H2>
         <ul>
             <li>健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。誰もが開発に参加することが可能です。</li>
