@@ -9,20 +9,9 @@ export async function action({ request }: ActionFunctionArgs) {
   const form = await request.formData();
   const email = form.get("email")?.toString();
   const password = form.get("password")?.toString();
-  const username = form.get("username")?.toString();
 
-  if (!email || !password || !username) {
+  if (!email || !password ) {
     return json({ status: 500, message: "Email, password and username are required" });
-  }
-
-  const isUserNameExist = await prisma.userProfiles.findFirst({
-    where: {
-      userName: username,
-    },
-  });
-
-  if (isUserNameExist) {
-    return json({ status: 500, message: "ユーザー名が既に登録されています" });
   }
 
   const url = new URL(request.url);
@@ -47,16 +36,13 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    console.log(userId, username, email)
     await prisma.userProfiles.create({
     data: {
       userId: userId,
-      userName: username,
       userEmail: email,
     },
   });
   } catch (error) {
-    console.log(error)
     return json({ status: 500, message: "ユーザー登録に失敗しました" });
   } 
 
@@ -66,12 +52,11 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Component() {
   const actionData = useActionData<typeof action>();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const isDisabled = !email || !password || !userName || passwordError !== "";
+  const isDisabled = !email || !password || passwordError !== "";
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
@@ -94,28 +79,6 @@ export default function Component() {
         onSubmit={() => setIsRegistering(true)}
       >
         <H1>ユーザー新規登録</H1>
-        <div className="mb-4">
-          <label
-            htmlFor="username"
-            className="block mb-2 font-bold text-base-content"
-          >
-            ユーザー名:
-          </label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
-              userName ? "focus:border-blue-500" : "border-red-500"
-            }`}
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            required
-          />
-          {!userName && (
-            <p className="text-red-500 text-sm mt-1">ユーザー名を入力してください。</p>
-          )}
-        </div>
         <div className="mb-4">
           <label htmlFor="email" className="block mb-2 font-bold text-base-content">
             メールアドレス:
