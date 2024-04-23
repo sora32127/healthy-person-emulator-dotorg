@@ -74,7 +74,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const { data, error } = await supabase.rpc("search_similar_content", {
       query_post_id: Number(postId),
       match_threshold: 0,
-      match_count: 15,
+      match_count: 16,
     });
 
     let similarPosts = [];
