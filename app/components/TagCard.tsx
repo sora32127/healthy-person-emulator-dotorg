@@ -9,7 +9,7 @@ export default function TagCard({
 }: TagCardProps) {
     return (
         <div className="rounded-md p-0.5 mb-0.5">
-            <NavLink to={`/tags/${tagName}`} className="text-lg font-bold text-info underline underline-offset-4 post-tag">{tagName}</NavLink>
+            <NavLink to={`/tags/${tagName}`} className="text-xs text-info underline underline-offset-4 post-tag">{tagName}</NavLink>
         </div>
     );
 }

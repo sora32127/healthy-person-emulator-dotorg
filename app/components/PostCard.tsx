@@ -52,7 +52,7 @@ export default function PostCard({
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
                 <ArticleIcon/>
-                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
+                <NavLink to={`/archives/${postId}`} className="text-lg font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
             </div>
             {highLightedText && (
                 <p className="neutral-content">{parse(highLightedText)}</p>
@@ -61,7 +61,7 @@ export default function PostCard({
                 <TagIcon/>
                 <div className="flex flex-wrap items-center">
                     {tagNames && tagNames.map((tag, index) => (
-                        <span key={index} className="inline-block text-sm font-semibold mr-1 mb-1">
+                        <span key={index} className="inline-block mr-1 mb-1">
                             <TagCard tagName={tag} />
                         </span>
                     ))}
