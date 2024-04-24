@@ -68,7 +68,7 @@ export default function TextInputBoxAI({
   };
 
   const handleSuggestions = (e: KeyboardEvent) => {
-    if (e.key === "Tab") {
+    if (e.key === "Shift") {
       e.preventDefault();
       commitSuggestions();
     }
@@ -115,9 +115,9 @@ export default function TextInputBoxAI({
       />
       {suggestions && (
         <>
-          <p className="text-info mt-2">[補完候補]: {suggestions}</p>
-          <p className="text-base-content mt-2">
-            Tabキーまたはボタンを押して補完できます。
+          <p className="text-base-content mt-2">[補完候補]: {suggestions}</p>
+          <p className="text-info mt-2">
+            Shiftキーまたはボタンを押して補完できます。
           </p>
           <button
             onClick={commitSuggestions}
