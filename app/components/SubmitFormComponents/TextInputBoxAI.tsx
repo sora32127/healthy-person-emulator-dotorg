@@ -34,6 +34,7 @@ export default function TextInputBoxAI({
           try {
             const formData = new FormData();
             formData.append("text", text);
+            formData.append("context", createContextSentense());
             const response = await fetch("/api/ai/getCompletion", {
               method: "POST",
               body: formData,
@@ -80,6 +81,25 @@ export default function TextInputBoxAI({
       removeEventListener("click", resetSuggestions);
     };
   }, [suggestions]);
+
+  const getContextFromLocalStorage = () => {
+    const situationValue = window.localStorage.getItem("situationValue");
+    const reflectionValue = window.localStorage.getItem("reflectionValue");
+    const counterReflectionValue = window.localStorage.getItem("counterReflectionValue");
+    const noteValue = window.localStorage.getItem("noteValue");
+    return {
+        situationValue,
+        reflectionValue,
+        counterReflectionValue,
+        noteValue,
+        };
+  }
+
+  const createContextSentense = () => {
+    const contextValues = getContextFromLocalStorage();
+    const contextSetense = `以下のテキストはコンテキストを表すものです。文章を補完する際の参考にしてください。状況: ${contextValues.situationValue}。反省: ${contextValues.reflectionValue}。反省に対する反省: ${contextValues.counterReflectionValue}。メモ: ${contextValues.noteValue}。`;
+    return contextSetense;
+  }
 
   return (
     <div className={className}>
