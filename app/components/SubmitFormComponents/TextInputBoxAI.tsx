@@ -88,7 +88,7 @@ export default function TextInputBoxAI({
         value={parentComponentStateValue}
         onChange={handleInputValue}
         placeholder={placeholder}
-        className="w-full border-2 border-gray-300 rounded-lg p-2 placeholder-slate-500"
+        className="w-full border-2 border-base-content rounded-lg p-2 placeholder-slate-500"
       />
       {suggestions && (
         <>
