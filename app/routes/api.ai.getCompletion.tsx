@@ -41,12 +41,12 @@ export async function getCompletion(text:string, context:string, prompt:string) 
     const result = await openAI.chat.completions.create({
         messages: [
             {
-                role: "user",
-                content: `${promptSentence}「${text}」に続く文節を考えてください`,
+                role: "assistant",
+                content: `補足情報は以下の通りです。文章を生成する参考にしてください。${context}`,
             },
             {
                 role: "user",
-                content: `補足情報は以下の通りです。文章を生成する参考にしてください。${context}`,
+                content: `${promptSentence}「${text}」に続く文節を考えてください`,
             },
             {
                 role: "user",
