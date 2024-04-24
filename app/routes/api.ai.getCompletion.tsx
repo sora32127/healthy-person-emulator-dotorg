@@ -29,6 +29,8 @@ function createPrompt(prompt: string) {
         return "書ききれなかった何かを補足したいと思っています。あなたは、ユーザーの補足を補佐してください。"
     } else if (prompt == "title") {
         return "タイトルを考えるのに困っています。あなたは、タイトルを考える補佐をしてください。"
+    } else {
+        return ""
     }
 }
 
@@ -41,12 +43,16 @@ export async function getCompletion(text:string, context:string, prompt:string) 
     const result = await openAI.chat.completions.create({
         messages: [
             {
+                role: "system",
+                content: promptSentence
+            },
+            {
                 role: "assistant",
                 content: `補足情報は以下の通りです。文章を生成する参考にしてください。${context}`,
             },
             {
                 role: "user",
-                content: `${promptSentence}「${text}」に続く文節を考えてください`,
+                content: `${text}」に続く文節を考えてください`,
             },
             {
                 role: "user",
