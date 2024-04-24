@@ -4,40 +4,31 @@ interface ComponentProps {
   className?: string;
   parentComponentStateValue: string;
   onInputChange: (value: string) => void;
+  placeholder?: string;
 }
 
 export default function TextInputBoxAI({
   className = "",
   parentComponentStateValue,
   onInputChange,
+  placeholder = "",
 }: ComponentProps) {
   const [suggestions, setSuggestions] = useState<string | null>(null);
-  const textarea = useRef<HTMLDivElement>(null);
+  const textarea = useRef<HTMLTextAreaElement>(null);
   const timer = useRef<NodeJS.Timeout | null>(null);
-  const composing = useRef<boolean>(false);
 
   const resetSuggestions = () => {
     setSuggestions(null);
   };
 
-  const caretToLast = (element: HTMLElement) => {
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  };
-
   const handleInputValue = useCallback(
-    (e: FormEvent<HTMLDivElement>) => {
-      if (composing.current) return;
+    (e: FormEvent<HTMLTextAreaElement>) => {
       if (timer.current) {
         clearTimeout(timer.current);
       }
 
-      if (e.currentTarget.innerText) {
-        const text = e.currentTarget.innerText;
+      if (e.currentTarget.value) {
+        const text = e.currentTarget.value;
 
         timer.current = setTimeout(async () => {
           try {
@@ -56,30 +47,17 @@ export default function TextInputBoxAI({
       } else {
         setSuggestions("");
       }
-      onInputChange(e.currentTarget.innerText);
-      caretToLast(e.currentTarget);
+      onInputChange(e.currentTarget.value);
     },
     [onInputChange]
-  );
-
-  const handleCompositionStart = useCallback(() => {
-    composing.current = true;
-  }, []);
-
-  const handleCompositionEnd = useCallback(
-    (e: FormEvent<HTMLDivElement>) => {
-      composing.current = false;
-      handleInputValue(e);
-    },
-    [handleInputValue]
   );
 
   const commitSuggestions = () => {
     const textareaElement = textarea.current;
     if (textareaElement && suggestions) {
-      const newValue = textareaElement.innerText + suggestions;
-      textareaElement.innerText = newValue;
-      caretToLast(textareaElement);
+      const newValue = textareaElement.value + suggestions;
+      textareaElement.value = newValue;
+      textareaElement.focus();
       resetSuggestions();
       onInputChange(newValue);
     }
@@ -105,17 +83,13 @@ export default function TextInputBoxAI({
 
   return (
     <div className={className}>
-      <div
-        contentEditable
-        suppressHydrationWarning={true}
+      <textarea
         ref={textarea}
-        onInput={handleInputValue}
-        onCompositionStart={handleCompositionStart}
-        onCompositionEnd={handleCompositionEnd}
-        className="w-full border-2 border-gray-300 rounded-lg p-2"
-      >
-        {parentComponentStateValue}
-      </div>
+        value={parentComponentStateValue}
+        onChange={handleInputValue}
+        placeholder={placeholder}
+        className="w-full border-2 border-gray-300 rounded-lg p-2 placeholder-slate-500"
+      />
       {suggestions && (
         <>
           <p className="text-base-content mt-2">[補完候補]: {suggestions}</p>
