@@ -49,9 +49,9 @@ test.describe('ユーザーはテンプレートから記事を投稿できる',
   test('最小限の要素を入力して投稿 * 結果悪 * タグ作成なし', async ({ page }) => {
     await page.getByText("結果悪").click();
     await page.getByLabel("Who").fill('S1');
-    await page.locator(".健常行動ブレイクポイント-0").fill('R1');
-    await page.locator(".どうすればよかったか-0").fill('CR1');
-    await page.locator(".タイトル-0").fill(`プログラムテスト-SB-${nowDateTime}`);
+    await page.locator(".健常行動ブレイクポイント-0 > textarea").fill('R1');
+    await page.locator(".どうすればよかったか-0 > textarea").fill('CR1');
+    await page.locator(".タイトル-0 > textarea").fill(`プログラムテスト-SB-${nowDateTime}`);
     await page.getByRole('button', { name: '投稿する' }).click();
 
     await gotoTestPostPage(page, "SB");
@@ -74,23 +74,23 @@ test.describe('ユーザーはテンプレートから記事を投稿できる',
     await page.getByText("テキスト入力を追加").click();
     await page.locator('#input-2').fill('A3');
 
-    await page.locator(".なぜやってよかったのか-0").fill('R1');
-    await page.locator(".なぜやってよかったのか-1").fill('R2');
-    await page.locator(".なぜやってよかったのか-2").fill('R3');
+    await page.locator(".なぜやってよかったのか-0 > textarea").fill('R1');
+    await page.locator(".なぜやってよかったのか-1 > textarea").fill('R2');
+    await page.locator(".なぜやってよかったのか-2 > textarea").fill('R3');
 
-    await page.locator(".やらなかったらどうなっていたか-0").fill('CR1');
-    await page.locator(".やらなかったらどうなっていたか-1").fill('CR2');
-    await page.locator(".やらなかったらどうなっていたか-2").fill('CR3');
+    await page.locator(".やらなかったらどうなっていたか-0 > textarea").fill('CR1');
+    await page.locator(".やらなかったらどうなっていたか-1 > textarea").fill('CR2');
+    await page.locator(".やらなかったらどうなっていたか-2 > textarea").fill('CR3');
 
-    await page.locator(".備考-0").fill('N1');
-    await page.locator(".備考-1").fill('N2');
-    await page.locator(".備考-2").fill('N3');
+    await page.locator(".備考-0 > textarea").fill('N1');
+    await page.locator(".備考-1 > textarea").fill('N2');
+    await page.locator(".備考-2 > textarea").fill('N3');
 
     await page.getByText(/やってはいけないこと/).click();
     await page.getByText(/T.M.Revolution/).click();
     await page.getByText(/やったほうがよいこと/).click();
 
-    await page.locator(".タイトル-0").fill(`プログラムテスト-MG-${nowDateTime}`);
+    await page.locator(".タイトル-0 > textarea").fill(`プログラムテスト-MG-${nowDateTime}`);
     await page.locator(".tag-create-box-input").fill(`タグ作成テスト-${nowDateTime}`);
     await page.getByText('タグを作成').click();
 

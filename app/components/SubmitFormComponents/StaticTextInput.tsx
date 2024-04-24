@@ -1,4 +1,5 @@
 import { Form } from "@remix-run/react";
+import TextInputBoxAI from "./TextInputBoxAI";
 
 interface StaticTextInputProps {
   row: number;
@@ -7,6 +8,7 @@ interface StaticTextInputProps {
   placeholders?: string[];
   onInputChange: (values: string[]) => void;
   parentComponentStateValues: string[];
+  prompt: string;
 }
 
 function StaticTextInput({
@@ -16,6 +18,7 @@ function StaticTextInput({
   placeholders = [],
   onInputChange,
   parentComponentStateValues,
+  prompt = "",
 }: StaticTextInputProps) {
   const handleInputChange = (index: number, value: string) => {
     const newInputValues = [...parentComponentStateValues];
@@ -29,12 +32,12 @@ function StaticTextInput({
       const placeholder = placeholders[i] || "";
       inputs.push(
         <div key={i} className="mb-4">
-          <textarea
+          <TextInputBoxAI
+            className={`w-full py-2 placeholder-slate-500 rounded-lg focus:outline-none ${title}-${i}`}
+            parentComponentStateValue={parentComponentStateValues[i] || ""}
+            onInputChange={(value) => handleInputChange(i, value)}
             placeholder={placeholder}
-            value={parentComponentStateValues[i] || ""}
-            onChange={(e) => handleInputChange(i, e.target.value)}
-            className={`w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none ${title}-${i}`}
-            rows={4}
+            prompt={prompt}
           />
         </div>
       );
