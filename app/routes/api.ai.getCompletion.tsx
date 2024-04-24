@@ -44,19 +44,15 @@ export async function getCompletion(text:string, context:string, prompt:string) 
         messages: [
             {
                 role: "system",
-                content: promptSentence
+                content: `あなたは優秀な日本語の作文アシスタントです。ユーザーが入力した文章の続きを、自然で文法的に正しい日本語で簡潔に生成してください。与えられた文脈を考慮し、ユーザーの意図を汲み取って適切な文章を生成することを心がけてください。${promptSentence}`
             },
             {
                 role: "assistant",
-                content: `補足情報は以下の通りです。文章を生成する参考にしてください。${context}`,
+                content: `承知しました。ユーザーの入力文に続く自然な日本語の文章を簡潔に生成いたします。以下の文脈情報を参考にします。\n文脈情報: ${context}`,
             },
             {
                 role: "user",
-                content: `${text}」に続く文節を考えてください`,
-            },
-            {
-                role: "user",
-                content: `「${text}」は省略し、続きの文節のみを短く完結に返却してください。日本語のみで生成してください。`,
+                content: `次の文章の続きを、文脈を考慮して自然な日本語で簡潔に生成してください。40文字程度でお願いします。\n「${text}」`,
             }
         ],
         model: 'gpt-3.5-turbo'
@@ -64,4 +60,3 @@ export async function getCompletion(text:string, context:string, prompt:string) 
     const completion = result.choices[0].message.content
     return completion
 }
-
