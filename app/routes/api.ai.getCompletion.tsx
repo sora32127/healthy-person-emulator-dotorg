@@ -21,13 +21,13 @@ export async function action ({ request }: ActionFunctionArgs) {
 
 function createPrompt(prompt: string) {
     if (prompt == "reflection") {
-        return "ユーザーは自分の行動に何が問題があったのか気にしています。あなたは、何が問題だったのかを考える補佐をしてください。"
+        return "自分の行動に何が問題があったのか気にしています。あなたは、何が問題だったのかを考える補佐をしてください。"
     } else if(prompt== "counterReflection") {
-        return "ユーザーは、もし自分がその行動をしなかったらどうなっていたのかや、本当はどうするべきだったのか反実仮想をしようとしています。あなたは反実仮想の補佐をしてください。"
+        return "もし自分がその行動をしなかったらどうなっていたのかや、本当はどうするべきだったのか反実仮想をしようとしています。あなたは反実仮想の補佐をしてください。"
     } else if (prompt == "note") {
-        return "ユーザーは、書ききれなかった何かを補足したいと思っています。あなたは、ユーザーの補足を補佐してください。"
+        return "書ききれなかった何かを補足したいと思っています。あなたは、ユーザーの補足を補佐してください。"
     } else if (prompt == "title") {
-        return "ユーザーは、タイトルを考えるのに困っています。あなたは、タイトルを考える補佐をしてください。"
+        return "タイトルを考えるのに困っています。あなたは、タイトルを考える補佐をしてください。"
     }
 }
 
@@ -39,14 +39,19 @@ export async function getCompletion(text:string, context:string, prompt:string) 
     const result = await groq.chat.completions.create({
         messages: [
             {
-                role: "system",
-                content: `${promptSentence}ユーザーのテキストを受け取り、日本語で文章を補完してください。続きの文節のみを短く完結に返却してください。なお、コンテキストは以下の通りです。${context}`},
+                role: "user",
+                content: `${promptSentence}「${text}」に続く文節を考えてください`,
+            },
             {
                 role: "user",
-                content: text,
+                content: `補足情報は以下の通りです。文章を生成する参考にしてください。${context}`,
+            },
+            {
+                role: "user",
+                content: `「${text}」は省略し、続きの文節のみを短く完結に返却してください。日本語のみで生成してください。`,
             }
         ],
-        model: "llama3-8b-8192"
+        model: "llama3-70b-8192"
     });
     const completion = result.choices[0].message.content
     return completion
