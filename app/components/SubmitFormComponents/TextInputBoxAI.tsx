@@ -115,7 +115,7 @@ export default function TextInputBoxAI({
       />
       {suggestions && (
         <>
-          <p className="text-base-content mt-2">[補完候補]: {suggestions}</p>
+          <p className="text-info mt-2">[補完候補]: {suggestions}</p>
           <p className="text-base-content mt-2">
             Tabキーまたはボタンを押して補完できます。
           </p>
