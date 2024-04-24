@@ -8,6 +8,7 @@ interface StaticTextInputProps {
   placeholders?: string[];
   onInputChange: (values: string[]) => void;
   parentComponentStateValues: string[];
+  prompt: string;
 }
 
 function StaticTextInput({
@@ -17,6 +18,7 @@ function StaticTextInput({
   placeholders = [],
   onInputChange,
   parentComponentStateValues,
+  prompt = "",
 }: StaticTextInputProps) {
   const handleInputChange = (index: number, value: string) => {
     const newInputValues = [...parentComponentStateValues];
@@ -35,6 +37,7 @@ function StaticTextInput({
             parentComponentStateValue={parentComponentStateValues[i] || ""}
             onInputChange={(value) => handleInputChange(i, value)}
             placeholder={placeholder}
+            prompt={prompt}
           />
         </div>
       );

@@ -5,6 +5,7 @@ interface ComponentProps {
   parentComponentStateValue: string;
   onInputChange: (value: string) => void;
   placeholder?: string;
+  prompt?: string;
 }
 
 export default function TextInputBoxAI({
@@ -12,6 +13,7 @@ export default function TextInputBoxAI({
   parentComponentStateValue,
   onInputChange,
   placeholder = "",
+  prompt="",
 }: ComponentProps) {
   const [suggestions, setSuggestions] = useState<string | null>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
@@ -35,6 +37,7 @@ export default function TextInputBoxAI({
             const formData = new FormData();
             formData.append("text", text);
             formData.append("context", createContextSentense());
+            formData.append("prompt", prompt);
             const response = await fetch("/api/ai/getCompletion", {
               method: "POST",
               body: formData,

@@ -195,6 +195,7 @@ export default function Component() {
                 description='上で記述した状況がどのような点でアウトだったのかの説明です。 できる範囲で構わないので、なるべく理由は深堀りしてください。 「マナーだから」は理由としては認められません。 健常者エミュレータはマナー講師ではありません。一つずつ追加してください。3つ記入する必要はありません。'
                 onInputChange={handleReflectionChange}
                 parentComponentStateValues={reflectionValues}
+                prompt="reflection"
             />
             <StaticTextInput
                 row={3}
@@ -203,6 +204,7 @@ export default function Component() {
                 description='5W1H状況説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。'
                 onInputChange={handleCounterFactualReflectionChange}
                 parentComponentStateValues={counterFactualReflectionValues}
+                prompt="counterReflection"
             />
             </>
         ) : (
@@ -214,6 +216,7 @@ export default function Component() {
                 description='上で記述した行動がなぜやってよかったのか、理由を説明します。できる範囲で構わないので、なるべく理由は深堀りしてください。なんとなくただ「よかった」は理由としては認められません。一つずつ追加してください。3つ記入する必要はありません。'
                 onInputChange={handleReflectionChange}
                 parentComponentStateValues={reflectionValues}
+                prompt="reflection"
             />
             <StaticTextInput
                 row={3}
@@ -222,6 +225,7 @@ export default function Component() {
                 description='仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構いません。'
                 onInputChange={handleCounterFactualReflectionChange}
                 parentComponentStateValues={counterFactualReflectionValues}
+                prompt="counterReflection"
             />
             </>
         )}
@@ -232,6 +236,7 @@ export default function Component() {
             placeholders={selectedType === "misDeed" ? ["友人が詠んだ句は「ため池や 水がいっぱい きれいだね」だった"] : ["舌が過度に肥えてしまい、コンビニ弁当が食べられなくなった。"]}
             onInputChange={handleNoteChange}
             parentComponentStateValues={noteValues}
+            prompt="note"
         />
         <Preview
             selectedType={selectedType}
@@ -248,6 +253,7 @@ export default function Component() {
             description='得られる教訓を要約してください'
             onInputChange={handleTitleChange}
             parentComponentStateValues={titleValues}
+            prompt="title"
         />
         <TagSelectionBox
             onTagsSelected={handleTagSelection}
