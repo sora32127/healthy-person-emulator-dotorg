@@ -1,7 +1,8 @@
 import { ActionFunctionArgs } from '@remix-run/node';
-import { Groq } from 'groq-sdk';
+import { OpenAI } from 'openai';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 
 export async function action ({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
@@ -32,11 +33,12 @@ function createPrompt(prompt: string) {
 }
 
 export async function getCompletion(text:string, context:string, prompt:string) {
-    const groq = new Groq({
-        apiKey:  GROQ_API_KEY
-    });
+    const openAI = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+    })
+
     const promptSentence = createPrompt(prompt)
-    const result = await groq.chat.completions.create({
+    const result = await openAI.chat.completions.create({
         messages: [
             {
                 role: "user",
@@ -51,7 +53,7 @@ export async function getCompletion(text:string, context:string, prompt:string) 
                 content: `「${text}」は省略し、続きの文節のみを短く完結に返却してください。日本語のみで生成してください。`,
             }
         ],
-        model: "llama3-70b-8192"
+        model: 'gpt-3.5-turbo'
     });
     const completion = result.choices[0].message.content
     return completion
