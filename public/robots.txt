@@ -1,2 +1,6 @@
 User-agent: *
 Disallow: /logout
+Disallow: /wp-json/
+Disallow: /archives/tag/
+Disallow: /archives/*/feed
+Disallow: /wp-login.php
