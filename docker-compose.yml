@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    depends_on:
+      - docker
+    environment:
+      - DOCKER_HOST=tcp://docker:2375
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app:/app/app
+      - /app/node_modules
+
+  docker:
+    image: docker:dind
+    privileged: true
+    command: [ "dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false" ]
+    ports:
+      - "2375:2375"
