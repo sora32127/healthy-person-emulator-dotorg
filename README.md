@@ -91,7 +91,8 @@ cd healthy-person-emulator-dotorg
 ```
 2. docker compose upを実行
 ```bash
-dockker compose up
+touch .env
+docker compose up
 ```
 
 ## 参考ドキュメント
