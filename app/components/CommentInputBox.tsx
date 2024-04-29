@@ -1,5 +1,6 @@
 // CommentInputBox.tsx
 import { Form } from "@remix-run/react";
+import { useState } from "react";
 
 interface CommentInputBoxProps {
   commentAuthor: string;
@@ -20,8 +21,25 @@ export default function CommentInputBox({
   isCommentOpen,
   commentParentId,
 }: CommentInputBoxProps) {
+  const [showError, setShowError] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (commentContent.trim() === "") {
+      setShowError(true);
+    } else {
+      onSubmit(e);
+      setShowError(false);
+    }
+  };
+
+  const handleCommentChange = (value: string) => {
+    onCommentContentChange(value);
+    setShowError(false);
+  };
+
   return (
-    <Form onSubmit={onSubmit} preventScrollReset>
+    <Form onSubmit={handleSubmit} preventScrollReset>
       <div className="mb-4">
         <label htmlFor="commentAuthor" className="block mb-2">
           名前
@@ -41,10 +59,15 @@ export default function CommentInputBox({
         <textarea
           id="commentContent"
           value={commentContent}
-          onChange={(e) => onCommentContentChange(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onChange={(e) => handleCommentChange(e.target.value)}
+          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            showError ? "border-red-500 text-red-500" : "border-gray-300 focus:ring-blue-500"
+          }`}
           rows={4}
         ></textarea>
+        {showError && (
+          <p className="mt-1 text-sm text-red-500">コメントを一文字以上入力してください</p>
+        )}
       </div>
       <button
         type="submit"
@@ -56,7 +79,7 @@ export default function CommentInputBox({
         disabled={!isCommentOpen}
       >
         {"コメント"}
-      <input type="hidden" name="commentParentId" value={commentParentId} />
+        <input type="hidden" name="commentParentId" value={commentParentId} />
       </button>
     </Form>
   );
