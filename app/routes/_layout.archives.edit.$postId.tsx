@@ -362,7 +362,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const postTitle = formData.get("postTitle")?.toString() || "";
   const postContent = formData.get("postContent")?.toString() || "";
   const tags = formData.getAll("tags") as string[];
-  const userName = formData.get("userName")?.toString() || "";
   const session = await getSession(request.headers.get('Cookie'));
   const userId = session.get('userId');
 
@@ -430,7 +429,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
       data: {
         postId,
         postRevisionNumber: newRevisionNumber,
-        editorUserName: userName,
         editorUserId: userId,
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,
