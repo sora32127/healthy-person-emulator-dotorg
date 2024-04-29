@@ -82,18 +82,17 @@
 # ローカル開発環境セットアップ
 
 ## 手順
+Docker compose v2を利用して、ローカル開発環境をセットアップします
+
 1. リポジトリをクローン
 ```bash
 git clone https://github.com/sora32127/healthy-person-emulator-dotorg.git
 cd healthy-person-emulator-dotorg
 ```
-2. セットアップスクリプトを起動
+2. docker compose upを実行
 ```bash
-/bin/bash localdev.sh
+dockker compose up
 ```
-3. 開発サーバーの立ち上げ
-```
-npm run dev
-```
+
 ## 参考ドキュメント
 - [Supabase : Local Development](https://supabase.com/docs/guides/cli/local-development)
