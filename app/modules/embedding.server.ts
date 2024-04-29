@@ -1,5 +1,6 @@
 import { json } from "@remix-run/node";
-import { supabase } from "./supabase.server";
+import { OpenAI } from "openai";
+import { prisma } from "./db.server";
 
 interface CreateEmbeddingInput {
     postId : number;
@@ -7,45 +8,33 @@ interface CreateEmbeddingInput {
 }
 
 const OpenAIAPIKey = process.env.OPENAI_API_KEY;
-const OpenAIEmbeddingEndpoint = "https://api.openai.com/v1/embeddings"
 const OpenAIEmbeddingModel = "text-embedding-3-small"
 
 export async function createEmbedding({ postId, postContent } : CreateEmbeddingInput) {
     if (!OpenAIAPIKey) {
         throw new Error("OPENAI_API_KEY is not set");
     }
-
-    const response = await fetch(OpenAIEmbeddingEndpoint, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${OpenAIAPIKey}`
-        },
-        body: JSON.stringify({
-            input: postContent,
-            model: OpenAIEmbeddingModel,
-            encoding_format : "float",
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to create embedding: ${response.statusText}`);
+    const openAI = new OpenAI({apiKey: OpenAIAPIKey})
+    const response = await openAI.embeddings.create({
+        model: OpenAIEmbeddingModel,
+        input: postContent,
+    })
+    
+    const embedding = Array.from(response.data[0].embedding)
+    const tokenCount = response.usage.total_tokens
+    try {
+        await prisma.$queryRaw`
+            UPDATE dim_posts
+            SET content_embedding = ${embedding}, token_count = ${tokenCount}
+            WHERE post_id = ${postId}
+        `;
+        // prismaクライアントを利用すると、unsporttedなデータ型を扱うことができない
+        // そのため、queryRawを利用する
+        // Supabaseのクライアントを利用してembeddingを更新する際、たまに`permission denied for schema public`が出現するため、supabaseクライアントを利用しない
     }
-
-    const parsedResponse = await response.json();
-    const embedding = Array.from(parsedResponse.data[0].embedding)
-    const tokenCount = parsedResponse.usage.total_tokens
-
-    const { error } = await supabase.from("dim_posts").update({
-        content_embedding: embedding,
-        token_count : tokenCount
-    }).eq("post_id", postId);
-
-
-    if (error) {
-        throw new Error(`Failed to update embedding:` + error.message);
+    catch (error) {
+        throw new Error(`Failed to update embedding:` + error);
     }
-
     return json({
         status: 200,
         message: "Embedding created successfully"
