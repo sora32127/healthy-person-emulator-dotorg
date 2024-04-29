@@ -12,6 +12,7 @@ services:
     volumes:
       - ./app:/app/app
       - /app/node_modules
+      - .env:/app/.env
 
   docker:
     image: docker:dind
@@ -19,3 +20,9 @@ services:
     command: [ "dockerd", "-H", "tcp://0.0.0.0:2375", "--tls=false" ]
     ports:
       - "2375:2375"
+    volumes:
+      - docker_data:/var/lib/docker
+
+volumes:
+  docker_data:
+  dotenv:
