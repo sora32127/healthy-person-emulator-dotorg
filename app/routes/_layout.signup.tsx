@@ -3,7 +3,6 @@ import { H1 } from "~/components/Headings";
 import { supabase } from "~/modules/supabase.server";
 import { useActionData, Form } from "@remix-run/react";
 import { useState } from "react";
-import { prisma } from "~/modules/db.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const form = await request.formData();
@@ -16,9 +15,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const url = new URL(request.url);
   const origin = url.origin;
-  const emailRedirectTo = `${origin}/userVerified`;
+  const emailRedirectTo = `${origin}/api/auth/callback`;
 
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -28,23 +27,6 @@ export async function action({ request }: ActionFunctionArgs) {
   if (error) {
     return json({ status: 500, message: error.message });
   }
-
-  const userId = data.user?.id;
-
-  if (!userId ){
-    return json({ status: 500, message: "ユーザー登録に失敗しました" });
-  }
-
-  try {
-    await prisma.userProfiles.create({
-    data: {
-      userId: userId,
-      userEmail: email,
-    },
-  });
-  } catch (error) {
-    throw new Error(`Failed to create user profile: ${error}`);
-  } 
 
   return redirect("/email");
 }

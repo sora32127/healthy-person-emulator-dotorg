@@ -8,6 +8,7 @@ import { createClient } from '@supabase/supabase-js';
 import type {
     Session,
 } from '@supabase/supabase-js';
+import { prisma } from "~/modules/db.server";
 
 export async function loader () {
     return json({ ENV : {
@@ -35,7 +36,7 @@ export default function AuthCallBack() {
         return () => {
             authListener?.subscription.unsubscribe();
         };
-    }, [fetcher, searchParams]);
+    }, [fetcher, searchParams, supabase.auth]);
 
     return null;
 }
@@ -52,24 +53,39 @@ export async function action({ request } : ActionFunctionArgs) {
     console.log("SupabaseSession", SupabaseSession)
 
     const session = await getSession(request.headers.get("Cookie"));
-    try {
-        const {
-            access_token : accessToken,
-            refresh_token : refreshToken,
-            user,
-        } = SupabaseSession;
-        session.set("accessToken", accessToken);
-        session.set("refreshToken", refreshToken);
-        session.set("userId", user.id);
+    const {
+        access_token : accessToken,
+        refresh_token : refreshToken,
+        user,
+    } = SupabaseSession;
+    session.set("accessToken", accessToken);
+    session.set("refreshToken", refreshToken);
+    session.set("userId", user.id);
+    if (event == "signup"){
+        if (!user.id || !user.email) {
+            throw new Error("User ID or Email is missing.");
+        }
+        try {
+            await prisma.userProfiles.create({
+            data: {
+                userId: user.id,
+                userEmail: user.email,
+            },
+            });
+        } catch (error) {
+            throw new Error(`Failed to create user profile: ${error}`);
+        }
+        return redirect("/userVerified",{
+            headers: {
+                "Set-Cookie": await commitSession(session)
+            }
+        })
+    }
+    else if (event == "resetpassword"){
         return redirect("/resetPassword", {
             headers: {
                 "Set-Cookie": await commitSession(session),
             },
         });
-    } catch (error) {
-        console.error("error", error)
-        return redirect("/login");
     }
-    
-    
 }
