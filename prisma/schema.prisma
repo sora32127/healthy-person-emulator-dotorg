@@ -40,7 +40,7 @@ model DimComments {
   commentParent            Int                     @map("comment_parent")
   uuid                     String                  @default(dbgenerated("gen_random_uuid()")) @map("uuid") @db.Uuid
   dimPosts                 DimPosts                @relation(fields: [postId], references: [postId], onDelete: Cascade, map: "public_dim_comments_post_id_fkey")
-  fct_comment_vote_history FctCommentVoteHisotry[]
+  fct_comment_vote_history FctCommentVoteHistory[]
 
   @@index([commentDateGmt], map: "idx_28782_comment_date_gmt")
   @@index([commentParent], map: "idx_28782_comment_parent")
@@ -48,7 +48,7 @@ model DimComments {
   @@map("dim_comments")
 }
 
-model FctPostVoteHisotry {
+model FctPostVoteHistory {
   voteDateGmt    DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("vote_date_gmt") @db.Timestamptz(6)
   voteUserIpHash String   @map("vote_user_ip_hash")
   postId         Int      @map("post_id")
@@ -61,7 +61,7 @@ model FctPostVoteHisotry {
   @@map("fct_post_vote_history")
 }
 
-model FctCommentVoteHisotry {
+model FctCommentVoteHistory {
   commentVoteId         Int         @id @unique @default(autoincrement()) @map("comment_vote_id")
   voteUserIpHash        String      @map("vote_user_ip_hash")
   commentId             Int         @map("comment_id")
@@ -113,7 +113,7 @@ model DimPosts {
   ogpImageUrl           String?                @map("ogp_image_url")
   dimComments           DimComments[]
   fct_post_edit_history FctPostEditHistory[]
-  fct_post_vote_history FctPostVoteHisotry[]
+  fct_post_vote_history FctPostVoteHistory[]
   now_editing_pages     nowEditingPages?
   rel_post_tags         RelPostTags[]
 

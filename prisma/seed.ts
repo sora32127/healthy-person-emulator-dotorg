@@ -136,7 +136,7 @@ async function main() {
     ]
   );
   for (const record of fctPostVoteHistoryRecords) {
-    await prisma.fctPostVoteHisotry.create({
+    await prisma.fctPostVoteHistory.create({
       data: {
         voteDateGmt: new Date(record.vote_date_gmt),
         voteUserIpHash: record.vote_user_ip_hash,
@@ -162,7 +162,7 @@ async function main() {
   );
 
   for (const record of fctCommentVoteHistoryRecords) {
-    await prisma.fctCommentVoteHisotry.create({
+    await prisma.fctCommentVoteHistory.create({
       data: {
         commentVoteId: parseInt(record.comment_vote_id),
         voteUserIpHash: record.vote_user_ip_hash,
