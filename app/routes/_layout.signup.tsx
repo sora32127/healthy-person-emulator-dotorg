@@ -16,7 +16,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const url = new URL(request.url);
   const origin = url.origin;
-  const emailRedirectTo = `${origin}/login`;
+  const emailRedirectTo = `${origin}/userVerified`;
 
   const { data, error } = await supabase.auth.signUp({
     email,
