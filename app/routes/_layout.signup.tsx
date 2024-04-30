@@ -43,7 +43,7 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
   } catch (error) {
-    return json({ status: 500, message: "ユーザー登録に失敗しました" });
+    throw new Error(`Failed to create user profile: ${error}`);
   } 
 
   return redirect("/email");
