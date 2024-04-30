@@ -158,6 +158,10 @@ export default function EditPost() {
     );
   }
 
+  if (!postData) {
+    return <div>投稿が見つかりません</div>;
+  }
+
   const { postTitle } = postData;
 
   const [markdownContent, setMarkdownContent] = useState(postMarkdown);
