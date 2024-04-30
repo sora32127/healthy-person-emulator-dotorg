@@ -144,6 +144,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
+  const [markdownContent, setMarkdownContent] = useState(postMarkdown);
+  const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
+  const [tagInputValue, setTagInputValue] = useState<string>("");
+  const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
+  const navigation = useNavigation();
 
   if (isEditing){
     return (
@@ -161,13 +166,7 @@ export default function EditPost() {
   if (!postData) {
     return <div>投稿が見つかりません</div>;
   }
-
   const { postTitle } = postData;
-
-  const [markdownContent, setMarkdownContent] = useState(postMarkdown);
-  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
-  const [tagInputValue, setTagInputValue] = useState<string>("");
-  const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
   const oldTags = tagNames
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,7 +193,7 @@ export default function EditPost() {
     setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
   };
 
-  const navigation = useNavigation();
+
 
   return (
     <ClientOnly fallback={<div>Loading...</div>}>
