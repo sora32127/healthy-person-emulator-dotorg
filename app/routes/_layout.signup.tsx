@@ -1,8 +1,10 @@
 import { ActionFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { H1 } from "~/components/Headings";
 import { supabase } from "~/modules/supabase.server";
-import { useActionData, Form } from "@remix-run/react";
+import { useActionData, Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import GoogleLogoIcon from "~/components/icons/GoogleLogoIcon";
 
 export async function action({ request }: ActionFunctionArgs) {
   const form = await request.formData();
@@ -31,12 +33,22 @@ export async function action({ request }: ActionFunctionArgs) {
   return redirect("/email");
 }
 
+export async function loader(){
+  const SUPABASE_ANON_KEY_CLIENT = process.env.SUPABASE_ANON_KEY_CLIENT;
+  const SUPABASE_URL_CLIENT = process.env.SUPABASE_URL_CLIENT;
+  if (!SUPABASE_ANON_KEY_CLIENT || !SUPABASE_URL_CLIENT) {
+    throw new Error("Supabase URL or Supabase Anon Key is missing.");
+  }
+  return json({ SUPABASE_ANON_KEY_CLIENT, SUPABASE_URL_CLIENT });
+}
+
 export default function Component() {
   const actionData = useActionData<typeof action>();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const { SUPABASE_ANON_KEY_CLIENT, SUPABASE_URL_CLIENT } = useLoaderData<typeof loader>();
 
   const isDisabled = !email || !password || passwordError !== "";
 
@@ -53,14 +65,25 @@ export default function Component() {
     }
   };
 
+  const supabaseClient = createClient(SUPABASE_URL_CLIENT, SUPABASE_ANON_KEY_CLIENT);
+
+  const handleGoogleSignIn = async () => {
+    await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+      },
+    });
+  }
+
   return (
+    <>
+    <H1>ユーザー新規登録</H1>
     <div>
       <Form
         method="post"
-        className="max-w-md mx-auto"
         onSubmit={() => setIsRegistering(true)}
       >
-        <H1>ユーザー新規登録</H1>
         <div className="mb-4">
           <label htmlFor="email" className="block mb-2 font-bold text-base-content">
             メールアドレス:
@@ -110,10 +133,21 @@ export default function Component() {
             }`}
             disabled={isDisabled || isRegistering}
           >
-            ユーザー新規登録
+            メールアドレスで登録
           </button>
         </div>
       </Form>
+      <div className="justify-center">
+        <button
+          className="mt-4 outline outline-offset-8 rounded"
+          onClick={handleGoogleSignIn}
+        >
+          <div className="flex">
+            <GoogleLogoIcon />
+            <p className="ml-2">Googleで新規登録/ログイン</p>
+          </div>
+        </button>
+      </div>
       {isRegistering && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-base-200 bg-opacity-50">
           <div className="bg-base-300 p-8 rounded-md">
@@ -147,6 +181,7 @@ export default function Component() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
