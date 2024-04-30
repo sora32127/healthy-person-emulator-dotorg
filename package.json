@@ -43,6 +43,7 @@
     "@axe-core/playwright": "^4.9.0",
     "@playwright/test": "^1.42.1",
     "@remix-run/dev": "^2.8.1",
+    "@types/diff": "^5.2.0",
     "@types/marked": "^6.0.0",
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.20",
