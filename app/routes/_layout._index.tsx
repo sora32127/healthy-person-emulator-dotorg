@@ -44,7 +44,7 @@ export async function loader() {
         },
     });
 
-    const recentVotedPostsAgg = await prisma.fctPostVoteHisotry.groupBy({
+    const recentVotedPostsAgg = await prisma.fctPostVoteHistory.groupBy({
         by: ["postId"],
         where: { 
             voteDateGmt : { 

@@ -26,7 +26,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const gteDate = new Date(now.getTime() - likeFromHourInt * 60 * 60 * 1000);
     const lteDate = new Date(now.getTime() - likeToHourInt * 60 * 60 * 1000);
 
-    const recentVotedPostsAgg = await prisma.fctPostVoteHisotry.groupBy({
+    const recentVotedPostsAgg = await prisma.fctPostVoteHistory.groupBy({
         by: ["postId"],
         where: {
             voteDateGmt: {
@@ -66,7 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         return { ...post, tagNames };
     });
 
-    const voteData = await prisma.fctPostVoteHisotry.findMany({
+    const voteData = await prisma.fctPostVoteHistory.findMany({
         where: {
             voteDateGmt: {
             gte: gteDate,

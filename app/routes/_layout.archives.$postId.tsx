@@ -64,7 +64,7 @@ export async function loader({ request }:LoaderFunctionArgs){
         },
     });
 
-    const commentVoteData = await prisma.fctCommentVoteHisotry.groupBy({
+    const commentVoteData = await prisma.fctCommentVoteHistory.groupBy({
         by: ["commentId", "voteType" ],
         _count: { commentId: true },
         where: {
@@ -110,7 +110,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     });
 
     const isAdmin = await isAdminLogin(request);
-    const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFuctionで使用するため、ここで定義
+    const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
 
     return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames });
 }
@@ -445,7 +445,7 @@ async function handleVotePost(
   }
 
   await prisma.$transaction(async (prisma) => {
-    await prisma.fctPostVoteHisotry.create({
+    await prisma.fctPostVoteHistory.create({
       data: {
         voteUserIpHash: userIpHashString,
         postId,
@@ -487,7 +487,7 @@ async function handleVoteComment(
   const voteType = formData.get("voteType")?.toString();
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
-    await prisma.fctCommentVoteHisotry.create({
+    await prisma.fctCommentVoteHistory.create({
       data: {
         voteUserIpHash: userIpHashString,
         commentId,
