@@ -143,7 +143,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
-  const [markdownContent, setMarkdownContent] = useState(postMarkdown);
+  const [markdownContent, setMarkdownContent] = useState<string>(postMarkdown || "");
   const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
   const navigation = useNavigation();
 
@@ -174,6 +174,10 @@ export default function EditPost() {
 
   const handleTagsSelected = (tags: string[]) => {
     setSelectedTags(tags);
+  };
+
+  const handleMarkdownChange = (value: string | undefined) => {
+    setMarkdownContent(value || "");
   };
 
   return (
@@ -238,8 +242,8 @@ export default function EditPost() {
             <div className="mb-4">
               <H2>本文を編集する</H2>
               <MarkdownEditor
-                defaultValue={markdownContent}
-                handleValueChange={setMarkdownContent}
+                defaultValue={markdownContent || ""}
+                handleValueChange={handleMarkdownChange}
               />
             </div>
             <input type="hidden" name="postContent" value={markdownContent} />
