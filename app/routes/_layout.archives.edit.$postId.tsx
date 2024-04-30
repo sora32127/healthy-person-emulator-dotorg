@@ -40,7 +40,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const isEditing = nowEditingInfo && nowEditingInfo.userId !== userId && (new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime()) < 30 * 60 * 1000;
 
   if (isEditing && nowEditingInfo){
-    // モーダルを表示する：${nowEditingInfo.userName}さんが編集中です。
+    // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
     // 「戻る」を押してredirect(`/archives/${postId}`)する
     return json({
       postData: null,
@@ -50,7 +50,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       userId,
       postId,
       isEditing: true,
-      userName: null,
       editHistory: null,
     });
   }
@@ -135,7 +134,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     postMarkdown,
     allTagsForSearch,
     userId,
-    editingUserName:null,
     isEditing:false,
     postId,
     editHistory,
@@ -285,7 +283,6 @@ export default function EditPost() {
             >
               変更を保存する
             </button>
-            <input type="hidden" name="userName" value={userName} />
           </Form>
           <div className="mb-4">
             <H2>編集履歴</H2>
