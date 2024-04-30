@@ -10,7 +10,6 @@ import { useState } from "react";
 // @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';
 import { getSession, requireUserId } from "~/modules/session.server";
-// @ts-expect-error : diffの型定義が存在しないため、anyとしている
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
@@ -268,43 +267,43 @@ export default function EditPost() {
                 </tr>
               </thead>
               <tbody>
-                {editHistory && editHistory.map((edit) => (
-                  <tr key={edit.postRevisionNumber}>
-                    <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
-                    <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
-                    <td className="border px-2 py-2">{edit.editorUserId.slice(0,8)}</td>
-                    <td className="border px-2 py-2">
-                      {diff.diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit).map((part, index) => {
-                        if (part.added || part.removed) {
-                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
-                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
-                          const excerpt = part.value.slice(start, end);
-                          return (
-                            <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
-                              {excerpt}
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
-                    </td>
-                    <td className="border py-2">
-                      {diff.diffLines(edit.postContentBeforeEdit, edit.postContentAfterEdit).map((part, index) => {
-                        if (part.added || part.removed) {
-                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
-                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
-                          const excerpt = part.value.slice(start, end);
-                          return (
-                            <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
-                              {excerpt}
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
-                    </td>
-                  </tr>
-                ))}
+              {editHistory && editHistory.map((edit) => (
+                 <tr key={edit.postRevisionNumber}>
+                   <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
+                   <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
+                   <td className="border px-2 py-2">{edit.editorUserId.slice(0,8)}</td>
+                   <td className="border px-2 py-2">
+                     {diff.diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit).map((part: diff.Change, index: number) => {
+                       if (part.added || part.removed) {
+                         const start = Math.max(0, part.value.indexOf(part.value) - 50);
+                         const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
+                         const excerpt = part.value.slice(start, end);
+                         return (
+                           <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                             {excerpt}
+                           </span>
+                         );
+                       }
+                       return null;
+                     })}
+                   </td>
+                   <td className="border py-2">
+                     {diff.diffLines(edit.postContentBeforeEdit, edit.postContentAfterEdit).map((part: diff.Change, index: number) => {
+                       if (part.added || part.removed) {
+                         const start = Math.max(0, part.value.indexOf(part.value) - 50);
+                         const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
+                         const excerpt = part.value.slice(start, end);
+                         return (
+                           <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                             {excerpt}
+                           </span>
+                         );
+                       }
+                       return null;
+                     })}
+                   </td>
+                 </tr>
+               ))}
               </tbody>
             </table>
           </div>
