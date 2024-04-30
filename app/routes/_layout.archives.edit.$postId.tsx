@@ -34,20 +34,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   - nowEditingInfoが存在し、最終ロック時刻から30分以上経過している場合、編集中でない
   - それ以外の場合は編集中と判断する。つまりは以下の場合：
     - nowEditingInfoが存在する
-    - なおかつ、自分以外のユーザー名が格納されている
+    - なおかつ、自分以外のユーザーIDが格納されている
     - なおかつ、lasteHeartBeatAtUTCから30分以内である
   */
-  let isEditing = nowEditingInfo ? new Date().getTime() - nowEditingInfo.lastHeartBeatAtUTC.getTime() <= 1000 * 60 * 30 : false;
-
-  if (nowEditingInfo){
-    const userName = await prisma.userProfiles.findUniqueOrThrow({
-      select: { userId: true },
-      where: { userId },
-    });
-    if (nowEditingInfo.userId === userName.userId){
-      isEditing = false;
-    }
-  }
+  const isEditing = nowEditingInfo && nowEditingInfo.userId !== userId && (new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime()) < 30 * 60 * 1000;
 
   if (isEditing && nowEditingInfo){
     // モーダルを表示する：${nowEditingInfo.userName}さんが編集中です。
