@@ -13,6 +13,7 @@ import { getSession, requireUserId } from "~/modules/session.server";
 // @ts-expect-error : diffの型定義が存在しないため、anyとしている
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
+import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
@@ -144,8 +145,6 @@ export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
   const [markdownContent, setMarkdownContent] = useState(postMarkdown);
   const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
-  const [tagInputValue, setTagInputValue] = useState<string>("");
-  const [tagSearchSuggestions, setTagSearchSuggestions] = useState<{ tagName: string, count: number }[]>([]);
   const navigation = useNavigation();
 
   if (isEditing){
@@ -167,30 +166,14 @@ export default function EditPost() {
   const { postTitle } = postData;
   const oldTags = tagNames
 
-  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTagInputValue(value);
-
-    if (value.length > 0) {
-      const filteredTagSearchSuggestions = allTagsForSearch.filter((tag) => tag.tagName.includes(value));
-      setTagSearchSuggestions(filteredTagSearchSuggestions);
-    } else {
-      setTagSearchSuggestions([]);
-    }
-  };
-
-  const handleTagSelect = (tagName: string) => {
-    if (selectedTags && !selectedTags.includes(tagName)) {
-      setSelectedTags([...selectedTags, tagName]);
-      setTagInputValue("");
-      setTagSearchSuggestions([]);
-    }
-  };
-
   const handleTagRemove = (tagName: string) => {
     if (selectedTags) {
       setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
     }
+  };
+
+  const handleTagsSelected = (tags: string[]) => {
+    setSelectedTags(tags);
   };
 
   return (
@@ -214,59 +197,43 @@ export default function EditPost() {
             <div className="mb-4">
               <H2>タグを編集する</H2>
               <div className="my-4">
+                <div className="mt-2">
+                  <p className="my-4">変更前：</p>
+                  <div className="flex flex-wrap">
+                    {oldTags.map((tag) => (
+                      <span key={tag} className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <TagSelectionBox
+                onTagsSelected={handleTagsSelected}
+                parentComponentStateValues={selectedTags || []}
+                allTagsOnlyForSearch={allTagsForSearch}
+              />
               <div className="mt-2">
-              <p className="my-4">変更前：</p>
-              <div className="flex flex-wrap">
-                {oldTags.map(
-                  (tag) =>
-                  <span className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2">{tag}</span>
-                )}
-              </div>
-              </div>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  value={tagInputValue}
-                  onChange={handleTagInputChange}
-                  className="border border-gray-300 rounded-l px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 edit-tag-search-input placeholder-slate-500"
-                  placeholder="タグを検索"
-                />
-              </div>
-              {tagSearchSuggestions.length > 0 && (
-                <ul className="mt-2 border border-gray-300 rounded">
-                  {tagSearchSuggestions.map((tag) => (
-                    <li
-                      key={tag.tagName}
-                      className={`px-4 py-2 cursor-pointer hover:bg-gray-100 edit-tag-${tag.tagName}`}
-                      onClick={() => handleTagSelect(tag.tagName)}
+                <p className="my-4">変更後：</p>
+                <div className="flex flex-wrap">
+                  {selectedTags && selectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
                     >
-                      {tag.tagName} ({tag.count})
-                    </li>
+                      <input type="hidden" name="tags" value={tag} />
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleTagRemove(tag)}
+                        className="ml-2 edit-tag-remove-button"
+                      >
+                        x
+                      </button>
+                    </span>
                   ))}
-                </ul>
-              )}
-              <div className="mt-2">
-              <p className="my-4">変更後：</p>
-              <div className="flex flex-wrap">
-                {selectedTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
-                  >
-                    <input type="hidden" name="tags" value={tag} />
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleTagRemove(tag)}
-                      className="ml-2 edit-tag-remove-button"
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
+                </div>
               </div>
-            </div>
             </div>
             <div className="mb-4">
               <H2>本文を編集する</H2>

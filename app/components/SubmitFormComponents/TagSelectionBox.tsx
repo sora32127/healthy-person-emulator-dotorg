@@ -7,7 +7,7 @@ interface Tag {
 
 interface TagSelectionBoxProps {
     onTagsSelected: (tags: string[]) => void;
-    parentComponentStateValues?: string[];
+    parentComponentStateValues: string[];
     allTagsOnlyForSearch: Tag[];
 }
 
