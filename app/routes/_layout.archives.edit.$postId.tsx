@@ -47,7 +47,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       postMarkdown: null,
       tagNames: null,
       allTagsForSearch: null,
-      editingUserName: nowEditingInfo.userId,
+      userId,
       postId,
       isEditing: true,
       userName: null,
@@ -62,15 +62,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       where: { postId: Number(postId) },
     });
   }
-  const userName = await prisma.userProfiles.findUniqueOrThrow({
-    select: { userId: true },
-    where: { userId },
-  });
-
   await prisma.nowEditingPages.create({
     data: {
       postId: Number(postId),
-      userId: userName.userId,
+      userId: userId,
     },
   });
 
@@ -139,7 +134,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     tagNames,
     postMarkdown,
     allTagsForSearch,
-    userName: userName.userId,
+    userId,
     editingUserName:null,
     isEditing:false,
     postId,
@@ -148,13 +143,13 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch, editingUserName, isEditing, postId, userName, editHistory } = useLoaderData<typeof loader>();
+  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
 
   if (isEditing){
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 shadow-lg">
-          <p className="text-xl font-bold mb-4">{editingUserName}さんが編集中です。</p>
+          <p className="text-xl font-bold mb-4">{userId}さんが編集中です。</p>
           <NavLink to={`/archives/${postId}`} className="block w-full text-center text-white bg-blue-500 hover:bg-blue-600 py-2 rounded-md">
             戻る
           </NavLink>
