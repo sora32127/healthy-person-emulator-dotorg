@@ -7,8 +7,10 @@ import { H1, H2 } from "~/components/Headings";
 import { ClientOnly } from "remix-utils/client-only";
 import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
+// @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';
 import { getSession, requireUserId } from "~/modules/session.server";
+// @ts-expect-error : diffの型定義が存在しないため、anyとしている
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 
