@@ -182,7 +182,7 @@ export default function EditPost() {
   };
 
   const handleTagSelect = (tagName: string) => {
-    if (!selectedTags.includes(tagName)) {
+    if (selectedTags && !selectedTags.includes(tagName)) {
       setSelectedTags([...selectedTags, tagName]);
       setTagInputValue("");
       setTagSearchSuggestions([]);
@@ -190,10 +190,10 @@ export default function EditPost() {
   };
 
   const handleTagRemove = (tagName: string) => {
-    setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
+    if (selectedTags) {
+      setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
+    }
   };
-
-
 
   return (
     <ClientOnly fallback={<div>Loading...</div>}>
