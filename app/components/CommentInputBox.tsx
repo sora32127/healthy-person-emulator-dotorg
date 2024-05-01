@@ -61,12 +61,12 @@ export default function CommentInputBox({
           value={commentContent}
           onChange={(e) => handleCommentChange(e.target.value)}
           className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            showError ? "border-red-500 text-red-500" : "border-gray-300 focus:ring-blue-500"
+            showError ? "border-error text-error" : "border-gray-300 focus:ring-blue-500"
           }`}
           rows={4}
         ></textarea>
         {showError && (
-          <p className="mt-1 text-sm text-red-500">コメントを一文字以上入力してください</p>
+          <p className="mt-1 text-sm text-error">コメントを一文字以上入力してください</p>
         )}
       </div>
       <button

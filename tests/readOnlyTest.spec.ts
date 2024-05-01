@@ -85,9 +85,11 @@ test('ランダムページ', async ({ page }) => {
 test('寄付ページ', async ({ page }) => {
   await page.goto(`${testURL}/support`);
   await expect(page).toHaveTitle(/サポートする/);
-  await page.getByRole('button', { name: 'サポートする' }).click();
-  await expect(page).toHaveTitle(/KENJOUSYA emulator/);
+  await page.getByRole('link', { name: 'サポートする' }).first().click();
+  await expect(page).toHaveTitle(/healthy-person-emulator/);
 });
+
+
 
 // サイト説明ページのテスト
 test('サイト説明ページ', async ({ page }) => {
@@ -170,7 +172,7 @@ async function navigateToLikedFeed(page: Page) {
 
 async function searchByTag(page: Page, tag: string) {
   await page.getByRole('combobox').selectOption('tag');
-  await page.getByPlaceholder('タグを入力').fill(tag.charAt(0));
+  await page.getByPlaceholder('タグを検索...').fill(tag.charAt(0));
   await page.getByText(tag).click();
   await page.getByRole('button', { name: '検索' }).click();
 }

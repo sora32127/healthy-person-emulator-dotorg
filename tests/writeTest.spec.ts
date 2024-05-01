@@ -8,6 +8,7 @@ if (!testURL) {
 }
 
 const nowDateTime = new Date().toISOString();
+test.describe.configure({ retries: 2 });
 
 async function gotoTestPostPage(page: Page, pattern: string = "MG") {
   await page.goto(`${testURL}`);

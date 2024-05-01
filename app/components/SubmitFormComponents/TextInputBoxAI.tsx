@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 interface ComponentProps {
+  id:string;
   className?: string;
   parentComponentStateValue: string;
   onInputChange: (value: string) => void;
@@ -9,6 +10,7 @@ interface ComponentProps {
 }
 
 export default function TextInputBoxAI({
+  id = "",
   className = "",
   parentComponentStateValue,
   onInputChange,
@@ -107,6 +109,7 @@ export default function TextInputBoxAI({
   return (
     <div className={className}>
       <textarea
+        id={id}
         ref={textarea}
         value={parentComponentStateValue}
         onChange={handleInputValue}

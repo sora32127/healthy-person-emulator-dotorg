@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const testURL = process.env.TEST_URL || 'http://localhost:5173';
+const testURL = process.env.TEST_URL || 'http://localhost:3000';
 
 import chalk from 'chalk';
 

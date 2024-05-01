@@ -32,7 +32,11 @@ function StaticTextInput({
       const placeholder = placeholders[i] || "";
       inputs.push(
         <div key={i} className="mb-4">
+          <label htmlFor={`${title}-${i}`} className="sr-only">
+            {title} {i + 1}
+          </label>
           <TextInputBoxAI
+            id={`${title}-${i}`}
             className={`w-full py-2 placeholder-slate-500 rounded-lg focus:outline-none ${title}-${i}`}
             parentComponentStateValue={parentComponentStateValues[i] || ""}
             onInputChange={(value) => handleInputChange(i, value)}

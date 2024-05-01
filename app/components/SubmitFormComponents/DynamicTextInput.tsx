@@ -52,7 +52,7 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
         <button
           type="button"
           onClick={addInput}
-          className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none"
+          className="px-4 py-2 text-white bg-blue-600 rounded-lg focus:outline-none"
         >
           テキスト入力を追加
         </button>

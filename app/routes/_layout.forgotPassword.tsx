@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, } from "@remix-run/node";
-import { Form, Link, useActionData } from "@remix-run/react";
+import { Form, Link, MetaFunction, useActionData } from "@remix-run/react";
 import { supabase } from "~/modules/supabase.server";
 import { useState } from "react";
 import { H1 } from "~/components/Headings";
@@ -52,13 +52,13 @@ export default function ForgotPassword() {
                         />
                     </div>
                     {actionData?.status === 200 && (
-                        <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-success text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 400 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-between items-center">
                         <button
@@ -80,3 +80,9 @@ export default function ForgotPassword() {
         </div>
     );
 }
+
+
+export const meta: MetaFunction = () => {
+    const title = "パスワードリセットを忘れた";
+    return [{title}]
+};

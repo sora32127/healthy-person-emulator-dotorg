@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, } from "@remix-run/node";
-import { Form, NavLink, useActionData } from "@remix-run/react";
+import { Form, MetaFunction, NavLink, useActionData } from "@remix-run/react";
 import { supabase } from "~/modules/supabase.server";
 import { useState } from "react";
 import { H1 } from "~/components/Headings";
@@ -64,17 +64,17 @@ export default function ResetPassword() {
                             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                         />
                         {passwordError && (
-                            <p className="text-red-500 text-xs italic">{passwordError}</p>
+                            <p className="text-error text-xs italic">{passwordError}</p>
                         )}
                     </div>
                     {actionData?.status === 200 && (
-                        <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-success text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 400 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-center">
                         <button
@@ -93,3 +93,8 @@ export default function ResetPassword() {
         </div>
     );
 }
+
+export const meta: MetaFunction = () => {
+    const title = "パスワードリセット";
+    return [{title}]
+};

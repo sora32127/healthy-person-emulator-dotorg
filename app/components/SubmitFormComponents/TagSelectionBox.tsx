@@ -58,7 +58,7 @@ const TagSelectionBox = ({
                     type="button"
                     className={`px-4 py-2 rounded-lg focus:outline-none ${
                         sortBy === 'count'
-                            ? 'text-white bg-blue-500 hover:bg-blue-600'
+                            ? 'text-white bg-blue-600'
                             : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
                     }`}
                     onClick={() => setSortBy('count')}
@@ -69,7 +69,7 @@ const TagSelectionBox = ({
                     type="button"
                     className={`px-4 py-2 rounded-lg focus:outline-none ${
                         sortBy === 'name'
-                            ? 'text-white bg-blue-500 hover:bg-blue-600'
+                            ? 'text-white bg-blue-600'
                             : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
                     }`}
                     onClick={() => setSortBy('name')}
@@ -77,13 +77,13 @@ const TagSelectionBox = ({
                     五十音順で並び替え
                 </button>
             </div>
-            <ul className="space-y-2 max-h-80 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto">
             {filteredTags.map(tag => (
             <button
                 key={`${tag.tagName}-${tag.count}`}
                 className={`px-4 py-2 rounded-lg cursor-pointer focus:outline-none ${
                 parentComponentStateValues.includes(tag.tagName)
-                    ? 'text-white bg-blue-500'
+                    ? 'text-white bg-blue-600'
                     : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
                 }`}
                 onClick={() => handleTagClick(tag.tagName)}
@@ -92,7 +92,7 @@ const TagSelectionBox = ({
                 {tag.tagName} ({tag.count})
             </button>
             ))}
-            </ul>
+            </div>
             <div className="mt-4">
                 <h4 className="text-xl font-bold mb-2">選択したタグ:</h4>
                 <div className="flex flex-wrap">
