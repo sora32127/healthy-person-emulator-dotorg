@@ -363,10 +363,15 @@ export default function SearchPage() {
       <Form action="/search" method="post" className="mb-8">
         <input type="hidden" name="searchType" value={currentSearchType} />
         <div className="flex flex-col md:flex-row items-center">
+          <label htmlFor="search-type" className="sr-only">
+            検索タイプ
+          </label>
           <select
+            id="search-type"
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className=" rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary"
+            className="rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary"
+            aria-label="検索タイプ"
           >
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
