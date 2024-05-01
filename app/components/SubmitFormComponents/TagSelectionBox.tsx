@@ -77,7 +77,7 @@ const TagSelectionBox = ({
                     五十音順で並び替え
                 </button>
             </div>
-            <ul className="space-y-2 max-h-80 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto">
             {filteredTags.map(tag => (
             <button
                 key={`${tag.tagName}-${tag.count}`}
@@ -92,7 +92,7 @@ const TagSelectionBox = ({
                 {tag.tagName} ({tag.count})
             </button>
             ))}
-            </ul>
+            </div>
             <div className="mt-4">
                 <h4 className="text-xl font-bold mb-2">選択したタグ:</h4>
                 <div className="flex flex-wrap">
