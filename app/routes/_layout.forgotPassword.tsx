@@ -55,10 +55,10 @@ export default function ForgotPassword() {
                         <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 400 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-between items-center">
                         <button

@@ -45,7 +45,7 @@ const ValidationCheckBox: React.FC<ValidationCheckBoxProps> = ({
   }
 
   return (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+    <div className="bg-red-100 border border-red-400 text-error px-4 py-3 rounded relative mb-4" role="alert">
       <strong className="font-bold block mb-2">入力が不完全です</strong>
       <ul className="list-disc list-inside">
         {errors.map((error, index) => (

@@ -112,12 +112,12 @@ export default function FreeStylePost() {
                         placeholder="記事タイトルを入力..."
                         className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
                     />
-                    {!title && <p className="text-red-500">タイトルを入力してください。</p>}
+                    {!title && <p className="text-error">タイトルを入力してください。</p>}
                     <H2>記事本文</H2>
                     <MarkdownEditor
                         defaultValue={markdownContent}
                         handleValueChange={handleMarkdownChange}/>
-                    {!markdownContent && <p className="text-red-500">本文を入力してください。</p>}
+                    {!markdownContent && <p className="text-error">本文を入力してください。</p>}
                     <TagSelectionBox
                         onTagsSelected={handleTagSelection}
                         parentComponentStateValues={selectedTags}

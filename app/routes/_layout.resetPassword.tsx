@@ -64,17 +64,17 @@ export default function ResetPassword() {
                             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
                         />
                         {passwordError && (
-                            <p className="text-red-500 text-xs italic">{passwordError}</p>
+                            <p className="text-error text-xs italic">{passwordError}</p>
                         )}
                     </div>
                     {actionData?.status === 200 && (
                         <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 400 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-red-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-center">
                         <button
