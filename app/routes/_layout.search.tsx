@@ -370,7 +370,7 @@ export default function SearchPage() {
             id="search-type"
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className="rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary"
+            className="rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary bg-base-200"
             aria-label="検索タイプ"
           >
             <option value="tag">タグ検索</option>
