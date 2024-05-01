@@ -1,3 +1,4 @@
+import { MetaFunction } from "@remix-run/react";
 import { H1 } from "~/components/Headings"
 
 export default function Mail() {
@@ -8,4 +9,8 @@ export default function Mail() {
       </div>
     );
   }
-  
+
+export const meta: MetaFunction = () => {
+    const title = "仮登録完了";
+    return [{title}]
+};

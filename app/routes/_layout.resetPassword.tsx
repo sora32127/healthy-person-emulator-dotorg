@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, } from "@remix-run/node";
-import { Form, NavLink, useActionData } from "@remix-run/react";
+import { Form, MetaFunction, NavLink, useActionData } from "@remix-run/react";
 import { supabase } from "~/modules/supabase.server";
 import { useState } from "react";
 import { H1 } from "~/components/Headings";
@@ -93,3 +93,8 @@ export default function ResetPassword() {
         </div>
     );
 }
+
+export const meta: MetaFunction = () => {
+    const title = "パスワードリセット";
+    return [{title}]
+};
