@@ -137,7 +137,7 @@ export default function Component() {
           <div className="bg-base-300 p-8 rounded-md">
             {actionData?.status === 200 ? (
               <div>
-                <p className="text-green-500 mb-4">{actionData.message}</p>
+                <p className="text-success mb-4">{actionData.message}</p>
                 <button
                   className="px-4 py-2 font-bold text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none"
                   onClick={() => window.location.href = "/login"}

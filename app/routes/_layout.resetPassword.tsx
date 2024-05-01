@@ -68,7 +68,7 @@ export default function ResetPassword() {
                         )}
                     </div>
                     {actionData?.status === 200 && (
-                        <p className="text-green-500 text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-success text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 400 && (
                         <p className="text-error text-xs italic mb-4">{actionData.message}</p>
