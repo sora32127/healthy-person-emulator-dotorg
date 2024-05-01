@@ -337,7 +337,7 @@ export default function SearchPage() {
     query,
   } = useLoaderData<typeof loader>();
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
   const [currentSearchType, setCurrentSearchType] = useState<SearchType>(searchType || "tag");
 
   const [queryText, setQueryText] = useState<string>("");
