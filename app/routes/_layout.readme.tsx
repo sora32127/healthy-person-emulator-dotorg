@@ -59,6 +59,7 @@ export default function Component() {
             <ul>
                 <li><a href="https://twitter.com/helthypersonemu">Twitter/X</a></li>
                 <li><a href="https://bsky.app/profile/helthypersonemu.bsky.social">Bluesky</a></li>
+                <li><a href="https://misskey.io/@helthypersonemu">Misskey.io(ActivityPub対応版)</a></li>
             </ul>
             </li>
             <li>SNSに投稿される際は、5W1H+Then状況説明の箇所が画像として表示されます</li>
