@@ -17,12 +17,10 @@ export default function BeSponsor() {
           </ul>
           <br></br>
           <p>もし健常者エミュレータ事例集の理念に共感していただけるのなら、以下のボタンから寄付していただけると助かります。</p>
-          <button className="mt-8 w-full">
-            <NavLink to ="https://buy.stripe.com/8wM3cG2Diemj5Qk5kk"
-              role="link"
-              className="bg-primary text-white font-bold py-2 px-8 rounded-md block w-full">サポートする
-            </NavLink>
-          </button>
+          <NavLink to="https://buy.stripe.com/8wM3cG2Diemj5Qk5kk"
+            role="link"
+            className="bg-primary text-white font-bold py-2 px-8 rounded-md block w-full mt-8">サポートする
+          </NavLink>
           <div className="text-center mt-6">
             <p>以下のQRコードから支払うことも可能です。</p>
             <img src={stripeQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
