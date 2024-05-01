@@ -17,7 +17,6 @@
     <td>Language</td>
     <td>EcoSystem</td>
     <td>InfraStructure</td>
-    <td>SNS</td>
   </tr>
   <tr>
     <td>
@@ -47,15 +46,20 @@
       <img src="https://img.shields.io/badge/-cloudflare-EEE.svg?logo=cloudflare&style=flat">
       <img src="https://img.shields.io/badge/-newrelic-EEE.svg?logo=newrelic&style=flat">
     </td>
-    <td>
-      <a href="https://twitter.com/helthypersonemu">
-            <img src="https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20X%20Bot">
-      </a>
-      <a href="https://bsky.app/profile/helthypersonemu.bsky.social">
-      <img src="https://img.shields.io/badge/-bluesky-EEE.svg?logo=bluesky&style=flat&label=Follow">
-      </a>
   </tr>
 </table>
+
+<div align="center">
+ <a href="https://twitter.com/helthypersonemu">
+   <img src="https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20X%20Bot">
+ </a>
+ <a href="https://bsky.app/profile/helthypersonemu.bsky.social">
+   <img src="https://img.shields.io/badge/-bluesky-EEE.svg?logo=bluesky&style=flat&label=Follow">
+ </a>
+ <a href="https://misskey.io/@helthypersonemu">
+   <img src="./public/misskey_icon.png" width="20">
+ </a>
+</div>
 
 
 # README
