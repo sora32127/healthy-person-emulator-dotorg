@@ -5,6 +5,8 @@ import { supabase } from "~/modules/supabase.server";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { useState } from "react";
+import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
+
 
 interface HighlightedPostContent {
   highlightedcontent: string;
@@ -336,40 +338,12 @@ export default function SearchPage() {
   } = useLoaderData<typeof loader>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [tagInputValue, setTagInputValue] = useState<string>("");
-  const [tagSuggestions, setTagSuggestions] = useState<Tag[]>([]);
   const [currentSearchType, setCurrentSearchType] = useState<SearchType>(searchType || "tag");
 
   const [queryText, setQueryText] = useState<string>("");
   const [titleText, setTitleText] = useState<string>("");
 
   const totalPages = Math.ceil(totalCount / 10);
-
-  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTagInputValue(value);
-
-    if (value.length > 0) {
-      const filteredSuggestions = allTagsForSearch.filter((tag: Tag) =>
-        tag.tagName.includes(value)
-      );
-      setTagSuggestions(filteredSuggestions);
-    } else {
-      setTagSuggestions([]);
-    }
-  };
-
-  const handleTagSelect = (tagName: string) => {
-    if (!selectedTags.includes(tagName)) {
-      setSelectedTags([...selectedTags, tagName]);
-      setTagInputValue("");
-      setTagSuggestions([]);
-    }
-  };
-
-  const handleTagRemove = (tagName: string) => {
-    setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
-  };
 
   const searchResultTitle = () => {
     if (searchType === "tag") {
@@ -400,12 +374,11 @@ export default function SearchPage() {
           </select>
           {currentSearchType === "tag" && (
             <div className="w-full md:flex-row">
-              <input
-                type="text"
-                value={tagInputValue}
-                onChange={handleTagInputChange}
-                className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
-                placeholder="タグを入力"
+              <br></br>
+              <TagSelectionBox
+                onTagsSelected={(tags) => setSelectedTags(tags)}
+                parentComponentStateValues={selectedTags}
+                allTagsOnlyForSearch={allTagsForSearch}
               />
               <button
                 type="submit"
@@ -461,34 +434,6 @@ export default function SearchPage() {
           </div>
         )}
         </div>
-        {currentSearchType === "tag" && (
-          <div className="mt-4">
-          {tagSuggestions.length > 0 && (
-            <ul className="mt-2 border border-gray-300 rounded">
-            {tagSuggestions.map((tag) => (
-              <li
-              key={tag.tagName+tag.count}
-              className="px-4 py-2 hover:border-2 hover:border-info tag-select"
-              onClick={() => handleTagSelect(tag.tagName)}
-              >
-              {tag.tagName} ({tag.count})
-              </li>
-            ))}
-            </ul>
-          )}
-          <div className="mt-2">
-          {selectedTags.map((tag) => (
-            <span key={tag} className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2">
-              <input type="hidden" name="tags" value={tag} />
-              {tag}
-                <button type="button" onClick={() => handleTagRemove(tag)} className="ml-2">
-                x
-                </button>
-            </span>
-          ))}
-          </div>
-        </div>
-      )}
     </Form>
     <p className="text-lg mb-4 font-bold">{searchResultTitle()}</p>
     {data && data.length > 0 ? (
