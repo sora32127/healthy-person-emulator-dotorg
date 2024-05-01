@@ -88,14 +88,14 @@ export default function Component() {
             id="email"
             name="email"
             className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
-              email ? "focus:border-blue-500" : "border-red-500"
+              email ? "focus:border-blue-500" : "border-error"
             }`}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
           {!email && (
-            <p className="text-red-500 text-sm mt-1">メールアドレスを入力してください。</p>
+            <p className="text-error text-sm mt-1">メールアドレスを入力してください。</p>
           )}
         </div>
         <div className="mb-6">
@@ -110,14 +110,14 @@ export default function Component() {
             id="password"
             name="password"
             className={`w-full px-3 py-2 text-base-content border rounded-md focus:outline-none ${
-              password ? "focus:border-blue-500" : "border-red-500"
+              password ? "focus:border-blue-500" : "border-error"
             }`}
             value={password}
             onChange={handlePasswordChange}
             required
           />
           {passwordError && (
-            <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+            <p className="text-error text-sm mt-1">{passwordError}</p>
           )}
         </div>
         <div className="text-center">
@@ -147,7 +147,7 @@ export default function Component() {
               </div>
             ) : actionData?.status === 500 ? (
               <div>
-                <p className="text-red-500 mb-4">{actionData.message}</p>
+                <p className="text-error mb-4">{actionData.message}</p>
                 <button
                   className="px-4 py-2 font-bold text-white bg-gray-500 rounded-md hover:bg-gray-600 focus:outline-none"
                   onClick={() => setIsRegistering(false)}
