@@ -1,6 +1,6 @@
 import { MetaFunction, NavLink } from '@remix-run/react';
 import { H1 } from '~/components/Headings';
-import stripeQRCode from '~/src/assets/stripe_qr_code.png';
+import fanboxQRCode from '~/src/assets/fanbox_qr_code.png';
 
 export default function BeSponsor() {
     return (
@@ -16,14 +16,14 @@ export default function BeSponsor() {
             <li>ドメイン代(Cloudflare) : $10.11/年</li>
           </ul>
           <br></br>
-          <p>もし健常者エミュレータ事例集の理念に共感していただけるのなら、以下のボタンから寄付していただけると助かります。</p>
-          <NavLink to="https://buy.stripe.com/8wM3cG2Diemj5Qk5kk"
+          <p>もし健常者エミュレータ事例集の理念に共感していただけるのなら、以下のPixiv Fanboxから寄付していただけると助かります。</p>
+          <NavLink to="https://contradiction29.fanbox.cc/"
             role="link"
             className="bg-primary text-white font-bold py-2 px-8 rounded-md block w-full mt-8">サポートする
           </NavLink>
           <div className="text-center mt-6">
             <p>以下のQRコードから支払うことも可能です。</p>
-            <img src={stripeQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
+            <img src={fanboxQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
           </div>
         </div>
     );
