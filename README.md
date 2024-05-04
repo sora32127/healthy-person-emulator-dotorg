@@ -100,6 +100,3 @@ docker compose up
 ```
 
 3. `http://localhost:3000/`にアクセス
-
-## 参考ドキュメント
-- [Supabase : Local Development](https://supabase.com/docs/guides/cli/local-development)
