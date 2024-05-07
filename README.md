@@ -57,7 +57,7 @@
    <img src="https://img.shields.io/badge/-bluesky-EEE.svg?logo=bluesky&style=flat&label=Follow">
  </a>
  <a href="https://misskey.io/@helthypersonemu">
-   <img src="./public/misskey_icon.png" width="20">
+   <img src="https://img.shields.io/badge/-misskey-EEE.svg?logo=misskey&style=flat&label=Follow">
  </a>
 </div>
 
