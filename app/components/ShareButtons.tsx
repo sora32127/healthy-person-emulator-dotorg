@@ -21,9 +21,9 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
         }, 2000);
     }
 
-    const invokeShareAPI = async (url: string) => {
+    const invokeShareAPI = async (currentURL: string, postTitle: string) => {
         try {
-            await navigator.share({ url });
+            await navigator.share({ url: currentURL, title: postTitle });
         } catch (error) {
             console.error("シェアAPIが使えませんでした", error);
         }
@@ -66,7 +66,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                 </span>
             </div>
             <div className="relative inline-block group">
-                <button type="button" onClick={() => invokeShareAPI(currentURL)} className="hover:bg-base-300 rounded-full p-2 transition-colors duration-300">
+                <button type="button" onClick={() => invokeShareAPI(currentURL, postTitle)} className="hover:bg-base-300 rounded-full p-2 transition-colors duration-300">
                     <ShareButtonAPI />
                 </button>
                 <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-base-200 text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
