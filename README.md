@@ -51,7 +51,7 @@
 
 <div align="center">
  <a href="https://twitter.com/helthypersonemu">
-   <img src="https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow%20X%20Bot">
+   <img src="https://img.shields.io/badge/-x-EEE.svg?logo=x&style=flat&label=Follow">
  </a>
  <a href="https://bsky.app/profile/helthypersonemu.bsky.social">
    <img src="https://img.shields.io/badge/-bluesky-EEE.svg?logo=bluesky&style=flat&label=Follow">
