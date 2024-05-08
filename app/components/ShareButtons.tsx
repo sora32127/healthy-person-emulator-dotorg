@@ -1,6 +1,7 @@
 import { useState } from "react";
 import XLogo from "~/src/assets/X_logo_2023_(white).png";
 import CopyToClipBoard from "./icons/CopyToClipboard";
+import ShareButtonAPI from "./icons/ShareButtonAPI";
 
 interface ShareButtonsProps {
     currentURL: string;
@@ -19,6 +20,15 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
             setCopyStatus("idle");
         }, 2000);
     }
+
+    const invokeShareAPI = async (url: string) => {
+        try {
+            await navigator.share({ url });
+        } catch (error) {
+            console.error("シェアAPIが使えませんでした", error);
+        }
+    }
+
 
     return (
         <div className="flex justify-center items-center space-x-4">
@@ -53,6 +63,14 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                 </button>
                 <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-base-200 text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
                     {copyStatus === "idle" ? "クリップボードにコピー" : "クリップボードにコピーしました"}
+                </span>
+            </div>
+            <div className="relative inline-block group">
+                <button type="button" onClick={() => invokeShareAPI(currentURL)} className="hover:bg-base-300 rounded-full p-2 transition-colors duration-300">
+                    <ShareButtonAPI />
+                </button>
+                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-base-200 text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
+                    シェアする
                 </span>
             </div>
         </div>
