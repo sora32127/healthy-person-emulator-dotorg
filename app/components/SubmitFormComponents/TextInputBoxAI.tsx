@@ -123,23 +123,29 @@ export default function TextInputBoxAI({
         placeholder={placeholder}
         className="w-full border-2 border-base-content rounded-lg p-2 placeholder-slate-500"
       />
-    {suggestions && (
-      <div className="mt-2">
-        <ul className="list-none p-0">
-          {suggestions.map((suggestion, index) => (
-            <li key={index} className="inline-block mr-4 outline outline-offset-2 rounded py-1 px-1 my-2">
-              <kbd>
-                <span className="text-info font-bold mr-1">
-                  <span className="text-xs font-normal mr-1">Shift+</span>
-                  {index + 1}{"で補完"}
-                </span>
-                {suggestion}
-              </kbd>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )}
+      {suggestions && (
+            <div className="mt-2">
+              <ul className="list-none p-0">
+                {suggestions.map((suggestion, index) => (
+                  <li key={index} className="inline-block mr-4 my-2">
+                    <button
+                      onClick={() => commitSuggestion(index)}
+                      className="btn btn-outline py-1 px-2"
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="text-info text-xs font-bold mb-1">
+                          Shift+{index + 1}もしくはタップで補完
+                        </span>
+                        <span className="text-left my-1 break-words">
+                          {suggestion}
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
     </div>
   );
 }
