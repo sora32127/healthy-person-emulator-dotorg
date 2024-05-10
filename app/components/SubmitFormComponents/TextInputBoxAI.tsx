@@ -123,21 +123,23 @@ export default function TextInputBoxAI({
         placeholder={placeholder}
         className="w-full border-2 border-base-content rounded-lg p-2 placeholder-slate-500"
       />
-      {suggestions && (
-        <>
-          <p className="text-base-content mt-2">
-            [補完候補]:
-            {suggestions.map((suggestion, index) => (
-              <span key={index} className="mr-2">
-                [{index + 1}] {suggestion}
-              </span>
-            ))}
-          </p>
-          <p className="text-info mt-2">
-            Shift + 1 を押すと1つ目の補完候補が、Shift + 2 を押すと2つ目の補完候補がコミットされます。
-          </p>
-        </>
-      )}
+    {suggestions && (
+      <div className="mt-2">
+        <ul className="list-none p-0">
+          {suggestions.map((suggestion, index) => (
+            <li key={index} className="inline-block mr-4">
+              <kbd className="kbd kbd-sm">
+                <span className="text-info font-bold mr-1">
+                  <span className="text-xs font-normal mr-1">Shift+</span>
+                  {index + 1}{"で補完"}
+                </span>
+                {suggestion}
+              </kbd>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
     </div>
   );
 }
