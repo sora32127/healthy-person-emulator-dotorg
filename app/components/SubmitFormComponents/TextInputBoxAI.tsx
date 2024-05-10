@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 interface ComponentProps {
-  id:string;
+  id: string;
   className?: string;
   parentComponentStateValue: string;
   onInputChange: (value: string) => void;
@@ -15,9 +15,9 @@ export default function TextInputBoxAI({
   parentComponentStateValue,
   onInputChange,
   placeholder = "",
-  prompt="",
+  prompt = "",
 }: ComponentProps) {
-  const [suggestions, setSuggestions] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[] | null>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const timer = useRef<NodeJS.Timeout | null>(null);
 
@@ -44,24 +44,24 @@ export default function TextInputBoxAI({
               method: "POST",
               body: formData,
             });
-            const suggestion = await response.json();
-            setSuggestions(suggestion);
+            const suggestions = await response.json();
+            setSuggestions(suggestions);
           } catch (e) {
             console.error(e);
           }
         }, 1000);
       } else {
-        setSuggestions("");
+        setSuggestions([]);
       }
       onInputChange(e.currentTarget.value);
     },
     [onInputChange]
   );
 
-  const commitSuggestions = () => {
+  const commitSuggestion = (index: number) => {
     const textareaElement = textarea.current;
-    if (textareaElement && suggestions) {
-      const newValue = textareaElement.value + suggestions;
+    if (textareaElement && suggestions && suggestions[index]) {
+      const newValue = textareaElement.value + suggestions[index];
       textareaElement.value = newValue;
       textareaElement.focus();
       resetSuggestions();
@@ -70,9 +70,16 @@ export default function TextInputBoxAI({
   };
 
   const handleSuggestions = (e: KeyboardEvent) => {
-    if (e.key === "Shift") {
-      e.preventDefault();
-      commitSuggestions();
+    if (e.shiftKey) {
+      const keys = ["1", "2"];
+      const inputKey = keys.find((key) => e.code.endsWith(key));
+      if (inputKey && suggestions) {
+        const inputNumber = parseInt(inputKey);
+        if (inputNumber >= 1 && inputNumber <= suggestions.length) {
+          e.preventDefault();
+          commitSuggestion(inputNumber - 1);
+        }
+      }
     }
   };
 
@@ -93,18 +100,18 @@ export default function TextInputBoxAI({
     const counterReflectionValue = window.localStorage.getItem("counterReflectionValue");
     const noteValue = window.localStorage.getItem("noteValue");
     return {
-        situationValue,
-        reflectionValue,
-        counterReflectionValue,
-        noteValue,
-        };
-  }
+      situationValue,
+      reflectionValue,
+      counterReflectionValue,
+      noteValue,
+    };
+  };
 
   const createContextSentence = () => {
     const contextValues = getContextFromLocalStorage();
     const contextSetense = `以下のテキストはコンテキストを表すものです。文章を補完する際の参考にしてください。状況: ${contextValues.situationValue}。反省: ${contextValues.reflectionValue}。反省に対する反省: ${contextValues.counterReflectionValue}。メモ: ${contextValues.noteValue}。`;
     return contextSetense;
-  }
+  };
 
   return (
     <div className={className}>
@@ -117,19 +124,28 @@ export default function TextInputBoxAI({
         className="w-full border-2 border-base-content rounded-lg p-2 placeholder-slate-500"
       />
       {suggestions && (
-        <>
-          <p className="text-base-content mt-2">[補完候補]: {suggestions}</p>
-          <p className="text-info mt-2">
-            Shiftキーまたはボタンを押して補完できます。
-          </p>
-          <button
-            onClick={commitSuggestions}
-            className="bg-primary text-white font-bold py-2 px-4 rounded mt-2"
-          >
-            補完する
-          </button>
-        </>
-      )}
+            <div className="mt-2">
+              <ul className="list-none p-0">
+                {suggestions.map((suggestion, index) => (
+                  <li key={index} className="inline-block mr-4 my-2">
+                    <button
+                      onClick={() => commitSuggestion(index)}
+                      className="btn btn-outline py-1 px-2"
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="text-info text-xs font-bold mb-1">
+                          Shift+{index + 1}もしくはタップで補完
+                        </span>
+                        <span className="text-left my-1 break-words">
+                          {suggestion}
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
     </div>
   );
 }
