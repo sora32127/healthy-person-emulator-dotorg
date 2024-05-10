@@ -43,21 +43,27 @@ export async function getCompletion(text: string, context: string, promptType: s
     const promptText = createPrompt(promptType);
     const result = await openAI.chat.completions.create({
         messages: [
+          {
+            role: "system",
+            content: `You are a proficient assistant for generating natural and grammatically correct Japanese compositions. Please generate two continuations of the user's input that consider the given context and capture the user's intent accurately. **Your response is limited to valid JSON format.** The format should be:
             {
-                role: "system",
-                content: `You are a proficient assistant for generating natural and grammatically correct Japanese compositions. Please generate a continuation of the user's input that considers the given context and captures the user's intent accurately. Here is your task: ${promptText}`
-            },
-            {
-                role: "assistant",
-                content: `Understood. I will generate a natural continuation of the Japanese text concisely, keeping in mind the following context information:\nContext: ${context}`,
-            },
-            {
-                role: "user",
-                content: `Please continue the following sentence, considering the context, in natural Japanese and concisely, aiming for about 40 characters:\n"${text}"`,
+              result: {
+                completion: Array<string> and length is 2
+              }
             }
+            Here is your task: ${promptText}`
+          },
+          {
+            role: "assistant",
+            content: `Understood. I will generate two natural continuations of the Japanese text concisely, keeping in mind the following context information:\nContext: ${context}`,
+          },
+          {
+            role: "user",
+            content: `Please continue the following sentence twice, considering the context, in natural Japanese and concisely, aiming for about 40 characters each:\n"${text}"`,
+          }
         ],
         model: 'gpt-3.5-turbo'
-    });
-    const completion = result.choices[0].message.content;
-    return completion;
+       });
+    const completion = JSON.parse(result.choices[0].message.content || "");
+    return completion.result.completion;
 }
