@@ -127,8 +127,8 @@ export default function TextInputBoxAI({
       <div className="mt-2">
         <ul className="list-none p-0">
           {suggestions.map((suggestion, index) => (
-            <li key={index} className="inline-block mr-4">
-              <kbd className="kbd kbd-sm">
+            <li key={index} className="inline-block mr-4 outline outline-offset-2 rounded py-1 px-1 my-2">
+              <kbd>
                 <span className="text-info font-bold mr-1">
                   <span className="text-xs font-normal mr-1">Shift+</span>
                   {index + 1}{"で補完"}
