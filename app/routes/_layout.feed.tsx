@@ -15,14 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (likeFromHour) {
     const likeFromHourInt = parseInt(likeFromHour);
     const likeToHourInt = parseInt(likeToHour || "0");
-    let now;
-    if (process.env.NODE_ENV === "development") {
-      now = new Date("2024-03-11")
-    }
-    else{
-      now = new Date();
-    }
-
+    const now = new Date();
     const gteDate = new Date(now.getTime() - likeFromHourInt * 60 * 60 * 1000);
     const lteDate = new Date(now.getTime() - likeToHourInt * 60 * 60 * 1000);
 
