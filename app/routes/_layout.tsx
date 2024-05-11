@@ -15,6 +15,7 @@ import SignupIcon from "~/components/icons/SignupIcon";
 import LoginIcon from "~/components/icons/LoginIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
+import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 
 export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
@@ -40,6 +41,7 @@ export default function Component() {
   const menuItems = [
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
+    { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon},
     ...(isLoggedIn
       ? [
           { to: "/logout", text: "ログアウト", icon: LogoutIcon },
