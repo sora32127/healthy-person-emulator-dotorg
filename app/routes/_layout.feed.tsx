@@ -335,10 +335,9 @@ export const meta: MetaFunction = ({ location }) => {
   
   if (type === "unboundedLikes"){
     title = `無期限いいね順 - ページ${pageNumber}`;
-  }
-  else if (!likeFrom){
+  } else if (type === "timeDesc"){
     title = pageNumber ? `フィード - ページ${pageNumber}` : "フィード"
-  } else {
+  } else if (type === "like") {
     title = `いいね順 - ${likeFrom}時間前～${likeTo}時間前`
   }
 
