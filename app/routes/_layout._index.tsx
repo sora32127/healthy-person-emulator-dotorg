@@ -192,7 +192,7 @@ export default function Feed() {
                     />
                 ))}
                 <NavLink
-                    to="/feed?p=2"
+                    to="/feed?p=2&type=timeDesc"
                     className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary"
                 >
                 最新の投稿を見る
@@ -212,7 +212,7 @@ export default function Feed() {
                     />
                 ))}
                 <NavLink
-                    to="/feed?p=2&likeFrom=24&likeTo=0"
+                    to="/feed?p=2&likeFrom=24&likeTo=0&type=like"
                     className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary"
                 >
                 最近いいねされた投稿を見る

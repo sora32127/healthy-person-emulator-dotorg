@@ -64,12 +64,16 @@ test.describe("フィードページ", () => {
     await verifyElementMinCount(page, ".feed-posts > div", 4);
   });
 
-  test("新着順といいね順を切り替えられる", async ({ page }) => {
+  test("新着順・いいね順・無期限いいね順を切り替えられる", async ({ page }) => {
     await navigateToLatestFeed(page);
-    await page.getByText("いいね順").click();
+    await page.getByText("いいね順").nth(0).click();
     await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
     await page.getByText("新着順").click();
     await expect(page).toHaveTitle(/フィード - ページ1/);
+    await page.getByText("無期限いいね順").click();
+    await expect(page).toHaveTitle(/無期限いいね順 - ページ1/);
+    await verifyElementCount(page, ".feed-posts > div", 10);
+
   });
 });
 
