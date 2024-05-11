@@ -157,15 +157,13 @@ export default function Feed() {
       <div className="feed-type-select">
         <Form method="post" className="mb-4">
           <div className="flex items-center">
-            <button
+          <button
               type="submit"
               name="action"
               value="sortByNew"
-              className={`px-4 py-2 mr-2 ${
-                !likeFromHour
-                  ? "bg-base-200 text-base-content border-4 border-info  focus:outline-info"
-                  : "bg-base-200 text-base-content focus:outline-info"
-              } rounded`}
+              className={`btn mx-2 ${
+                !likeFromHour ? "border-info border-4" : ""
+              }`}
             >
               新着順
             </button>
@@ -173,13 +171,19 @@ export default function Feed() {
               type="submit"
               name="action"
               value="sortByLikes"
-              className={`px-4 py-2 ${
-                likeFromHour
-                  ? "bg-base-200 text-base-content border-4 border-info  focus:outline-info"
-                  : "bg-base-200 text-base-content focus:outline-info"
-              } rounded`}
+              className={`btn mx-2 ${
+                likeFromHour ? " border-info border-4" : ""
+              }`}
             >
               いいね順
+            </button>
+            <button
+              type="submit"
+              name="action"
+              value="unbounedLikes"
+              className="btn mx-2"
+            >
+              無期限いいね順
             </button>
           </div>
         </Form>
