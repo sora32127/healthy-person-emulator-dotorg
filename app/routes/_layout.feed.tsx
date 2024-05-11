@@ -9,8 +9,47 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const pagingNumber = parseInt(url.searchParams.get("p") || "1");
   const likeFromHour = url.searchParams.get("likeFrom");
   const likeToHour = url.searchParams.get("likeTo");
+  const type = url.searchParams.get("type");
   let postData = [];
   let totalCount = 0;
+
+  if (type === "unboundedLikes") {
+    const postData = await prisma.dimPosts.findMany({
+      orderBy: { countLikes: "desc" },
+      skip: (pagingNumber - 1) * 10,
+      take: 10,
+      select: {
+        postId: true,
+        postTitle: true,
+        postDateGmt: true,
+        countLikes: true,
+        countDislikes: true,
+        rel_post_tags: {
+          select: {
+            dimTag: {
+              select: {
+                tagName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    totalCount = await prisma.dimPosts.count();
+    const postDataWithTags = postData.map((post) => { 
+      const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
+      return { ...post, tagNames };
+    })
+
+    return json({ 
+      posts: postDataWithTags, 
+      currentPage: pagingNumber,
+      totalCount,
+      likeFromHour,
+      type,
+    });
+  }
+
 
   if (likeFromHour) {
     const likeFromHourInt = parseInt(likeFromHour);
@@ -110,6 +149,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     currentPage: pagingNumber,
     totalCount,
     likeFromHour,
+    type,
   });
 }
 
@@ -120,14 +160,25 @@ export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
   const likeFrom = url.searchParams.get("likeFrom");
   const likeTo = url.searchParams.get("likeTo");
+  const type = url.searchParams.get("type");
 
   if (action === "sortByNew") {
     return redirect(`/feed?p=1`);
   } else if (action === "sortByLikes") {
     return redirect(`/feed?p=1&likeFrom=24&likeTo=0`);
+  } else if (action === "unbounedLikes") {
+    return redirect(`/feed?p=1&type=unboundedLikes`);
   }
 
-  if (!likeFrom && action === "firstPage") {
+  if (type === "unboundedLikes" && action === "firstPage") {
+    return redirect(`/feed?p=1&type=unboundedLikes`);
+  } else if (type === "unboundedLikes" && action === "prevPage") {
+    return redirect(`/feed?p=${currentPage - 1}&type=unboundedLikes`);
+  } else if (type === "unboundedLikes" && action === "nextPage") {
+    return redirect(`/feed?p=${currentPage + 1}&type=unboundedLikes`);
+  } else if (type === "unboundedLikes" && action === "lastPage") {
+    return redirect(`/feed?p=${formData.get("totalPages")}&type=unboundedLikes`);
+  } else if (!likeFrom && action === "firstPage") {
     return redirect(`/feed?p=1`);
   } else if (!likeFrom && action === "prevPage") {
     return redirect(`/feed?p=${currentPage - 1}`);
@@ -144,11 +195,12 @@ export async function action({ request }: ActionFunctionArgs) {
   } else if (likeFrom && action === "lastPage") {
     return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${formData.get("totalPages")}`);
   }
+  
   return null;
 }
 
 export default function Feed() {
-  const { posts, currentPage, totalCount, likeFromHour } = useLoaderData<typeof loader>();
+  const { posts, currentPage, totalCount, likeFromHour, type } = useLoaderData<typeof loader>();
   const totalPages = Math.ceil(totalCount / 10);
 
   return (
@@ -162,7 +214,7 @@ export default function Feed() {
               name="action"
               value="sortByNew"
               className={`btn mx-2 ${
-                !likeFromHour ? "border-info border-4" : ""
+                !likeFromHour && type != "unboundedLikes" ? "border-info border-4" : ""
               }`}
             >
               新着順
@@ -181,7 +233,9 @@ export default function Feed() {
               type="submit"
               name="action"
               value="unbounedLikes"
-              className="btn mx-2"
+              className= {`btn mx-2 ${
+                type == "unboundedLikes" ? "border-info border-4" : ""
+              }`}
             >
               無期限いいね順
             </button>
