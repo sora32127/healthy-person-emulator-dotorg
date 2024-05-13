@@ -394,6 +394,12 @@ export default function SearchPage() {
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
+        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)}>
+          <option disabled selected className="text-slate-500"> 並び替え</option>
+          <option value="timeDesc">投稿日時順</option>
+          <option value="like">いいね数順</option>
+        </select>
+        <input type="hidden" name="orderBy" value={currentOrderBy} />
           {currentSearchType === "tag" && (
             <div className="w-full md:flex-row">
               <br></br>
@@ -456,12 +462,6 @@ export default function SearchPage() {
           </div>
         )}
         </div>
-        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)}>
-            <option disabled selected className="text-slate-500"> 並び替え</option>
-            <option value="timeDesc">投稿日時順</option>
-            <option value="like">いいね数順</option>
-          </select>
-          <input type="hidden" name="orderBy" value={currentOrderBy} />
     </Form>
     <p className="text-lg mb-4 font-bold">{searchResultTitle()}</p>
     {data && data.length > 0 ? (
