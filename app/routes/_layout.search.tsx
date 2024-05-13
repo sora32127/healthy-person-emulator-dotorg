@@ -213,7 +213,6 @@ export const loader: LoaderFunction = async ({ request }) => {
         .filter((tag) => tag.postId === post.postId)
         .map((tag) => tag.dimTag.tagName),
     }));
-
     return json({
       data: searchResultsWithTags,
       allTagsForSearch,
@@ -368,10 +367,6 @@ export default function SearchPage() {
     }
   };
 
-  const handleCurrentOrderBy = (e: string) => {
-    setCurrentOrderBy(e as OrderBy);
-  }
-
   return (
     <div className="container mx-auto px-4">
       <H1>検索</H1>
@@ -393,7 +388,7 @@ export default function SearchPage() {
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
-        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)} value={currentOrderBy}>
+        <select className="select select-bordered" onChange={(e) =>  setCurrentOrderBy(e.target.value as OrderBy)}>
           <option disabled selected className="text-slate-500"> 並び替え</option>
           <option value="timeDesc">投稿日時順</option>
           <option value="like">いいね数順</option>
