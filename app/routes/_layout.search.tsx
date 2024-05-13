@@ -175,9 +175,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   } else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
     const { data } = (await supabase.rpc("search_post_contents", {
-      keyword: query,
+      keyword: query, orderby:orderBy,
     })) as { data: HighlightedPostContent[] };
-
     if (!data) {
       return json({
         data: [],
@@ -394,7 +393,7 @@ export default function SearchPage() {
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
-        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)}>
+        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)} value={currentOrderBy}>
           <option disabled selected className="text-slate-500"> 並び替え</option>
           <option value="timeDesc">投稿日時順</option>
           <option value="like">いいね数順</option>
