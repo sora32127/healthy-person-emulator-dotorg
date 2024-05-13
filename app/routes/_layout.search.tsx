@@ -22,10 +22,15 @@ interface Tag {
   count: number;
 }
 
+type SearchType = "tag" | "fullText" | "title";
+type OrderBy = "timeDesc" | "like";
+
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const searchType = url.searchParams.get("t") as SearchType | null;
   const pageNumber = parseInt(url.searchParams.get("p") || "1");
+  const orderBy = url.searchParams.get("orderBy") as OrderBy || "timeDesc";
 
   const tags = await prisma.dimTags.findMany({
     select: {
@@ -91,7 +96,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         },
       },
       where: { postId: { in: filteredPostIds } },
-      orderBy: { postDateGmt: "desc" },
+      orderBy: orderBy === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -115,6 +120,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query: null,
       url,
+      orderBy,
     });
   } else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
@@ -140,7 +146,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           },
         },
       },
-      orderBy: { postDateGmt: "desc" },
+      orderBy: orderBy === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -164,13 +170,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       title,
       query: null,
       url,
+      orderBy,
     });
   } else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
     const { data } = (await supabase.rpc("search_post_contents", {
-      keyword: query,
+      keyword: query, orderby:orderBy,
     })) as { data: HighlightedPostContent[] };
-
     if (!data) {
       return json({
         data: [],
@@ -179,6 +185,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         pageNumber: 1,
         searchType: null,
         query: "",
+        orderBy,
       });
     }
 
@@ -206,7 +213,6 @@ export const loader: LoaderFunction = async ({ request }) => {
         .filter((tag) => tag.postId === post.postId)
         .map((tag) => tag.dimTag.tagName),
     }));
-
     return json({
       data: searchResultsWithTags,
       allTagsForSearch,
@@ -217,6 +223,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query,
       url,
+      orderBy,
     });
   } else {
     return json({
@@ -229,6 +236,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query: null,
       url,
+      orderBy: null,
     });
   }
 };
@@ -242,6 +250,7 @@ export const action: ActionFunction = async ({ request }) => {
   const tags = formData.get("tags")?.toString().split("+") || [];
   const title = formData.get("title")?.toString() || "";
   const query = formData.get("query")?.toString() || "";
+  const orderBy = formData.get("orderBy") as OrderBy;
 
   const encodedQuery = encodeURIComponent(query);
   const encodedTitle = encodeURIComponent(title);
@@ -249,7 +258,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "firstSearch") {
     return redirect(
-      `/search?t=${searchType}&p=1${
+      `/search?t=${searchType}&p=1&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -261,7 +270,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "firstPage") {
     return redirect(
-      `/search?t=${searchType}&p=1${
+      `/search?t=${searchType}&p=1&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -273,7 +282,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "prevPage") {
     return redirect(
-      `/search?t=${searchType}&p=${currentPage - 1}${
+      `/search?t=${searchType}&p=${currentPage - 1}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -285,7 +294,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "nextPage") {
     return redirect(
-      `/search?t=${searchType}&p=${currentPage + 1}${
+      `/search?t=${searchType}&p=${currentPage + 1}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -297,7 +306,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "lastPage") {
     return redirect(
-      `/search?t=${searchType}&p=${totalPages}${
+      `/search?t=${searchType}&p=${totalPages}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -323,7 +332,6 @@ function makeReadableHighlightText(htmlString: string): string {
   return highlightedText.slice(2, -2);
 }
 
-type SearchType = "tag" | "fullText" | "title";
 
 export default function SearchPage() {
   const {
@@ -335,6 +343,7 @@ export default function SearchPage() {
     tags,
     title,
     query,
+    orderBy,
   } = useLoaderData<typeof loader>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
@@ -342,6 +351,7 @@ export default function SearchPage() {
 
   const [queryText, setQueryText] = useState<string>("");
   const [titleText, setTitleText] = useState<string>("");
+  const [currentOrderBy, setCurrentOrderBy] = useState<OrderBy>(orderBy || "timeDesc");
 
   const totalPages = Math.ceil(totalCount / 10);
 
@@ -370,13 +380,20 @@ export default function SearchPage() {
             id="search-type"
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className="rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary bg-base-200"
+            className="select select-bordered"
             aria-label="検索タイプ"
           >
+            <option disabled selected className="text-slate-500"> 検索タイプ</option>
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
+        <select className="select select-bordered" onChange={(e) =>  setCurrentOrderBy(e.target.value as OrderBy)}>
+          <option disabled selected className="text-slate-500"> 並び替え</option>
+          <option value="timeDesc">投稿日時順</option>
+          <option value="like">いいね数順</option>
+        </select>
+        <input type="hidden" name="orderBy" value={currentOrderBy} />
           {currentSearchType === "tag" && (
             <div className="w-full md:flex-row">
               <br></br>
@@ -387,7 +404,7 @@ export default function SearchPage() {
               />
               <button
                 type="submit"
-                className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
                 name="action"
                 value="firstSearch"
               >
@@ -403,12 +420,12 @@ export default function SearchPage() {
                 name="q"
                 defaultValue={queryText}
                 onChange={(e) => setQueryText(e.target.value)}
-                className="rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-2 border-secondary"
+                className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-secondary"
                 placeholder="検索キーワードを入力"
               />
               <button
               type="submit"
-              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
               >
@@ -424,12 +441,12 @@ export default function SearchPage() {
             name="title"
             defaultValue={titleText}
             onChange={(e) => setTitleText(e.target.value)}
-            className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
+            className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-secondary"
             placeholder="タイトルを入力"
             />
             <button
               type="submit"
-              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
             >
