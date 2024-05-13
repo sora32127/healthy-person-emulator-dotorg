@@ -1,5 +1,7 @@
 import { useState } from "react";
 import XLogo from "~/src/assets/X_logo_2023_(white).png";
+import MastodonLogo from "~/src/assets/mastodon_logo_black.svg"
+import MisskeyLogo from "~/src/assets/misskey_icon.png"
 import CopyToClipBoard from "./icons/CopyToClipboard";
 import ShareButtonAPI from "./icons/ShareButtonAPI";
 
@@ -38,7 +40,6 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                     className="flex items-center"
                 >
                     <img src={XLogo} alt="X" width="20" height="20" />
-                    <p className="text-white pl-2">シェア</p>
                 </a>
            </button>
            <button type="button">
@@ -58,8 +59,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                     href={`https://donshare.net/share.html?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
                     className="flex items-center"
                 >
-                    <img src="https://joinmastodon.org/logos/logo-purple.svg" alt="donshare" width="20" height="20" />
-                    <p className="text-white pl-2">シェア</p>
+                    <img src={MastodonLogo} alt="donshare" width="20" height="20" />
                 </a>
             </button>
             <button type="button" className="bg-green-500 flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
@@ -67,8 +67,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                     href={`https://misskeyshare.link/share.html?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
                     className="flex items-center"
                 >
-                    <img src="https://github.com/misskey-dev/assets/blob/main/public/icon.png" alt="misskeyshare" width="20" height="20" />
-                    <p className="text-white pl-2">シェア</p>
+                    <img src={MisskeyLogo} alt="misskeyshare" width="20" height="20" />
                 </a>
             </button>
             <div className="relative inline-block group">
