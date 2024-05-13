@@ -10,7 +10,7 @@ interface ShareButtonsProps {
 
 export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProps) {
     const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
-    const twitterShareText = encodeURIComponent(`${postTitle}-健常者エミュレータ事例集`);
+    const socialShareText = encodeURIComponent(`${postTitle}-健常者エミュレータ事例集`);
     const url = new URL(currentURL);
     const hatenaBlogUrl = url.hostname + url.pathname;
     const copy = async (currentURL: string) => {
@@ -34,7 +34,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
         <div className="flex justify-center items-center space-x-4">
             <button type="button" className="bg-black flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
                 <a
-                    href={`https://twitter.com/intent/tweet?text=${twitterShareText}&url=${encodeURIComponent(currentURL)}`}
+                    href={`https://twitter.com/intent/tweet?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
                     className="flex items-center"
                 >
                     <img src={XLogo} alt="X" width="20" height="20" />
@@ -51,6 +51,24 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                         width="40"
                         height="40"
                     />
+                </a>
+            </button>
+            <button type="button" className="bg-violet-800 flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
+                <a
+                    href={`https://donshare.net/share.html?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
+                    className="flex items-center"
+                >
+                    <img src="https://joinmastodon.org/logos/logo-purple.svg" alt="donshare" width="20" height="20" />
+                    <p className="text-white pl-2">シェア</p>
+                </a>
+            </button>
+            <button type="button" className="bg-green-500 flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
+                <a
+                    href={`https://misskeyshare.link/share.html?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
+                    className="flex items-center"
+                >
+                    <img src="https://github.com/misskey-dev/assets/blob/main/public/icon.png" alt="misskeyshare" width="20" height="20" />
+                    <p className="text-white pl-2">シェア</p>
                 </a>
             </button>
             <div className="relative inline-block group">
