@@ -51,15 +51,15 @@ const TagSelectionBox = ({
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
                 placeholder="タグを検索..."
-                className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
+                className="input input-bordered w-full px-3 py-2 placeholder-slate-500  mb-4"
             />
             <div className="flex space-x-2 mb-4">
                 <button
                     type="button"
-                    className={`px-4 py-2 rounded-lg focus:outline-none ${
+                    className={`px-4 py-2 btn ${
                         sortBy === 'count'
-                            ? 'text-white bg-blue-600'
-                            : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                            ? ' btn-primary'
+                            : 'btn-neutral'
                     }`}
                     onClick={() => setSortBy('count')}
                 >
@@ -67,10 +67,10 @@ const TagSelectionBox = ({
                 </button>
                 <button
                     type="button"
-                    className={`px-4 py-2 rounded-lg focus:outline-none ${
+                    className={`px-4 py-2 btn ${
                         sortBy === 'name'
-                            ? 'text-white bg-blue-600'
-                            : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                            ? ' btn-primary'
+                            : 'btn-neutral'
                     }`}
                     onClick={() => setSortBy('name')}
                 >
@@ -81,10 +81,10 @@ const TagSelectionBox = ({
             {filteredTags.map(tag => (
             <button
                 key={`${tag.tagName}-${tag.count}`}
-                className={`px-4 py-2 rounded-lg cursor-pointer focus:outline-none ${
+                className={`px-4 py-2 rounded-lg cursor-pointer btn ${
                 parentComponentStateValues.includes(tag.tagName)
-                    ? 'text-white bg-blue-600'
-                    : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                    ? 'btn-active'
+                    : 'text-gray-700 bg-gray-200'
                 }`}
                 onClick={() => handleTagClick(tag.tagName)}
                 type="button"
@@ -99,7 +99,7 @@ const TagSelectionBox = ({
                 {parentComponentStateValues.map(tag => (
                     <button
                         key={tag}
-                        className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer focus:outline-none"
+                        className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium btn-active rounded-full cursor-pointer"
                         onClick={() => handleRemoveSelectedTag(tag)}
                         type="button"
                     >

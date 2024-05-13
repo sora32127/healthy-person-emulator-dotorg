@@ -386,9 +386,10 @@ export default function SearchPage() {
             id="search-type"
             value={currentSearchType}
             onChange={(e) => setCurrentSearchType(e.target.value as SearchType)}
-            className="rounded px-4 py-2 mb-4 md:mb-0 md:mr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-auto border-2 border-secondary bg-base-200"
+            className="select select-bordered"
             aria-label="検索タイプ"
           >
+            <option disabled selected className="text-slate-500"> 検索タイプ</option>
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
@@ -403,7 +404,7 @@ export default function SearchPage() {
               />
               <button
                 type="submit"
-                className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+                className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
                 name="action"
                 value="firstSearch"
               >
@@ -419,12 +420,12 @@ export default function SearchPage() {
                 name="q"
                 defaultValue={queryText}
                 onChange={(e) => setQueryText(e.target.value)}
-                className="rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-2 border-secondary"
+                className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-secondary"
                 placeholder="検索キーワードを入力"
               />
               <button
               type="submit"
-              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
               >
@@ -440,12 +441,12 @@ export default function SearchPage() {
             name="title"
             defaultValue={titleText}
             onChange={(e) => setTitleText(e.target.value)}
-            className="placeholder-slate-500 rounded px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 md:mb-0 md:w-5/6 border-2 border-secondary"
+            className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-secondary"
             placeholder="タイトルを入力"
             />
             <button
               type="submit"
-              className="bg-primary text-white px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+              className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
               name="action"
               value="firstSearch"
             >
