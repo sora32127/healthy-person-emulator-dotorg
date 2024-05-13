@@ -22,10 +22,15 @@ interface Tag {
   count: number;
 }
 
+type SearchType = "tag" | "fullText" | "title";
+type OrderBy = "timeDesc" | "like";
+
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const searchType = url.searchParams.get("t") as SearchType | null;
   const pageNumber = parseInt(url.searchParams.get("p") || "1");
+  const orderBy = url.searchParams.get("orderBy") as OrderBy || "timeDesc";
 
   const tags = await prisma.dimTags.findMany({
     select: {
@@ -91,7 +96,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         },
       },
       where: { postId: { in: filteredPostIds } },
-      orderBy: { postDateGmt: "desc" },
+      orderBy: orderBy === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -115,6 +120,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query: null,
       url,
+      orderBy,
     });
   } else if (searchType === "title") {
     const title = url.searchParams.get("title") || "";
@@ -140,7 +146,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           },
         },
       },
-      orderBy: { postDateGmt: "desc" },
+      orderBy: orderBy === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
       skip: (pageNumber - 1) * 10,
       take: 10,
     });
@@ -164,6 +170,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title,
       query: null,
       url,
+      orderBy,
     });
   } else if (searchType === "fullText") {
     const query = url.searchParams.get("text") || "";
@@ -179,6 +186,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         pageNumber: 1,
         searchType: null,
         query: "",
+        orderBy,
       });
     }
 
@@ -217,6 +225,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query,
       url,
+      orderBy,
     });
   } else {
     return json({
@@ -229,6 +238,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       title: null,
       query: null,
       url,
+      orderBy: null,
     });
   }
 };
@@ -242,6 +252,7 @@ export const action: ActionFunction = async ({ request }) => {
   const tags = formData.get("tags")?.toString().split("+") || [];
   const title = formData.get("title")?.toString() || "";
   const query = formData.get("query")?.toString() || "";
+  const orderBy = formData.get("orderBy") as OrderBy;
 
   const encodedQuery = encodeURIComponent(query);
   const encodedTitle = encodeURIComponent(title);
@@ -249,7 +260,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "firstSearch") {
     return redirect(
-      `/search?t=${searchType}&p=1${
+      `/search?t=${searchType}&p=1&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -261,7 +272,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "firstPage") {
     return redirect(
-      `/search?t=${searchType}&p=1${
+      `/search?t=${searchType}&p=1&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -273,7 +284,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "prevPage") {
     return redirect(
-      `/search?t=${searchType}&p=${currentPage - 1}${
+      `/search?t=${searchType}&p=${currentPage - 1}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -285,7 +296,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "nextPage") {
     return redirect(
-      `/search?t=${searchType}&p=${currentPage + 1}${
+      `/search?t=${searchType}&p=${currentPage + 1}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -297,7 +308,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } else if (action === "lastPage") {
     return redirect(
-      `/search?t=${searchType}&p=${totalPages}${
+      `/search?t=${searchType}&p=${totalPages}&orderBy=${orderBy}${
         searchType === "tag"
           ? `&tags=${encodedTags}`
           : searchType === "title"
@@ -323,7 +334,6 @@ function makeReadableHighlightText(htmlString: string): string {
   return highlightedText.slice(2, -2);
 }
 
-type SearchType = "tag" | "fullText" | "title";
 
 export default function SearchPage() {
   const {
@@ -335,6 +345,7 @@ export default function SearchPage() {
     tags,
     title,
     query,
+    orderBy,
   } = useLoaderData<typeof loader>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
@@ -342,6 +353,7 @@ export default function SearchPage() {
 
   const [queryText, setQueryText] = useState<string>("");
   const [titleText, setTitleText] = useState<string>("");
+  const [currentOrderBy, setCurrentOrderBy] = useState<OrderBy>(orderBy || "timeDesc");
 
   const totalPages = Math.ceil(totalCount / 10);
 
@@ -356,6 +368,10 @@ export default function SearchPage() {
       return null;
     }
   };
+
+  const handleCurrentOrderBy = (e: string) => {
+    setCurrentOrderBy(e as OrderBy);
+  }
 
   return (
     <div className="container mx-auto px-4">
@@ -439,6 +455,12 @@ export default function SearchPage() {
           </div>
         )}
         </div>
+        <select className="select select-bordered" onChange={(e) => handleCurrentOrderBy(e.target.value)}>
+            <option disabled selected className="text-slate-500"> 並び替え</option>
+            <option value="timeDesc">投稿日時順</option>
+            <option value="like">いいね数順</option>
+          </select>
+          <input type="hidden" name="orderBy" value={currentOrderBy} />
     </Form>
     <p className="text-lg mb-4 font-bold">{searchResultTitle()}</p>
     {data && data.length > 0 ? (
