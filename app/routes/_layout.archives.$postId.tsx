@@ -79,7 +79,7 @@ export async function loader({ request }:LoaderFunctionArgs){
 
     let similarPosts = [];
     if (error) {
-      throw new Response(`Internal Server Error : Failed to fetch similar posts, ${error.message}`, { status: 500 });
+      console.error(error.code, error.message);
     }else{
       similarPosts = data.slice(1,);
     }
