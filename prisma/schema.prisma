@@ -150,3 +150,14 @@ model FctAICompletionSuggestionHistory {
 
   @@map("fct_aicompletion_suggestion_history")
 }
+
+model FctAICompletionCommitHistory {
+  commitId          String   @id @default(dbgenerated("gen_random_uuid()")) @map("commit_id") @db.Uuid
+  commitAtUtc      DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("commit_at_utc") @db.Timestamptz(6)
+  commitAtJst      DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("commit_at_jst") @db.Timestamptz(6)
+  commitUserIPHash  String   @map("commit_user_ip_hash")
+  suggestionResult String[] @map("suggestion_result")
+  commitText       String   @map("commit_text")
+
+  @@map("fct_aicompletion_commit_history")
+}
