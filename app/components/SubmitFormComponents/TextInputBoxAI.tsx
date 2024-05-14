@@ -67,6 +67,17 @@ export default function TextInputBoxAI({
       resetSuggestions();
       onInputChange(newValue);
     }
+
+    const formData = new FormData();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    suggestions?.forEach((suggestion, idx) => {
+        formData.append("suggestionResult", suggestion);
+    });
+    formData.append("commitText", suggestions[index]);
+    fetch("/api/ai/createSuggestionCommitHistory", {
+      method: "POST",
+      body: formData,
+    });
   };
 
   const handleSuggestions = (e: KeyboardEvent) => {
