@@ -400,7 +400,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     timeout : 20000,
   });
 
-  await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent });
+  await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent, postTitle: updatedPost.postTitle});
 
   return redirect(`/archives/${updatedPost.postId}`);
 }

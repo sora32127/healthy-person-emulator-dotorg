@@ -426,7 +426,8 @@ export async function action({ request }:ActionFunctionArgs ) {
 
     await createEmbedding({
         postId: Number(newPost.postId),
-        postContent: newPost.postContent
+        postContent: newPost.postContent,
+        postTitle: newPost.postTitle,
     });
 
     return redirect(`/archives/${newPost.postId}`);
