@@ -62,7 +62,7 @@ export async function getCompletion(text: string, context: string, promptType: s
             content: `Please continue the following sentence twice, considering the context, in natural Japanese and concisely, aiming for about 40 characters each:\n"${text}"`,
           }
         ],
-        model: 'gpt-3.5-turbo'
+        model: 'gpt-4o'
        });
     const completion = JSON.parse(result.choices[0].message.content || "");
     return completion.result.completion;
