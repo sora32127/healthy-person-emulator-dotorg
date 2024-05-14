@@ -1,5 +1,7 @@
 import { ActionFunctionArgs } from '@remix-run/node';
 import { OpenAI } from 'openai';
+import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { prisma } from '~/modules/db.server';
 
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
@@ -13,10 +15,38 @@ export async function action ({ request }: ActionFunctionArgs) {
         return new Response("Bad Request", { status: 400 });
     }
     const result = await getCompletion(text, context, prompt);
-    return new Response(JSON.stringify(result), {
+    const completion = result.completion.result.completion;
+    const usedTokens = result.usedTokens
+    await insertAiCompletionSuggestHistory(request, text, context, prompt, completion, usedTokens);
+    return new Response(JSON.stringify(completion), {
         headers: {
             "Content-Type": "application/json",
         },
+    });
+}
+
+async function getUserIpHashString(ip: string) {
+    const userIpHash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(ip)
+    );
+    const hashArray = Array.from(new Uint8Array(userIpHash));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function insertAiCompletionSuggestHistory(request:Request, text: string, context: string, prompt: string, completion: string[], usedTokens: number) {
+    const ip = getClientIPAddress(request) || "";
+    const userIpHash = await getUserIpHashString(ip);
+    await prisma.fctAICompletionSuggestionHistory.create({
+        data: {
+            suggestedUserIPHash: userIpHash,
+            text,
+            contextText: context,
+            promptText: prompt,
+            suggestionResult: completion,
+            usedTokens: usedTokens,
+        },
+    
     });
 }
 
@@ -62,8 +92,9 @@ export async function getCompletion(text: string, context: string, promptType: s
             content: `Please continue the following sentence twice, considering the context, in natural Japanese and concisely, aiming for about 40 characters each:\n"${text}"`,
           }
         ],
-        model: 'gpt-3.5-turbo'
+        model: 'gpt-4o'
        });
     const completion = JSON.parse(result.choices[0].message.content || "");
-    return completion.result.completion;
+    const usedTokens = result.usage?.total_tokens || 0;
+    return { completion, usedTokens }
 }
