@@ -25,26 +25,46 @@
       </a>
     </td>
     <td>
-      <img src="https://img.shields.io/badge/-typescript-EEE.svg?logo=TypeScript&style=flat">
+      <a href="https://www.typescriptlang.org" alt="TypeScript">
+        <img src="https://img.shields.io/badge/-typescript-EEE.svg?logo=TypeScript&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-Remix-EEE.svg?logo=Remix&style=flat">
+      <a href="https://remix.run" alt="Remix">
+        <img src="https://img.shields.io/badge/-Remix-EEE.svg?logo=Remix&style=flat">
+      </a>
     </td>
     <td>
-      <img src="https://img.shields.io/badge/-vite-EEE.svg?logo=vite&style=flat">
+      <a href="https://vitejs.dev" alt="Vite">
+        <img src="https://img.shields.io/badge/-vite-EEE.svg?logo=vite&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-prisma-EEE.svg?logo=prisma&style=flat">
+      <a href="https://www.prisma.io" alt="Prisma">
+        <img src="https://img.shields.io/badge/-prisma-EEE.svg?logo=prisma&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-playwright-EEE.svg?logo=playwright&style=flat">
+      <a href="https://playwright.dev" alt="Playwright">
+        <img src="https://img.shields.io/badge/-playwright-EEE.svg?logo=playwright&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-tailwindcss-EEE.svg?logo=tailwindcss&style=flat">
+      <a href="https://tailwindcss.com" alt="tailwindcss">
+        <img src="https://img.shields.io/badge/-tailwindcss-EEE.svg?logo=tailwindcss&style=flat">
+      </a>
     </td>
     <td>
-      <img src="https://img.shields.io/badge/-vercel-EEE.svg?logo=vercel&style=flat">
+      <a href="https://vercel.com" alt="Vercel">
+        <img src="https://img.shields.io/badge/-vercel-EEE.svg?logo=vercel&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-supabase-EEE.svg?logo=supabase&style=flat">
+      <a href="https://supabase.com" alt="supabase">
+        <img src="https://img.shields.io/badge/-supabase-EEE.svg?logo=supabase&style=flat">
+      </a>
       <br>
-      <img src="https://img.shields.io/badge/-cloudflare-EEE.svg?logo=cloudflare&style=flat">
-      <img src="https://img.shields.io/badge/-newrelic-EEE.svg?logo=newrelic&style=flat">
+      <a href="https://www.cloudflare.com" alt="Cloudflare">
+        <img src="https://img.shields.io/badge/-cloudflare-EEE.svg?logo=cloudflare&style=flat">
+      </a>
+      <a href="https://newrelic.com" alt="new relic">
+        <img src="https://img.shields.io/badge/-newrelic-EEE.svg?logo=newrelic&style=flat">
+      </a>
     </td>
   </tr>
 </table>
