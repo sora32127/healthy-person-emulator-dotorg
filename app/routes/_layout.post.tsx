@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import DynamicTextInput from '~/components/SubmitFormComponents/DynamicTextInput';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import SituationInput from '~/components/SubmitFormComponents/SituationInput';
@@ -56,7 +56,6 @@ export default function Component() {
     const [selectedType, setSelectedType] = useState<string>('misDeed');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [createdTags, setCreatedTags] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const savedSituationValue = window.localStorage.getItem('situationValue');
@@ -145,12 +144,6 @@ export default function Component() {
         setIsValidUser(isValid);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        e.currentTarget.submit();
-    }
-
     const clearInputs = () => {
         console.log("CLEARBUTTON")
         setSituationValues({});
@@ -170,7 +163,7 @@ export default function Component() {
     
     return (
     <div className="templateSubmitForm">
-        <Form method="post" onSubmit={handleSubmit}>
+        <Form method="post">
         <UserExplanation />
         <br></br>
         <NavLink
@@ -285,13 +278,13 @@ export default function Component() {
         <button
             type="submit"
             className={`rounded-md block w-full px-4 py-2 text-center text-white my-4 ${
-              isValid && isValidUser && !isSubmitting
+              isValid && isValidUser
                 ? 'bg-blue-500 hover:bg-blue-600'
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
-            disabled={!isValid || !isValidUser || isSubmitting}
+            disabled={!isValid || !isValidUser}
         >
-        {isSubmitting ? '投稿中...' : '投稿する'}
+        投稿する
         </button>
         <input type="hidden" name="situationValues" value={JSON.stringify(situationValues)} />
         <input type="hidden" name="assumptionValues" value={JSON.stringify(assumptionValues)} />
