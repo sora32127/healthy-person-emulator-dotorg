@@ -49,7 +49,7 @@ export default function TextInputBoxAI({
           } catch (e) {
             console.error(e);
           }
-        }, 1000);
+        }, 2000);
       } else {
         setSuggestions([]);
       }
