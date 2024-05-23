@@ -1,6 +1,6 @@
 import { useState } from "react";
 import XLogo from "~/src/assets/X_logo_2023_(white).png";
-import MastodonLogo from "~/src/assets/mastodon_logo_black.svg"
+import MastodonLogo from "~/src/assets/mastodon_logo.svg"
 import MisskeyLogo from "~/src/assets/misskey_icon.png"
 import CopyToClipBoard from "./icons/CopyToClipboard";
 import ShareButtonAPI from "./icons/ShareButtonAPI";
@@ -62,7 +62,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                     <img src={MastodonLogo} alt="donshare" width="20" height="20" />
                 </a>
             </button>
-            <button type="button" className="bg-green-500 flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
+            <button type="button" className="bg-green-200 flex items-center justify-center space-x-2 px-4 py-2 rounded-full">
                 <a
                     href={`https://misskeyshare.link/share.html?text=${socialShareText}&url=${encodeURIComponent(currentURL)}`}
                     className="flex items-center"
