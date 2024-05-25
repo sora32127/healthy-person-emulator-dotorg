@@ -110,18 +110,18 @@ export default function Component() {
           <div className="flex justify-between p-4">
             <button
               onClick={() => setIsMenuOpen(false)}
-              className="ml-4 btn btn-neutral"
+              className="ml-2 btn btn-neutral"
             >
               閉じる
             </button>
           </div>
-          <ul className="mt-8">
+          <ul className="mt-8 mx-4">
             {menuItems.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    `block px-4 py-2 ${
+                    `block px-4 py-4 border-b-2 border-neutral ${
                       isActive ? "text-info font-bold" : ""
                     }`
                   }
