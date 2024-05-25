@@ -38,7 +38,7 @@ export default function Component() {
     } else if (menuAnimation === "animate-slideIn") {
       setMenuAnimation("animate-slideOut");
     }
-  }, [isMenuOpen, menuAnimation]);
+  }, [isMenuOpen]);
 
   const navItems = [
     { to: "/", icon: HomeIcon, text: "トップ" },
