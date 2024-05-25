@@ -3,7 +3,22 @@ import type { Config } from 'tailwindcss'
 export default {
   content: ['./app/**/*.tsx'],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        slideIn: {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideOut: {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(100%)', opacity: '0' },
+        },
+      },
+      animation: {
+        slideIn: 'slideIn 0.3s ease-out',
+        slideOut: 'slideOut 0.3s ease-in',
+      },
+    },
     fontSize: {
       "4xl" : "32px",
       "3xl" : "28px",
