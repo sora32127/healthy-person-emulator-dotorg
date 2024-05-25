@@ -130,7 +130,6 @@ export default function Component() {
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
 
   const handleVoteOnClient = async (voteType: "like" | "dislike") => {
-    console.log("handleVote")
     if (voteType === "like") {
       setIsPageLikeButtonPushed(true);
     } else if (voteType === "dislike") {
@@ -483,7 +482,6 @@ async function handleVoteComment(
   userIpHashString: string,
   request: Request
 ) {
-  console.log("handleVoteComment")
   const voteType = formData.get("voteType")?.toString();
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
