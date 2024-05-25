@@ -1,6 +1,6 @@
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
@@ -17,7 +17,7 @@ import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs){
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
   if (userId) {
@@ -29,16 +29,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Component() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuAnimation, setMenuAnimation] = useState("");
   const { isLoggedIn } = useLoaderData<typeof loader>();
-
-  useEffect(() => {
-    if (isMenuOpen) {
-      setMenuAnimation("animate-slideIn");
-    } else if (menuAnimation === "animate-slideIn") {
-      setMenuAnimation("animate-slideOut");
-    }
-  }, [isMenuOpen]);
 
   const navItems = [
     { to: "/", icon: HomeIcon, text: "トップ" },
@@ -50,9 +41,11 @@ export default function Component() {
   const menuItems = [
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
-    { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
+    { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon},
     ...(isLoggedIn
-      ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
+      ? [
+          { to: "/logout", text: "ログアウト", icon: LogoutIcon },
+        ]
       : [
           { to: "/signup", text: "サインアップ", icon: SignupIcon },
           { to: "/login", text: "ログイン", icon: LoginIcon },
