@@ -57,53 +57,60 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `flex flex-col items-center justify-center text-base-content ${
+        `flex items-center md:items-start md:flex-row flex-col text-base-content hover:text-blue-600 ${
           isActive ? "text-info font-bold" : ""
         }`
       }
     >
       <item.icon />
-      <p className="text-xs md:text-sm">{item.text}</p>
+      <p className="text-xs md:text-sm md:ml-2">{item.text}</p>
     </NavLink>
   );
 
   return (
     <>
-    <div className="flex flex-col min-h-screen">
-      <div className="mx-4 mb-32 md:mt-32 md:mx-20 lg:mx-40 xl:mx-80 2xl:mx-96">
-        <Outlet />
-      </div>
-      <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner md:fixed md:top-0 md:w-full w-full md:bottom-auto md:px-10">
-        <ul className="flex justify-between items-center mx-4">
+    <header className="fixed top-0 w-full bg-base-100 shadow z-10 flex justify-between items-center p-4">
+      <h1 className="text-xl font-bold"><NavLink to="/">健常者エミュレータ事例集</NavLink></h1>
+      <ThemeSwitcher />
+    </header>
+    <div className="flex min-h-screen pt-16">
+      <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-16">
+        <ul className="space-y-4">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
           ))}
-          <li className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex flex-col items-center justify-center hover:text-blue-500"
-            >
-              <MenuIcon />
-              <p className="text-xs">メニュー</p>
-            </button>
-          </li>
           {menuItems.map((item) => (
-            <li key={item.to} className="hidden md:block">
-              {renderNavItem(item)}
-            </li>
+            <li key={item.to}>{renderNavItem(item)}</li>
           ))}
-          <li className="hidden md:block md:mr-3">
-            <ThemeSwitcher />
-          </li>
         </ul>
       </nav>
+      <div className="flex-1 p-4 ml-0 md:mx-64">
+        <div className="mb-32 md:mb-0">
+          <Outlet />
+        </div>
+      </div>
+    </div>
+    <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner w-full md:hidden">
+      <ul className="flex justify-between items-center mx-4">
+        {navItems.map((item) => (
+          <li key={item.to}>{renderNavItem(item)}</li>
+        ))}
+        <li>
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="flex flex-col items-center justify-center hover:text-blue-600"
+          >
+            <MenuIcon />
+            <p className="text-xs">メニュー</p>
+          </button>
+        </li>
+      </ul>
       {isMenuOpen && (
-        <div className="fixed inset-0 bg-base-100 z-40 md:hidden">
+        <div className="fixed bottom-20 left-0 right-0 top-64 bg-base-100 border-t-2 border-neutral">
           <div className="flex justify-between p-4">
-            <ThemeSwitcher />
             <button
               onClick={() => setIsMenuOpen(false)}
-              className="ml-4"
+              className="ml-4 btn btn-neutral"
             >
               閉じる
             </button>
@@ -115,14 +122,14 @@ export default function Component() {
                   to={item.to}
                   className={({ isActive }) =>
                     `block px-4 py-2 ${
-                      isActive ? "text-blue-500 font-bold" : ""
+                      isActive ? "text-info font-bold" : ""
                     }`
                   }
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <div className="flex">
-                  {item.icon()}
-                  {item.text}
+                  <div className="flex items-center space-x-2">
+                    <item.icon />
+                    <span>{item.text}</span>
                   </div>
                 </NavLink>
               </li>
@@ -130,42 +137,41 @@ export default function Component() {
           </ul>
         </div>
       )}
-    </div>
+    </nav>
     <footer className="bg-base-100 py-8 md:pb-0">
-    <div className="container mx-auto px-4">
-      <div className="flex justify-center items-center">
-        <TopIcon />
-        <div className="flex flex-col space-y-2 ml-2">
-          <NavLink
-            to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088"
-            className="text-base-content"
-          >
-            管理人に連絡
-          </NavLink>
-          <NavLink
-            to="/readme"
-            className="text-base-content"
-          >
-            サイト説明
-          </NavLink>
-          <NavLink
-            to="/privacyPolicy"
-            className="text-base-content"
-          >
-            プライバシー・ポリシー/免責事項
-          </NavLink>
-          <NavLink
-            to="/support"
-            className="text-base-content"
-          >
-            寄付する
-          </NavLink>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-center items-center">
+          <TopIcon />
+          <div className="flex flex-col space-y-2 ml-2">
+            <NavLink
+              to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088"
+              className="text-base-content"
+            >
+              管理人に連絡
+            </NavLink>
+            <NavLink
+              to="/readme"
+              className="text-base-content"
+            >
+              サイト説明
+            </NavLink>
+            <NavLink
+              to="/privacyPolicy"
+              className="text-base-content"
+            >
+              プライバシー・ポリシー/免責事項
+            </NavLink>
+            <NavLink
+              to="/support"
+              className="text-base-content"
+            >
+              寄付する
+            </NavLink>
+          </div>
         </div>
+        <p className="text-base-content text-center mt-4 pb-16 mb:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
       </div>
-      <p className="text-base-content text-center mt-4 pb-16 mb:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
-    </div>
-  </footer>
-  </>
-    
+    </footer>
+    </>
   );
 }
