@@ -14,8 +14,13 @@ export default {
           '100%': { transform: 'translateY(100%)', opacity: '0' },
         },
         spin: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
+          '0%': { transform: 'rotate(0deg)', color: '#ff0000' },
+          '16%': { transform: 'rotate(60deg)', color: '#ff7f00' },
+          '33%': { transform: 'rotate(120deg)', color: '#ffff00' },
+          '50%': { transform: 'rotate(180deg)', color: '#00ff00' },
+          '66%': { transform: 'rotate(240deg)', color: '#0000ff' },
+          '83%': { transform: 'rotate(300deg)', color: '#4b0082' },
+          '100%': { transform: 'rotate(360deg)', color: '#9400d3' },
         },
         like: {
           '0%': { transform: 'scale(1)', color: 'inherit' },
