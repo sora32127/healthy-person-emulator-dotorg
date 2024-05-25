@@ -18,6 +18,9 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 
+export const config = {
+  maxDuration: 300,
+};
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
