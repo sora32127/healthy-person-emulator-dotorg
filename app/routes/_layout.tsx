@@ -64,13 +64,13 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `flex items-center md:items-start md:flex-row flex-col text-base-content hover:text-blue-600 ${
+        `flex items-center md:items-start md:flex-row flex-col text-base-content hover:text-blue-600 md:ml-4 ${
           isActive ? "text-info font-bold" : ""
         }`
       }
     >
       <item.icon />
-      <p className="text-xs md:text-sm md:ml-2">{item.text}</p>
+      <p className="text-xs md:text-sm md:ml-4">{item.text}</p>
     </NavLink>
   );
 
