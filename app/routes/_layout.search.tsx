@@ -387,10 +387,15 @@ export default function SearchPage() {
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
-        <select className="select select-bordered m-2" onChange={(e) =>  setCurrentOrderBy(e.target.value as OrderBy)}>
-          <option value="timeDesc">投稿日時順</option>
-          <option value="like">いいね数順</option>
-        </select>
+        <label htmlFor="orderBy" className="sr-only">並び替え</label>
+          <select
+            id="orderBy"
+            className="select select-bordered m-2"
+            onChange={(e) =>  setCurrentOrderBy(e.target.value as OrderBy)}
+          >
+            <option value="timeDesc">投稿日時順</option>
+            <option value="like">いいね数順</option>
+          </select>
         <input type="hidden" name="orderBy" value={currentOrderBy} />
           {currentSearchType === "tag" && (
             <div className="w-full md:flex-row">
