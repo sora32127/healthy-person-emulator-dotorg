@@ -1,4 +1,3 @@
-import { useState } from "react";
 import XLogo from "~/src/assets/X_logo_2023_(white).png";
 import MastodonLogo from "~/src/assets/mastodon_logo.svg"
 import MisskeyLogo from "~/src/assets/misskey_icon.png"
@@ -11,16 +10,11 @@ interface ShareButtonsProps {
 }
 
 export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProps) {
-    const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
     const socialShareText = encodeURIComponent(`${postTitle}-健常者エミュレータ事例集`);
     const url = new URL(currentURL);
     const hatenaBlogUrl = url.hostname + url.pathname;
     const copy = async (currentURL: string) => {
         await navigator.clipboard.writeText(currentURL);
-        setCopyStatus("copied");
-        setTimeout(() => {
-            setCopyStatus("idle");
-        }, 2000);
     }
 
     const invokeShareAPI = async (currentURL: string, postTitle: string) => {
@@ -70,7 +64,7 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                     <img src={MisskeyLogo} alt="misskeyshare" width="20" height="20" />
                 </a>
             </button>
-            <div className="relative inline-block group">
+            <div className="tooltip" data-tip ="URLをクリップボードにコピー">
                 <button 
                     type="button" 
                     onClick={() => copy(currentURL)}
@@ -78,17 +72,11 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
                 >
                     <CopyToClipBoard />
                 </button>
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-base-200 text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
-                    {copyStatus === "idle" ? "クリップボードにコピー" : "クリップボードにコピーしました"}
-                </span>
             </div>
-            <div className="relative inline-block group">
+            <div className="tooltip" data-tip ="シェアする">
                 <button type="button" onClick={() => invokeShareAPI(currentURL, postTitle)} className="hover:bg-base-300 rounded-full p-2 transition-colors duration-300">
                     <ShareButtonAPI />
                 </button>
-                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-base-200 text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
-                    シェアする
-                </span>
             </div>
         </div>
     );
