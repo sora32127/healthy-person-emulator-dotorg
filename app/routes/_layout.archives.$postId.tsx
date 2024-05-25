@@ -117,10 +117,8 @@ export async function loader({ request }:LoaderFunctionArgs){
 
 export default function Component() {
   const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin } = useLoaderData<typeof loader>();
-
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
-
   const submit = useSubmit();
   const fetcher = useFetcher();
 
@@ -128,13 +126,22 @@ export default function Component() {
   const isDisliked = dislikedPages.includes(postContent?.postId);
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
+  const [isLikeAnimating, setIsLikeAnimating] = useState(false);
+  const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
 
   const handleVoteOnClient = async (voteType: "like" | "dislike") => {
-    console.log("handleVote")
     if (voteType === "like") {
-      setIsPageLikeButtonPushed(true);
+      setIsLikeAnimating(true);
+      setTimeout(() => {
+        setIsPageLikeButtonPushed(true);
+        setIsLikeAnimating(false);
+      }, 1000);
     } else if (voteType === "dislike") {
-      setIsPageDislikeButtonPushed(true);
+      setIsDislikeAnimating(true);
+      setTimeout(() => {
+        setIsPageDislikeButtonPushed(true);
+        setIsDislikeAnimating(false);
+      }, 1000);
     }
     const formData = new FormData();
     formData.append("postId", postContent?.postId.toString() || "");
@@ -273,32 +280,35 @@ export default function Component() {
           </div>
         </div>
         <div className="flex items-center p-2 rounded">
+        <div className="tooltip" data-tip ="この記事を高評価する">
           <button
             className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
-              isLiked ? "text-blue-500 font-bold" : ""
-            } post-like-button`}
+              isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
+            }`}
             onClick={() => handleVoteOnClient("like")}
-            disabled={isPageLikeButtonPushed || isLiked}
-            type="submit"
+            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
           >
             <ThumbsUpIcon />
             <p className="ml-2">
-            {postContent?.countLikes}
-            </p>
-          </button>
-          <button
-            className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
-              isDisliked ? "text-red-500 font-bold" : ""
-            } post-dislike-button`}
-            onClick={() => handleVoteOnClient("dislike")}
-            disabled={isPageDislikeButtonPushed || isDisliked}
-          >
-            <ThumbsDownIcon />
-            <p className="ml-2">
-            {postContent?.countDislikes}
+              {postContent?.countLikes}
             </p>
           </button>
         </div>
+        <div className="tooltip" data-tip ="この記事を低評価する">
+          <button
+            className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
+              isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
+            }`}
+            onClick={() => handleVoteOnClient("dislike")}
+            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+          >
+            <ThumbsDownIcon />
+            <p className="ml-2">
+              {postContent?.countDislikes}
+            </p>
+          </button>
+        </div>
+      </div>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
         </div>
@@ -483,7 +493,6 @@ async function handleVoteComment(
   userIpHashString: string,
   request: Request
 ) {
-  console.log("handleVoteComment")
   const voteType = formData.get("voteType")?.toString();
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {

@@ -89,8 +89,8 @@ test('ランダムページ', async ({ page }) => {
 test('寄付ページ', async ({ page }) => {
   await page.goto(`${testURL}/support`);
   await expect(page).toHaveTitle(/サポートする/);
-  await page.getByRole('link', { name: 'サポートする' }).first().click();
-  await expect(page).toHaveTitle(/healthy-person-emulator/);
+  await page.getByRole('link', { name: 'サポートする' }).nth(1).click();
+  await expect(page).toHaveTitle(/contradiction29｜pixivFANBOX/);
 });
 
 
@@ -175,20 +175,20 @@ async function navigateToLikedFeed(page: Page) {
 }
 
 async function searchByTag(page: Page, tag: string) {
-  await page.getByRole('combobox').selectOption('tag');
+  await page.getByLabel(/検索タイプ/).selectOption('tag');
   await page.getByPlaceholder('タグを検索...').fill(tag.charAt(0));
   await page.getByText(tag).click();
   await page.getByRole('button', { name: '検索' }).click();
 }
 
 async function searchByFullText(page: Page, keyword: string) {
-  await page.getByRole('combobox').selectOption('fullText');
+  await page.getByLabel(/検索タイプ/).selectOption('fullText');
   await page.getByPlaceholder('検索キーワードを入力').fill(keyword);
   await page.getByRole('button', { name: '検索' }).click();
 }
 
 async function searchByTitle(page: Page, title: string) {
-  await page.getByRole('combobox').selectOption('title');
+  await page.getByLabel(/検索タイプ/).selectOption('title');
   await page.getByPlaceholder('タイトルを入力').fill(title);
   await page.getByRole('button', { name: '検索' }).click();
 }
