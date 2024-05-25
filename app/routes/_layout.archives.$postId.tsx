@@ -280,34 +280,30 @@ export default function Component() {
           </div>
         </div>
         <div className="flex items-center p-2 rounded">
-        <div className="tooltip" data-tip ="この記事を高評価する">
-          <button
-            className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
-              isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
-            }`}
-            onClick={() => handleVoteOnClient("like")}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
-          >
-            <ThumbsUpIcon />
-            <p className="ml-2">
-              {postContent?.countLikes}
-            </p>
-          </button>
-        </div>
-        <div className="tooltip" data-tip ="この記事を低評価する">
-          <button
-            className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
-              isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
-            }`}
-            onClick={() => handleVoteOnClient("dislike")}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
-          >
-            <ThumbsDownIcon />
-            <p className="ml-2">
-              {postContent?.countDislikes}
-            </p>
-          </button>
-        </div>
+        <button
+          className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
+            isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
+          }`}
+          onClick={() => handleVoteOnClient("like")}
+          disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+        >
+          <ThumbsUpIcon />
+          <p className="ml-2">
+            {postContent?.countLikes}
+          </p>
+        </button>
+        <button
+          className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
+            isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
+          }`}
+          onClick={() => handleVoteOnClient("dislike")}
+          disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+        >
+          <ThumbsDownIcon />
+          <p className="ml-2">
+            {postContent?.countDislikes}
+          </p>
+        </button>
       </div>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
