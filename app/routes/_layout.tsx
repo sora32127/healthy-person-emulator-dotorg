@@ -109,7 +109,6 @@ export default function Component() {
             </button>
           </div>
           <ul className="mt-8">
-          <ul className="mt-8">
             {menuItems.map((item) => (
               <li key={item.to}>
                 <NavLink
