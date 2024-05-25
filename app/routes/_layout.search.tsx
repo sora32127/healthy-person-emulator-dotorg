@@ -383,13 +383,11 @@ export default function SearchPage() {
             className="select select-bordered"
             aria-label="検索タイプ"
           >
-            <option disabled selected className="text-slate-500"> 検索タイプ</option>
             <option value="tag">タグ検索</option>
             <option value="fullText">全文検索</option>
             <option value="title">タイトル検索</option>
           </select>
         <select className="select select-bordered" onChange={(e) =>  setCurrentOrderBy(e.target.value as OrderBy)}>
-          <option disabled selected className="text-slate-500"> 並び替え</option>
           <option value="timeDesc">投稿日時順</option>
           <option value="like">いいね数順</option>
         </select>
