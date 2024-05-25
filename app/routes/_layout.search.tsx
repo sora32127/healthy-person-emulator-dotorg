@@ -11,12 +11,11 @@ interface Tag {
   count: number;
 }
 
-type OrderBy = "timeDesc" | "like";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const pageNumber = parseInt(url.searchParams.get("p") || "1");
-  const orderBy = url.searchParams.get("orderBy") as OrderBy || "timeDesc";
+  const orderby = url.searchParams.get("orderby") || "timeDesc";
   const searchQuery = url.searchParams.get("q") || null;
   const searchTags = url.searchParams.get("tags")?.split(" ") || null;
   
@@ -87,7 +86,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       countDislikes: true,
     },
     where: whereConditions,
-    orderBy: orderBy === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
+    orderBy: orderby === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
     skip: (pageNumber - 1) * 10,
     take: 10,
   });
@@ -110,7 +109,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     pageNumber,
     tags: searchTags,
     query: searchQuery,
-    orderBy: orderBy || "timeDesc",
+    orderby: orderby ?? "timeDesc",
     totalCount,
   });
 };
@@ -122,26 +121,26 @@ export const action: ActionFunction = async ({ request }) => {
   const totalPages = parseInt(formData.get("totalPages") as string);
   const tags = formData.get("tags")?.toString().split("+") ?? null;
   const query = formData.get("query")?.toString() ?? null;
-  const orderBy = formData.get("orderBy") as OrderBy;
+  const orderby = formData.get("orderby") ?? "timeDesc";
 
   const encodedQueryString = query && query != '' ? `&q=${encodeURIComponent(query)}` : "";
   const encodedTagsString =  tags && tags.filter(tag => tag !== '').length > 0 ? `&tags=${tags.map(tag => encodeURIComponent(tag)).join("+")}` : "";
 
   if (action === "firstSearch" || action === "firstPage") {
     return redirect(
-      `/search?p=1&orderBy=${orderBy}${encodedQueryString}${encodedTagsString}`
+      `/search?p=1&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
   } else if (action === "prevPage") {
     return redirect(
-      `/search?p=${currentPage - 1}&orderBy=${orderBy}${encodedQueryString}${encodedTagsString}`
+      `/search?p=${currentPage - 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
   } else if (action === "nextPage") {
     return redirect(
-      `/search?p=${currentPage + 1}&orderBy=${orderBy}${encodedQueryString}${encodedTagsString}`
+      `/search?p=${currentPage + 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
   } else if (action === "lastPage") {
     return redirect(
-      `/search?p=${totalPages}&orderBy=${orderBy}${encodedQueryString}${encodedTagsString}`
+      `/search?p=${totalPages}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
   } else {
     return redirect("/search");
@@ -156,12 +155,12 @@ export default function SearchPage() {
     pageNumber,
     tags,
     query,
-    orderBy,
+    orderby,
   } = useLoaderData<typeof loader>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
   const [queryText, setQueryText] = useState<string>(query ?? "");
-  const [currentOrderBy, setCurrentOrderBy] = useState<OrderBy>(orderBy || "timeDesc");
+  const [currentOrderBy, setCurrentOrderBy] = useState<string>(orderby || "timeDesc");
   const totalPages = Math.ceil(totalCount / 10);
 
   return (
@@ -191,23 +190,32 @@ export default function SearchPage() {
             allTagsOnlyForSearch={allTagsForSearch}
           />
         </div>
-        <select
-          id="orderBy"
-          className="select select-bordered m-2"
-          name="orderBy"
-          value={currentOrderBy}
-          onChange={(e) => setCurrentOrderBy(e.target.value as OrderBy)}
-        >
-          <option value="timeDesc">投稿日時順</option>
-          <option value="like">いいね数順</option>
-        </select>
-        <input type="hidden" name="orderBy" value={currentOrderBy} />
         <input type="hidden" name="tags" value={selectedTags.join("+")} />
         <input type="hidden" name="query" value={queryText} />
+        <input type="hidden" name="orderby" value={currentOrderBy} />
     </Form>
 
     {data && data.length > 0 ? (
     <>
+    <Form action="/search" method="post" className="mb-8" id="orderbyForm">
+      <div className="bg-base-100 w-1/4 flex flex-col items-start space-y-2">
+        <p className="text-lg font-semibold mb-2">並び替え</p>
+        <div className="flex space-x-4">
+          <button type="submit" name="orderby" value="timeDesc" className="btn btn-outline">
+            投稿日時順
+          </button>
+          <button type="submit" name="orderby" value="like" className="btn btn-outline">
+            いいね数順
+          </button>
+        </div>
+      </div>
+      <input type="hidden" name="currentPage" value="1" />
+      <input type="hidden" name="tags" value={selectedTags.join("+")} />
+      <input type="hidden" name="query" value={queryText} />
+      <input type="hidden" name="action" value="firstSearch" />
+      <input type="hidden" name="orderby" value={currentOrderBy} />
+      <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}></button>
+    </Form>
     <div className="search-results">
       {data.map((post: any) => (
         <PostCard
@@ -228,6 +236,7 @@ export default function SearchPage() {
       <input type="hidden" name="totalPages" value={totalPages} />
       <input type="hidden" name="tags" value={tags?.join("+")} />
       <input type="hidden" name="query" value={query} />
+      <input type="hidden" name="orderby" value={orderby} />
       <button
         type="submit"
         name="action"
