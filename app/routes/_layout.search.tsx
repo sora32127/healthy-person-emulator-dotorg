@@ -1,5 +1,5 @@
 import { Form, useLoaderData } from "@remix-run/react";
-import { H1 } from "~/components/Headings";
+import { H1, H2 } from "~/components/Headings";
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
 import PostCard, { PostCardProps }  from "~/components/PostCard";
@@ -198,9 +198,19 @@ export default function SearchPage() {
 
     {data && data.length > 0 ? (
     <>
-    <Form action="/search" method="post" className="mb-8" id="orderbyForm">
-      <div className="bg-base-100 w-1/4 flex flex-col items-start space-y-2">
-        <p className="text-lg font-semibold mb-2">並び替え</p>
+    <div>
+      <H2>検索結果</H2>
+      <p>合計{totalCount}件中 {pageNumber * 10 - 9} - {Math.min(pageNumber * 10, totalCount)} 件を表示</p>
+      {query && (
+        <p>キーワード: {query}</p>
+      )}
+      {tags && tags.length > 0 && (
+        <p>タグ: {tags.join(", ")}</p>
+      )}
+    </div>
+    <Form action="/search" method="post" id="orderbyForm" preventScrollReset>
+      <div className="bg-base-100 max-w-xs flex flex-col items-start rounded-lg my-4">
+        <p className="mb-2">並び替え</p>
         <div className="flex space-x-4">
           <button type="submit" name="orderby" value="timeDesc" className="btn btn-outline">
             投稿日時順
@@ -217,6 +227,7 @@ export default function SearchPage() {
       <input type="hidden" name="orderby" value={currentOrderBy} />
       <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}></button>
     </Form>
+
     <div className="search-results">
       {data.map((post: PostCardProps) => (
         <PostCard
