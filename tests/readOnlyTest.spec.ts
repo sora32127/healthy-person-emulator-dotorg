@@ -107,26 +107,41 @@ test.describe('記事検索', () => {
     await page.goto(`${testURL}/search`);
     await expect(page).toHaveTitle(/検索/);
   });
-
-  test('タグ検索 - 一つのタグで検索できる', async ({ page }) => {
-    await searchByTag(page, 'Twitter');
-    await verifySearchResults(page, /タグ検索: Twitter/, 10, 2);
+  /*
+  検証項目は以下の通り
+  - 一つのタグのみで検索を行う
+  - 複数のタグのみで検索を行う
+  - キーワードで検索を行う
+  - キーワードとタグで検索を行う
+  */
+  test('一つのタグのみで検索を行う', async ({ page }) => {
+    await page.getByPlaceholder("タグを検索...").fill("やっては")
+    await page.getByText(/やってはいけないこと/).click();
+    await page.getByRole("button", { name: "検索" }).click();
+    await verifySearchResults(page, /検索結果 タグ: やってはいけないこと/, 10, 2);
   });
 
-  test('タグ検索 - 複数のタグで検索できる', async ({ page }) => {
-    await searchByTag(page, 'Twitter');
-    await searchByTag(page, 'やらないほうがよいこと');
-    await verifySearchResults(page, /タグ検索: Twitter, やらないほうがよいこと/, 10, 2);
+  test('複数のタグのみで検索を行う', async ({ page }) => {
+    await page.getByPlaceholder("タグを検索...").fill("やってはいけないこと")
+    await page.getByText(/やってはいけないこと/).click();
+    await page.getByPlaceholder("タグを検索...").fill("AS")
+    await page.getByText(/ASD/).click();
+    await page.getByRole("button", { name: "検索" }).click();
+    await verifySearchResults(page, /検索結果 タグ: やってはいけないこと, ASD/, 10, 2);
   });
 
-  test('全文検索できる', async ({ page }) => {
-    await searchByFullText(page, 'ASD');
-    await verifySearchResults(page, /全文検索: ASD/, 10, 2);
+  test('キーワードで検索を行う', async ({ page }) => {
+    await page.getByPlaceholder("検索キーワードを入力").fill("Twitter");
+    await page.getByRole("button", { name: "検索" }).click();
+    await verifySearchResults(page, /検索結果 キーワード: Twitter/, 10, 2);
   });
 
-  test('タイトル検索できる', async ({ page }) => {
-    await searchByTitle(page, 'Twitter');
-    await verifySearchResults(page, /タイトル検索: Twitter/, 10, 2);
+  test('キーワードとタグで検索を行う', async ({ page }) => {
+    await page.getByPlaceholder("検索キーワードを入力").fill("Twitter");
+    await page.getByPlaceholder("タグを検索...").fill("やってはいけないこと")
+    await page.getByText(/やってはいけないこと/).click();
+    await page.getByRole("button", { name: "検索" }).click();
+    await verifySearchResults(page, /検索結果 キーワード: Twitter タグ: やってはいけないこと/, 10, 2);
   });
 });
 
@@ -172,25 +187,6 @@ async function navigateToLatestFeed(page: Page) {
 async function navigateToLikedFeed(page: Page) {
   await page.getByText("最近いいねされた投稿を見る").click();
   await expect(page).toHaveTitle(/いいね順 - 24時間前～0時間前/);
-}
-
-async function searchByTag(page: Page, tag: string) {
-  await page.getByLabel(/検索タイプ/).selectOption('tag');
-  await page.getByPlaceholder('タグを検索...').fill(tag.charAt(0));
-  await page.getByText(tag).click();
-  await page.getByRole('button', { name: '検索' }).click();
-}
-
-async function searchByFullText(page: Page, keyword: string) {
-  await page.getByLabel(/検索タイプ/).selectOption('fullText');
-  await page.getByPlaceholder('検索キーワードを入力').fill(keyword);
-  await page.getByRole('button', { name: '検索' }).click();
-}
-
-async function searchByTitle(page: Page, title: string) {
-  await page.getByLabel(/検索タイプ/).selectOption('title');
-  await page.getByPlaceholder('タイトルを入力').fill(title);
-  await page.getByRole('button', { name: '検索' }).click();
 }
 
 async function verifySearchResults(page: Page, titlePattern: RegExp, expectedCount: number, maxPage: number) {
