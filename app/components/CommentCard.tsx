@@ -85,8 +85,10 @@ export default function CommentCard({
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
       <div className="flex items-center">
-        <p className="text-green-700 font-bold mr-4">{commentAuthor}</p>
+        <p className="text-green-700 font-bold mr-1">{commentAuthor}</p>
+        <div className="pr-0.5">
         <ClockIcon  />
+        </div>
         <RelativeDate timestamp={commentDateGmt} />
       </div>
       <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
