@@ -6,7 +6,7 @@ import TagIcon from "./icons/TagIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 
-interface PostCardProps {
+export interface PostCardProps {
     postId: number;
     postTitle: string;
     postDateGmt: string;

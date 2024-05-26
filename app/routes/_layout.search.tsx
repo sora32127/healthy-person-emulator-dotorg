@@ -2,7 +2,7 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
 import { prisma } from "~/modules/db.server";
-import PostCard from "~/components/PostCard";
+import PostCard, { PostCardProps }  from "~/components/PostCard";
 import { useState } from "react";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 
@@ -38,6 +38,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     count: tag._count.relPostTags,
   }));
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const whereConditions: any = {}
 
   if (searchQuery) {
@@ -160,7 +161,7 @@ export default function SearchPage() {
 
   const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
   const [queryText, setQueryText] = useState<string>(query ?? "");
-  const [currentOrderBy, setCurrentOrderBy] = useState<string>(orderby || "timeDesc");
+  const [currentOrderBy] = useState<string>(orderby || "timeDesc");
   const totalPages = Math.ceil(totalCount / 10);
 
   return (
@@ -217,7 +218,7 @@ export default function SearchPage() {
       <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}></button>
     </Form>
     <div className="search-results">
-      {data.map((post: any) => (
+      {data.map((post: PostCardProps) => (
         <PostCard
           key={post.postId}
           postId={post.postId}
@@ -226,7 +227,6 @@ export default function SearchPage() {
           tagNames={post.tagNames}
           countLikes={post.countLikes}
           countDislikes={post.countDislikes}
-          highLightedText={post.highlightedContent}
         />
       ))}
     </div>
@@ -298,7 +298,7 @@ export default function SearchPage() {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) {
-  return { title: "Loading..." };
+  return [{ title: "Loading..." }];
   }
 
   const { tags, query } = data;
