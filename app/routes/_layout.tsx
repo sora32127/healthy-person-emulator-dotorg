@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData } from "@remix-run/react";
+import { Form, Outlet, useLoaderData } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
@@ -76,12 +76,24 @@ export default function Component() {
 
   return (
     <>
-      <header className="fixed top-0 w-full bg-base-100 shadow z-10 flex justify-between items-center p-4">
+    <header className="fixed top-0 w-full bg-base-100 shadow z-10 flex justify-between items-center p-4">
+      <div className="flex flex-row items-center space-x-4">
         <h1 className="text-xl font-bold">
-          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          <div className="hidden md:block"><NavLink to="/">健常者エミュレータ事例集</NavLink></div>
+          <div className="block md:hidden"><NavLink to="/">健エミュ</NavLink></div>
         </h1>
-        <ThemeSwitcher />
-      </header>
+        <Form method="post" action="/search">
+        <div className="flex flex-row items-center">
+          <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
+          <button className="btn btn-square btn-ghost ml-2">
+          <SearchIcon/> 
+          </button>
+        </div>
+        <input type="hidden" name="action" value="firstSearch"/>
+        </Form>
+      </div>
+      <ThemeSwitcher />
+    </header>
       <div className="flex min-h-screen pt-16">
         <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-16">
           <ul className="space-y-4">
