@@ -44,8 +44,7 @@ const TagSelectionBox = ({
 
     return (
         <div className="mb-8">
-            <h3 className="text-2xl font-bold mb-4">タグ選択</h3>
-            <p className="mb-4">タグを選択してください。</p>
+            <p className="mb-4">タグを選択してください</p>
             <input
                 type="text"
                 value={searchText}
@@ -94,7 +93,7 @@ const TagSelectionBox = ({
             ))}
             </div>
             <div className="mt-4">
-                <h4 className="text-xl font-bold mb-2">選択したタグ:</h4>
+                <p className="mb-2">選択したタグ:</p>
                 <div className="flex flex-wrap">
                 {parentComponentStateValues.map(tag => (
                     <button

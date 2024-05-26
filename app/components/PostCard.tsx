@@ -5,6 +5,8 @@ import ArticleIcon from "./icons/ArticleIcon";
 import TagIcon from "./icons/TagIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
+import RelativeDate from "./RelativeDate";
+import ClockIcon from "./icons/ClockIcon";
 
 export interface PostCardProps {
     postId: number;
@@ -25,15 +27,6 @@ export default function PostCard({
     countDislikes,
     highLightedText,
 }: PostCardProps) {
-    const formattedPostDate = new Date(postDateGmt).toLocaleString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hourCycle: "h23",
-    }).replace(/\//g, "-");
 
     tagNames.sort((a, b) => {
         if (a > b) {
@@ -50,8 +43,11 @@ export default function PostCard({
 
     return (
         <div className="bg-base-100 border-2 rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-2">
-                <p className="text-base-content text-sm post-timestamp">{formattedPostDate}</p>
+            <div className="flex my-1">
+                <div className="pr-2">
+                <ClockIcon/>
+                </div>
+                <RelativeDate timestamp={postDateGmt} />
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
                 <ArticleIcon/>
