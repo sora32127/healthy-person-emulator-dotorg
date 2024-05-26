@@ -184,7 +184,7 @@ export default function SearchPage() {
         >
           検索
         </button>
-        <div className="mx-8 pl-4 pr-16 pt-4">
+        <div className="pt-4">
           <TagSelectionBox
             onTagsSelected={(tags) => setSelectedTags(tags)}
             parentComponentStateValues={selectedTags}
