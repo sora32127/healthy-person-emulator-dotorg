@@ -6,6 +6,7 @@ import TagIcon from "./icons/TagIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import RelativeDate from "./RelativeDate";
+import ClockIcon from "./icons/ClockIcon";
 
 export interface PostCardProps {
     postId: number;
@@ -42,7 +43,12 @@ export default function PostCard({
 
     return (
         <div className="bg-base-100 border-2 rounded-lg p-4 mb-4">
-            <RelativeDate timestamp={postDateGmt} />
+            <div className="flex my-1">
+                <div className="pr-2">
+                <ClockIcon/>
+                </div>
+                <RelativeDate timestamp={postDateGmt} />
+            </div>
             <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
                 <ArticleIcon/>
                 <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
