@@ -4,6 +4,7 @@ import { useSubmit } from "@remix-run/react";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
+import RelativeDate from "./RelativeDate";
 
 interface CommentCardProps {
   commentId: number;
@@ -36,19 +37,6 @@ export default function CommentCard({
   isAdmin,
   isCommentOpen,
 }: CommentCardProps) {
-
-  const formattedCommentDate = new Date(commentDateGmt).toLocaleString(
-    "ja-JP",
-    {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-    }
-  ).replace(/\//g, "-");
 
   const marginLeft = `${level * 2}rem`;
   const isLiked = likedComments.includes(commentId);
@@ -99,7 +87,7 @@ export default function CommentCard({
       <div className="flex items-center">
         <p className="text-green-700 font-bold mr-4">{commentAuthor}</p>
         <ClockIcon  />
-        <p className="text-sm ml-2">{formattedCommentDate}</p>
+        <RelativeDate timestamp={commentDateGmt} />
       </div>
       <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
       <div className="flex items-center mt-4">

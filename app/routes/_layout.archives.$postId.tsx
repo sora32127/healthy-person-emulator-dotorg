@@ -17,6 +17,7 @@ import TagIcon from "~/components/icons/TagIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
+import RelativeDate from "~/components/RelativeDate";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -255,15 +256,7 @@ export default function Component() {
               <ClockIcon />
             </div>
             <p>
-              {postContent && new Date(postContent.postDateGmt).toLocaleString("ja-JP", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hourCycle: "h23",
-              }).replace(/\//g, "-")}
+              <RelativeDate timestamp={postContent?.postDateGmt} />
             </p>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
