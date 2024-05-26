@@ -80,7 +80,6 @@ export default function Component() {
       <div className="flex flex-row items-center space-x-4">
         <h1 className="text-xl font-bold">
           <div className="hidden md:block"><NavLink to="/">健常者エミュレータ事例集</NavLink></div>
-          <div className="block md:hidden"><NavLink to="/">健エミュ</NavLink></div>
         </h1>
         <Form method="post" action="/search">
         <div className="flex flex-row items-center">
