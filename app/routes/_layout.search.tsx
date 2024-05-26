@@ -313,8 +313,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
 
   const { tags, query } = data;
-  let pageTitle;
-  pageTitle = query ? `「${query}」の検索結果` : "検索結果";
+  let pageTitle = "検索結果";
+  if (query) {
+    pageTitle += ` キーワード: ${query}`;
+  }
   if (tags && tags.length > 0) {
     pageTitle += " タグ"
     pageTitle += `: ${tags.join(", ")}`;
