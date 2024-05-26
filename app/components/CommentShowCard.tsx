@@ -23,7 +23,7 @@ export default function CommentShowCard({
 }: CommentShowCardProps) {
 
   return (
-      <div className="bg-base-100 border-2 rounded-lg p-4 mb-4">
+      <div className="bg-base-100 border-b border-neutral p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
             <div className="flex my-1">
                 <div className="pr-2">

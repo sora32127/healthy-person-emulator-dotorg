@@ -42,7 +42,7 @@ export default function PostCard({
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 
     return (
-        <div className="bg-base-100 border-2 rounded-lg p-4 mb-4">
+        <div className="bg-base-100 border-b border-neutral p-4">
             <div className="flex my-1">
                 <div className="pr-2">
                 <ClockIcon/>
