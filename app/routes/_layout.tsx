@@ -94,7 +94,7 @@ export default function Component() {
       <ThemeSwitcher />
     </header>
     <div className="flex min-h-screen pt-16">
-      <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-16">
+      <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-32">
         <ul className="space-y-4">
           {navItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
