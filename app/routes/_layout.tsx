@@ -95,7 +95,7 @@ export default function Component() {
             <NavLink
               to="/post"
               className={({ isActive }) =>
-                `flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 rounded-full ${
+                `flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 mt-20 rounded-full ${
                   isActive ? "text-info font-bold" : ""
                 }`
               }
