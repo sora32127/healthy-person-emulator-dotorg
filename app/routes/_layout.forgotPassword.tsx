@@ -49,6 +49,7 @@ export default function ForgotPassword() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+                            autoComplete="email"
                         />
                     </div>
                     {actionData?.status === 200 && (
