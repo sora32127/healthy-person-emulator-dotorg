@@ -3,6 +3,9 @@ import type { Config } from 'tailwindcss'
 export default {
   content: ['./app/**/*.tsx'],
   theme: {
+    fontFamily: {
+      "noto-sans" : ["Noto Sans JP"],
+    },
     extend: {
       keyframes: {
         slideIn: {
