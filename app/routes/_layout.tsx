@@ -64,7 +64,7 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `flex items-center md:items-start md:flex-row flex-col text-base-content hover:text-blue-600 md:ml-4 ${
+        `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
           isActive ? "text-info font-bold" : ""
         }`
       }
