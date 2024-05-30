@@ -85,12 +85,25 @@ export default function Component() {
     <div className="flex min-h-screen pt-16">
       <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-32">
         <ul className="space-y-4">
-          {navItems.map((item) => (
+        {navItems.map((item) => item.to !== "/post" ? (
             <li key={item.to}>{renderNavItem(item)}</li>
-          ))}
+          ) : null)}
           {menuItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
           ))}
+          <li>
+            <NavLink
+              to="/post"
+              className={({ isActive }) =>
+                `flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 rounded-full ${
+                  isActive ? "text-info font-bold" : ""
+                }`
+              }
+            >
+              <PostIcon />
+              <p className="text-xs px-4 font-bold">投稿する</p>
+            </NavLink>
+          </li>
         </ul>
       </nav>
       <div className="flex-1 p-4 ml-0 md:mx-64">
@@ -101,30 +114,56 @@ export default function Component() {
     </div>
     <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner w-full md:hidden">
       <ul className="flex justify-between items-center mx-4">
-        {navItems.map((item) => (
-          <li key={item.to}>{renderNavItem(item)}</li>
+        {navItems.map(item => (
+          <li key={item.to}>
+            {item.to === "/post" ? (
+              <NavLink
+                to="/post"
+                className={({ isActive }) =>
+                  `flex flex-col items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 py-2 rounded-full ${
+                    isActive ? "text-info font-bold" : ""
+                  }`
+                }
+              >
+                <PostIcon />
+                <p className="text-xs font-bold">投稿する</p>
+              </NavLink>
+            ) : (
+              renderNavItem(item)
+            )}
+          </li>
         ))}
         <li>
-        <div className="drawer">
-          <input id="menu-drawer" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-content flex flex-col items-center">
-            <MenuIcon/>
-            <label htmlFor="menu-drawer" className="drawer-overlay">メニュー</label>
-          </div> 
-          <div className="drawer-side">
-            <label htmlFor="menu-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
-            <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
-              {menuItems.map((item) => (
-                <li key={item.to}>
-                  <NavLink to={item.to} className="flex items-center p-2 rounded"  onClick={() => document.getElementById('menu-drawer')?.click()}>
-                    <item.icon/>
-                    <p className="ml-2">{item.text}</p>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
+          <div className="drawer">
+            <input id="menu-drawer" type="checkbox" className="drawer-toggle" />
+            <div className="drawer-content flex flex-col items-center">
+              <MenuIcon />
+              <label htmlFor="menu-drawer" className="drawer-overlay">
+                メニュー
+              </label>
+            </div>
+            <div className="drawer-side">
+              <label
+                htmlFor="menu-drawer"
+                aria-label="close sidebar"
+                className="drawer-overlay"
+              ></label>
+              <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
+                {menuItems.map((item) => (
+                  <li key={item.to}>
+                    <NavLink
+                      to={item.to}
+                      className="flex items-center p-2 rounded"
+                      onClick={() => document.getElementById("menu-drawer")?.click()}
+                    >
+                      <item.icon />
+                      <p className="ml-2">{item.text}</p>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
         </li>
       </ul>
     </nav>
