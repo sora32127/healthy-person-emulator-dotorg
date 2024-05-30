@@ -598,7 +598,7 @@ async function handleDeleteComment(formData: FormData, postId: number, request: 
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
-    return { title: "Loading..." };
+    return [{ title: "Loading..." }];
   }
   const title = data.postContent?.postTitle || "";
   const description = data.tagNames?.join(", ") || "";
