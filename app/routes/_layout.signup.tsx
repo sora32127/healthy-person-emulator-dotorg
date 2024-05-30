@@ -93,6 +93,7 @@ export default function Component() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
           {!email && (
             <p className="text-error text-sm mt-1">メールアドレスを入力してください。</p>
@@ -115,6 +116,7 @@ export default function Component() {
             value={password}
             onChange={handlePasswordChange}
             required
+            autoComplete="new-password"
           />
           {passwordError && (
             <p className="text-error text-sm mt-1">{passwordError}</p>

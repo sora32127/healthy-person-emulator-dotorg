@@ -3,16 +3,11 @@ import type { Config } from 'tailwindcss'
 export default {
   content: ['./app/**/*.tsx'],
   theme: {
+    fontFamily: {
+      "noto-sans" : ["Noto Sans JP"],
+    },
     extend: {
       keyframes: {
-        slideIn: {
-          '0%': { transform: 'translateY(100%)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        slideOut: {
-          '0%': { transform: 'translateY(0)', opacity: '1' },
-          '100%': { transform: 'translateY(100%)', opacity: '0' },
-        },
         spin: {
           '0%': { transform: 'rotate(0deg)', color: '#ff0000' },
           '16%': { transform: 'rotate(60deg)', color: '#ff7f00' },
@@ -34,8 +29,6 @@ export default {
         },
       },
       animation: {
-        slideIn: 'slideIn 0.3s ease-out',
-        slideOut: 'slideOut 0.3s ease-in',
         spin: 'spin 1s linear',
         like: 'like 1s ease-in-out',
         dislike: 'dislike 1s ease-in-out',

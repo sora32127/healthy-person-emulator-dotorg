@@ -1,6 +1,5 @@
 import { Form, Outlet, useLoaderData } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { getSession } from "~/modules/session.server";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
@@ -28,17 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Component() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuAnimation, setMenuAnimation] = useState("");
   const { isLoggedIn } = useLoaderData<typeof loader>();
-
-  useEffect(() => {
-    if (isMenuOpen) {
-      setMenuAnimation("animate-slideIn");
-    } else if (menuAnimation === "animate-slideIn") {
-      setMenuAnimation("animate-slideOut");
-    }
-  }, [isMenuOpen, menuAnimation]);
 
   const navItems = [
     { to: "/", icon: HomeIcon, text: "トップ" },
@@ -64,7 +53,7 @@ export default function Component() {
       key={item.to}
       to={item.to}
       className={({ isActive }) =>
-        `flex items-center md:items-start md:flex-row flex-col text-base-content hover:text-blue-600 md:ml-4 ${
+        `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
           isActive ? "text-info font-bold" : ""
         }`
       }
@@ -96,12 +85,25 @@ export default function Component() {
     <div className="flex min-h-screen pt-16">
       <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-32">
         <ul className="space-y-4">
-          {navItems.map((item) => (
+        {navItems.map((item) => item.to !== "/post" ? (
             <li key={item.to}>{renderNavItem(item)}</li>
-          ))}
+          ) : null)}
           {menuItems.map((item) => (
             <li key={item.to}>{renderNavItem(item)}</li>
           ))}
+          <li>
+            <NavLink
+              to="/post"
+              className={({ isActive }) =>
+                `flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 rounded-full ${
+                  isActive ? "text-info font-bold" : ""
+                }`
+              }
+            >
+              <PostIcon />
+              <p className="text-xs px-4 font-bold">投稿する</p>
+            </NavLink>
+          </li>
         </ul>
       </nav>
       <div className="flex-1 p-4 ml-0 md:mx-64">
@@ -112,55 +114,58 @@ export default function Component() {
     </div>
     <nav className="fixed py-4 bottom-0 bg-base-100 shadow-inner w-full md:hidden">
       <ul className="flex justify-between items-center mx-4">
-        {navItems.map((item) => (
-          <li key={item.to}>{renderNavItem(item)}</li>
+        {navItems.map(item => (
+          <li key={item.to}>
+            {item.to === "/post" ? (
+              <NavLink
+                to="/post"
+                className={({ isActive }) =>
+                  `flex flex-col items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-2 py-2 rounded-3xl ${
+                    isActive ? "text-info font-bold" : ""
+                  }`
+                }
+              >
+                <PostIcon />
+                <p className="text-xs font-bold">投稿する</p>
+              </NavLink>
+            ) : (
+              renderNavItem(item)
+            )}
+          </li>
         ))}
         <li>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex flex-col items-center justify-center hover:text-blue-600"
-          >
-            <MenuIcon />
-            <p className="text-xs">メニュー</p>
-          </button>
+          <div className="drawer">
+            <input id="menu-drawer" type="checkbox" className="drawer-toggle" />
+            <div className="drawer-content flex flex-col items-center">
+              <MenuIcon />
+              <label htmlFor="menu-drawer" className="drawer-overlay">
+                メニュー
+              </label>
+            </div>
+            <div className="drawer-side">
+              <label
+                htmlFor="menu-drawer"
+                aria-label="close sidebar"
+                className="drawer-overlay"
+              ></label>
+              <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
+                {menuItems.map((item) => (
+                  <li key={item.to}>
+                    <NavLink
+                      to={item.to}
+                      className="flex items-center p-2 rounded"
+                      onClick={() => document.getElementById("menu-drawer")?.click()}
+                    >
+                      <item.icon />
+                      <p className="ml-2">{item.text}</p>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </li>
       </ul>
-      {(isMenuOpen || menuAnimation === "animate-slideOut") && (
-        <div
-          className={`fixed bottom-20 left-0 right-0 top-64 bg-base-100 border-t-2 border-neutral transition-transform duration-300 ease-out ${
-            menuAnimation
-          }`}
-          onAnimationEnd={() => {
-            if (menuAnimation === "animate-slideOut") {
-              setMenuAnimation("");
-            }
-          }}
-        >
-          <div className="flex justify-between p-4">
-            <button onClick={() => setIsMenuOpen(false)} className="ml-2 btn btn-neutral">
-              閉じる
-            </button>
-          </div>
-          <ul className="mt-8 mx-4">
-            {menuItems.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `block px-4 py-4 border-b-2 border-neutral ${isActive ? "text-info font-bold" : ""}`
-                  }
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <item.icon />
-                    <span>{item.text}</span>
-                  </div>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </nav>
     <footer className="bg-base-100 py-8 md:pb-0">
       <div className="container mx-auto px-4">

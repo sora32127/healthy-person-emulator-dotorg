@@ -61,6 +61,7 @@ export default function Login() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+                            autoComplete="email"
                         />
                     </div>
                     <div className="mb-6">
@@ -74,6 +75,7 @@ export default function Login() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline"
+                            autoComplete="current-password"
                         />
                     </div>
                     {actionData?.status === 400 && (

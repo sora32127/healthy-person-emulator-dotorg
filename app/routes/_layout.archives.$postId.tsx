@@ -275,7 +275,7 @@ export default function Component() {
         <div className="flex items-center p-2 rounded">
         <div className="tooltip" data-tip ="この記事を高評価する">
           <button
-            className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
+            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
             }`}
             onClick={() => handleVoteOnClient("like")}
@@ -289,7 +289,7 @@ export default function Component() {
         </div>
         <div className="tooltip" data-tip ="この記事を低評価する">
           <button
-            className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
+            className={`flex items-center rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
             }`}
             onClick={() => handleVoteOnClient("dislike")}
@@ -598,7 +598,7 @@ async function handleDeleteComment(formData: FormData, postId: number, request: 
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
-    return { title: "Loading..." };
+    return [{ title: "Loading..." }];
   }
   const title = data.postContent?.postTitle || "";
   const description = data.tagNames?.join(", ") || "";
