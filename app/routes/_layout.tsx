@@ -73,7 +73,7 @@ export default function Component() {
         <Form method="post" action="/search">
         <div className="flex flex-row items-center">
           <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
-          <button className="btn btn-square btn-ghost ml-2">
+          <button className="btn btn-square btn-ghost ml-2" title="search">
           <SearchIcon/> 
           </button>
         </div>
