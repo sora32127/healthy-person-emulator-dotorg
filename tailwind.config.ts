@@ -49,7 +49,7 @@ export default {
         light: {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           ...require("daisyui/src/theming/themes")["light"],
-          primary: "#0017C1",
+          primary: "#99D9EA",
           secondary: "#264AF4",
           tertiary: "#00118F",
           info: "#00118F",
@@ -60,7 +60,7 @@ export default {
         dark: {
           // eslint-disable-next-line @typescript-eslint/no-var-requires
           ...require("daisyui/src/theming/themes")["dark"],
-          primary: "#0017C1",
+          primary: "#99D9EA",
           secondary: "#264AF4",
           tertiary: "#00118F",
           "base-100": "#0F0F0F",

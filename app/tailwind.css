@@ -56,3 +56,10 @@ h1 {
 svg {
   @apply fill-current;
 }
+
+.btn-primary {
+  @apply bg-primary;
+  @apply text-slate-950;
+  @apply hover:bg-teal-100;
+  @apply font-bold
+}
