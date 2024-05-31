@@ -18,7 +18,7 @@ const ClearLocalStorageButton = ({ clearInputs }: ClearLocalStorageButtonProps) 
       <H3>入力内容をクリア</H3>
       <p>入力内容をクリアします。</p>
       <button
-        className="inline-flex items-center px-4 py-2 my-4 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="inline-flex items-center px-4 py-2 my-4 border border-transparent text-base font-medium rounded-md shadow-sm btn-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         onClick={() => setShowModal(true)}
         type='button'
       >

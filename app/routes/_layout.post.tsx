@@ -278,10 +278,10 @@ export default function Component() {
         <Turnstile siteKey={CFTurnstileSiteKey} onSuccess={() => handleTurnstileValidation(true)}/>
         <button
             type="submit"
-            className={`rounded-md block w-full px-4 py-2 text-center text-white my-4 ${
+            className={`rounded-md block w-full px-4 py-2 text-center my-4 ${
               isValid && isValidUser && !isSubmitting
-                ? 'bg-blue-500 hover:bg-blue-600'
-                : 'bg-gray-400 cursor-not-allowed'
+                ? 'btn-primary'
+                : 'bg-gray-400 cursor-not-allowed text-white'
             }`}
             disabled={!isValid || !isValidUser || isSubmitting}
         >

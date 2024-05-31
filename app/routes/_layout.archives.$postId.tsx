@@ -308,7 +308,7 @@ export default function Component() {
         <div className="my-6">
           <NavLink
             to={`/archives/edit/${postContent?.postId}`}
-            className="bg-primary text-white rounded px-4 py-2 mx-1 my-20"
+            className="btn-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
           </NavLink>

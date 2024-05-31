@@ -126,10 +126,10 @@ export default function FreeStylePost() {
                     <Turnstile siteKey={CFTurnstileSiteKey} onSuccess={() => handleTurnstileValidation(true)}/>
                     <button
                         type="submit"
-                        className={`rounded-md block w-full px-4 py-2 text-center text-white my-4 ${
+                        className={`rounded-md block w-full px-4 py-2 text-center my-4 ${
                         isButtonDisabled
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-primary'
+                            ? 'bg-gray-400 cursor-not-allowed text-white'
+                            : 'btn-primary'
                         }`}
                         disabled={isButtonDisabled}
                     >
