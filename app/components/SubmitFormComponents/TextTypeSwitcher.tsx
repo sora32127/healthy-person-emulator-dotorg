@@ -13,16 +13,16 @@ const ToggleButton: React.FC<{
   children: React.ReactNode;
 // eslint-disable-next-line react/prop-types
 }> = ({ id, checked, value, onChange, children }) => {
-  const baseStyle = "rounded-full w-15 h-8 flex justify-center items-center text-xs px-3 mx-1 border-0";
-  const checkedStyle = "bg-blue-600 hover:bg-blue-700";
-  const uncheckedStyle = "bg-gray-600 hover:bg-gray-700";
+  const baseStyle = "rounded-full w-15 h-8 flex justify-center items-center text-xs px-3 mx-1";
+  const checkedStyle = "btn-secondary border-2 border-info";
+  const uncheckedStyle = "btn-secondary";
 
   return (
     <button
       id={id}
       value={value}
       onClick={onChange}
-      className={`${baseStyle} ${checked ? checkedStyle : uncheckedStyle} text-white`}
+      className={`${baseStyle} ${checked ? checkedStyle : uncheckedStyle}`}
       type='button'
     >
       {children}

@@ -55,7 +55,7 @@ export function ErrorBoundary() {
     return (
       <div className="container mx-auto px-4 text-center">
         <h1 className="text-4xl font-bold mt-32 mb-8">お探しのページは見つかりませんでした</h1>
-        <NavLink to="/" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <NavLink to="/" className="btn-primary font-bold py-2 px-4 rounded">
           トップページに戻る
         </NavLink>
       </div>
