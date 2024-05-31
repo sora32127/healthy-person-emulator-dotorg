@@ -43,7 +43,7 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
             <button
               type="button"
               onClick={() => deleteInput(index)}
-              className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 focus:outline-none"
+              className="px-4 py-2 text-white bg-error rounded-lg focus:outline-none"
             >
               削除
             </button>
@@ -52,7 +52,7 @@ const DynamicTextInput: React.FC<DynamicTextInputProps> = ({
         <button
           type="button"
           onClick={addInput}
-          className="px-4 py-2 text-white bg-blue-600 rounded-lg focus:outline-none"
+          className="px-4 py-2 btn-secondary rounded-lg focus:outline-none"
         >
           テキスト入力を追加
         </button>

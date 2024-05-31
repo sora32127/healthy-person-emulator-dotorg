@@ -54,7 +54,7 @@ export default function Component() {
       to={item.to}
       className={({ isActive }) =>
         `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
-          isActive ? "text-info font-bold" : ""
+          isActive ? "font-bold md:bg-base-300" : ""
         }`
       }
     >
@@ -73,7 +73,7 @@ export default function Component() {
         <Form method="post" action="/search">
         <div className="flex flex-row items-center">
           <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
-          <button className="btn btn-square btn-ghost ml-2">
+          <button className="btn btn-square btn-ghost ml-2" title="search">
           <SearchIcon/> 
           </button>
         </div>
@@ -86,19 +86,15 @@ export default function Component() {
       <nav className="hidden md:flex flex-col fixed top-0 bottom-0 w-64 p-4 bg-base-100 mt-32 border-r border-neutral">
         <ul className="space-y-4">
         {navItems.map((item) => item.to !== "/post" ? (
-            <li key={item.to}>{renderNavItem(item)}</li>
+          <li key={item.to}>{renderNavItem(item)}</li>
           ) : null)}
-          {menuItems.map((item) => (
-            <li key={item.to}>{renderNavItem(item)}</li>
-          ))}
+        {menuItems.map((item) => (
+          <li key={item.to}>{renderNavItem(item)}</li>
+        ))}
           <li>
             <NavLink
               to="/post"
-              className={({ isActive }) =>
-                `flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 mt-20 rounded-full ${
-                  isActive ? "text-info font-bold" : ""
-                }`
-              }
+              className="flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 mx-4 py-4 mt-20 rounded-full"
             >
               <PostIcon />
               <p className="text-xs px-4 font-bold">投稿する</p>
@@ -119,11 +115,7 @@ export default function Component() {
             {item.to === "/post" ? (
               <NavLink
                 to="/post"
-                className={({ isActive }) =>
-                  `flex flex-col items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-2 py-2 rounded-3xl ${
-                    isActive ? "text-info font-bold" : ""
-                  }`
-                }
+                className="flex flex-col items-center btn-primary px-2 py-2 rounded-3xl"
               >
                 <PostIcon />
                 <p className="text-xs font-bold">投稿する</p>

@@ -1,5 +1,5 @@
 import { Form } from "@remix-run/react";
-import TextInputBoxAI from "./TextInputBoxAI";
+import TextInputBox from "./TextInputBox";
 
 interface StaticTextInputProps {
   row: number;
@@ -8,7 +8,6 @@ interface StaticTextInputProps {
   placeholders?: string[];
   onInputChange: (values: string[]) => void;
   parentComponentStateValues: string[];
-  prompt: string;
 }
 
 function StaticTextInput({
@@ -18,7 +17,6 @@ function StaticTextInput({
   placeholders = [],
   onInputChange,
   parentComponentStateValues,
-  prompt = "",
 }: StaticTextInputProps) {
   const handleInputChange = (index: number, value: string) => {
     const newInputValues = [...parentComponentStateValues];
@@ -35,13 +33,12 @@ function StaticTextInput({
           <label htmlFor={`${title}-${i}`} className="sr-only">
             {title} {i + 1}
           </label>
-          <TextInputBoxAI
+          <TextInputBox
             id={`${title}-${i}`}
             className={`w-full py-2 placeholder-slate-500 rounded-lg focus:outline-none ${title}-${i}`}
             parentComponentStateValue={parentComponentStateValues[i] || ""}
             onInputChange={(value) => handleInputChange(i, value)}
             placeholder={placeholder}
-            prompt={prompt}
           />
         </div>
       );

@@ -73,7 +73,7 @@ export default function CommentInputBox({
         type="submit"
         className={`px-4 py-2 mx-1 w-full ${
           isCommentOpen
-            ? "bg-primary text-white"
+            ? "btn-primary"
             : "bg-gray-200 text-gray-500 cursor-not-allowed"
         } rounded`}
         disabled={!isCommentOpen}

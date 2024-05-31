@@ -248,7 +248,7 @@ export default function EditPost() {
             <input type="hidden" name="postContent" value={markdownContent} />
             <button
               type="submit"
-              className="rounded-md block w-full px-4 py-2 text-center text-white bg-primary edit-post-submit-button"
+              className="rounded-md block w-full px-4 py-2 text-center btn-primary edit-post-submit-button"
               disabled={navigation.state === "submitting"}
             >
               変更を保存する

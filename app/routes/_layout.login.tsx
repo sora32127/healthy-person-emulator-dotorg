@@ -79,16 +79,16 @@ export default function Login() {
                         />
                     </div>
                     {actionData?.status === 400 && (
-                        <p className="text-error-content text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     {actionData?.status === 500 && (
-                        <p className="text-error-content text-xs italic mb-4">{actionData.message}</p>
+                        <p className="text-error text-xs italic mb-4">{actionData.message}</p>
                     )}
                     <div className="flex justify-between items-start">
                         <button
                         type="submit"
                         disabled={!email || !password}
-                        className="bg-primary font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 text-white"
+                        className="btn-primary font-bold py-2 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
                         >
                         ログイン
                         </button>

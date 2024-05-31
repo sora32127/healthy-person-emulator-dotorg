@@ -19,7 +19,7 @@ export default function BeSponsor() {
           <p>もし健常者エミュレータ事例集の理念に共感していただけるのなら、以下のPixiv Fanboxから寄付していただけると助かります。</p>
           <NavLink to="https://contradiction29.fanbox.cc/"
             role="link"
-            className="bg-primary text-white font-bold py-2 px-8 rounded-md block w-full mt-8">サポートする
+            className="btn-primary font-bold py-2 px-8 rounded-md block w-full mt-8">サポートする
           </NavLink>
           <div className="text-center mt-6">
             <p>以下のQRコードから支払うことも可能です。</p>

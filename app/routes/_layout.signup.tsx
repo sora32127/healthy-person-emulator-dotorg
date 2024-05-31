@@ -125,8 +125,8 @@ export default function Component() {
         <div className="text-center">
           <button
             type="submit"
-            className={`px-4 py-2 font-bold text-white rounded-md focus:outline-none ${
-              isDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-primary"
+            className={`px-4 py-2 font-bold  rounded-md focus:outline-none ${
+              isDisabled ? "bg-gray-400 cursor-not-allowed text-white" : "btn-primary"
             }`}
             disabled={isDisabled || isRegistering}
           >

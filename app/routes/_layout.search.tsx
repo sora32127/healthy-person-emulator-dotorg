@@ -173,18 +173,18 @@ export default function SearchPage() {
           name="q"
           defaultValue={queryText}
           onChange={(e) => setQueryText(e.target.value)}
-          className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-secondary"
+          className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-neutral"
           placeholder="検索キーワードを入力"
         />
         <button
           type="submit"
-          className="btn btn-primary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
+          className="btn-secondary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
           name="action"
           value="firstSearch"
         >
           検索
         </button>
-        <div className="pt-4">
+        <div className="pt-4 md:pr-12">
           <TagSelectionBox
             onTagsSelected={(tags) => setSelectedTags(tags)}
             parentComponentStateValues={selectedTags}
@@ -255,7 +255,7 @@ export default function SearchPage() {
         disabled={pageNumber === 1}
         className={`px-2 py-2 mx-1 ${pageNumber === 1?
           "bg-gray-200 text-gray-500 cursor-not-allowed":
-          "bg-primary text-white"}
+          "btn-secondary"}
           rounded search-go-to-first-page`}
         >
         最初
@@ -267,7 +267,7 @@ export default function SearchPage() {
         disabled={pageNumber === 1}
         className={`px-2 py-2 mx-1 ${pageNumber === 1?
         "bg-gray-200 text-gray-500 cursor-not-allowed":
-        "bg-primary text-white"}
+        "btn-secondary"}
         rounded search-go-to-previous-page`}
         >
         前へ
@@ -281,7 +281,7 @@ export default function SearchPage() {
       value="nextPage"
       disabled={pageNumber === totalPages}
       className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "bg-primary text-white"}
+      "btn-secondary"}
       rounded search-go-to-next-page`}
         >
         次へ
@@ -292,7 +292,7 @@ export default function SearchPage() {
       value="lastPage"
       disabled={pageNumber === totalPages}
       className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "bg-primary text-white"}
+      "btn-secondary"}
       rounded search-go-to-last-page`}
         >
         最後

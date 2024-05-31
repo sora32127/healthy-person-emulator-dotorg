@@ -55,10 +55,10 @@ const TagSelectionBox = ({
             <div className="flex space-x-2 mb-4">
                 <button
                     type="button"
-                    className={`px-4 py-2 btn ${
+                    className={`px-4 py-2 btn border-none ${
                         sortBy === 'count'
-                            ? ' btn-primary'
-                            : 'btn-neutral'
+                            ? 'btn-secondary outline outline-info'
+                            : 'btn-secondary'
                     }`}
                     onClick={() => setSortBy('count')}
                 >
@@ -66,10 +66,10 @@ const TagSelectionBox = ({
                 </button>
                 <button
                     type="button"
-                    className={`px-4 py-2 btn ${
+                    className={`px-4 py-2 btn border-none  ${
                         sortBy === 'name'
-                            ? ' btn-primary'
-                            : 'btn-neutral'
+                            ? 'btn-secondary outline outline-info'
+                            : 'btn-secondary'
                     }`}
                     onClick={() => setSortBy('name')}
                 >
