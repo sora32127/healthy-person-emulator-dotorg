@@ -98,7 +98,10 @@ export async function loader() {
                 },
             },
         },
-    }}});
+    }},
+    take: 100,
+    orderBy : { dim_posts : { postDateGmt : "desc" }},
+});
 
     const famedPostsRaw = await prisma.relPostTags.findMany({
         where: { tagId: { equals: 575 } }, // コミュニティ選のtag_id
