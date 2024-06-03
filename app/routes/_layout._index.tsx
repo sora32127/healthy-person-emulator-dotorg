@@ -98,7 +98,9 @@ export async function loader() {
                 },
             },
         },
-    }}});
+    }},
+    take: 100
+});
 
     const famedPostsRaw = await prisma.relPostTags.findMany({
         where: { tagId: { equals: 575 } }, // コミュニティ選のtag_id
