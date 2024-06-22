@@ -1,5 +1,4 @@
-// _layout.archives.$postId.edit.tsx
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
 import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"
@@ -9,15 +8,30 @@ import MarkdownEditor from "~/components/MarkdownEditor.client";
 import { useState } from "react";
 // @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';
-import { getSession, requireUserId } from "~/modules/session.server";
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
+import { getAuth } from "@clerk/remix/ssr.server";
+import { setVisitorCookieData } from "~/modules/visitor.server";
+
+async function requireUserId(args: LoaderFunctionArgs) {
+  const { userId } = await getAuth(args);
+  if (!userId) {
+    const url = new URL(args.request.url)
+    const pathName = url.pathname
+    const headers = await setVisitorCookieData({
+        redirectUrl: pathName
+    });
+    throw redirect('/login', { headers });
+  }
+  
+  return userId;
+}
 
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
-  const userId = await requireUserId(request);
-  const postId = params.postId;
+export const loader:LoaderFunction = async(args) => {
+  const userId = await requireUserId(args);
+  const postId = args.params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({
     where : { postId: Number(postId) },
     select : {
@@ -246,6 +260,7 @@ export default function EditPost() {
               />
             </div>
             <input type="hidden" name="postContent" value={markdownContent} />
+            <input type="hidden" name="userId" value={userId} />
             <button
               type="submit"
               className="rounded-md block w-full px-4 py-2 text-center btn-primary edit-post-submit-button"
@@ -314,15 +329,13 @@ export default function EditPost() {
 }
 
 
-export async function action({ request, params }: ActionFunctionArgs) {
-  const formData = await request.formData();
+export const action: ActionFunction = async (args) => {
+  const formData = await args.request.formData();
   const postTitle = formData.get("postTitle")?.toString() || "";
   const postContent = formData.get("postContent")?.toString() || "";
   const tags = formData.getAll("tags") as string[];
-  const session = await getSession(request.headers.get('Cookie'));
-  const userId = session.get('userId');
-
-  const postId = Number(params.postId);
+  const userId = formData.get("userId")?.toString() || "";
+  const postId = Number(args.params.postId);
 
   const latestPost = await prisma.dimPosts.findUnique({
     where: { postId },
