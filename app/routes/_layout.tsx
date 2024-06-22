@@ -102,7 +102,7 @@ export default function Component() {
           </li>
         </ul>
       </nav>
-      <div className="flex-1 p-4 ml-0 md:mx-64">
+      <div className="flex-1 p-4 ml-0 md:ml-64 md:mr-16 lg:ml-64 lg:mr-32 xl:ml-96 xl:mr-96">
         <div className="mb-32 md:mb-0">
           <Outlet />
         </div>
