@@ -93,30 +93,34 @@ export default function CommentCard({
       </div>
       <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
       <div className="flex items-center mt-4">
-        <button
-          className={`flex items-center mr-4 bg-inherit rounded-md px-2 py-2 border ${
-            isLiked ? "text-blue-500 fonr-bold" : ""
-          } comment-like-button`}
-          onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
-          disabled={isCommentLikeButtonPushed || isLiked}
-        >
-          <ThumbsUpIcon />
-          <p className="ml-2">
-          {likesCount}
-          </p>
-        </button>
-        <button
-          className={`flex items-center bg-inherit rounded-md px-2 py-2 border ${
-            isDisliked ? "text-red-500 font-bold" : ""
-          } comment-dislike-button`}
-          onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
-          disabled={isCommentDislikeButtonPushed || isDisliked}
-        >
-          <ThumbsDownIcon />
-          <p className="ml-2">
-          {dislikesCount}
-          </p>
-        </button>
+        <div className="tooltip" data-tip="このコメントを高評価する">
+          <button
+            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
+              isLiked ? "text-blue-500 font-bold" : ""
+            } comment-like-button`}
+            onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
+            disabled={isCommentLikeButtonPushed || isLiked}
+          >
+            <ThumbsUpIcon />
+            <p className="ml-2">
+            {likesCount}
+            </p>
+          </button>
+        </div>
+        <div className="tooltip" data-tip="このコメントを低評価する">
+          <button
+            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
+              isDisliked ? "text-red-500 font-bold" : ""
+            } comment-dislike-button`}
+            onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
+            disabled={isCommentDislikeButtonPushed || isDisliked}
+          >
+            <ThumbsDownIcon />
+            <p className="ml-2">
+            {dislikesCount}
+            </p>
+          </button>
+        </div>
       </div>
     <button
         className="mt-2 text-blue-500"
