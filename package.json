@@ -13,6 +13,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@clerk/localizations": "^2.4.5",
+    "@clerk/remix": "^4.1.2",
+    "@clerk/themes": "^2.1.10",
     "@estruyf/github-actions-reporter": "^1.6.0",
     "@marsidev/react-turnstile": "^0.5.3",
     "@prisma/client": "^5.12.0",
