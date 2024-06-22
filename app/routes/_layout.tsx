@@ -15,19 +15,10 @@ import LoginIcon from "~/components/icons/LoginIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("userId");
-  if (userId) {
-    return json({ isLoggedIn: true });
-  } else {
-    return json({ isLoggedIn: false });
-  }
-}
+import { useUser } from "@clerk/remix";
 
 export default function Component() {
-  const { isLoggedIn } = useLoaderData<typeof loader>();
+  const { isSignedIn } = useUser();
 
   const navItems = [
     { to: "/", icon: HomeIcon, text: "トップ" },
@@ -40,7 +31,7 @@ export default function Component() {
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
-    ...(isLoggedIn
+    ...(isSignedIn
       ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
       : [
           { to: "/signup", text: "サインアップ", icon: SignupIcon },
