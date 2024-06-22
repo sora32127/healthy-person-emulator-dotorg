@@ -1,7 +1,5 @@
-import { Form, Outlet, useLoaderData } from "@remix-run/react";
+import { Form, Outlet } from "@remix-run/react";
 import { NavLink } from "react-router-dom";
-import { LoaderFunctionArgs, json } from "@remix-run/node";
-import { getSession } from "~/modules/session.server";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import HomeIcon from "~/components/icons/HomeIcon";
 import RandomIcon from "~/components/icons/RandomIcon";
@@ -15,7 +13,7 @@ import LoginIcon from "~/components/icons/LoginIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
-import { useUser } from "@clerk/remix";
+import { useUser, SignOutButton } from "@clerk/remix";
 
 export default function Component() {
   const { isSignedIn } = useUser();
@@ -32,27 +30,49 @@ export default function Component() {
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
     ...(isSignedIn
-      ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
+      ? [{
+          to: "#",
+          text: "ログアウト",
+          icon: LogoutIcon,
+        }]
       : [
           { to: "/signup", text: "サインアップ", icon: SignupIcon },
           { to: "/login", text: "ログイン", icon: LoginIcon },
         ]),
   ];
 
-  const renderNavItem = (item: { to: string; icon: React.ComponentType; text: string }): JSX.Element => (
-    <NavLink
-      key={item.to}
-      to={item.to}
-      className={({ isActive }) =>
-        `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
-          isActive ? "font-bold md:bg-base-300" : ""
-        }`
-      }
-    >
-      <item.icon />
-      <p className="text-xs md:text-sm md:ml-4">{item.text}</p>
-    </NavLink>
-  );
+  const renderNavItem = (item: { to: string; icon: React.ComponentType; text: string; onClick?: () => void }): JSX.Element => {
+    const content = (
+      <>
+        <item.icon />
+        <p className="text-xs md:text-sm md:ml-4">{item.text}</p>
+      </>
+    );
+
+    if (item.text === "ログアウト") {
+      return (
+        <SignOutButton redirectUrl="/">
+          <button className="flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit">
+            {content}
+          </button>
+        </SignOutButton>
+      );
+    }
+
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={({ isActive }) =>
+          `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
+            isActive ? "font-bold md:bg-base-300" : ""
+          }`
+        }
+      >
+        {content}
+      </NavLink>
+    );
+  };
 
   return (
     <>
