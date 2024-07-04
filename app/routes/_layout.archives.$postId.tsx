@@ -18,7 +18,7 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
-
+import { SEOHandle } from "@nasa-gcn/remix-seo";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -632,4 +632,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { name: "twitter:creator", content: twitterCreator },
     { name: "twitter:image", content: twitterImage },
   ];
+};
+
+export const handle: SEOHandle = {
+  getSitemapEntries: async (request) => {
+    const pages = await prisma.dimPosts.findMany()
+    return pages.map((post) => {
+      return {
+        route: `archives/${post.postId}`,
+        priority: 0.7
+      }
+    })
+  },
 };
