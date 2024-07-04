@@ -13,6 +13,8 @@ import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getAuth } from "@clerk/remix/ssr.server";
 import { setVisitorCookieData } from "~/modules/visitor.server";
+import { SEOHandle } from "@nasa-gcn/remix-seo";
+
 
 async function requireUserId(args: LoaderFunctionArgs) {
   const { userId } = await getAuth(args);
@@ -423,3 +425,7 @@ export const meta : MetaFunction = () => {
     { title : "編集"}
   ]
 }
+
+export const handle: SEOHandle = {
+  getSitemapEntries: () => null,
+};
