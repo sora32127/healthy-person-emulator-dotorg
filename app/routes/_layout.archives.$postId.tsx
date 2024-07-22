@@ -437,12 +437,6 @@ export async function action({ request }: ActionFunctionArgs) {
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
       return handleSubmitComment(formData, postId);
-    case "deletePost":
-      return handleDeletePost(postId, request);
-    case "changeCommentStatus":
-      return handleChangeCommentStatus(postId, request);
-    case "deleteComment":
-      return handleDeleteComment(formData, postId, request);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -555,65 +549,6 @@ async function handleSubmitComment(formData: FormData, postId: number) {
   catch (e) {
     console.error(e);
     return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleDeletePost(postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  try {
-    await prisma.dimPosts.delete({ where: { postId } });
-    return redirect("/");
-  } catch (e) {
-    console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleChangeCommentStatus(postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  try {
-    const nowCommentStatus = await prisma.dimPosts.findFirst({
-      where: { postId },
-      select: { commentStatus: true },
-    });
-    if (!nowCommentStatus) {
-      return new Response("Not Found", { status: 404 });
-    }
-    const newCommentStatus = nowCommentStatus.commentStatus === "open" ? "closed" : "open";
-    await prisma.dimPosts.update({
-      where: { postId },
-      data: { commentStatus: newCommentStatus },
-    });
-    return json({ success: true });
-  } catch (e) {
-    console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleDeleteComment(formData: FormData, postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  const commentId = Number(formData.get("commentId"));
-
-  try {
-    await prisma.dimComments.update({
-      where: { commentId },
-      data: { commentContent: "(このコメントは管理者により削除されました)" },
-    });
-    return json({ success: true });
-  } catch (e) {
-    console.error(e);
-    return new Response("Internal Server Error", { status: 500 });
   }
 }
 
