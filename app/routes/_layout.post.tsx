@@ -10,8 +10,9 @@ import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationCheckBox';
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
-import { ActionFunctionArgs, json, redirect } from '@remix-run/node';
-import { Form, MetaFunction, NavLink, useLoaderData } from '@remix-run/react';
+import { ActionFunctionArgs, json } from '@remix-run/node';
+import { useNavigate } from '@remix-run/react'
+import { Form, MetaFunction, NavLink, useActionData, useLoaderData } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
@@ -57,6 +58,17 @@ export default function Component() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [createdTags, setCreatedTags] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const actionData = useActionData<typeof action>();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (actionData?.success) {
+            // 投稿が成功した後にローカルストレージの内容を削除しないと、次に投稿しようとしたときに同じ内容が残ってしまうため、
+            // リダイレクトする前にローカルストレージの内容を削除する
+            clearInputs();
+            navigate(`/archives/${actionData.postId}`);
+        }
+      }, [actionData]);
 
     useEffect(() => {
         const savedSituationValue = window.localStorage.getItem('situationValue');
@@ -431,7 +443,9 @@ export async function action({ request }:ActionFunctionArgs ) {
         postTitle: newPost.postTitle,
     });
 
-    return redirect(`/archives/${newPost.postId}`);
+    return json(
+        { success: true, postId: newPost.postId }
+    );
 }
 
 export const meta: MetaFunction = () => {
