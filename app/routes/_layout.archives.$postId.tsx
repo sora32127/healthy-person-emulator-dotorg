@@ -18,6 +18,7 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -113,11 +114,13 @@ export async function loader({ request }:LoaderFunctionArgs){
     const isAdmin = await isAdminLogin(request);
     const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames });
+    const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
+
+    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const submit = useSubmit();
@@ -129,6 +132,7 @@ export default function Component() {
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
+  const [isValidUser, setIsValidUser] = useState(false);
 
   const handleVoteOnClient = async (voteType: "like" | "dislike") => {
     if (voteType === "like") {
@@ -246,10 +250,21 @@ export default function Component() {
     return 0;
   })
 
+  const handleTurnstileValidation = (isValid: boolean) => {
+    setIsValidUser(isValid)
+  }
+
   return (
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
+        {CF_TURNSTILE_SITEKEY && (
+          <Turnstile
+            siteKey={CF_TURNSTILE_SITEKEY}
+            onSuccess={() => handleTurnstileValidation(true)}
+            options={{"size":"invisible"}}
+          />
+        )}        
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
@@ -279,7 +294,7 @@ export default function Component() {
               isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
             }`}
             onClick={() => handleVoteOnClient("like")}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
           >
             <ThumbsUpIcon />
             <p className="ml-2">
@@ -293,7 +308,7 @@ export default function Component() {
               isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
             }`}
             onClick={() => handleVoteOnClient("dislike")}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
           >
             <ThumbsDownIcon />
             <p className="ml-2">
