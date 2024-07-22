@@ -1,5 +1,5 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher } from "@remix-run/react";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
+import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, useNavigate } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -125,6 +125,7 @@ export default function Component() {
   const [commentContent, setCommentContent] = useState("");
   const submit = useSubmit();
   const fetcher = useFetcher();
+  const navigate = useNavigate()
 
   const isLiked = likedPages.includes(postContent?.postId);
   const isDisliked = dislikedPages.includes(postContent?.postId);
@@ -253,18 +254,19 @@ export default function Component() {
   const handleTurnstileValidation = (isValid: boolean) => {
     setIsValidUser(isValid)
   }
+  if (!CF_TURNSTILE_SITEKEY){
+    return navigate("/")
+  }
 
   return (
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        {CF_TURNSTILE_SITEKEY && (
-          <Turnstile
-            siteKey={CF_TURNSTILE_SITEKEY}
-            onSuccess={() => handleTurnstileValidation(true)}
-            options={{"size":"invisible"}}
-          />
-        )}        
+        <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={() => handleTurnstileValidation(true)}
+          options={{"size":"invisible"}}
+        />
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
@@ -384,6 +386,7 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
+          CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>
