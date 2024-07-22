@@ -123,17 +123,18 @@ export default function Component() {
   const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
-  const submit = useSubmit();
-  const fetcher = useFetcher();
-  const navigate = useNavigate()
-
-  const isLiked = likedPages.includes(postContent?.postId);
-  const isDisliked = dislikedPages.includes(postContent?.postId);
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
+
+  const submit = useSubmit();
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
+
+  const isLiked = likedPages.includes(postContent?.postId);
+  const isDisliked = dislikedPages.includes(postContent?.postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
