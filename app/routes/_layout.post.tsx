@@ -11,12 +11,12 @@ import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationChec
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
 import { ActionFunctionArgs, json } from '@remix-run/node';
-import { useNavigate } from '@remix-run/react'
-import { Form, MetaFunction, NavLink, useActionData, useLoaderData } from '@remix-run/react';
+import { Form, MetaFunction, NavLink, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
 import { createEmbedding } from '~/modules/embedding.server';
+import { Modal } from '~/components/Modal';
 
 
 interface Tag {
@@ -58,18 +58,31 @@ export default function Component() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [createdTags, setCreatedTags] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const actionData = useActionData<typeof action>();
     const navigate = useNavigate();
+    const submit = useSubmit();
 
     useEffect(() => {
-        if (actionData?.success) {
-            // 投稿が成功した後にローカルストレージの内容を削除しないと、次に投稿しようとしたときに同じ内容が残ってしまうため、
-            // リダイレクトする前にローカルストレージの内容を削除する
+        if (actionData?.success == false) {
+          setShowErrorModal(true);
+          setIsSubmitting(false);
+        } else if (actionData?.success == true) {
+          setShowSuccessModal(true);
+          setTimeout(() => {
             clearInputs();
-            navigate(`/archives/${actionData.postId}`);
+            'postId' in actionData && navigate(`/archives/${actionData.postId}`);
+          }, 3000);
         }
-      }, [actionData]);
+      }, [actionData, navigate]);
 
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        submit(event.currentTarget, { replace: true } );
+        setIsSubmitting(true);
+    }
+    
     useEffect(() => {
         const savedSituationValue = window.localStorage.getItem('situationValue');
         const initialSituationValue = JSON.parse(savedSituationValue || '{}');
@@ -156,12 +169,6 @@ export default function Component() {
     const handleTurnstileValidation = (isValid: boolean) => {
         setIsValidUser(isValid);
     };
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        e.currentTarget.submit();
-    }
 
     const clearInputs = () => {
         console.log("CLEARBUTTON")
@@ -309,6 +316,22 @@ export default function Component() {
         <input type="hidden" name="selectedTags" value={JSON.stringify(selectedTags)} />
         <input type="hidden" name="createdTags" value={JSON.stringify(createdTags)} />
         </Form>
+        <Modal
+            isOpen={showErrorModal}
+            onClose={() => setShowErrorModal(false)}
+            title="エラー"
+        >
+            <p>{actionData?.error}</p>
+        </Modal>
+
+        <Modal
+            isOpen={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            title="投稿成功"
+            showCloseButton={false}
+        >
+            <p>投稿が成功しました。リダイレクトします...</p>
+        </Modal>
     </div>
     )
 }
@@ -333,6 +356,13 @@ export async function action({ request }:ActionFunctionArgs ) {
     reflectionValues = removeEmptyString(reflectionValues);
     counterFactualReflectionValues = removeEmptyString(counterFactualReflectionValues);
     noteValues = removeEmptyString(noteValues);
+
+    if (titleValues.some((title: string) => title.includes('#'))){
+        return json({
+            success: false,
+            error: 'タイトルに「#」（ハッシュタグ）を含めることはできません。'
+        });
+    }
 
     const result = `
         <h3>5W1H+Then状況説明</h3>
@@ -444,7 +474,7 @@ export async function action({ request }:ActionFunctionArgs ) {
     });
 
     return json(
-        { success: true, postId: newPost.postId }
+        { success: true, postId: newPost.postId, error: null }
     );
 }
 
