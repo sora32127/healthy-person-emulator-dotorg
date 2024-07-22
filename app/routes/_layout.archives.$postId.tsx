@@ -1,5 +1,5 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher } from "@remix-run/react";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
+import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -123,16 +123,22 @@ export default function Component() {
   const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
-  const submit = useSubmit();
-  const fetcher = useFetcher();
-
-  const isLiked = likedPages.includes(postContent?.postId);
-  const isDisliked = dislikedPages.includes(postContent?.postId);
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
+
+  const submit = useSubmit();
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
+
+  const isLiked = likedPages.includes(postContent?.postId);
+  const isDisliked = dislikedPages.includes(postContent?.postId);
+
+  if (!CF_TURNSTILE_SITEKEY){
+    return navigate("/")
+  }
 
   const handleVoteOnClient = async (voteType: "like" | "dislike") => {
     if (voteType === "like") {
@@ -210,6 +216,7 @@ export default function Component() {
             dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
+            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -258,13 +265,11 @@ export default function Component() {
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        {CF_TURNSTILE_SITEKEY && (
-          <Turnstile
-            siteKey={CF_TURNSTILE_SITEKEY}
-            onSuccess={() => handleTurnstileValidation(true)}
-            options={{"size":"invisible"}}
-          />
-        )}        
+        <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={() => handleTurnstileValidation(true)}
+          options={{"size":"invisible"}}
+        />
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
@@ -384,6 +389,7 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
+          CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>
@@ -431,12 +437,6 @@ export async function action({ request }: ActionFunctionArgs) {
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
       return handleSubmitComment(formData, postId);
-    case "deletePost":
-      return handleDeletePost(postId, request);
-    case "changeCommentStatus":
-      return handleChangeCommentStatus(postId, request);
-    case "deleteComment":
-      return handleDeleteComment(formData, postId, request);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -549,65 +549,6 @@ async function handleSubmitComment(formData: FormData, postId: number) {
   catch (e) {
     console.error(e);
     return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleDeletePost(postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  try {
-    await prisma.dimPosts.delete({ where: { postId } });
-    return redirect("/");
-  } catch (e) {
-    console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleChangeCommentStatus(postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  try {
-    const nowCommentStatus = await prisma.dimPosts.findFirst({
-      where: { postId },
-      select: { commentStatus: true },
-    });
-    if (!nowCommentStatus) {
-      return new Response("Not Found", { status: 404 });
-    }
-    const newCommentStatus = nowCommentStatus.commentStatus === "open" ? "closed" : "open";
-    await prisma.dimPosts.update({
-      where: { postId },
-      data: { commentStatus: newCommentStatus },
-    });
-    return json({ success: true });
-  } catch (e) {
-    console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-async function handleDeleteComment(formData: FormData, postId: number, request: Request) {
-  const isAdmin = await isAdminLogin(request);
-  if (!isAdmin) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  const commentId = Number(formData.get("commentId"));
-
-  try {
-    await prisma.dimComments.update({
-      where: { commentId },
-      data: { commentContent: "(このコメントは管理者により削除されました)" },
-    });
-    return json({ success: true });
-  } catch (e) {
-    console.error(e);
-    return new Response("Internal Server Error", { status: 500 });
   }
 }
 
