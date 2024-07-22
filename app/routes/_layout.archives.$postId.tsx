@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, useNavigate } from "@remix-run/react";
+import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -135,6 +135,10 @@ export default function Component() {
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
 
+  if (!CF_TURNSTILE_SITEKEY){
+    return navigate("/")
+  }
+
   const handleVoteOnClient = async (voteType: "like" | "dislike") => {
     if (voteType === "like") {
       setIsLikeAnimating(true);
@@ -211,6 +215,7 @@ export default function Component() {
             dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
+            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -253,9 +258,6 @@ export default function Component() {
 
   const handleTurnstileValidation = (isValid: boolean) => {
     setIsValidUser(isValid)
-  }
-  if (!CF_TURNSTILE_SITEKEY){
-    return navigate("/")
   }
 
   return (

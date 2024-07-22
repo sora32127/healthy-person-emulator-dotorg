@@ -5,6 +5,7 @@ import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import RelativeDate from "./RelativeDate";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 interface CommentCardProps {
   commentId: number;
@@ -20,6 +21,7 @@ interface CommentCardProps {
   postId: number;
   isAdmin: boolean;
   isCommentOpen: boolean;
+  CF_TURNSTILE_SITEKEY: string;
 }
 
 export default function CommentCard({
@@ -36,6 +38,7 @@ export default function CommentCard({
   postId,
   isAdmin,
   isCommentOpen,
+  CF_TURNSTILE_SITEKEY,
 }: CommentCardProps) {
 
   const marginLeft = `${level * 2}rem`;
@@ -48,6 +51,7 @@ export default function CommentCard({
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
+  const [isValidUser, setIsValidUser] = useState(false);
 
   const submit = useSubmit();
 
@@ -93,13 +97,18 @@ export default function CommentCard({
       </div>
       <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
       <div className="flex items-center mt-4">
+        <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={() => setIsValidUser(true)}
+          options={{"size":"invisible"}}
+        />
         <div className="tooltip" data-tip="このコメントを高評価する">
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
             } comment-like-button`}
             onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
-            disabled={isCommentLikeButtonPushed || isLiked}
+            disabled={isCommentLikeButtonPushed || isLiked || !isValidUser}
           >
             <ThumbsUpIcon />
             <p className="ml-2">
@@ -113,7 +122,7 @@ export default function CommentCard({
               isDisliked ? "text-red-500 font-bold" : ""
             } comment-dislike-button`}
             onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
-            disabled={isCommentDislikeButtonPushed || isDisliked}
+            disabled={isCommentDislikeButtonPushed || isDisliked || !isValidUser}
           >
             <ThumbsDownIcon />
             <p className="ml-2">
@@ -138,6 +147,7 @@ export default function CommentCard({
                 onSubmit={handleReplyCommentSubmit}
                 isCommentOpen={isCommentOpen}
                 commentParentId={commentId}
+                CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
             />
         )}
         </div>
