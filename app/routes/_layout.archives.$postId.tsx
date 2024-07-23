@@ -267,7 +267,7 @@ export default function Component() {
         )}
         {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
         <p className="ml-2">
-          {!isValidUser ? "ユーザーを検証中" : count}
+          {count}
         </p>
       </button>
     </div>
