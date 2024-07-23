@@ -4,7 +4,7 @@ import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
@@ -224,7 +224,6 @@ export default function Component() {
             dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
-            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -388,7 +387,6 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
-          CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>

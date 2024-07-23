@@ -1,5 +1,3 @@
-// CommentInputBox.tsx
-import { Turnstile } from "@marsidev/react-turnstile";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 
@@ -11,7 +9,6 @@ interface CommentInputBoxProps {
   onSubmit: (e: React.FormEvent) => void;
   isCommentOpen: boolean;
   commentParentId: number;
-  CF_TURNSTILE_SITEKEY: string;
 }
 
 export default function CommentInputBox({
@@ -22,10 +19,8 @@ export default function CommentInputBox({
   onSubmit,
   isCommentOpen,
   commentParentId,
-  CF_TURNSTILE_SITEKEY,
 }: CommentInputBoxProps) {
   const [showError, setShowError] = useState(false);
-  const [isValidUser, setIsValidUser] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +39,6 @@ export default function CommentInputBox({
 
   return (
     <Form onSubmit={handleSubmit} preventScrollReset>
-      <Turnstile
-        siteKey={CF_TURNSTILE_SITEKEY}
-        onSuccess={() => setIsValidUser(true)}
-        options={{"size":"invisible"}}
-      />
       <div className="mb-4">
         <label htmlFor="commentAuthor" className="block mb-2">
           名前
@@ -85,7 +75,7 @@ export default function CommentInputBox({
             ? "btn-primary"
             : "bg-gray-200 text-gray-500 cursor-not-allowed"
         } rounded`}
-        disabled={!isCommentOpen || !isValidUser}
+        disabled={!isCommentOpen}
       >
         {"コメント"}
         <input type="hidden" name="commentParentId" value={commentParentId} />
