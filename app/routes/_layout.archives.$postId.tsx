@@ -415,15 +415,15 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const ip = getClientIPAddress(request) || "";
   const userIpHashString = await getUserIpHashString(ip);
-  const turnstileValidation = await validateTurnStile(token, origin);
-  const turnstileValidationData = await turnstileValidation.json();
-
-  if (turnstileValidationData.success != true) {
-    return json({ success: false, message : "Invalid Request" });
-  }
 
   switch (action) {
     case "votePost":
+      const turnstileValidation = await validateTurnStile(token, origin);
+      const turnstileValidationData = await turnstileValidation.json();
+    
+      if (turnstileValidationData.success != true) {
+        return json({ success: false, message : "Invalid Request" });
+      }
       return handleVotePost(formData, postId, userIpHashString, request);
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
