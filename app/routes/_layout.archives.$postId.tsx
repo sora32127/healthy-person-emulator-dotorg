@@ -246,7 +246,7 @@ export default function Component() {
         type="submit"
         name="voteType"
         value={type}
-        className={`flex items-center rounded-md px-2 py-2 ${
+        className={`flex items-center rounded-md px-2 py-2 mx-1 ${
           !isValidUser
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
             : isAnimating
@@ -297,29 +297,31 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <Form method="post" onSubmit={handleVoteSubmit} className="flex items-center p-2 rounded space-x-4">
-          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
-          <input type="hidden" name="action" value="votePost" />
-          <Turnstile
-            siteKey={CF_TURNSTILE_SITEKEY}
-            options={{"size":"invisible"}}
-            onSuccess={() => setIsValidUser(true)}
-          />
-          <VoteButton
-            type="like"
-            count={postContent?.countLikes}
-            isAnimating={isLikeAnimating}
-            isVoted={isLiked}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
-          />
-          <VoteButton
-            type="dislike"
-            count={postContent?.countDislikes}
-            isAnimating={isDislikeAnimating}
-            isVoted={isDisliked}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
-          />
+        <div className="flex justify">
+          <Form method="post" onSubmit={handleVoteSubmit} className="flex items-center p-2 rounded">
+            <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+            <input type="hidden" name="action" value="votePost" />
+            <Turnstile
+              siteKey={CF_TURNSTILE_SITEKEY}
+              options={{"size":"invisible"}}
+              onSuccess={() => setIsValidUser(true)}
+            />
+            <VoteButton
+              type="like"
+              count={postContent?.countLikes}
+              isAnimating={isLikeAnimating}
+              isVoted={isLiked}
+              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
+            />
+            <VoteButton
+              type="dislike"
+              count={postContent?.countDislikes}
+              isAnimating={isDislikeAnimating}
+              isVoted={isDisliked}
+              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
+            />
         </Form>
+      </div>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
         </div>
