@@ -8,15 +8,6 @@ export default {
     },
     extend: {
       keyframes: {
-        spin: {
-          '0%': { transform: 'rotate(0deg)', color: '#ff0000' },
-          '16%': { transform: 'rotate(60deg)', color: '#ff7f00' },
-          '33%': { transform: 'rotate(120deg)', color: '#ffff00' },
-          '50%': { transform: 'rotate(180deg)', color: '#00ff00' },
-          '66%': { transform: 'rotate(240deg)', color: '#0000ff' },
-          '83%': { transform: 'rotate(300deg)', color: '#4b0082' },
-          '100%': { transform: 'rotate(360deg)', color: '#9400d3' },
-        },
         like: {
           '0%': { transform: 'scale(1)', color: 'inherit' },
           '50%': { transform: 'scale(1.5)', color: '#0000ff' },
@@ -27,11 +18,16 @@ export default {
           '50%': { transform: 'scale(1.5)', color: '#ff0000' },
           '100%': { transform: 'scale(1.2)', color: '#ff0000' },
         },
+        voteSpin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        }
       },
       animation: {
         spin: 'spin 1s linear',
         like: 'like 1s ease-in-out',
         dislike: 'dislike 1s ease-in-out',
+        voteSpin: 'voteSpin 0.5s ease-in-out',
       },
     },
     fontSize: {

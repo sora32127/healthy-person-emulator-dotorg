@@ -248,11 +248,11 @@ export default function Component() {
         type="submit"
         name="voteType"
         value={type}
-        className={`flex items-center rounded-md px-2 py-2 mx-1 ${
+        className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
           !isValidUser
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
             : isAnimating
-            ? 'animate-spin bg-base-300'
+            ? 'animate-voteSpin bg-base-300'
             : isVoted
             ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
             : 'bg-base-300 hover:bg-base-200'
