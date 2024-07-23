@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate } from "@remix-run/react";
+import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -127,7 +127,6 @@ export default function Component() {
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
-  const [turnStileToken, setTurnStileToken] = useState("");
   const [isValidUser, setIsValidUser] = useState(false);
 
   const submit = useSubmit();
@@ -141,7 +140,13 @@ export default function Component() {
     return navigate("/")
   }
 
-  const handleVoteOnClient = async (voteType: "like" | "dislike") => {
+  const handleVoteSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const voteType = formData.get("voteType") as "like" | "dislike";
+    const cfTurnstileResponse = formData.get("cf-turnstile-response") as string;
+
     if (voteType === "like") {
       setIsLikeAnimating(true);
       setTimeout(() => {
@@ -155,12 +160,10 @@ export default function Component() {
         setIsDislikeAnimating(false);
       }, 1000);
     }
-    const formData = new FormData();
+
     formData.append("postId", postContent?.postId.toString() || "");
-    formData.append("voteType", voteType);
     formData.append("action", "votePost");
-    formData.append("cf-turnstile-response", turnStileToken);
-    console.log("token", turnStileToken)
+    formData.append("cf-turnstile-response", cfTurnstileResponse);
 
     fetcher.submit(formData, {
       method: "post",
@@ -238,14 +241,12 @@ export default function Component() {
     return 0;
   })
 
-  const handleTurnStileSuccess = (token: string) => {
-    setTurnStileToken(token);
-    setIsValidUser(true);
-  }
-
-  const VoteButton = ({ type, count, isAnimating, isVoted, onClick, disabled }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, onClick: () => void, disabled: boolean }) => (
+  const VoteButton = ({ type, count, isAnimating, isVoted, disabled }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean }) => (
     <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
       <button
+        type="submit"
+        name="voteType"
+        value={type}
         className={`flex items-center rounded-md px-2 py-2 ${
           !isValidUser
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
@@ -255,7 +256,6 @@ export default function Component() {
             ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
             : 'bg-base-300 hover:bg-base-200'
         }`}
-        onClick={onClick}
         disabled={disabled}
       >
         {!isValidUser && (
@@ -275,11 +275,7 @@ export default function Component() {
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        <Turnstile
-          siteKey={CF_TURNSTILE_SITEKEY}
-          onSuccess={(token) => handleTurnStileSuccess(token)}
-          options={{"size":"invisible"}}
-        />
+        
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
@@ -302,13 +298,19 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="flex items-center p-2 rounded space-x-4">
+        <Form method="post" onSubmit={handleVoteSubmit} className="flex items-center p-2 rounded space-x-4">
+          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+          <input type="hidden" name="action" value="votePost" />
+          <Turnstile
+            siteKey={CF_TURNSTILE_SITEKEY}
+            options={{"size":"invisible"}}
+            onSuccess={() => setIsValidUser(true)}
+          />
           <VoteButton
             type="like"
             count={postContent?.countLikes}
             isAnimating={isLikeAnimating}
             isVoted={isLiked}
-            onClick={() => handleVoteOnClient("like")}
             disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
           />
           <VoteButton
@@ -316,10 +318,9 @@ export default function Component() {
             count={postContent?.countDislikes}
             isAnimating={isDislikeAnimating}
             isVoted={isDisliked}
-            onClick={() => handleVoteOnClient("dislike")}
             disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
           />
-        </div>
+        </Form>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
         </div>
