@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate } from "@remix-run/react";
+import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
@@ -140,7 +140,14 @@ export default function Component() {
     return navigate("/")
   }
 
-  const handleVoteOnClient = async (voteType: "like" | "dislike") => {
+  const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const voteType = button.value as "like" | "dislike";
+    const form = button.closest('form') as HTMLFormElement;
+    const formData = new FormData(form);
+    const cfTurnstileResponse = formData.get("cf-turnstile-response") as string;
+
     if (voteType === "like") {
       setIsLikeAnimating(true);
       setTimeout(() => {
@@ -154,10 +161,11 @@ export default function Component() {
         setIsDislikeAnimating(false);
       }, 1000);
     }
-    const formData = new FormData();
+
     formData.append("postId", postContent?.postId.toString() || "");
-    formData.append("voteType", voteType);
     formData.append("action", "votePost");
+    formData.append("cf-turnstile-response", cfTurnstileResponse);
+    formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
@@ -197,6 +205,8 @@ export default function Component() {
     });
   };
 
+  const isCommentOpen = postContent?.commentStatus === "open";
+
   const renderComments = (parentId: number = 0, level: number = 0) => {
     return comments
       .filter((comment) => comment.commentParent === parentId)
@@ -213,39 +223,14 @@ export default function Component() {
             likedComments={likedComments}
             dislikedComments={dislikedComments}
             likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
-            dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
+            dislikesCount={commentVoteData.find((data: { commentId: number; voteType: number; }) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
-            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
       ));
   };
-
-  const handleDeletePost = async () => {
-    const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
-    formData.append("action", "deletePost");
-
-    await submit(formData, {
-      method: "post",
-      action: `/archives/${postContent?.postId}`,
-    });
-  };
-
-  const isCommentOpen = postContent?.commentStatus === "open";
-
-  const handleCommentStatus = async () => {
-    const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
-    formData.append("action", "changeCommentStatus");
-
-    await submit(formData, {
-      method: "post",
-      action: `/archives/${postContent?.postId}`,
-    });
-  }
 
   const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
     if (a.dimTag.tagName > b.dimTag.tagName) {
@@ -257,19 +242,42 @@ export default function Component() {
     return 0;
   })
 
-  const handleTurnstileValidation = (isValid: boolean) => {
-    setIsValidUser(isValid)
-  }
+  const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
+    <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
+      <button
+        type="submit"
+        name="voteType"
+        value={type}
+        className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
+          !isValidUser
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
+            : isAnimating
+            ? 'animate-voteSpin bg-base-300'
+            : isVoted
+            ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
+            : 'bg-base-300 hover:bg-base-200'
+        }`}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {!isValidUser && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+          </div>
+        )}
+        {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
+        <p className="ml-2">
+          {count}
+        </p>
+      </button>
+    </div>
+  );
 
   return (
     <>
       <div>
         <H1>{postContent && postContent.postTitle}</H1>
-        <Turnstile
-          siteKey={CF_TURNSTILE_SITEKEY}
-          onSuccess={() => handleTurnstileValidation(true)}
-          options={{"size":"invisible"}}
-        />
+        
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
@@ -292,35 +300,32 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="flex items-center p-2 rounded">
-        <div className="tooltip" data-tip ="この記事を高評価する">
-          <button
-            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isLikeAnimating ? 'animate-spin' : isLiked ? "text-blue-500 font-bold" : ""
-            }`}
-            onClick={() => handleVoteOnClient("like")}
+        <div className="flex justify">
+        <Form method="post" className="flex items-center p-2 rounded">
+          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+          <input type="hidden" name="action" value="votePost" />
+          <Turnstile
+            siteKey={CF_TURNSTILE_SITEKEY}
+            options={{"size":"invisible"}}
+            onSuccess={() => setIsValidUser(true)}
+          />
+          <VoteButton
+            type="like"
+            count={postContent?.countLikes}
+            isAnimating={isLikeAnimating}
+            isVoted={isLiked}
             disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
-          >
-            <ThumbsUpIcon />
-            <p className="ml-2">
-              {postContent?.countLikes}
-            </p>
-          </button>
-        </div>
-        <div className="tooltip" data-tip ="この記事を低評価する">
-          <button
-            className={`flex items-center rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isDislikeAnimating ? 'animate-spin' : isDisliked ? "text-red-500 font-bold" : ""
-            }`}
-            onClick={() => handleVoteOnClient("dislike")}
+            onClick={handleVoteSubmit}
+          />
+          <VoteButton
+            type="dislike"
+            count={postContent?.countDislikes}
+            isAnimating={isDislikeAnimating}
+            isVoted={isDisliked}
             disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
-          >
-            <ThumbsDownIcon />
-            <p className="ml-2">
-              {postContent?.countDislikes}
-            </p>
-          </button>
-        </div>
+            onClick={handleVoteSubmit}
+          />
+        </Form>
       </div>
         <div className="postContent">
             {postContent && parser(postContent.postContent)}
@@ -389,35 +394,11 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
-          CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>
         {renderComments()}
       </div>
-      {isAdmin && (
-        <div className="my-40">
-          <button
-            onClick={handleDeletePost}
-            className="bg-red-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
-            type="submit"
-            name="action"
-            value="deletePost"
-          >
-            記事を削除する
-          </button>
-          <button
-            onClick={handleCommentStatus}
-            className="bg-purple-500 text-white rounded px-4 py-2 mx-1 my-1 w-full"
-            type="submit"
-            name="action"
-            value="changeCommentStatus"
-          >
-            コメントステータスを変更
-          </button>
-
-        </div>
-        )}
     </div>
   </>
   );
@@ -427,11 +408,22 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
   const postId = Number(formData.get("postId"));
+  const token = formData.get("cf-turnstile-response") as string;
+
+  const url = new URL(request.url);
+  const origin = url.origin;
+
   const ip = getClientIPAddress(request) || "";
   const userIpHashString = await getUserIpHashString(ip);
 
   switch (action) {
     case "votePost":
+      const turnstileValidation = await validateTurnStile(token, origin);
+      const turnstileValidationData = await turnstileValidation.json();
+    
+      if (turnstileValidationData.success != true) {
+        return json({ success: false, message : "Invalid Request" });
+      }
       return handleVotePost(formData, postId, userIpHashString, request);
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
@@ -457,10 +449,14 @@ async function handleVotePost(
   userIpHashString: string,
   request: Request
 ) {
+  
   const voteType = formData.get("voteType")?.toString();
+
   if (voteType !== "like" && voteType !== "dislike") {
     return json({ error: "Invalid vote type" }, { status: 400 });
   }
+  
+
 
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHistory.create({
@@ -550,6 +546,24 @@ async function handleSubmitComment(formData: FormData, postId: number) {
     console.error(e);
     return json({ error: "Internal Server Error" }, { status: 500 });
   }
+}
+
+async function validateTurnStile(token: string, origin: string) {
+  const formData = new FormData();
+  formData.append('cf-turnstile-response', token);
+
+  const res = await fetch(`${origin}/api/verify`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!data.success) {
+    return json({ success: false, message : "Invalid Request" });
+  }
+
+  return json({ success: true, message : "Valid Request" });
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
