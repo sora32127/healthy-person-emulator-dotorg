@@ -223,7 +223,7 @@ export default function Component() {
             likedComments={likedComments}
             dislikedComments={dislikedComments}
             likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
-            dislikesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
+            dislikesCount={commentVoteData.find((data: { commentId: number; voteType: number; }) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
             isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
           />
