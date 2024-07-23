@@ -6,8 +6,6 @@ const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY
 export async function action({ request }: ActionFunctionArgs){
     const formData = await request.formData();
     const token = formData.get('cf-turnstile-response') as string;
-    console.log("token", token)
-    console.log("secret", CF_TURNSTILE_SECRET_KEY)
     if (!token || !CF_TURNSTILE_SECRET_KEY) {
         return new Response(JSON.stringify({ success: false, message: 'Invalid request' }), {
             status: 400,

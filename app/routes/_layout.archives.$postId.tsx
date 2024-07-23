@@ -449,12 +449,8 @@ async function handleVotePost(
   userIpHashString: string,
   request: Request
 ) {
-  console.log("invoked")
   
   const voteType = formData.get("voteType")?.toString();
-  console.log("votetype",voteType)
-  console.log("postId",postId)
-  console.log("userIpHashString",userIpHashString)
 
   if (voteType !== "like" && voteType !== "dislike") {
     return json({ error: "Invalid vote type" }, { status: 400 });
@@ -562,8 +558,6 @@ async function validateTurnStile(token: string, origin: string) {
   });
 
   const data = await res.json();
-
-  console.log(data)
 
   if (!data.success) {
     return json({ success: false, message : "Invalid Request" });
