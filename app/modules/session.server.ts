@@ -3,7 +3,7 @@ import { setVisitorCookieData } from "./visitor.server";
 
 const { getSession, commitSession, destroySession } = createCookieSessionStorage({
     cookie: {
-        name: "__session",
+        name: "__healthy_person_emulator",
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
         path: "/",
