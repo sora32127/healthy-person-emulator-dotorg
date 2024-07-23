@@ -140,11 +140,12 @@ export default function Component() {
     return navigate("/")
   }
 
-  const handleVoteSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const form = event.currentTarget;
+    const button = event.currentTarget;
+    const voteType = button.value as "like" | "dislike";
+    const form = button.closest('form') as HTMLFormElement;
     const formData = new FormData(form);
-    const voteType = formData.get("voteType") as "like" | "dislike";
     const cfTurnstileResponse = formData.get("cf-turnstile-response") as string;
 
     if (voteType === "like") {
@@ -164,6 +165,7 @@ export default function Component() {
     formData.append("postId", postContent?.postId.toString() || "");
     formData.append("action", "votePost");
     formData.append("cf-turnstile-response", cfTurnstileResponse);
+    formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
@@ -240,7 +242,7 @@ export default function Component() {
     return 0;
   })
 
-  const VoteButton = ({ type, count, isAnimating, isVoted, disabled }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean }) => (
+  const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
     <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
       <button
         type="submit"
@@ -256,6 +258,7 @@ export default function Component() {
             : 'bg-base-300 hover:bg-base-200'
         }`}
         disabled={disabled}
+        onClick={onClick}
       >
         {!isValidUser && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -298,28 +301,30 @@ export default function Component() {
           </div>
         </div>
         <div className="flex justify">
-          <Form method="post" onSubmit={handleVoteSubmit} className="flex items-center p-2 rounded">
-            <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
-            <input type="hidden" name="action" value="votePost" />
-            <Turnstile
-              siteKey={CF_TURNSTILE_SITEKEY}
-              options={{"size":"invisible"}}
-              onSuccess={() => setIsValidUser(true)}
-            />
-            <VoteButton
-              type="like"
-              count={postContent?.countLikes}
-              isAnimating={isLikeAnimating}
-              isVoted={isLiked}
-              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
-            />
-            <VoteButton
-              type="dislike"
-              count={postContent?.countDislikes}
-              isAnimating={isDislikeAnimating}
-              isVoted={isDisliked}
-              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
-            />
+        <Form method="post" className="flex items-center p-2 rounded">
+          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+          <input type="hidden" name="action" value="votePost" />
+          <Turnstile
+            siteKey={CF_TURNSTILE_SITEKEY}
+            options={{"size":"invisible"}}
+            onSuccess={() => setIsValidUser(true)}
+          />
+          <VoteButton
+            type="like"
+            count={postContent?.countLikes}
+            isAnimating={isLikeAnimating}
+            isVoted={isLiked}
+            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
+            onClick={handleVoteSubmit}
+          />
+          <VoteButton
+            type="dislike"
+            count={postContent?.countDislikes}
+            isAnimating={isDislikeAnimating}
+            isVoted={isDisliked}
+            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
+            onClick={handleVoteSubmit}
+          />
         </Form>
       </div>
         <div className="postContent">
@@ -444,10 +449,18 @@ async function handleVotePost(
   userIpHashString: string,
   request: Request
 ) {
+  console.log("invoked")
+  
   const voteType = formData.get("voteType")?.toString();
+  console.log("votetype",voteType)
+  console.log("postId",postId)
+  console.log("userIpHashString",userIpHashString)
+
   if (voteType !== "like" && voteType !== "dislike") {
     return json({ error: "Invalid vote type" }, { status: 400 });
   }
+  
+
 
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHistory.create({
