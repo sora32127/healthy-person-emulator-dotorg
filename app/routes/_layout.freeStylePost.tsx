@@ -1,7 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { Form, redirect, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { ClientOnly } from "remix-utils/client-only";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { H1, H2 } from "~/components/Headings";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
@@ -97,51 +96,46 @@ export default function FreeStylePost() {
 
 
     return (
-        <ClientOnly fallback={<div>Loading...</div>}>
-            {() => (
-                <div>
-                    <H1>自由記述投稿</H1>
-                    <p>テンプレートを利用しない、自由形式の記事投稿が可能です。</p>
-                    <Form method="post">
-                    <ClearLocalStorageButton clearInputs={handleConfirmClear} />
-                    <H2>記事タイトル</H2>
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => handleTitleChange(e.target.value)}
-                        placeholder="記事タイトルを入力..."
-                        className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
-                    />
-                    {!title && <p className="text-error">タイトルを入力してください。</p>}
-                    <H2>記事本文</H2>
-                    <MarkdownEditor value={markdownContent} onChange={handleMarkdownChange} />
-                    {!markdownContent && <p className="text-error">本文を入力してください。</p>}
-                    <TagSelectionBox
-                        onTagsSelected={handleTagSelection}
-                        parentComponentStateValues={selectedTags}
-                        allTagsOnlyForSearch={allTagsForSearch}
-                    />
-                    <Turnstile siteKey={CFTurnstileSiteKey} onSuccess={() => handleTurnstileValidation(true)}/>
-                    <button
-                        type="submit"
-                        className={`rounded-md block w-full px-4 py-2 text-center my-4 ${
-                        isButtonDisabled
-                            ? 'bg-gray-400 cursor-not-allowed text-white'
-                            : 'btn-primary'
-                        }`}
-                        disabled={isButtonDisabled}
-                    >
-                    投稿する
-                    </button>
-                    <input type="hidden" name="title" value={title} />
-                    <input type="hidden" name="markdownContent" value={markdownContent} />
-                    <input type="hidden" name="selectedTags" value={selectedTags.join(',')} />
-                    </Form>
-                </div>
-            )}
-        </ClientOnly>
+        <div>
+            <H1>自由記述投稿</H1>
+            <p>テンプレートを利用しない、自由形式の記事投稿が可能です。</p>
+            <Form method="post">
+            <ClearLocalStorageButton clearInputs={handleConfirmClear} />
+            <H2>記事タイトル</H2>
+            <input
+                type="text"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="記事タイトルを入力..."
+                className="w-full px-3 py-2 placeholder-slate-500 border rounded-lg focus:outline-none mb-4"
+            />
+            {!title && <p className="text-error">タイトルを入力してください。</p>}
+            <H2>記事本文</H2>
+            <MarkdownEditor value={markdownContent} onChange={handleMarkdownChange} />
+            {!markdownContent && <p className="text-error">本文を入力してください。</p>}
+            <TagSelectionBox
+                onTagsSelected={handleTagSelection}
+                parentComponentStateValues={selectedTags}
+                allTagsOnlyForSearch={allTagsForSearch}
+            />
+            <Turnstile siteKey={CFTurnstileSiteKey} onSuccess={() => handleTurnstileValidation(true)}/>
+            <button
+                type="submit"
+                className={`rounded-md block w-full px-4 py-2 text-center my-4 ${
+                isButtonDisabled
+                    ? 'bg-gray-400 cursor-not-allowed text-white'
+                    : 'btn-primary'
+                }`}
+                disabled={isButtonDisabled}
+            >
+            投稿する
+            </button>
+            <input type="hidden" name="title" value={title} />
+            <input type="hidden" name="markdownContent" value={markdownContent} />
+            <input type="hidden" name="selectedTags" value={selectedTags.join(',')} />
+            </Form>
+    </div>
     )
-
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -200,7 +194,7 @@ export async function action({ request }: ActionFunctionArgs) {
         return newPost;
     });
 
-    await createEmbedding({ postId: Number(newPost.postId), postContent: newPost.postContent });
+    await createEmbedding({ postId: Number(newPost.postId), postContent: newPost.postContent, postTitle: newPost.postTitle });
 
     return redirect(`/archives/${newPost.postId}`);
 }
