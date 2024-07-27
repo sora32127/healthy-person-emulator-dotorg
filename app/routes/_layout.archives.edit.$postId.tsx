@@ -214,7 +214,7 @@ export default function EditPost() {
                 <div className="mt-2">
                   <p className="my-4">変更前：</p>
                   <div className="flex flex-wrap">
-                    {oldTags.map((tag) => (
+                    {oldTags.map((tag: string) => (
                       <span key={tag} className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2">
                         {tag}
                       </span>
@@ -279,7 +279,7 @@ export default function EditPost() {
                 </tr>
               </thead>
               <tbody>
-              {editHistory && editHistory.map((edit) => (
+              {editHistory && editHistory.map((edit: { postRevisionNumber: number; postEditDateJst: Date; editorUserId: string; postTitleBeforeEdit: string; postTitleAfterEdit: string; postContentBeforeEdit: string; postContentAfterEdit: string; }) => (
                  <tr key={edit.postRevisionNumber}>
                    <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
                    <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
