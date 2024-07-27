@@ -6,6 +6,7 @@ import { H1, H2 } from "~/components/Headings";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { prisma } from "~/modules/db.server";
+// @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';
 import { ActionFunctionArgs } from "@remix-run/node";
 import { createEmbedding } from "~/modules/embedding.server";
@@ -93,6 +94,10 @@ export default function FreeStylePost() {
 
 
     const isButtonDisabled = !title || !markdownContent || !isValidUser;
+
+    if (!CFTurnstileSiteKey) {
+        return <div>Turnstileのサイトキーが設定されていません。</div>;
+    }
 
 
     return (
