@@ -38,38 +38,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
 
     onChange(newText);
     textarea.focus();
-    textarea.setSelectionRange(selectionStart + prefix.length, selectionStart + prefix.length);
+    textarea.setSelectionRange(selectionStart + prefix.length, selectionEnd + prefix.length);
   }, [value, onChange]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== 'Enter') return;
-
-    const { selectionStart } = e.currentTarget;
-    const currentLine = value.slice(0, selectionStart).split('\n').pop() || '';
-    
-    const orderedListMatch = currentLine.match(/^(\d+)\.\s/);
-    const unorderedListMatch = currentLine.match(/^[-*]\s/);
-
-    if (orderedListMatch) {
-      e.preventDefault();
-      insertMarkdown(`\n${parseInt(orderedListMatch[1]) + 1}. `);
-    } else if (unorderedListMatch) {
-      e.preventDefault();
-      insertMarkdown(`\n${unorderedListMatch[0]}`);
-    }
-  }, [value, insertMarkdown]);
-
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, []);
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [value, adjustTextareaHeight]);
 
   const toolbarItems: ToolbarItem[] = [
     { label: '見出し1', icon: FaHeading, action: () => insertMarkdown('# ') },
@@ -155,12 +125,8 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             <textarea
               ref={textareaRef}
               value={value}
-              onChange={(e) => {
-                onChange(e.target.value);
-                adjustTextareaHeight();
-              }}
-              onKeyDown={handleKeyDown}
-              className="textarea textarea-bordered w-full min-h-[16rem] overflow-hidden"
+              onChange={(e) => onChange(e.target.value)}
+              className="textarea textarea-bordered w-full min-h-[32rem]"
             />
           ) : (
             <div className="max-w-none markdownEditorPreview">
