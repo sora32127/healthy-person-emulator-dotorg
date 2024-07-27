@@ -4,7 +4,7 @@ import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { H1, H2 } from "~/components/Headings";
 import { ClientOnly } from "remix-utils/client-only";
-import MarkdownEditor from "~/components/MarkdownEditor.client";
+import { MarkdownEditor } from "~/components/MarkdownEditor";
 import { useState } from "react";
 // @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';

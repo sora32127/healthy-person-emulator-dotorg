@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ClientOnly } from "remix-utils/client-only";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { H1, H2 } from "~/components/Headings";
-import MarkdownEditor from "~/components/MarkdownEditor.client";
+import { MarkdownEditor } from "~/components/MarkdownEditor";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { prisma } from "~/modules/db.server";
 import { marked } from 'marked';
@@ -114,9 +114,7 @@ export default function FreeStylePost() {
                     />
                     {!title && <p className="text-error">タイトルを入力してください。</p>}
                     <H2>記事本文</H2>
-                    <MarkdownEditor
-                        defaultValue={markdownContent}
-                        handleValueChange={handleMarkdownChange}/>
+                    <MarkdownEditor value={markdownContent} onChange={handleMarkdownChange} />
                     {!markdownContent && <p className="text-error">本文を入力してください。</p>}
                     <TagSelectionBox
                         onTagsSelected={handleTagSelection}
