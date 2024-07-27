@@ -40,6 +40,10 @@ h1 {
   @apply mb-1;
 }
 
+.postContent ol, .markdownEditorPreview ol {
+  @apply list-decimal list-outside mb-4 ml-8;
+}
+
 .postContent, .markdownEditorPreview {
   @apply text-lg;
 }
