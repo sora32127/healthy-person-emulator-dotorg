@@ -555,11 +555,12 @@ async function validateRequest(token: string, origin: string) {
     body: formData,
   });
 
-  const data = await res.json();
-
-  if (data.success) {
-    return true;
-  } else {
+  try {
+    const data = await res.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error verifying Turnstile response:', error)
+    console.log(res)
     return false;
   }
 }
