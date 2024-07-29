@@ -418,10 +418,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   switch (action) {
     case "votePost":
-      const turnstileValidation = await validateTurnStile(token, origin);
-      const turnstileValidationData = await turnstileValidation.json();
-    
-      if (turnstileValidationData.success != true) {
+      const isValidRequest = await validateRequest(token, origin);
+      if (!isValidRequest) {
         return json({ success: false, message : "Invalid Request" });
       }
       return handleVotePost(formData, postId, userIpHashString, request);
@@ -548,7 +546,7 @@ async function handleSubmitComment(formData: FormData, postId: number) {
   }
 }
 
-async function validateTurnStile(token: string, origin: string) {
+async function validateRequest(token: string, origin: string) {
   const formData = new FormData();
   formData.append('cf-turnstile-response', token);
 
@@ -559,11 +557,11 @@ async function validateTurnStile(token: string, origin: string) {
 
   const data = await res.json();
 
-  if (!data.success) {
-    return json({ success: false, message : "Invalid Request" });
+  if (data.success) {
+    return true;
+  } else {
+    return false;
   }
-
-  return json({ success: true, message : "Valid Request" });
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
