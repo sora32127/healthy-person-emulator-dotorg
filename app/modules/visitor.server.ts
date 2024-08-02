@@ -1,4 +1,4 @@
-import { createCookie } from '@remix-run/node';
+import { createCookie } from '@remix-run/cloudflare';
 
 const visitorCookie = createCookie('visitor-cookie', { maxAge: 60 * 5 });
 

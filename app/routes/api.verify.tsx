@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json } from "@remix-run/node"
+import { ActionFunctionArgs, json } from "@remix-run/cloudflare"
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY

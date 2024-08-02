@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/cloudflare";
 import { NavLink } from "@remix-run/react";
 import { H1, H2, H3 } from "~/components/Headings";
 

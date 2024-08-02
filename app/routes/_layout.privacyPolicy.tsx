@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/cloudflare";
 import { H1, H2 } from "~/components/Headings";
 
 export default function PrivacyPolicy(){

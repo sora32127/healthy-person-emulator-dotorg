@@ -1,4 +1,4 @@
-import { redirect, LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, LoaderFunctionArgs } from "@remix-run/cloudflare";
 
 export function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);

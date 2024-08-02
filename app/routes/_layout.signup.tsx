@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/cloudflare";
 import { SignUp } from "@clerk/remix";
 
 export default function Component() {

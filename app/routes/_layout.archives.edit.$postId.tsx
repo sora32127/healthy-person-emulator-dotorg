@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/cloudflare";
 import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"

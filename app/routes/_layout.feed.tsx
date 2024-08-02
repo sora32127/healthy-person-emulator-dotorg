@@ -1,6 +1,6 @@
 import { Form, useLoaderData } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/cloudflare";
 import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 

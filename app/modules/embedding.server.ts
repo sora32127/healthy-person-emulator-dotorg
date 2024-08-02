@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { json } from "@remix-run/cloudflare";
 import { OpenAI } from "openai";
 import { prisma } from "./db.server";
 

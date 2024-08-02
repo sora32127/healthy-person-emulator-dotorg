@@ -1,4 +1,4 @@
-import { MetaFunction, json } from "@remix-run/node";
+import { MetaFunction, json } from "@remix-run/cloudflare";
 import { prisma } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";

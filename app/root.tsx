@@ -9,7 +9,7 @@ import {
   useRouteError,
 } from "@remix-run/react";
 
-import type { LinksFunction, LoaderFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction } from "@remix-run/cloudflare";
 import stylesheet from "~/tailwind.css?url";
 import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ClerkApp } from "@clerk/remix";

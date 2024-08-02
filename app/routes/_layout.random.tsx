@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import { MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 import CommentShowCard from "~/components/CommentShowCard";
 import { H1 } from "~/components/Headings";
