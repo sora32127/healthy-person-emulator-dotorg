@@ -5,7 +5,7 @@ import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
+import { getClientIPAddress } from "~/modules/session.server";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H1, H2 } from "~/components/Headings";
@@ -23,6 +23,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
+    console.log(await getClientIPAddress(request));
     // Wordpress時代のURLと合わせるため、以下の形式のURLを想定する
     // https://healthy-person-emulator.org/archives/${postId}?q...
     const postId = url.pathname.split("/")[2];
