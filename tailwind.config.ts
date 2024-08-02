@@ -1,9 +1,67 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss'
 
 export default {
-  content: ["./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}"],
+  content: ['./app/**/*.tsx'],
   theme: {
-    extend: {},
+    fontFamily: {
+      "noto-sans" : ["Noto Sans JP"],
+    },
+    extend: {
+      keyframes: {
+        like: {
+          '0%': { transform: 'scale(1)', color: 'inherit' },
+          '50%': { transform: 'scale(1.5)', color: '#0000ff' },
+          '100%': { transform: 'scale(1.2)', color: '#0000ff' },
+        },
+        dislike: {
+          '0%': { transform: 'scale(1)', color: 'inherit' },
+          '50%': { transform: 'scale(1.5)', color: '#ff0000' },
+          '100%': { transform: 'scale(1.2)', color: '#ff0000' },
+        },
+        voteSpin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        }
+      },
+      animation: {
+        spin: 'spin 1s linear',
+        like: 'like 1s ease-in-out',
+        dislike: 'dislike 1s ease-in-out',
+        voteSpin: 'voteSpin 0.5s ease-in-out',
+      },
+    },
+    fontSize: {
+      "4xl" : "32px",
+      "3xl" : "28px",
+      "2xl" : "24px",
+      "xl" : "20px",
+      "lg" : "16px",
+    }
   },
-  plugins: [],
-} satisfies Config;
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        light: {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          ...require("daisyui/src/theming/themes")["light"],
+          primary: "#99D9EA",
+          secondary: "#264AF4",
+          tertiary: "#00118F",
+          info: "#00118F",
+          error: "#B91C1C"
+        },
+      },
+      {
+        dark: {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          ...require("daisyui/src/theming/themes")["dark"],
+          primary: "#99D9EA",
+          secondary: "#264AF4",
+          tertiary: "#00118F",
+          "base-100": "#0F0F0F",
+        },
+      },
+    ],
+  }
+} satisfies Config

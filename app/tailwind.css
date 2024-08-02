@@ -1,3 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+h1 {
+  @apply text-4xl font-bold;
+}
+
+.postContent h3, .markdownEditorPreview h3 {
+  @apply text-xl font-bold mb-6 mt-10 border-b border-base-content pb-2;
+}
+
+.postContent h4, .markdownEditorPreview h4 {
+  @apply text-lg font-bold mb-4 mt-10 border-b border-base-content pb-2;
+}
+
+.postContent h5, .markdownEditorPreview h5 {
+  @apply text-lg font-bold mb-4 mt-10 border-b border-base-content pb-2; 
+}
+
+.postContent table, .markdownEditorPreview table {
+  @apply w-full border-collapse mb-4;
+}
+
+.postContent table td, .markdownEditorPreview table td {
+  @apply border border-gray-300 px-4 py-2;
+}
+
+.postContent table td:first-child, .markdownEditorPreview table td:first-child {
+  @apply font-bold;
+}
+
+.postContent ul, .markdownEditorPreview ul, .templateSubmitForm ul{
+  @apply list-disc list-outside mb-4 ml-8;
+}
+
+.postContent li, .markdownEditorPreview li, .templateSubmitForm li {
+  @apply mb-1;
+}
+
+.postContent ol, .markdownEditorPreview ol {
+  @apply list-decimal list-outside mb-4 ml-8;
+}
+
+.postContent, .markdownEditorPreview {
+  @apply text-lg;
+}
+
+.postContent a, .markdownEditorPreview a{
+  @apply text-info underline underline-offset-4;
+}
+
+.markdownEditorPreview th {
+  @apply bg-inherit text-left font-normal 
+
+}
+
+svg {
+  @apply fill-current;
+}
+
+.btn-primary {
+  @apply bg-primary;
+  @apply text-slate-950;
+  @apply hover:bg-teal-100;
+  @apply font-bold
+}
+
+.btn-secondary {
+  @apply bg-base-200;
+  @apply text-base-content;
+  @apply hover:bg-base-300;
+  @apply font-bold;
+}
