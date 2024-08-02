@@ -1,14 +1,14 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { Form, redirect, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
+import { getClientIPAddress } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { prisma } from "~/modules/db.server";
 // @ts-expect-error : markedの型定義が存在しないため、anyとしている
 import { marked } from 'marked';
-import { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import { ActionFunctionArgs, MetaFunction } from "@remix-run/cloudflare";
 import { createEmbedding } from "~/modules/embedding.server";
 import ClearLocalStorageButton from "~/components/SubmitFormComponents/ClearLocalStorageButton";
 

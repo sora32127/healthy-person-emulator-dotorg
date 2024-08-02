@@ -10,11 +10,11 @@ import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationCheckBox';
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
-import { ActionFunctionArgs, json } from '@remix-run/node';
+import { ActionFunctionArgs, json } from '@remix-run/cloudflare';
 import { Form, MetaFunction, NavLink, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
 import { prisma } from '~/modules/db.server';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { getClientIPAddress } from '~/modules/session.server';
 import { createEmbedding } from '~/modules/embedding.server';
 import { Modal } from '~/components/Modal';
 

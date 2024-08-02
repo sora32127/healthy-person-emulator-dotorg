@@ -1,12 +1,11 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/cloudflare";
 import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
-import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
+import { commitSession, getSession, isAdminLogin, getClientIPAddress } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox from "~/components/CommentInputBox";

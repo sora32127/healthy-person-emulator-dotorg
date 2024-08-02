@@ -1,4 +1,4 @@
-import { createCookieSessionStorage, redirect } from "@remix-run/node";
+import { createCookieSessionStorage, redirect } from "@remix-run/cloudflare";
 import { setVisitorCookieData } from "./visitor.server";
 
 const { getSession, commitSession, destroySession } = createCookieSessionStorage({
@@ -37,4 +37,10 @@ export async function isAdminLogin(request: Request){
     } else {
         return false
     }
+}
+
+export async function getClientIPAddress(request:Request) {
+    const headers = request.headers;
+    const ipAddress = headers.get("X-Forwarded-For");
+    return ipAddress;
 }
