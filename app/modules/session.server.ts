@@ -38,3 +38,11 @@ export async function isAdminLogin(request: Request){
         return false
     }
 }
+
+
+export async function getClientIPAddress(request:Request) {
+    const headers = request.headers;
+    console.log(headers)
+    const ipAddress = headers.get("X-Forwarded-For");
+    return ipAddress;
+}
