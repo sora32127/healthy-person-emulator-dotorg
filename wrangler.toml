@@ -1,4 +1,4 @@
-name = "remix-cloudflare-workers-template"
+name = "healthy-person-emulator"
 
 main = "./server.ts"
 workers_dev = true
