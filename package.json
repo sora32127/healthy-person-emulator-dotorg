@@ -16,8 +16,9 @@
   "dependencies": {
     "@clerk/localizations": "^2.4.5",
     "@clerk/remix": "^4.1.2",
-    "@libsql/client": "^0.8.1",
+    "@libsql/client": "^0.6.0",
     "@marsidev/react-turnstile": "^0.5.3",
+    "@prisma/adapter-libsql": "^5.17.0",
     "@prisma/client": "^5.12.0",
     "@remix-run/cloudflare": "^2.11.0",
     "@remix-run/react": "^2.8.1",
@@ -39,7 +40,8 @@
     "react-icons": "^5.2.1",
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",
-    "wrangler": "^3.68.0"
+    "wrangler": "^3.68.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.9.0",
