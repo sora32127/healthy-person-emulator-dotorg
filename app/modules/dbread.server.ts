@@ -3,6 +3,7 @@ import { AppLoadContext } from "@remix-run/cloudflare";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { z } from "zod";
+import { json } from "@remix-run/cloudflare";
 
 interface Env {
     TURSO_DATABASE_URL: string;
@@ -34,18 +35,44 @@ const CommentShowCardSchema = z.object({
 
 type CommentShowCard = z.infer<typeof CommentShowCardSchema>;
 
+// Single Instanceになるようにしないと、以下のようなエラーが出る
+// warn(prisma-client) This is the 10th instance of Prisma Client being started. Make sure this is intentional.
+// このようなエラーを避けるため、Singletonパターンで実装している
+// https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
+declare global {
+    var __prisma: PrismaClient | undefined;
+}
 
-function getTursoClient(serverContext: AppLoadContext){
-    const env = serverContext.cloudflare.env as Env;
-    const TURSO_DATABASE_URL = env.TURSO_DATABASE_URL;
-    const TURSO_AUTH_TOKEN = env.TURSO_AUTH_TOKEN;
+let prisma: PrismaClient | undefined;
+
+function createPrismaClient(env: Env): PrismaClient {
     const client = createClient({
-        url: TURSO_DATABASE_URL,
-        authToken: TURSO_AUTH_TOKEN,
+        url: env.TURSO_DATABASE_URL,
+        authToken: env.TURSO_AUTH_TOKEN,
     });
     const adapter = new PrismaLibSQL(client);
-    const prisma = new PrismaClient({ adapter });
+    return new PrismaClient({ adapter });
+}
+
+function getTursoClient(serverContext: AppLoadContext): PrismaClient {
+    if (prisma) {
+        return prisma;
+    }
+
+    const env = serverContext.cloudflare.env as Env;
+    prisma = createPrismaClient(env);
+
+    // 開発環境でのホットリロード対策
+    if (import.meta.env.MODE !== "production") {
+        global.__prisma = prisma;
+    }
+
     return prisma;
+}
+
+// 開発環境での再利用
+if (import.meta.env.MODE !== "production" && global.__prisma) {
+    prisma = global.__prisma;
 }
 
 async function getMostRecentPosts(serverContext: AppLoadContext, count: number = 10): Promise<PostCard[]> {
@@ -198,4 +225,72 @@ async function getMostRecentComments(serverContext: AppLoadContext): Promise<Com
     return comments;
 }
 
-export { getMostRecentPosts, getRecentVotedPosts, getPostsByTagId, PostCardSchema, getMostRecentComments, CommentShowCardSchema }
+async function getPostByIdInArchivePage(serverContext: AppLoadContext, postId: number){
+    const db = getTursoClient(serverContext);
+    const postContent = await db.dimPosts.findFirst({
+        where : { postId },
+        select : {
+            postId: true,
+            postTitle: true,
+            postContent: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            commentStatus: true,
+            ogpImageUrl: true,
+            relPostTags: {
+                select: {
+                    dimTags: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
+        }
+    })
+
+    const comments = await db.dimComments.findMany({
+        where: { postId: postId },
+        orderBy: { commentDateJst: "desc" },
+    });
+
+    const commentVoteData = await db.fctCommentVoteHistory.groupBy({
+        by: ["commentId", "voteType"],
+        _count: { commentId: true },
+        where: {
+            commentId: { in: comments.map((comment) => comment.commentId) },
+        },
+    });
+
+    const similarPosts = [];
+    if (!postContent) return json({
+        status: 404,
+        message: "Post not found",
+    });
+    const tagNames = postContent.relPostTags.map((rel) => rel.dimTags.tagName);
+
+    const prevPost = await db.dimPosts.findFirst({
+        where: { postDateGmt: { lt: postContent.postDateGmt } },
+        orderBy: { postDateGmt: "desc" },
+    });
+
+    const nextPost = await db.dimPosts.findFirst({
+        where: { postDateGmt: { gt: postContent.postDateGmt } },
+        orderBy: { postDateGmt: "asc" },
+    });
+
+    return json({
+        postContent,
+        comments,
+        commentVoteData,
+        similarPosts: [],
+        tagNames,
+        prevPost,
+        nextPost,
+    });
+
+}
+
+
+export { getMostRecentPosts, getRecentVotedPosts, getPostsByTagId, PostCardSchema, getMostRecentComments, CommentShowCardSchema, getPostByIdInArchivePage }
