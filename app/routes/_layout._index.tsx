@@ -1,5 +1,5 @@
-import { MetaFunction, json } from "@remix-run/cloudflare";
-import { prisma } from "~/modules/db.server";
+import { AppLoadContext, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/cloudflare";
+import { getMostRecentComments, getMostRecentPosts, getPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
@@ -22,147 +22,12 @@ export const meta: MetaFunction = () => {
     ];
   };
 
-export async function loader() {
-    const mostRecentPostsRaw = await prisma.dimPosts.findMany({
-        orderBy: { postDateGmt: "desc" },
-        take: 10,
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            rel_post_tags: {
-                select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                        },
-                    },
-                },
-            },
-        },
-    });
-
-    const recentVotedPostsAgg = await prisma.fctPostVoteHistory.groupBy({
-        by: ["postId"],
-        where: { 
-            voteDateGmt : { 
-                gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-                lte: new Date(),
-            },
-            voteTypeInt : { in : [1]}
-        },
-        _count: { voteUserIpHash: true },
-        orderBy: { _count: { voteUserIpHash: "desc" } },
-        take: 10,
-    });
-
-    const recentVotedPostsRaw = await prisma.dimPosts.findMany({
-        where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            rel_post_tags: {
-                select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                        },
-                    },
-                },
-            },
-        },
-    });
-
-    const communityPostsRaw = await prisma.relPostTags.findMany({
-        where: { tagId: { equals: 986 } }, // コミュニティ選のtag_id
-        select : {
-            dim_posts: {
-                select : {
-                    postId: true,
-                    postTitle: true,
-                    postDateGmt: true,
-                    countLikes: true,
-                    countDislikes: true,
-                    rel_post_tags: {
-                    select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                        },
-                    },
-                },
-            },
-        },
-    }},
-    take: 100,
-    orderBy : { dim_posts : { postDateGmt : "desc" }},
-});
-
-    const famedPostsRaw = await prisma.relPostTags.findMany({
-        where: { tagId: { equals: 575 } }, // コミュニティ選のtag_id
-        select : {
-            dim_posts: {
-                select : {
-                    postId: true,
-                    postTitle: true,
-                    postDateGmt: true,
-                    countLikes: true,
-                    countDislikes: true,
-                    rel_post_tags: {
-                    select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                        },
-                    },
-                },
-            },
-        },
-    }}});
-
-    const mostRecentPosts: PostCardProps[] = mostRecentPostsRaw.map((post) => {
-        const tagNames = post.rel_post_tags.map((tag) => tag.dimTag.tagName);
-        return { ...post, tagNames };
-    });
-
-    const recentVotedPosts: PostCardProps[] = recentVotedPostsRaw.map((post) => {
-        const tagNames = post.rel_post_tags.map((tag) => tag.dimTag.tagName);
-        return { ...post, tagNames };
-    });
-
-    const communityPosts: PostCardProps[] = communityPostsRaw.map((post) => {
-        const tagNames = post.dim_posts.rel_post_tags.map((tag) => tag.dimTag.tagName);
-        return { ...post.dim_posts, tagNames };
-    });
-
-    const famedPosts: PostCardProps[] = famedPostsRaw.map((post) => {
-        const tagNames = post.dim_posts.rel_post_tags.map((tag) => tag.dimTag.tagName);
-        return { ...post.dim_posts, tagNames };
-    }
-    );
-
-
-    const mostRecentComments = await prisma.dimComments.findMany({
-        orderBy: { commentDateJst: "desc" },
-        take: 10,
-        select: {
-            commentId: true,
-            postId: true,
-            commentContent: true,
-            commentDateGmt: true,
-            commentAuthor: true,
-            dimPosts: {
-                select: {
-                    postTitle: true,
-                },
-            },
-        },
-    })
+export async function loader({ context }: LoaderFunctionArgs) {
+     const mostRecentPosts = await getMostRecentPosts(context);
+     const recentVotedPosts = await getRecentVotedPosts(context);
+     const communityPosts = await getPostsByTagId(context, 986);
+     const famedPosts = await getPostsByTagId(context, 575);
+     const mostRecentComments = await getMostRecentComments(context);
 
     return json({
         mostRecentPosts,
@@ -187,7 +52,7 @@ export default function Feed() {
                         postId={post.postId}
                         postTitle={post.postTitle}
                         postDateGmt={post.postDateGmt}
-                        tagNames={post.tagNames}
+                        tagNames={post.tags}
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                     />
@@ -207,7 +72,7 @@ export default function Feed() {
                         postId={post.postId}
                         postTitle={post.postTitle}
                         postDateGmt={post.postDateGmt}
-                        tagNames={post.tagNames}
+                        tagNames={post.tags}
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                     />
@@ -240,7 +105,7 @@ export default function Feed() {
                         postId={post.postId}
                         postTitle={post.postTitle}
                         postDateGmt={post.postDateGmt}
-                        tagNames={post.tagNames}
+                        tagNames={post.tags}
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                     />
@@ -254,7 +119,7 @@ export default function Feed() {
                         postId={post.postId}
                         postTitle={post.postTitle}
                         postDateGmt={post.postDateGmt}
-                        tagNames={post.tagNames}
+                        tagNames={post.tags}
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                     />
