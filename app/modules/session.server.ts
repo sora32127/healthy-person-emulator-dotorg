@@ -8,8 +8,8 @@ const { getSession, commitSession, destroySession } = createCookieSessionStorage
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
         path: "/",
         sameSite: "lax",
-        secrets: [process.env.SESSION_SECRET || "s3cr3t"],
-        secure: process.env.NODE_ENV === "production",
+        secrets: [import.meta.env.SESSION_SECRET || "s3cr3t"],
+        secure: import.meta.env.NODE_ENV === "production",
     }
 });
 
@@ -32,7 +32,7 @@ export async function requireUserId(request: Request){
 export async function isAdminLogin(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
     const userId = session.get('userId');
-    if (userId == process.env.ADMIN_USER_ID) {
+    if (userId == import.meta.env.ADMIN_USER_ID) {
         return true;
     } else {
         return false

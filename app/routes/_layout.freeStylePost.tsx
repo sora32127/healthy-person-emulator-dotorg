@@ -36,7 +36,7 @@ export async function loader() {
     return { tagName: tag.tagName, count: tag._count.relPostTags };
     });
 
-    const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY;
+    const CFTurnstileSiteKey = import.meta.env.CF_TURNSTILE_SITEKEY;
 
     return { allTagsForSearch, CFTurnstileSiteKey };
 }

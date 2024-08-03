@@ -25,7 +25,7 @@ interface Tag {
 }
 
 export async function loader () {
-    const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
+    const CFTurnstileSiteKey = import.meta.env.CF_TURNSTILE_SITEKEY || "";
     const tags = await prisma.dimTags.findMany({
         select: {
           tagName: true,

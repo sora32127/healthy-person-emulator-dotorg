@@ -9,7 +9,7 @@ interface CreateEmbeddingInput {
 }
 
 
-const OpenAIAPIKey = process.env.OPENAI_API_KEY;
+const OpenAIAPIKey = import.meta.env.OPENAI_API_KEY;
 const OpenAIEmbeddingModel = "text-embedding-3-small"
 
 export async function createEmbedding({ postId, postContent, postTitle } : CreateEmbeddingInput) {

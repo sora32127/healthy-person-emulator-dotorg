@@ -113,7 +113,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const isAdmin = await isAdminLogin(request);
     const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
 
-    const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
+    const CF_TURNSTILE_SITEKEY = import.meta.env.CF_TURNSTILE_SITEKEY
 
     return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames, CF_TURNSTILE_SITEKEY });
 }
