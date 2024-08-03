@@ -26,6 +26,7 @@ const PostCardSchema = z.object({
 type PostCard = z.infer<typeof PostCardSchema>;
 
 const CommentShowCardSchema = z.object({
+    commentId: z.number(),
     commentContent: z.string(),
     commentDateGmt: z.string(),
     commentAuthor: z.string(),
@@ -189,6 +190,7 @@ async function getMostRecentComments(serverContext: AppLoadContext): Promise<Com
         },
     })
     const comments = rawData.map((comment) => ({
+        commentId: comment.commentId,
         commentContent: comment.commentContent,
         commentDateGmt: comment.commentDateGmt,
         commentAuthor: comment.commentAuthor,
