@@ -1,19 +1,9 @@
-import { AppLoadContext, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/cloudflare";
+import { LoaderFunctionArgs, MetaFunction, json } from "@remix-run/cloudflare";
 import { getMostRecentComments, getMostRecentPosts, getPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
-
-interface PostCardProps {
-    postId: number;
-    postTitle: string;
-    postDateGmt: Date;
-    tagNames: string[];
-    countLikes: number;
-    countDislikes: number;
-}
-
 
 export const meta: MetaFunction = () => {
     return [
