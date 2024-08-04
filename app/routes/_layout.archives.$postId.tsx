@@ -2,7 +2,7 @@ import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@rem
 import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
-import parser from "html-react-parser";
+import parser from 'html-react-parser';
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
 import { commitSession, getSession, isAdminLogin, getClientIPAddress } from "~/modules/session.server";
@@ -18,7 +18,7 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { getCommentByPostId, getCommentVoteDataByPostId, getNextPostByPostId, getPostByIdInArchivePage, getPostByPostId, getPreviousPostByPostId, getSimilarPostsByPostId } from "~/modules/dbread.server";
+import { getCommentByPostId, getCommentVoteDataByPostId, getNextPostByPostId, getPostByPostId, getPreviousPostByPostId, getSimilarPostsByPostId } from "~/modules/dbread.server";
 
 
 export async function loader({ request, context }:LoaderFunctionArgs){
@@ -58,7 +58,7 @@ export async function loader({ request, context }:LoaderFunctionArgs){
     const dislikedPages = session.get("dislikedPages") || [];
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
-    
+
     const CF_TURNSTILE_SITEKEY = import.meta.env.CF_TURNSTILE_SITEKEY
 
     return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, CF_TURNSTILE_SITEKEY });
@@ -76,14 +76,9 @@ export default function Component() {
 
   const submit = useSubmit();
   const fetcher = useFetcher();
-  const navigate = useNavigate();
 
   const isLiked = likedPages.includes(postContent?.postId);
   const isDisliked = dislikedPages.includes(postContent?.postId);
-
-  if (!CF_TURNSTILE_SITEKEY){
-    return navigate("/")
-  }
 
   const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -154,7 +149,7 @@ export default function Component() {
 
   const renderComments = (parentId: number = 0, level: number = 0) => {
     return comments
-      .filter((comment) => comment.commentParent === parentId)
+      .filter((comment) => comment.commentParet === parentId)
       .map((comment) => (
         <div key={comment.commentId}>
           <CommentCard
@@ -169,7 +164,6 @@ export default function Component() {
             dislikedComments={dislikedComments}
             likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
             dislikesCount={commentVoteData.find((data: { commentId: number; voteType: number; }) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
-            isAdmin={isAdmin}
             isCommentOpen={isCommentOpen}
           />
           {renderComments(comment.commentId, level + 1)}
@@ -238,8 +232,8 @@ export default function Component() {
             </div>
             <div>
               {sortedTagNames && sortedTagNames.map((tag) => (
-                <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
-                  <TagCard tagName={tag.dimTag.tagName} />
+                <span key={tag} className="inline-block text-sm font-semibold text-gray-500 mr-1">
+                  <TagCard tagName={tag} />
                 </span>
               ))}
             </div>
@@ -272,9 +266,9 @@ export default function Component() {
           />
         </Form>
       </div>
-        <div className="postContent">
-            {postContent && parser(postContent.postContent)}
-        </div>
+      <div className="postContent">
+        {postContent && parser(postContent.postContent)}
+      </div>
         <div className="my-6">
           <NavLink
             to={`/archives/edit/${postContent?.postId}`}
