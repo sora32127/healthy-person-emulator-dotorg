@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs, MetaFunction, json } from "@remix-run/cloudflare";
-import { getMostRecentComments, getMostRecentPosts, getPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
+import { getMostRecentComments, getMostRecentPosts, getPostsByTagId, getRecentVotedPosts } from "~/modules/dbread.server";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";

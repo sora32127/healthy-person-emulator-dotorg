@@ -1,5 +1,5 @@
 import { createClient } from "@libsql/client/web";
-import { AppLoadContext } from "@remix-run/cloudflare";
+import { AppLoadContext, TypedResponse } from "@remix-run/cloudflare";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { z } from "zod";
@@ -225,9 +225,21 @@ async function getMostRecentComments(serverContext: AppLoadContext): Promise<Com
     return comments;
 }
 
-async function getPostByIdInArchivePage(serverContext: AppLoadContext, postId: number){
+const PostContentSchemaArchivePage = z.object({
+    postId: z.number(),
+    postTitle: z.string(),
+    postContent: z.string(),
+    postDateGmt: z.string(),
+    countLikes: z.number(),
+    countDislikes: z.number(),
+    commentStatus: z.string(),
+    ogpImageUrl: z.string(),
+    tagNames: z.array(z.string()),
+});
+
+async function getPostByPostId(serverContext: AppLoadContext, postId: number): Promise<z.infer<typeof PostContentSchemaArchivePage> | null>{
     const db = getTursoClient(serverContext);
-    const postContent = await db.dimPosts.findFirst({
+    const rawData = await db.dimPosts.findFirst({
         where : { postId },
         select : {
             postId: true,
@@ -249,48 +261,119 @@ async function getPostByIdInArchivePage(serverContext: AppLoadContext, postId: n
             },
         }
     })
+    if (!rawData){
+        return null
+    }
+    const postContent: z.infer<typeof PostContentSchemaArchivePage> = {
+        postId: rawData.postId,
+        postTitle: rawData.postTitle,
+        postContent: rawData.postContent,
+        postDateGmt: rawData.postDateGmt,
+        countLikes: rawData.countLikes,
+        countDislikes: rawData.countDislikes,
+        commentStatus: rawData.commentStatus,
+        ogpImageUrl: rawData.ogpImageUrl || "",
+        tagNames: rawData.relPostTags.map((tag) => tag.dimTags.tagName),
+    };
+    return postContent
+}
 
-    const comments = await db.dimComments.findMany({
+const CommentCardSchema = z.object({
+    commentId: z.number(),
+    commentContent: z.string(),
+    commentDateGmt: z.string(),
+    commentAuthor: z.string(),
+    postId: z.number(),
+});
+
+type CommentCard = z.infer<typeof CommentCardSchema>;
+
+async function getCommentByPostId(serverContext: AppLoadContext, postId: number): Promise<CommentCard[] | null>{
+    const db = getTursoClient(serverContext);
+    const rawData = await db.dimComments.findMany({
         where: { postId: postId },
         orderBy: { commentDateJst: "desc" },
     });
+    if (!rawData){
+        return null
+    }
+    return rawData;
+}
 
-    const commentVoteData = await db.fctCommentVoteHistory.groupBy({
+const CommentVoteDataSchema = z.object({
+    commentId: z.number(),
+    voteType: z.number(),
+    count: z.number(),
+});
+
+type CommentVoteData = z.infer<typeof CommentVoteDataSchema>;
+
+async function getCommentVoteDataByPostId(serverContext: AppLoadContext, postId: number): Promise<CommentVoteData[] | null>{
+    const db = getTursoClient(serverContext);
+    const commentIds = await db.dimComments.findMany({
+        where: { postId: postId },
+        select: {
+            commentId: true,
+        },
+    });
+    const rawData = await db.fctCommentVoteHistory.groupBy({
         by: ["commentId", "voteType"],
         _count: { commentId: true },
         where: {
-            commentId: { in: comments.map((comment) => comment.commentId) },
+            commentId: { in: commentIds.map((comment) => comment.commentId) },
         },
     });
+    const commentVoteData = rawData.map((data) => ({
+        commentId: data.commentId,
+        voteType: data.voteType,
+        count: data._count.commentId,
+    }));
+    if (!commentVoteData){
+        return null
+    }
+    return commentVoteData;
+}
 
-    const similarPosts = [];
-    if (!postContent) return json({
-        status: 404,
-        message: "Post not found",
-    });
-    const tagNames = postContent.relPostTags.map((rel) => rel.dimTags.tagName);
+async function getSimilarPostsByPostId(serverContext: AppLoadContext, postId: number): Promise<PostCard[]>{
+    // 現段階ではなくていいのでモックを作る
+    return [];
+}
 
+const PostContentSchemaPrevNext = z.object({
+    postId: z.number(),
+    postTitle: z.string(),
+})
+
+async function getPreviousPostByPostId(serverContext: AppLoadContext, postId: number, postContent: z.infer<typeof PostContentSchemaArchivePage>): Promise<z.infer<typeof PostContentSchemaPrevNext> | null>{
+    const db = getTursoClient(serverContext);
     const prevPost = await db.dimPosts.findFirst({
+        select: {
+            postId: true,
+            postTitle: true,
+        },
         where: { postDateGmt: { lt: postContent.postDateGmt } },
         orderBy: { postDateGmt: "desc" },
     });
+    if (!prevPost){
+        return null
+    }
+    return prevPost;
+}
 
+async function getNextPostByPostId(serverContext: AppLoadContext, postId: number, postContent: z.infer<typeof PostContentSchemaArchivePage>): Promise<z.infer<typeof PostContentSchemaPrevNext> | null>{
+    const db = getTursoClient(serverContext);
     const nextPost = await db.dimPosts.findFirst({
+        select: {
+            postId: true,
+            postTitle: true,
+        },
         where: { postDateGmt: { gt: postContent.postDateGmt } },
         orderBy: { postDateGmt: "asc" },
     });
-
-    return json({
-        postContent,
-        comments,
-        commentVoteData,
-        similarPosts: [],
-        tagNames,
-        prevPost,
-        nextPost,
-    });
-
+    if (!nextPost){
+        return null
+    }
+    return nextPost;
 }
 
-
-export { getMostRecentPosts, getRecentVotedPosts, getPostsByTagId, PostCardSchema, getMostRecentComments, CommentShowCardSchema, getPostByIdInArchivePage }
+export { getMostRecentPosts, getRecentVotedPosts, getPostsByTagId, PostCardSchema, getMostRecentComments, CommentShowCardSchema, getPostByPostId, getCommentByPostId, getCommentVoteDataByPostId, getSimilarPostsByPostId, getPreviousPostByPostId, getNextPostByPostId }

@@ -18,108 +18,54 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { getCommentByPostId, getCommentVoteDataByPostId, getNextPostByPostId, getPostByIdInArchivePage, getPostByPostId, getPreviousPostByPostId, getSimilarPostsByPostId } from "~/modules/dbread.server";
 
 
-export async function loader({ request }:LoaderFunctionArgs){
+export async function loader({ request, context }:LoaderFunctionArgs){
     const url = new URL(request.url);
     // Wordpress時代のURLと合わせるため、以下の形式のURLを想定する
     // https://healthy-person-emulator.org/archives/${postId}?q...
     const postId = url.pathname.split("/")[2];
-    const postContent = await prisma.dimPosts.findFirst({
-        where: {
-          postId: Number(postId),
-        },
-        select: {
-          postId: true,
-          postTitle: true,
-          postContent: true,
-          postDateGmt: true,
-          countLikes: true,
-          countDislikes: true,
-          commentStatus: true,
-          ogpImageUrl: true,
-          rel_post_tags: {
-            select: {
-              dimTag: {
-                select: {
-                  tagName: true,
-                },
-              },
-            },
-          },
-        },
-    });
+    const postContent = await getPostByPostId(context, Number(postId));
+    const comments = await getCommentByPostId(context, Number(postId));
+    const commentVoteData = await getCommentVoteDataByPostId(context, Number(postId));
+    const similarPosts = await getSimilarPostsByPostId(context, Number(postId));
 
-    if (!postContent) {
-      throw new Response("Post not found", {
+    if (!postContent){
+      return json({
+        message: "Post Not Found",
         status: 404,
+        postContent: null,
+        comments: null,
+        commentVoteData: null,
+        similarPosts: null,
+        prevPost: null,
+        nextPost: null,
+        tagNames: null,
+        CF_TURNSTILE_SITEKEY: null,
+        likedPages: null,
+        dislikedPages: null,
+        likedComments: null,
+        dislikedComments: null,
       })
     }
+    const prevPost = await getPreviousPostByPostId(context, Number(postId), postContent);
+    const nextPost = await getNextPostByPostId(context, Number(postId), postContent);
 
-    const comments = await prisma.dimComments.findMany({
-        where: {
-          postId: Number(postId),
-        },
-        orderBy: {
-          commentDateJst: "desc",
-        },
-    });
-
-    const commentVoteData = await prisma.fctCommentVoteHistory.groupBy({
-        by: ["commentId", "voteType" ],
-        _count: { commentId: true },
-        where: {
-          commentId: { in: comments.map((comment) => comment.commentId) },
-        },
-    });
-    const { data, error } = await supabase.rpc("search_similar_content", {
-      query_post_id: Number(postId),
-      match_threshold: 0,
-      match_count: 16,
-    });
-
-    let similarPosts = [];
-    if (error) {
-      console.error(error.code, error.message);
-    }else{
-      similarPosts = data.slice(1,);
-    }
 
     const session = await getSession(request.headers.get("Cookie"));
     const likedPages = session.get("likedPages") || [];
     const dislikedPages = session.get("dislikedPages") || [];
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
-
-    const prevPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { lt: postContent?.postDateGmt },
-      },
-      orderBy: {
-        postDateGmt: "desc",
-      },
-    });
     
-    const nextPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { gt: postContent?.postDateGmt },
-        postId: { not: postContent?.postId }, // 同じ記事が表示されないようにする
-      },
-      orderBy: {
-        postDateGmt: "asc",
-      },
-    });
-
-    const isAdmin = await isAdminLogin(request);
-    const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
-
     const CF_TURNSTILE_SITEKEY = import.meta.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames, CF_TURNSTILE_SITEKEY });
+    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -231,11 +177,11 @@ export default function Component() {
       ));
   };
 
-  const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
-    if (a.dimTag.tagName > b.dimTag.tagName) {
+  const sortedTagNames = postContent?.tagNames.sort((a, b) => {
+    if (a > b) {
       return 1;
     }
-    if (a.dimTag.tagName < b.dimTag.tagName) {
+    if (a < b) {
       return -1;
     }
     return 0;
