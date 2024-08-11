@@ -52,7 +52,7 @@ export default function Component() {
     if (item.text === "ログアウト") {
       return (
         <SignOutButton redirectUrl="/">
-          <button className="flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit">
+          <button className="flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit" type="button">
             {content}
           </button>
         </SignOutButton>
@@ -84,7 +84,7 @@ export default function Component() {
         <Form method="post" action="/search">
         <div className="flex flex-row items-center">
           <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
-          <button className="btn btn-square btn-ghost ml-2" title="search">
+          <button className="btn btn-square btn-ghost ml-2" title="search" type="submit">
           <SearchIcon/> 
           </button>
         </div>
@@ -150,7 +150,7 @@ export default function Component() {
                 htmlFor="menu-drawer"
                 aria-label="close sidebar"
                 className="drawer-overlay"
-              ></label>
+              />
               <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
                 {menuItems.map((item) => (
                   <li key={item.to}>

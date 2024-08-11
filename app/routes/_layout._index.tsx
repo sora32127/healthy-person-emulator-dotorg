@@ -1,6 +1,7 @@
-import { MetaFunction, json } from "@remix-run/node";
-import { prisma } from "~/modules/db.server";
+import { json } from "@remix-run/node";
 import { NavLink, useLoaderData } from "@remix-run/react";
+import type { MetaFunction } from "@remix-run/node";
+import { prisma } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
