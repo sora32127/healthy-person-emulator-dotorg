@@ -1,8 +1,5 @@
 import { NavLink } from "@remix-run/react";
-import parse from "html-react-parser";
 import TagCard from "./TagCard";
-import ArticleIcon from "./icons/ArticleIcon";
-import TagIcon from "./icons/TagIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import RelativeDate from "./RelativeDate";
@@ -25,7 +22,6 @@ export default function PostCard({
     tagNames,
     countLikes,
     countDislikes,
-    highLightedText,
 }: PostCardProps) {
 
     tagNames.sort((a, b) => {
@@ -49,18 +45,16 @@ export default function PostCard({
                 </div>
                 <RelativeDate timestamp={postDateGmt} />
             </div>
-            <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
-                <ArticleIcon/>
-                <NavLink to={`/archives/${postId}`} className="text-xl font-bold text-info underline underline-offset-4 post-title">{postTitle}</NavLink>
-            </div>
-            {highLightedText && (
-                <p className="neutral-content">{parse(highLightedText)}</p>
-            )}
-            <div className="grid grid-cols-[auto_1fr] gap-2 mt-2 items-center">
-                <TagIcon/>
+            <NavLink to={`/archives/${postId}`} className="hover:underline hover:underline-offset-4">
+                <img src={`https://healthy-person-emulator-public-assets.s3.ap-northeast-1.amazonaws.com/${postId}.jpg`} alt={postTitle}/>
+                <div className="mt-1 mb-2">
+                    <p className="text-xl">{postTitle}</p>
+                </div>
+            </NavLink>
+            <div>
                 <div className="flex flex-wrap items-center">
                     {displayedTags.map((tag, index) => (
-                        <span key={index} className="inline-block mr-1 mb-1">
+                        <span key={`${tag}-${postId}`} className="inline-block mr-1 mb-1">
                             <TagCard tagName={tag} />
                         </span>
                     ))}
