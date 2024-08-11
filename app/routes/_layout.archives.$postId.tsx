@@ -291,7 +291,7 @@ export default function Component() {
             <div className="w-6 h-6">
               <TagIcon />
             </div>
-            <div>
+            <div className="flex flex-wrap gap-y-3 my-2">
               {sortedTagNames && sortedTagNames.map((tag) => (
                 <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                   <TagCard tagName={tag.dimTag.tagName} />
