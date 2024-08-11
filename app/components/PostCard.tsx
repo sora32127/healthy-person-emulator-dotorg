@@ -38,17 +38,26 @@ export default function PostCard({
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 
     return (
-        <div className="bg-base-100 border-b border-neutral p-4">
-            <div className="flex my-1">
-                <div className="pr-2">
-                <ClockIcon/>
+        <div className="bg-base-100 p-4">
+            <div className="flex flex-raw my-2">
+                <div className="flex flex-raw">
+                    <RelativeDate timestamp={postDateGmt} />
                 </div>
-                <RelativeDate timestamp={postDateGmt} />
+                <div className="flex items-center ml-3 gap-x-2">
+                    <div className="flex items-center">
+                        <ThumbsUpIcon/>
+                        <span className="text-sm text-base-content ml-1">{countLikes}</span>
+                    </div>
+                    <div className="flex items-center">
+                        <ThumbsDownIcon/>
+                        <span className="text-sm text-base-content ml-1">{countDislikes}</span>
+                    </div>
+                </div>
             </div>
             <NavLink to={`/archives/${postId}`} className="hover:underline hover:underline-offset-4">
                 <img src={`https://healthy-person-emulator-public-assets.s3.ap-northeast-1.amazonaws.com/${postId}.jpg`} alt={postTitle}/>
                 <div className="mt-1 mb-2">
-                    <p className="text-xl">{postTitle}</p>
+                    <p className="text-lg">{postTitle}</p>
                 </div>
             </NavLink>
             <div>
@@ -65,16 +74,7 @@ export default function PostCard({
                     )}
                 </div>
             </div>
-            <div className="flex items-center mt-2">
-                <div className="flex items-center mr-4">
-                    <ThumbsUpIcon/>
-                    <span className="text-sm text-base-content ml-1">{countLikes}</span>
-                </div>
-                <div className="flex items-center">
-                    <ThumbsDownIcon/>
-                    <span className="text-sm text-base-content ml-1">{countDislikes}</span>
-                </div>
-            </div>
+
         </div>
     );
 }
