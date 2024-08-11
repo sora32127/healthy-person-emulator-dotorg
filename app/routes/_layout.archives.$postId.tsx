@@ -1,11 +1,13 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
+import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import parser from "html-react-parser";
+import { getClientIPAddress } from "remix-utils/get-client-ip-address";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
-import parser from "html-react-parser";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
 import { supabase } from "~/modules/supabase.server";
 import { H1, H2 } from "~/components/Headings";
@@ -18,7 +20,6 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -207,7 +208,7 @@ export default function Component() {
 
   const isCommentOpen = postContent?.commentStatus === "open";
 
-  const renderComments = (parentId: number = 0, level: number = 0) => {
+  const renderComments = (parentId = 0, level = 0) => {
     return comments
       .filter((comment) => comment.commentParent === parentId)
       .map((comment) => (
@@ -262,7 +263,7 @@ export default function Component() {
       >
         {!isValidUser && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"/>
           </div>
         )}
         {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
@@ -276,7 +277,7 @@ export default function Component() {
   return (
     <>
       <div>
-        <H1>{postContent && postContent.postTitle}</H1>
+        <H1>{postContent?.postTitle}</H1>
         
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
@@ -291,8 +292,8 @@ export default function Component() {
             <div className="w-6 h-6">
               <TagIcon />
             </div>
-            <div>
-              {sortedTagNames && sortedTagNames.map((tag) => (
+            <div className="flex flex-wrap gap-y-3 my-2">
+              {sortedTagNames?.map((tag) => (
                 <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                   <TagCard tagName={tag.dimTag.tagName} />
                 </span>
@@ -341,7 +342,7 @@ export default function Component() {
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
-            {similarPosts.map((post: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+            {similarPosts.map((post: { post_id: number, post_title: string }) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <li key={post.post_id} className="my-2">
                 <NavLink
                   to={`/archives/${post.post_id}`}
@@ -364,7 +365,7 @@ export default function Component() {
                 {nextPost.postTitle}
               </NavLink>
             </div>
-          ): (<div></div>)}
+          ): (<div/>)}
           {prevPost ? (
             <div className="flex items-center">
               <NavLink
@@ -375,7 +376,7 @@ export default function Component() {
               </NavLink>
               <ArrowBackIcon  />
             </div>
-          ): <div></div>}
+          ): <div/>}
         </div>
         <div className="my-8">
             <ShareButtons
@@ -383,7 +384,7 @@ export default function Component() {
               postTitle={postContent?.postTitle || ""}
             />
         </div>
-        <br></br>
+        <br/>
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox
@@ -418,11 +419,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
   switch (action) {
     case "votePost":
-      const isValidRequest = await validateRequest(token, origin);
-      if (!isValidRequest) {
+      {
+        const isValidRequest = await validateRequest(token, origin);
+        if (!isValidRequest) {
         return json({ success: false, message : "Invalid Request" });
       }
       return handleVotePost(formData, postId, userIpHashString, request);
+    }
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
