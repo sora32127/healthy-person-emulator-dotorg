@@ -23,4 +23,20 @@ function getPrismaClient(): PrismaClient {
 }
 
 const prisma = getPrismaClient();
+
+export async function getPostDataForSitemap() {
+    const posts = await prisma.dimPosts.findMany({
+        select: {
+            postId: true,
+        }
+    })
+
+    return posts.map((post) => {
+        return {
+            loc: `https://healthy-person-emulator.org/archives/${post.postId}`
+        }
+    })
+}
+
+
 export { prisma }
