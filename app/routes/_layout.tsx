@@ -118,8 +118,7 @@ export default function Component() {
             </ul>
           </div>
         </nav>
-
-        <div className="p-4 xl:mx-10 2xl:mx-96">
+        <div className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
           <Outlet />
         </div>
       </main>

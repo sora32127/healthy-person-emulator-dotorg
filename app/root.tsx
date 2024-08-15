@@ -33,8 +33,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="ja" className="font-noto-sans">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta property="og:site_name" content="健常者エミュレータ事例集"></meta>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta property="og:site_name" content="健常者エミュレータ事例集"/>
         <Meta />
         <Links />
       </head>
@@ -68,18 +68,17 @@ export function ErrorBoundary() {
         </NavLink>
       </div>
     );
-  } else {
-    console.error(error);
-    return (
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mt-32 mb-8">不明なエラーが発生しました</h1>
-        <pre className="bg-red-100 p-4 mb-8 overflow-auto">{error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}</pre>
-        <div className="text-center">
-          <NavLink to="/" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            トップページに戻る
-          </NavLink>
-        </div>
-      </div>
-    );
   }
+
+  return (
+    <div className="container mx-auto px-4">
+      <h1 className="text-4xl font-bold text-center mt-32 mb-8">不明なエラーが発生しました</h1>
+      <pre className="bg-red-100 p-4 mb-8 overflow-auto">{error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}</pre>
+      <div className="text-center">
+        <NavLink to="/" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          トップページに戻る
+        </NavLink>
+      </div>
+    </div>
+  );
 }
