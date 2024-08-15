@@ -98,8 +98,12 @@ export default function CommentCard({
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
             } comment-like-button`}
-            onClick={() => (onCommentVote(commentId, "like"), setIsCommentLikeButtonPushed(true))}
+            onClick={() => {
+              onCommentVote(commentId, "like");
+              setIsCommentLikeButtonPushed(true);
+            }}
             disabled={isCommentLikeButtonPushed || isLiked}
+            type="button"
           >
             <ThumbsUpIcon />
             <p className="ml-2">
@@ -112,8 +116,12 @@ export default function CommentCard({
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isDisliked ? "text-red-500 font-bold" : ""
             } comment-dislike-button`}
-            onClick={() => (onCommentVote(commentId, "dislike"), setIsCommentDislikeButtonPushed(true))}
+            onClick={() => {
+              onCommentVote(commentId, "dislike");
+              setIsCommentDislikeButtonPushed(true);
+            }}
             disabled={isCommentDislikeButtonPushed || isDisliked}
+            type="button"
           >
             <ThumbsDownIcon />
             <p className="ml-2">
@@ -125,6 +133,7 @@ export default function CommentCard({
     <button
         className="mt-2 text-blue-500"
         onClick={() => setIsReplyBoxShown(!isReplyBoxShown)}
+        type="button"
     >
         {isReplyBoxShown ? "キャンセル" : "返信"}
     </button>
@@ -145,6 +154,7 @@ export default function CommentCard({
         <button
           className="mt-2 text-red-500"
           onClick={handleCommentDelete}
+          type="button"
         >
           削除
         </button>
