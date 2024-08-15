@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { NavLink } from "@remix-run/react";
 import { H1, H2, H3 } from "~/components/Headings";
 
@@ -77,40 +77,44 @@ export default function Component() {
             <li>Q : ライフハックを投稿してもかまいませんか？</li>
             <li>A : 大丈夫です。ライフハックにより確保される「健康」は、健常者として生活するために必要な要素です</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q:投稿しても大丈夫かどうか不安です</li>
             <li>A : まずは投稿してみてください。あとから編集することが可能です。詳しくは当ガイドラインをご覧ください。</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q: ウケ狙いで書いている奴がいてキモいんですが...</li>
             <li>A: 集合知の構築という目的の前では、動機の違いなど電子顕微鏡で覗かないと気づかないようなミジンコ未満の些細な違いでしかありません。我々は書かれたものそれ自体のみを考慮するべきです。ウケ狙いで書かれた名文もあるし、正義のために書かれた駄文もあるのです。評価は歴史が行ってくれるでしょう。ウケ狙いでも気にせず投稿してください。それはそれとしてガイドラインに違反したものは管理人の方で削除します。</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q: 言論の自由を否定する自由はありますか？</li>
             <li>A: ありません。言論の自由を否定するような投稿は管理人により削除されます。</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q:人間から「健常性」を一つずつはぎ取っていくと何が残りますか？</li>
             <li>A: 悪</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q: 投稿したページのタイトルを変えたいです。</li>
             <li>A: 編集することが可能です。詳しくは当ガイドラインをご覧ください。</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q: 投稿したページを削除したいです。</li>
             <li>A: 管理人のTwitterのDMにご一報ください。</li>
         </ul>
-        <br></br>
+        <br/>
         <ul>
             <li>Q: 経験をうまく整理できず、記事にできません。どうすればいいですか？</li>
             <li>A: 一案ですが、コミュニティで相談してみてはいかがでしょうか。詳しくは当ガイドラインをご覧ください。</li>
+        </ul>
+        <ul>
+            <li>Q: 荒らしに対する運営の対応方針を教えてください。</li>
+            <li>A: 荒らしの実行者は様々なものを手に入れようとしています。例えばネット上での名声や、自分がやったことの痕跡などです。だからこそ、荒らしが起こった痕跡はデータから一つ残らず消し去り、その存在は「最初からなかったもの」として扱われるべきです。実行者に対して決して名前を与えてはならず、その存在を示す証左もあってはなりません。それはそれとして技術的な対応は必要に応じて実施し、場合によっては法的な対応をとることもあります。</li>
         </ul>
         </div>
     )
@@ -124,7 +128,7 @@ export const meta: MetaFunction = () => {
     const ogType = "article";
     const ogTitle = title;
     const ogDescription = description;
-    const ogUrl = `https://healthy-person-emulator.org/readme`;
+    const ogUrl = "https://healthy-person-emulator.org/readme";
     const twitterCard = "summary"
     const twitterSite = "@helthypersonemu"
     const twitterTitle = title
