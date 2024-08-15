@@ -91,7 +91,7 @@ export default function CommentCard({
         </div>
         <RelativeDate timestamp={commentDateGmt} />
       </div>
-      <p className="mt-2 whitespace-pre-wrap">{commentContent}</p>
+      <p className="whitespace-pre-wrap break-words">{commentContent}</p>
       <div className="flex items-center mt-4">
         <div className="tooltip" data-tip="このコメントを高評価する">
           <button
