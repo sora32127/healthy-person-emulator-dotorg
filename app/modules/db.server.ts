@@ -92,5 +92,50 @@ export async function getPostByPostId(postId: number): Promise<PostData> {
     return postData;
 }
 
+const CommentDataSchema = z.object({
+    commentId: z.number(),
+    commentDateGmt: z.date(),
+    commentAuthor: z.string(),
+    commentContent: z.string(),
+    likesCount: z.number(),
+    dislikesCount: z.number(),
+    commentParent: z.number(),
+})
+
+type CommentData = z.infer<typeof CommentDataSchema>;
+
+export async function getCommentsByPostId(postId: number): Promise<CommentData[]> {
+    const comments = await prisma.dimComments.findMany({
+        where: { postId },
+        select: {
+            commentId: true,
+            commentDateGmt: true,
+            commentAuthor: true,
+            commentContent: true,
+            commentParent: true,
+        },
+        orderBy: {
+            commentDateGmt: "desc"
+        }
+    })
+
+    const voteCount = await prisma.fctCommentVoteHistory.groupBy({
+        where: { postId },
+        by: ["commentId", "voteType"],
+        _count: { commentVoteId: true },
+    })
+
+    const commentsWithVoteCount = comments.map((comment) => {
+        const likesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0;
+        const dislikesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 0)?._count.commentVoteId || 0;
+        return {
+            ...comment,
+            likesCount,
+            dislikesCount,
+        }
+    })
+    return commentsWithVoteCount;
+}
+
 
 export { prisma }

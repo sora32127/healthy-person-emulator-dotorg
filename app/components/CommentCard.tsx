@@ -18,7 +18,6 @@ interface CommentCardProps {
   likesCount: number;
   dislikesCount: number;
   postId: number;
-  isAdmin: boolean;
   isCommentOpen: boolean;
 }
 
@@ -34,7 +33,6 @@ export default function CommentCard({
   likesCount,
   dislikesCount,
   postId,
-  isAdmin,
   isCommentOpen,
 }: CommentCardProps) {
 
@@ -141,14 +139,6 @@ export default function CommentCard({
             />
         )}
         </div>
-      {isAdmin && (
-        <button
-          className="mt-2 text-red-500"
-          onClick={handleCommentDelete}
-        >
-          削除
-        </button>
-      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, getPostByPostId } from "~/modules/db.server";
+import { prisma, getPostByPostId, getCommentsByPostId } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
@@ -26,22 +26,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
     const postId = Number(url.pathname.split("/")[2]);
     const postContent = await getPostByPostId(postId);
-    const comments = await prisma.dimComments.findMany({
-        where: {
-          postId: Number(postId),
-        },
-        orderBy: {
-          commentDateJst: "desc",
-        },
-    });
-
-    const commentVoteData = await prisma.fctCommentVoteHistory.groupBy({
-        by: ["commentId", "voteType" ],
-        _count: { commentId: true },
-        where: {
-          commentId: { in: comments.map((comment) => comment.commentId) },
-        },
-    });
+    const comments = await getCommentsByPostId(postId);
     const { data, error } = await supabase.rpc("search_similar_content", {
       query_post_id: Number(postId),
       match_threshold: 0,
@@ -84,11 +69,11 @@ export async function loader({ request }:LoaderFunctionArgs){
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin,CF_TURNSTILE_SITEKEY });
+    return json({ postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin,CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -190,9 +175,8 @@ export default function Component() {
             onCommentVote={handleCommentVote}
             likedComments={likedComments}
             dislikedComments={dislikedComments}
-            likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
-            dislikesCount={commentVoteData.find((data: { commentId: number; voteType: number; }) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
-            isAdmin={isAdmin}
+            likesCount={comment.likesCount}
+            dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
           />
           {renderComments(comment.commentId, level + 1)}
