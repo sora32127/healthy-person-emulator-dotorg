@@ -54,7 +54,7 @@
     "@typescript-eslint/parser": "^8.1.0",
     "autoprefixer": "^10.4.20",
     "daisyui": "^4.12.10",
-    "eslint": "^9.9.0",
+    "eslint": "^8.57.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsx-a11y": "^6.9.0",
