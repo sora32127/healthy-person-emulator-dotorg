@@ -8,7 +8,7 @@ import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts, getNextP
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { commitSession, getSession } from "~/modules/session.server";
+import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
@@ -29,13 +29,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const similarPosts = await getSimilarPosts(postId);
     const prevPost = await getPreviousPost(postId);
     const nextPost = await getNextPost(postId);
-
-    const session = await getSession(request.headers.get("Cookie"));
-    const likedPages = session.get("likedPages") || [];
-    const dislikedPages = session.get("dislikedPages") || [];
-    const likedComments = session.get("likedComments") || [];
-    const dislikedComments = session.get("dislikedComments") || [];
-
+    const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 

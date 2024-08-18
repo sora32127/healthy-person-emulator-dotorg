@@ -28,3 +28,13 @@ export async function requireUserId(request: Request){
     }
     return userId;
 }
+
+export async function getUserActivityData(request: Request){
+    const session = await getSession(request.headers.get('Cookie'));
+    const likedPages = session.get("likedPages") || [];
+    const dislikedPages = session.get("dislikedPages") || [];
+    const likedComments = session.get("likedComments") || [];
+    const dislikedComments = session.get("dislikedComments") || [];
+
+    return { likedPages, dislikedPages, likedComments, dislikedComments };
+}
