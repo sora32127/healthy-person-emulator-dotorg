@@ -48,6 +48,7 @@ export default function Feed() {
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                         countComments={post.countComments}
+                        identifier="latest"
                     />
                 ))}
                 <NavLink
@@ -69,6 +70,7 @@ export default function Feed() {
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                         countComments={post.countComments}
+                        identifier="voted"
                     />
                 ))}
                 <NavLink
@@ -103,6 +105,7 @@ export default function Feed() {
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                         countComments={post.countComments}
+                        identifier="community"
                     />
                 ))}
             </div>
@@ -118,6 +121,7 @@ export default function Feed() {
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
                         countComments={post.countComments}
+                        identifier="famed"
                     />
                 ))}
             </div>
