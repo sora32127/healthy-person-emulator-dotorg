@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client"
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { z } from "zod"
 
 declare global {
@@ -241,4 +242,206 @@ export class ArchiveDataEntry {
         return new ArchiveDataEntry(postData, comments, similarPosts, previousPost, nextPost);
     }
 
+}
+
+const PostCardDataSchema = z.object({
+    postId: z.number(),
+    postTitle: z.string(),
+    postDateGmt: z.date(),
+    countLikes: z.number(),
+    countDislikes: z.number(),
+    ogpImageUrl: z.string().nullable(),
+    tags: z.array(z.object({
+        tagName: z.string(),
+        tagId: z.number(),
+    })),
+    countComments: z.number(),
+})
+
+type PostCardData = z.infer<typeof PostCardDataSchema>;
+
+export async function getRecentPosts(): Promise<PostCardData[]>{
+    const recentPosts = await prisma.dimPosts.findMany({
+        orderBy: { postDateGmt: "desc" },
+        take: 10,
+        select: {
+            postId: true,
+            postTitle: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            ogpImageUrl: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                            tagId: true,
+                        }
+                    }
+                    }
+                }
+            }
+    }).then((posts) => {
+        return posts.map((post) => {
+            return {
+                ...post,
+                tags: post.rel_post_tags.map((tag) => tag.dimTag),
+            }
+        })
+    })
+
+    const countComments = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: recentPosts.map((post) => post.postId) } },
+    })
+
+    const recentPostsWithCountComments = recentPosts.map((post) => {
+        const count = countComments.find((c) => c.postId === post.postId)?._count.commentId || 0;
+        return {
+            ...post,
+            countComments: count,
+        }
+    })
+
+    return recentPostsWithCountComments;
+}
+
+export async function getRecentVotedPosts(): Promise<PostCardData[]>{
+    const recentVotedPostIds = await prisma.fctPostVoteHistory.groupBy({
+        by: ["postId"],
+        where: { 
+            voteDateGmt : { 
+                gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+                lte: new Date(),
+            },
+            voteTypeInt : { in : [1]}
+        },
+        _count: { voteUserIpHash: true },
+        orderBy: { _count: { voteUserIpHash: "desc" } },
+        take: 10,
+    }).then((votes) => {
+        return votes.map((vote) => vote.postId)
+    })
+
+    const countComments = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: recentVotedPostIds } },
+    })
+
+
+    const recentVotedPosts = await prisma.dimPosts.findMany({
+        where: { postId: { in: recentVotedPostIds } },
+        select: {
+            postId: true,
+            postTitle: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            ogpImageUrl: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                            tagId: true,
+                        }
+                    }
+                }
+            }
+        }
+    }).then((posts) => {
+        return posts.map((post) => {
+            return {
+                ...post,
+                tags: post.rel_post_tags.map((tag) => tag.dimTag),
+                countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
+            }
+        })
+    })
+
+    return recentVotedPosts;
+}
+
+export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>{
+    const recentPosts = await prisma.relPostTags.findMany({
+        where: { tagId },
+        select: {
+            dim_posts: {
+                select: {
+                    postId: true,
+                    postTitle: true,
+                    postDateGmt: true,
+                    countLikes: true,
+                    countDislikes: true,
+                    ogpImageUrl: true,
+                    rel_post_tags: {
+                        select: {
+                            dimTag: {
+                                select: {
+                                    tagName: true,
+                                    tagId: true,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        orderBy: { dim_posts: { postDateGmt: "desc" } },
+        take: 20,
+    }).then((posts) => {
+        return posts.map((post) => {
+            return {
+                ...post.dim_posts,
+                tags: post.dim_posts.rel_post_tags.map((tag) => tag.dimTag),
+            }
+        })
+    })
+
+    const countComments = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: recentPosts.map((post) => post.postId) } },
+    })
+
+    const recentPostsWithCountComments = recentPosts.map((post) => {
+        const count = countComments.find((c) => c.postId === post.postId)?._count.commentId || 0;
+        return {
+            ...post,
+            countComments: count,
+        }
+    })
+
+    return recentPostsWithCountComments;
+}
+
+export async function getRecentComments(){
+    const recentComments = await prisma.dimComments.findMany({
+        orderBy: { commentDateJst: "desc" },
+        take: 10,
+        select: {
+            commentId: true,
+            postId: true,
+            commentContent: true,
+            commentDateGmt: true,
+            commentAuthor: true,
+            dimPosts: {
+                select: {
+                    postTitle: true,
+                },
+            },
+        },
+    }).then((comments) => {
+        return comments.map((comment) => {
+            return {
+                ...comment,
+                postTitle: comment.dimPosts.postTitle,
+            }
+        })
+    })
+
+    return recentComments;
 }

@@ -13,6 +13,7 @@ export interface PostCardProps {
     countLikes: number;
     countDislikes: number;
     highLightedText?: string;
+    countComments?: number;
 }
 
 export default function PostCard({
@@ -22,6 +23,7 @@ export default function PostCard({
     tagNames,
     countLikes,
     countDislikes,
+    countComments,
 }: PostCardProps) {
 
     tagNames.sort((a, b) => {
@@ -53,6 +55,9 @@ export default function PostCard({
                         <div className="flex items-center">
                             <ThumbsDownIcon/>
                             <span className="text-sm text-base-content ml-1">{countDislikes}</span>
+                        </div>
+                        <div className="flex items-center">
+                            <span className="text-sm text-base-content ml-1">{countComments}</span>
                         </div>
                     </div>
                 </div>
