@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts, getNextPost, getPreviousPost } from "~/modules/db.server";
+import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
@@ -24,20 +24,16 @@ import RelativeDate from "~/components/RelativeDate";
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
     const postId = Number(url.pathname.split("/")[2]);
-    const postContent = await getPostByPostId(postId);
-    const comments = await getCommentsByPostId(postId);
-    const similarPosts = await getSimilarPosts(postId);
-    const prevPost = await getPreviousPost(postId);
-    const nextPost = await getNextPost(postId);
+    const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost,CF_TURNSTILE_SITEKEY });
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -50,8 +46,8 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPages.includes(postContent?.postId);
-  const isDisliked = dislikedPages.includes(postContent?.postId);
+  const isLiked = likedPages.includes(data.postId);
+  const isDisliked = dislikedPages.includes(data.postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -79,14 +75,14 @@ export default function Component() {
       }, 1000);
     }
 
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("action", "votePost");
     formData.append("cf-turnstile-response", cfTurnstileResponse);
     formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${postContent?.postId}`,
+      action: `/archives/${data.postId}`,
     });
   };
 
@@ -95,14 +91,14 @@ export default function Component() {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("commentAuthor", commentAuthor);
     formData.append("commentContent", commentContent);
     formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
-      action: `/archives/${postContent?.postId}`,
+      action: `/archives/${data.postId}`,
     });
 
     setCommentAuthor("Anonymous");
@@ -111,27 +107,27 @@ export default function Component() {
   
   const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
     const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("commentId", commentId.toString());
     formData.append("voteType", voteType);
     formData.append("action", "voteComment");
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${postContent?.postId}`,
+        action: `/archives/${data.postId}`,
     });
   };
 
-  const isCommentOpen = postContent?.commentStatus === "open";
+  const isCommentOpen = data.commentStatus === "open";
 
   const renderComments = (parentId = 0, level = 0) => {
-    return comments
+    return data.comments
       .filter((comment) => comment.commentParent === parentId)
       .map((comment) => (
         <div key={comment.commentId}>
           <CommentCard
             commentId={comment.commentId}
-            postId={postContent?.postId || 0}
+            postId={data.postId}
             commentContent={comment.commentContent}
             commentDateGmt={comment.commentDateGmt}
             commentAuthor={comment.commentAuthor}
@@ -148,7 +144,7 @@ export default function Component() {
       ));
   };
 
-  const sortedTagNames = postContent?.tags.sort((a, b) => {
+  const sortedTagNames = data.tags.sort((a, b) => {
     if (a.tagName > b.tagName) {
       return 1;
     }
@@ -192,15 +188,14 @@ export default function Component() {
   return (
     <>
       <div>
-        <H1>{postContent?.postTitle}</H1>
-        
+        <H1>{data.postTitle}</H1>
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
               <ClockIcon />
             </div>
             <p>
-              <RelativeDate timestamp={postContent?.postDateGmt} />
+              <RelativeDate timestamp={data.postDateGmt} />
             </p>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
@@ -218,7 +213,7 @@ export default function Component() {
         </div>
         <div className="flex justify">
         <Form method="post" className="flex items-center p-2 rounded">
-          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+          <input type="hidden" name="postId" value={data.postId.toString() || ""} />
           <input type="hidden" name="action" value="votePost" />
           <Turnstile
             siteKey={CF_TURNSTILE_SITEKEY}
@@ -227,7 +222,7 @@ export default function Component() {
           />
           <VoteButton
             type="like"
-            count={postContent?.countLikes}
+            count={data.countLikes}
             isAnimating={isLikeAnimating}
             isVoted={isLiked}
             disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
@@ -235,7 +230,7 @@ export default function Component() {
           />
           <VoteButton
             type="dislike"
-            count={postContent?.countDislikes}
+            count={data.countDislikes}
             isAnimating={isDislikeAnimating}
             isVoted={isDisliked}
             disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
@@ -244,11 +239,11 @@ export default function Component() {
         </Form>
       </div>
         <div className="postContent">
-            {postContent && parser(postContent.postContent)}
+            {parser(data.postContent)}
         </div>
         <div className="my-6">
           <NavLink
-            to={`/archives/edit/${postContent?.postId}`}
+            to={`/archives/edit/${data.postId}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
@@ -257,7 +252,7 @@ export default function Component() {
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
-            {similarPosts.map((post) => (
+            {data.similarPosts.map((post) => (
               <li key={post.postId} className="my-2">
                 <NavLink
                   to={`/archives/${post.postId}`}
@@ -270,24 +265,24 @@ export default function Component() {
           </ul>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center my-20">
-          {nextPost ? (
+          {data.nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
               <ArrowForwardIcon />
               <NavLink
-                to={`/archives/${nextPost.postId}`}
+                to={`/archives/${data.nextPost.postId}`}
                 className="text-info underline underline-offset-4"
               >
-                {nextPost.postTitle}
+                {data.nextPost.postTitle}
               </NavLink>
             </div>
           ): (<div/>)}
-          {prevPost ? (
+          {data.previousPost ? (
             <div className="flex items-center">
               <NavLink
-                to={`/archives/${prevPost.postId}`}
+                to={`/archives/${data.previousPost.postId}`}
                 className="text-info underline underline-offset-4 mr-2"
               >
-                {prevPost.postTitle}
+                {data.previousPost.postTitle}
               </NavLink>
               <ArrowBackIcon  />
             </div>
@@ -295,8 +290,8 @@ export default function Component() {
         </div>
         <div className="my-8">
             <ShareButtons
-              currentURL={`https://healthy-person-emulator.org/archives/${postContent?.postId}`}
-              postTitle={postContent?.postTitle || ""}
+              currentURL={data.postURL}
+              postTitle={data.postTitle}
             />
         </div>
         <br/>
@@ -487,8 +482,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
     return [{ title: "Loading..." }];
   }
-  const title = data.postContent?.postTitle || "";
-  const description = data.postContent?.tags.map((tag) => tag.tagName).join(", ") || "";
+  const title = data.data.postTitle;
+  const description = data.data.tags.map((tag) => tag.tagName).join(", ") || "";
   const ogLocale = "ja_JP";
   const ogSiteName = "健常者エミュレータ事例集";
   const ogType = "article";
@@ -500,7 +495,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const twitterTitle = title
   const twitterDescription = description
   const twitterCreator = "@helthypersonemu"
-  const twitterImage = data.postContent?.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+  const twitterImage = data.data.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
 
   return [
     { title },
