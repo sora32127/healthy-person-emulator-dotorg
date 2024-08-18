@@ -28,13 +28,3 @@ export async function requireUserId(request: Request){
     }
     return userId;
 }
-
-export async function isAdminLogin(request: Request){
-    const session = await getSession(request.headers.get('Cookie'));
-    const userId = session.get('userId');
-    if (userId == process.env.ADMIN_USER_ID) {
-        return true;
-    } else {
-        return false
-    }
-}

@@ -8,7 +8,7 @@ import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts, getNextP
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
+import { commitSession, getSession } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
