@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma } from "~/modules/db.server";
+import { prisma, getPostByPostId } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
@@ -24,40 +24,8 @@ import RelativeDate from "~/components/RelativeDate";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
-    // Wordpress時代のURLと合わせるため、以下の形式のURLを想定する
-    // https://healthy-person-emulator.org/archives/${postId}?q...
-    const postId = url.pathname.split("/")[2];
-    const postContent = await prisma.dimPosts.findFirst({
-        where: {
-          postId: Number(postId),
-        },
-        select: {
-          postId: true,
-          postTitle: true,
-          postContent: true,
-          postDateGmt: true,
-          countLikes: true,
-          countDislikes: true,
-          commentStatus: true,
-          ogpImageUrl: true,
-          rel_post_tags: {
-            select: {
-              dimTag: {
-                select: {
-                  tagName: true,
-                },
-              },
-            },
-          },
-        },
-    });
-
-    if (!postContent) {
-      throw new Response("Post not found", {
-        status: 404,
-      })
-    }
-
+    const postId = Number(url.pathname.split("/")[2]);
+    const postContent = await getPostByPostId(postId);
     const comments = await prisma.dimComments.findMany({
         where: {
           postId: Number(postId),
@@ -113,11 +81,10 @@ export async function loader({ request }:LoaderFunctionArgs){
     });
 
     const isAdmin = await isAdminLogin(request);
-    const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames, CF_TURNSTILE_SITEKEY });
+    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin,CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
@@ -233,11 +200,11 @@ export default function Component() {
       ));
   };
 
-  const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
-    if (a.dimTag.tagName > b.dimTag.tagName) {
+  const sortedTagNames = postContent?.tags.sort((a, b) => {
+    if (a.tagName > b.tagName) {
       return 1;
     }
-    if (a.dimTag.tagName < b.dimTag.tagName) {
+    if (a.tagName < b.tagName) {
       return -1;
     }
     return 0;
@@ -294,8 +261,8 @@ export default function Component() {
             </div>
             <div className="flex flex-wrap gap-y-3 my-2">
               {sortedTagNames?.map((tag) => (
-                <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
-                  <TagCard tagName={tag.dimTag.tagName} />
+                <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
+                  <TagCard tagName={tag.tagName} />
                 </span>
               ))}
             </div>
@@ -573,7 +540,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [{ title: "Loading..." }];
   }
   const title = data.postContent?.postTitle || "";
-  const description = data.tagNames?.join(", ") || "";
+  const description = data.postContent?.tags.map((tag) => tag.tagName).join(", ") || "";
   const ogLocale = "ja_JP";
   const ogSiteName = "健常者エミュレータ事例集";
   const ogType = "article";
