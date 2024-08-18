@@ -11,7 +11,8 @@
     "seed": "npx tsx prisma/seed.ts",
     "reset:db": "npx prisma migrate reset -f && npx prisma db push",
     "typecheck": "tsc",
-    "knip": "knip"
+    "knip": "knip",
+    "test": "vitest"
   },
   "dependencies": {
     "@clerk/localizations": "^2.5.8",
@@ -66,7 +67,8 @@
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.1",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.0.1",
+    "vitest": "^2.0.5"
   },
   "engines": {
     "node": ">=18.0.0"
