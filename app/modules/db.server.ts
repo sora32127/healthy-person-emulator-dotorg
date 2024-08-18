@@ -182,7 +182,7 @@ async function getPreviousPost(postId: number): Promise<PreviousOrNextPostData> 
     return previousPost;
 }
 
-export async function getNextPost(postId: number): Promise<PreviousOrNextPostData> {
+async function getNextPost(postId: number): Promise<PreviousOrNextPostData> {
     const nextPost = await prisma.dimPosts.findFirst({
         where : {postId: {gt: postId}},
         orderBy: {postId: "asc"},
