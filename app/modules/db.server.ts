@@ -165,6 +165,44 @@ export async function getSimilarPosts(postId: number): Promise<SimilarPostsData[
     return similarPosts;
 }
 
+const PreviousOrNextPostSchema = z.object({
+    postId: z.number(),
+    postTitle: z.string(),
+}).transform((post) => {
+    return {
+        ...post,
+        postURL: `https://healthy-person-emulator.org/archives/${post.postId}`
+    }
+})
+
+type PreviousOrNextPostData = z.infer<typeof PreviousOrNextPostSchema>;
+
+export async function getPreviousPost(postId: number): Promise<PreviousOrNextPostData> {
+    const previousPost = await prisma.dimPosts.findFirst({
+        where : {postId: {lt: postId}},
+        orderBy: {postId: "desc"},
+        select: {
+            postId: true,
+            postTitle: true,
+        }
+    }) as PreviousOrNextPostData
+
+    return previousPost;
+}
+
+export async function getNextPost(postId: number): Promise<PreviousOrNextPostData> {
+    const nextPost = await prisma.dimPosts.findFirst({
+        where : {postId: {gt: postId}},
+        orderBy: {postId: "asc"},
+        select: {
+            postId: true,
+            postTitle: true,
+        }
+    }) as PreviousOrNextPostData
+
+    return nextPost;
+}
+
 
 
 export { prisma }

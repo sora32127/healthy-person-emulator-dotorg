@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts } from "~/modules/db.server";
+import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts, getNextPost, getPreviousPost } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
@@ -27,6 +27,8 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postContent = await getPostByPostId(postId);
     const comments = await getCommentsByPostId(postId);
     const similarPosts = await getSimilarPosts(postId);
+    const prevPost = await getPreviousPost(postId);
+    const nextPost = await getNextPost(postId);
 
     const session = await getSession(request.headers.get("Cookie"));
     const likedPages = session.get("likedPages") || [];
@@ -34,26 +36,6 @@ export async function loader({ request }:LoaderFunctionArgs){
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
 
-    const prevPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { lt: postContent?.postDateGmt },
-      },
-      orderBy: {
-        postDateGmt: "desc",
-      },
-    });
-    
-    const nextPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { gt: postContent?.postDateGmt },
-        postId: { not: postContent?.postId }, // 同じ記事が表示されないようにする
-      },
-      orderBy: {
-        postDateGmt: "asc",
-      },
-    });
-
-    const isAdmin = await isAdminLogin(request);
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
