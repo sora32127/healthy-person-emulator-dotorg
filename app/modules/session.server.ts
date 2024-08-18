@@ -29,12 +29,12 @@ export async function requireUserId(request: Request){
     return userId;
 }
 
-export async function isAdminLogin(request: Request){
+export async function getUserActivityData(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
-    const userId = session.get('userId');
-    if (userId == process.env.ADMIN_USER_ID) {
-        return true;
-    } else {
-        return false
-    }
+    const likedPages = session.get("likedPages") || [];
+    const dislikedPages = session.get("dislikedPages") || [];
+    const likedComments = session.get("likedComments") || [];
+    const dislikedComments = session.get("dislikedComments") || [];
+
+    return { likedPages, dislikedPages, likedComments, dislikedComments };
 }

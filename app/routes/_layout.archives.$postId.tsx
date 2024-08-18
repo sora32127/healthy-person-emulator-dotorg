@@ -4,12 +4,11 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma } from "~/modules/db.server";
+import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
-import { supabase } from "~/modules/supabase.server";
+import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
@@ -24,104 +23,17 @@ import RelativeDate from "~/components/RelativeDate";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
-    // Wordpress時代のURLと合わせるため、以下の形式のURLを想定する
-    // https://healthy-person-emulator.org/archives/${postId}?q...
-    const postId = url.pathname.split("/")[2];
-    const postContent = await prisma.dimPosts.findFirst({
-        where: {
-          postId: Number(postId),
-        },
-        select: {
-          postId: true,
-          postTitle: true,
-          postContent: true,
-          postDateGmt: true,
-          countLikes: true,
-          countDislikes: true,
-          commentStatus: true,
-          ogpImageUrl: true,
-          rel_post_tags: {
-            select: {
-              dimTag: {
-                select: {
-                  tagName: true,
-                },
-              },
-            },
-          },
-        },
-    });
-
-    if (!postContent) {
-      throw new Response("Post not found", {
-        status: 404,
-      })
-    }
-
-    const comments = await prisma.dimComments.findMany({
-        where: {
-          postId: Number(postId),
-        },
-        orderBy: {
-          commentDateJst: "desc",
-        },
-    });
-
-    const commentVoteData = await prisma.fctCommentVoteHistory.groupBy({
-        by: ["commentId", "voteType" ],
-        _count: { commentId: true },
-        where: {
-          commentId: { in: comments.map((comment) => comment.commentId) },
-        },
-    });
-    const { data, error } = await supabase.rpc("search_similar_content", {
-      query_post_id: Number(postId),
-      match_threshold: 0,
-      match_count: 16,
-    });
-
-    let similarPosts = [];
-    if (error) {
-      console.error(error.code, error.message);
-    }else{
-      similarPosts = data.slice(1,);
-    }
-
-    const session = await getSession(request.headers.get("Cookie"));
-    const likedPages = session.get("likedPages") || [];
-    const dislikedPages = session.get("dislikedPages") || [];
-    const likedComments = session.get("likedComments") || [];
-    const dislikedComments = session.get("dislikedComments") || [];
-
-    const prevPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { lt: postContent?.postDateGmt },
-      },
-      orderBy: {
-        postDateGmt: "desc",
-      },
-    });
-    
-    const nextPost = await prisma.dimPosts.findFirst({
-      where: {
-        postDateGmt: { gt: postContent?.postDateGmt },
-        postId: { not: postContent?.postId }, // 同じ記事が表示されないようにする
-      },
-      orderBy: {
-        postDateGmt: "asc",
-      },
-    });
-
-    const isAdmin = await isAdminLogin(request);
-    const tagNames = postContent.rel_post_tags.map((rel) => rel.dimTag.tagName); // MetaFunctionで使用するため、ここで定義
+    const postId = Number(url.pathname.split("/")[2]);
+    const data = await ArchiveDataEntry.getData(postId);
+    const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, commentVoteData, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, tagNames, CF_TURNSTILE_SITEKEY });
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, commentVoteData, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -134,8 +46,8 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPages.includes(postContent?.postId);
-  const isDisliked = dislikedPages.includes(postContent?.postId);
+  const isLiked = likedPages.includes(data.postId);
+  const isDisliked = dislikedPages.includes(data.postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -163,14 +75,14 @@ export default function Component() {
       }, 1000);
     }
 
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("action", "votePost");
     formData.append("cf-turnstile-response", cfTurnstileResponse);
     formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${postContent?.postId}`,
+      action: `/archives/${data.postId}`,
     });
   };
 
@@ -179,14 +91,14 @@ export default function Component() {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("commentAuthor", commentAuthor);
     formData.append("commentContent", commentContent);
     formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
-      action: `/archives/${postContent?.postId}`,
+      action: `/archives/${data.postId}`,
     });
 
     setCommentAuthor("Anonymous");
@@ -195,27 +107,27 @@ export default function Component() {
   
   const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
     const formData = new FormData();
-    formData.append("postId", postContent?.postId.toString() || "");
+    formData.append("postId", data.postId.toString() || "");
     formData.append("commentId", commentId.toString());
     formData.append("voteType", voteType);
     formData.append("action", "voteComment");
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${postContent?.postId}`,
+        action: `/archives/${data.postId}`,
     });
   };
 
-  const isCommentOpen = postContent?.commentStatus === "open";
+  const isCommentOpen = data.commentStatus === "open";
 
   const renderComments = (parentId = 0, level = 0) => {
-    return comments
+    return data.comments
       .filter((comment) => comment.commentParent === parentId)
       .map((comment) => (
         <div key={comment.commentId}>
           <CommentCard
             commentId={comment.commentId}
-            postId={postContent?.postId || 0}
+            postId={data.postId}
             commentContent={comment.commentContent}
             commentDateGmt={comment.commentDateGmt}
             commentAuthor={comment.commentAuthor}
@@ -223,9 +135,8 @@ export default function Component() {
             onCommentVote={handleCommentVote}
             likedComments={likedComments}
             dislikedComments={dislikedComments}
-            likesCount={commentVoteData.find((data) => data.commentId === comment.commentId && data.voteType === 1)?._count.commentId || 0}
-            dislikesCount={commentVoteData.find((data: { commentId: number; voteType: number; }) => data.commentId === comment.commentId && data.voteType === -1)?._count.commentId || 0}
-            isAdmin={isAdmin}
+            likesCount={comment.likesCount}
+            dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
           />
           {renderComments(comment.commentId, level + 1)}
@@ -233,11 +144,11 @@ export default function Component() {
       ));
   };
 
-  const sortedTagNames = postContent?.rel_post_tags.sort((a, b) => {
-    if (a.dimTag.tagName > b.dimTag.tagName) {
+  const sortedTagNames = data.tags.sort((a, b) => {
+    if (a.tagName > b.tagName) {
       return 1;
     }
-    if (a.dimTag.tagName < b.dimTag.tagName) {
+    if (a.tagName < b.tagName) {
       return -1;
     }
     return 0;
@@ -277,15 +188,14 @@ export default function Component() {
   return (
     <>
       <div>
-        <H1>{postContent?.postTitle}</H1>
-        
+        <H1>{data.postTitle}</H1>
         <div>
           <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
             <div className="w-6 h-6">
               <ClockIcon />
             </div>
             <p>
-              <RelativeDate timestamp={postContent?.postDateGmt} />
+              <RelativeDate timestamp={data.postDateGmt} />
             </p>
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
@@ -294,8 +204,8 @@ export default function Component() {
             </div>
             <div className="flex flex-wrap gap-y-3 my-2">
               {sortedTagNames?.map((tag) => (
-                <span key={tag.dimTag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
-                  <TagCard tagName={tag.dimTag.tagName} />
+                <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
+                  <TagCard tagName={tag.tagName} />
                 </span>
               ))}
             </div>
@@ -303,7 +213,7 @@ export default function Component() {
         </div>
         <div className="flex justify">
         <Form method="post" className="flex items-center p-2 rounded">
-          <input type="hidden" name="postId" value={postContent?.postId.toString() || ""} />
+          <input type="hidden" name="postId" value={data.postId.toString() || ""} />
           <input type="hidden" name="action" value="votePost" />
           <Turnstile
             siteKey={CF_TURNSTILE_SITEKEY}
@@ -312,7 +222,7 @@ export default function Component() {
           />
           <VoteButton
             type="like"
-            count={postContent?.countLikes}
+            count={data.countLikes}
             isAnimating={isLikeAnimating}
             isVoted={isLiked}
             disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
@@ -320,7 +230,7 @@ export default function Component() {
           />
           <VoteButton
             type="dislike"
-            count={postContent?.countDislikes}
+            count={data.countDislikes}
             isAnimating={isDislikeAnimating}
             isVoted={isDisliked}
             disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
@@ -329,11 +239,11 @@ export default function Component() {
         </Form>
       </div>
         <div className="postContent">
-            {postContent && parser(postContent.postContent)}
+            {parser(data.postContent)}
         </div>
         <div className="my-6">
           <NavLink
-            to={`/archives/edit/${postContent?.postId}`}
+            to={`/archives/edit/${data.postId}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
@@ -342,37 +252,37 @@ export default function Component() {
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
-            {similarPosts.map((post: { post_id: number, post_title: string }) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-              <li key={post.post_id} className="my-2">
+            {data.similarPosts.map((post) => (
+              <li key={post.postId} className="my-2">
                 <NavLink
-                  to={`/archives/${post.post_id}`}
+                  to={`/archives/${post.postId}`}
                   className="text-info underline underline-offset-4"
                 >
-                  {post.post_title}
+                  {post.postTitle}
                 </NavLink>
               </li>
             ))}
           </ul>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center my-20">
-          {nextPost ? (
+          {data.nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
               <ArrowForwardIcon />
               <NavLink
-                to={`/archives/${nextPost.postId}`}
+                to={`/archives/${data.nextPost.postId}`}
                 className="text-info underline underline-offset-4"
               >
-                {nextPost.postTitle}
+                {data.nextPost.postTitle}
               </NavLink>
             </div>
           ): (<div/>)}
-          {prevPost ? (
+          {data.previousPost ? (
             <div className="flex items-center">
               <NavLink
-                to={`/archives/${prevPost.postId}`}
+                to={`/archives/${data.previousPost.postId}`}
                 className="text-info underline underline-offset-4 mr-2"
               >
-                {prevPost.postTitle}
+                {data.previousPost.postTitle}
               </NavLink>
               <ArrowBackIcon  />
             </div>
@@ -380,8 +290,8 @@ export default function Component() {
         </div>
         <div className="my-8">
             <ShareButtons
-              currentURL={`https://healthy-person-emulator.org/archives/${postContent?.postId}`}
-              postTitle={postContent?.postTitle || ""}
+              currentURL={data.postURL}
+              postTitle={data.postTitle}
             />
         </div>
         <br/>
@@ -572,8 +482,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
     return [{ title: "Loading..." }];
   }
-  const title = data.postContent?.postTitle || "";
-  const description = data.tagNames?.join(", ") || "";
+  const title = data.data.postTitle;
+  const description = data.data.tags.map((tag) => tag.tagName).join(", ") || "";
   const ogLocale = "ja_JP";
   const ogSiteName = "健常者エミュレータ事例集";
   const ogType = "article";
@@ -585,7 +495,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const twitterTitle = title
   const twitterDescription = description
   const twitterCreator = "@helthypersonemu"
-  const twitterImage = data.postContent?.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+  const twitterImage = data.data.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
 
   return [
     { title },
