@@ -62,10 +62,12 @@ export default function PostCard({
                             <LiaThumbsDownSolid/>
                             <span className="text-sm text-base-content ml-1">{countDislikes}</span>
                         </div>
-                        <div className="flex items-center">
-                            <FaRegComments/>
-                            <span className="text-sm text-base-content ml-1">{countComments}</span>
-                        </div>
+                        {countComments !== undefined && (
+                            <div className="flex items-center">
+                                <FaRegComments/>
+                                <span className="text-sm text-base-content ml-1">{countComments}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <NavLink to={`/archives/${postId}`} className="hover:underline hover:underline-offset-4">
