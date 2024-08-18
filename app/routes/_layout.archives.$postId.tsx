@@ -4,12 +4,11 @@ import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remi
 import parser from "html-react-parser";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, getPostByPostId, getCommentsByPostId } from "~/modules/db.server";
+import { prisma, getPostByPostId, getCommentsByPostId, getSimilarPosts } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
 import { commitSession, getSession, isAdminLogin } from "~/modules/session.server";
-import { supabase } from "~/modules/supabase.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
@@ -27,18 +26,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const postContent = await getPostByPostId(postId);
     const comments = await getCommentsByPostId(postId);
-    const { data, error } = await supabase.rpc("search_similar_content", {
-      query_post_id: Number(postId),
-      match_threshold: 0,
-      match_count: 16,
-    });
-
-    let similarPosts = [];
-    if (error) {
-      console.error(error.code, error.message);
-    }else{
-      similarPosts = data.slice(1,);
-    }
+    const similarPosts = await getSimilarPosts(postId);
 
     const session = await getSession(request.headers.get("Cookie"));
     const likedPages = session.get("likedPages") || [];
@@ -69,11 +57,11 @@ export async function loader({ request }:LoaderFunctionArgs){
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
 
-    return json({ postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin,CF_TURNSTILE_SITEKEY });
+    return json({ postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost,CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, isAdmin, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { postContent, comments, likedPages, dislikedPages, likedComments, dislikedComments, similarPosts, prevPost, nextPost, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -293,13 +281,13 @@ export default function Component() {
         <H2>関連記事</H2>
         <div>
           <ul className="list-disc list-outside mb-4 ml-4">
-            {similarPosts.map((post: { post_id: number, post_title: string }) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-              <li key={post.post_id} className="my-2">
+            {similarPosts.map((post) => (
+              <li key={post.postId} className="my-2">
                 <NavLink
-                  to={`/archives/${post.post_id}`}
+                  to={`/archives/${post.postId}`}
                   className="text-info underline underline-offset-4"
                 >
-                  {post.post_title}
+                  {post.postTitle}
                 </NavLink>
               </li>
             ))}

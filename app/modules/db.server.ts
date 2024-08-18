@@ -137,5 +137,34 @@ export async function getCommentsByPostId(postId: number): Promise<CommentData[]
     return commentsWithVoteCount;
 }
 
+const similarPostsSchema = z.object({
+    postId: z.number(),
+    postTitle: z.string(),
+}).transform((post) => {
+    return {
+        ...post,
+        postURL: `https://healthy-person-emulator.org/archives/${post.postId}`
+    }
+})
+
+type SimilarPostsData = z.infer<typeof similarPostsSchema>;
+
+export async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
+    const similarPostsRaw = await prisma.$queryRaw`
+    select json_agg(
+        json_build_object(
+            'postId', post_id,
+            'postTitle', post_title,
+            'similarity', similarity
+        )
+    )::varchar as result
+    from search_similar_content(${postId}, 0, 16)
+    ` as { result: string }[]
+
+    const similarPosts: SimilarPostsData[] = JSON.parse(similarPostsRaw[0].result).slice(1,) // 0番目のエントリはその記事自身を指すため除外する
+    return similarPosts;
+}
+
+
 
 export { prisma }
