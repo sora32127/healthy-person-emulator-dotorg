@@ -60,14 +60,32 @@ export default function Component() {
   return (
     <div className="grid grid-cols-1 min-h-screen">
       <div className="hidden md:block">
-        <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[1fr,2fr,1fr]">
+        <header className="navbar z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[2fr,10fr,1fr]">
           <div>
-            <h1 className="text-xl font-bold">
+            <h1 className="text-lg font-bold">
             <NavLink to="/">健常者エミュレータ事例集</NavLink>
             </h1>
           </div>
           <div className="flex justify-center">
             <ThemeSwitcher />
+            <ul className="flex gap-x-4">
+              {navItems.map((item) => {
+                if (item.to === "/logout"){
+                  return (
+                    <li key={item.to} className="hover:font-bold rounded-lg">
+                      <SignOutButton redirectUrl="/">
+                        ログアウト
+                      </SignOutButton>
+                    </li>
+                  )
+                }
+                return (
+                  <li key={item.to} className="hover:font-bold rounded-lg">
+                    <NavLink to={item.to}>{item.text}</NavLink>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
           <div className="flex justify-end" >
             <div className="tooltip tooltip-bottom" data-tip="検索する">
