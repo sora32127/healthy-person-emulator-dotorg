@@ -133,34 +133,11 @@ export default function Component() {
           </div>
         </div>
       </header>
-      <main className="grid md:grid-cols-[auto,1fr] pt-16">
-        {/* md以上の画面サイズ向けメニュー */}
-        <nav className="hidden md:block w-64 bg-base-100 border-r border-neutral">
-          <div className="fixed top-32 bottom-0 w-64 p-4 overflow-y-auto">
-            <ul className="space-y-4">
-              {navItems.map((item) => item.to !== "/post" && (
-                <li key={item.to}>{renderNavItem(item)}</li>
-              ))}
-              {menuItems.map((item) => (
-                <li key={item.to}>{renderNavItem(item)}</li>
-              ))}
-              <li>
-                <NavLink
-                  to="/post"
-                  className="flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 py-4 mt-20 rounded-full"
-                >
-                  <PostIcon />
-                  <p className="text-xs px-4 font-bold">投稿する</p>
-                </NavLink>
-              </li>
-            </ul>
-          </div>
-        </nav>
-        <div className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
+      <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
+        <div className="pt-16">
           <Outlet />
         </div>
       </main>
-      {/* md以下の画面サイズ向けメニュー */}
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
         <NavLink to="/post">
           <button className="btn btn-primary btn-circle" type="button">
