@@ -102,7 +102,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar fixed z-40 border-b p-4 border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-40 border-b px-2 border-base-200 bg-base-100 flex justify-between">
       <div>
         <h1 className="text-xl font-bold">
           <NavLink to="/">健常者エミュレータ事例集</NavLink>
