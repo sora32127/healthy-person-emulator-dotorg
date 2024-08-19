@@ -64,52 +64,52 @@ function renderSearchModal(){
 
 function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 grid grid-cols-[2fr,10fr,1fr]">
-    <div>
-      <h1 className="text-lg font-bold">
-        <NavLink to="/">健常者エミュレータ事例集</NavLink>
-      </h1>
-    </div>
-    <div className="flex justify-center">
-      <ThemeSwitcher />
-      <ul className="flex gap-x-4">
-        {navItems.map((item) => (
-          <li key={item.to} className="hover:font-bold rounded-lg">
-            {item.to === "/logout" ? (
-              <SignOutButton redirectUrl="/">ログアウト</SignOutButton>
-            ) : (
-              <NavLink to={item.to}>{item.text}</NavLink>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-    <div className="flex justify-end">
-      <div className="tooltip tooltip-bottom" data-tip="検索する">
-        <button className="btn btn-ghost" onClick={() => {
-          const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-          searchModal?.showModal();
-        }} type="button">
-          <MdSearch />
-        </button>
-        {renderSearchModal()}
+    <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
+      <div className="flex-none">
+        <h1 className="text-lg font-bold">
+          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+        </h1>
       </div>
-    </div>
-  </header>
-);
+      <div className="flex-1 flex justify-center items-center">
+        <ThemeSwitcher />
+        <ul className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-2">
+          {navItems.map((item) => (
+            <li key={item.to} className="hover:font-bold rounded-lg hover:bg-base-200 py-2">
+              {item.to === "/logout" ? (
+                <SignOutButton redirectUrl="/">ログアウト</SignOutButton>
+              ) : (
+                <NavLink to={item.to} className="px-2 py-1 text-sm">{item.text}</NavLink>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="flex-none">
+        <div className="tooltip tooltip-bottom" data-tip="検索する">
+          <button className="btn btn-ghost" onClick={() => {
+            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+            searchModal?.showModal();
+          }} type="button">
+            <MdSearch />
+          </button>
+          {renderSearchModal()}
+        </div>
+      </div>
+    </header>
+  );
 }
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar fixed z-10 border-b p-4 border-base-200 bg-base-100 grid grid-cols-2">
-    <div>
-      <h1 className="text-xl font-bold">
-        <NavLink to="/">健エミュ</NavLink>
-      </h1>
-    </div>
-    <div>
-      <div className="drawer drawer-end">
-        <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+    <header className="navbar fixed z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between">
+      <div>
+        <h1 className="text-xl font-bold">
+          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+        </h1>
+      </div>
+      <div>
+        <div className="drawer drawer-end">
+          <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
         <div className="drawer-content flex justify-end">
           <label htmlFor="drawer-toggle" className="btn btn-ghost">
             <MdMenu />
