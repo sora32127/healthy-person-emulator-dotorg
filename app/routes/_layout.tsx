@@ -14,27 +14,26 @@ import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
-import { MdOutlinePostAdd, MdSearch } from "react-icons/md";
+import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
 import { H3 } from "~/components/Headings";
 import { useEffect } from "react";
 
+
 export default function Component() {
   const { isSignedIn } = useUser();
+  console.log("isSignedIn", isSignedIn);
 
   const navItems = [
     { to: "/", icon: HomeIcon, text: "トップ" },
     { to: "/random", icon: RandomIcon, text: "ランダム" },
     { to: "/post", icon: PostIcon, text: "投稿する" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
-  ];
-
-  const menuItems = [
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
     ...(isSignedIn
       ? [{
-          to: "#",
+          to: "/logout",
           text: "ログアウト",
           icon: LogoutIcon,
         }]
@@ -44,42 +43,10 @@ export default function Component() {
         ]),
   ];
 
-  const renderNavItem = (item: { to: string; icon: React.ComponentType; text: string; onClick?: () => void }): JSX.Element => {
-    const content = (
-      <>
-        <item.icon />
-        <p className="text-xs md:text-sm md:ml-4">{item.text}</p>
-      </>
-    );
 
-    if (item.text === "ログアウト") {
-      return (
-        <SignOutButton redirectUrl="/">
-          <button className="flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit" type="button">
-            {content}
-          </button>
-        </SignOutButton>
-      );
-    }
-
-    return (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        className={({ isActive }) =>
-          `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
-            isActive ? "font-bold md:bg-base-300" : ""
-          }`
-        }
-      >
-        {content}
-      </NavLink>
-    );
-  };
-
-  const searchModal = document.getElementById('search-modal') as HTMLDialogElement;
 
   useEffect(()=> {
+    const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
     const handleKeyDownForSearch = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "f") {
         event.preventDefault();
@@ -88,51 +55,124 @@ export default function Component() {
     }
     window.addEventListener('keydown', handleKeyDownForSearch);
     return () => window.removeEventListener('keydown', handleKeyDownForSearch);
-  }, [searchModal]);
+  }, []);
 
   return (
     <div className="grid grid-cols-1 min-h-screen">
-      <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[1fr,2fr,1fr]">
-        <div>
-          <h1 className="text-xl font-bold hidden md:block">
+      <div className="hidden md:block">
+        <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[1fr,2fr,1fr]">
+          <div>
+            <h1 className="text-xl font-bold">
             <NavLink to="/">健常者エミュレータ事例集</NavLink>
-          </h1>
-          <h1 className="text-xl font-bold block md:hidden">
+            </h1>
+          </div>
+          <div className="flex justify-center">
+            <ThemeSwitcher />
+          </div>
+          <div className="flex justify-end" >
+            <div className="tooltip tooltip-bottom" data-tip="検索する">
+              <button className="btn btn-ghost" onClick={()=>{
+                const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+                searchModal?.showModal();
+              }} type="button">
+                <MdSearch />
+              </button>
+              <dialog id="search-modal" className="modal">
+                <div className="modal-box">
+                  <div className="mt-6">
+                    <Form method="post" action="/search" className="flex flex-row" onSubmit={()=>{
+                      const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+                      searchModal?.close();
+                    }}>
+                      <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
+                        <button type="submit" className="btn btn-primary ml-4">
+                          <MdSearch />
+                        </button>
+                      <input type="hidden" name="action" value="firstSearch" />
+                      <form method="dialog">
+                        <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                      </form>
+                    </Form>
+                  </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                  <button type="submit">閉じる</button>
+                </form>
+              </dialog>
+            </div>
+          </div>
+        </header>
+      </div>
+      <div className="block md:hidden">
+        <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-2">
+          <div>
+            <h1 className="text-xl font-bold">
             <NavLink to="/">健エミュ</NavLink>
-          </h1>
-        </div>
-        <div className="hidden md:flex md:justify-center">
-          <ThemeSwitcher />
-        </div>
-        <div className="flex justify-end" >
-          <div className="tooltip tooltip-bottom" data-tip="検索する">
-            <button className="btn btn-ghost" onClick={()=>searchModal?.showModal()} type="button">
-              <MdSearch />
-            </button>
-            <dialog id="search-modal" className="modal">
-              <div className="modal-box">
-                <div className="mt-6">
-                  <Form method="post" action="/search" className="flex flex-row" onSubmit={()=>{
-                    searchModal?.close();
-                  }}>
-                    <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
-                      <button type="submit" className="btn btn-primary ml-4">
-                        <MdSearch />
-                      </button>
-                    <input type="hidden" name="action" value="firstSearch" />
-                    <form method="dialog">
-                      <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                    </form>
-                  </Form>
+            </h1>
+          </div>
+          <div>
+            <div className="drawer drawer-end">
+              <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+              <div className="drawer-content flex justify-end">
+                <label htmlFor="drawer-toggle" className="btn btn-ghost">
+                  <MdMenu />
+                </label>
+              </div>
+              <div className="drawer-side">
+                <label htmlFor="drawer-toggle" className="drawer-overlay"/>
+                <div className="bg-base-100">
+                  <button
+                    className="btn btn-ghost absolute right-4 top-2"
+                    type="button"
+                    onClick={() => {
+                      document.getElementById('drawer-toggle')?.click();
+                    }}
+                  >
+                  ✕
+                  </button>
+                  <ul className="p-4 w-50 text-base-content min-h-screen py-20 flex flex-col">
+                    {navItems.map((item) => {
+                      return (
+                        <li key={item.to} className="justify-center">
+                          {item.to === "/logout" && 
+                          (
+                            <button onClick={
+                              () => {
+                              document.getElementById('drawer-toggle')?.click();
+                            }}
+                              className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                              type="button"
+                            >
+                            <LogoutIcon/>
+                            <SignOutButton redirectUrl="/">
+                            {"ログアウト"}
+                            </SignOutButton>
+                            </button>
+                          )
+                          }
+                          {item.to !== "/logout" &&
+                          <NavLink to={item.to} onClick={
+                            () => {
+                            document.getElementById('drawer-toggle')?.click();
+                          }}
+                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                          >
+                            <item.icon />
+                            {item.text}
+                          </NavLink>
+                          }
+                        </li>
+                      )
+                    })}
+                  </ul>
                 </div>
               </div>
-              <form method="dialog" className="modal-backdrop">
-                <button type="submit">閉じる</button>
-              </form>
-            </dialog>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
+
+
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
         <div className="pt-16">
           <Outlet />
