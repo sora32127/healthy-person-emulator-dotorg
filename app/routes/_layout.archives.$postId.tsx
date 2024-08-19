@@ -190,13 +190,9 @@ export default function Component() {
       <div>
         <H1>{data.postTitle}</H1>
         <div>
-          <div className="grid grid-cols-[auto_1fr] gap-2 my-1 items-center">
-            <div className="w-6 h-6">
-              <ClockIcon />
-            </div>
-            <p>
-              <RelativeDate timestamp={data.postDateGmt} />
-            </p>
+          <div className="flex items-start gap-2 my-1">
+            <div className="w-6 h-6"><ClockIcon /></div>
+            <RelativeDate timestamp={data.postDateGmt} />
           </div>
           <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
             <div className="w-6 h-6">
