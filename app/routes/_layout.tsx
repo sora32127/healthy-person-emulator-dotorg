@@ -101,7 +101,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar fixed z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-50 border-b p-4 border-base-200 bg-base-100 flex justify-between">
       <div>
         <h1 className="text-xl font-bold">
           <NavLink to="/">健常者エミュレータ事例集</NavLink>
@@ -117,7 +117,7 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
         </div>
         <div className="drawer-side">
           <label htmlFor="drawer-toggle" className="drawer-overlay"/>
-          <div className="bg-base-100">
+          <div className="bg-base-200">
             <button
               className="btn btn-ghost absolute right-4 top-2"
               type="button"
