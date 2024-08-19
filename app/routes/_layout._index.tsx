@@ -35,7 +35,7 @@ export default function Feed() {
     const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
     return (
         <>
-        <div>
+        <div className="container mx-auto">
             <div className="latest-posts">
                 <H2>最新の投稿</H2>
                 {mostRecentPosts.map((post) => (
@@ -51,12 +51,14 @@ export default function Feed() {
                         identifier="latest"
                     />
                 ))}
-                <NavLink
-                    to="/feed?p=2&type=timeDesc"
-                    className="rounded-md block w-full px-4 py-2 text-center btn-secondary my-4"
-                >
-                最新の投稿を見る
-                </NavLink>
+                <div className="mx-auto w-1/2">
+                    <NavLink
+                        to="/feed?p=2&type=timeDesc"
+                        className="rounded-md block px-10 py-2 text-center btn-secondary my-4"
+                    >
+                    最新の投稿を見る
+                    </NavLink>
+                </div>
             </div>
             <div className="recent-voted-posts">
             <H2>最近いいねされた投稿</H2>
@@ -73,12 +75,14 @@ export default function Feed() {
                         identifier="voted"
                     />
                 ))}
-                <NavLink
-                    to="/feed?p=2&likeFrom=24&likeTo=0&type=like"
-                    className="rounded-md block w-full px-4 py-2 text-center btn-secondary my-4"
-                >
-                最近いいねされた投稿を見る
-                </NavLink>
+                <div className="mx-auto w-1/2">
+                    <NavLink
+                        to="/feed?p=2&likeFrom=24&likeTo=0&type=like"
+                        className="rounded-md block w-full px-4 py-2 text-center btn-secondary my-4"
+                    >
+                    最近いいねされた投稿を見る
+                    </NavLink>
+                </div>
             </div>
             <div className="recent-comments">
                 <H2>最新のコメント</H2>
