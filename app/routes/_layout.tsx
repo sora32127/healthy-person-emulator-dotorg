@@ -14,6 +14,9 @@ import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
+import { MdOutlinePostAdd, MdSearch } from "react-icons/md";
+import { H3 } from "~/components/Headings";
+import { useEffect } from "react";
 
 export default function Component() {
   const { isSignedIn } = useUser();
@@ -74,29 +77,64 @@ export default function Component() {
     );
   };
 
+  const searchModal = document.getElementById('search-modal') as HTMLDialogElement;
+
+  useEffect(()=> {
+    const handleKeyDownForSearch = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "f") {
+        event.preventDefault();
+        searchModal?.showModal();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDownForSearch);
+    return () => window.removeEventListener('keydown', handleKeyDownForSearch);
+  }, [searchModal]);
+
   return (
     <div className="grid grid-cols-1 min-h-screen">
-      <header className="fixed top-0 w-full bg-base-100 shadow z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold hidden md:block">
-                <NavLink to="/">健常者エミュレータ事例集</NavLink>
-              </h1>
-              <Form method="post" action="/search" className="flex items-center">
-                <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
-                <button className="btn btn-square btn-ghost ml-2" title="search" type="submit">
-                  <SearchIcon/> 
-                </button>
-                <input type="hidden" name="action" value="firstSearch"/>
-              </Form>
-            </div>
-            <ThemeSwitcher />
+      <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[1fr,2fr,1fr]">
+        <div>
+          <h1 className="text-xl font-bold hidden md:block">
+            <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          </h1>
+          <h1 className="text-xl font-bold block md:hidden">
+            <NavLink to="/">健エミュ</NavLink>
+          </h1>
+        </div>
+        <div className="hidden md:flex md:justify-center">
+          <ThemeSwitcher />
+        </div>
+        <div className="flex justify-end" >
+          <div className="tooltip tooltip-bottom" data-tip="検索する">
+            <button className="btn btn-ghost" onClick={()=>searchModal?.showModal()} type="button">
+              <MdSearch />
+            </button>
+            <dialog id="search-modal" className="modal">
+              <div className="modal-box">
+                <div className="mt-6">
+                  <Form method="post" action="/search" className="flex flex-row" onSubmit={()=>{
+                    searchModal?.close();
+                  }}>
+                    <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
+                      <button type="submit" className="btn btn-primary ml-4">
+                        <MdSearch />
+                      </button>
+                    <input type="hidden" name="action" value="firstSearch" />
+                    <form method="dialog">
+                      <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                    </form>
+                  </Form>
+                </div>
+              </div>
+              <form method="dialog" className="modal-backdrop">
+                <button type="submit">閉じる</button>
+              </form>
+            </dialog>
           </div>
         </div>
       </header>
-
       <main className="grid md:grid-cols-[auto,1fr] pt-16">
+        {/* md以上の画面サイズ向けメニュー */}
         <nav className="hidden md:block w-64 bg-base-100 border-r border-neutral">
           <div className="fixed top-32 bottom-0 w-64 p-4 overflow-y-auto">
             <ul className="space-y-4">
@@ -122,46 +160,14 @@ export default function Component() {
           <Outlet />
         </div>
       </main>
-
-      <nav className="fixed bottom-0 w-full bg-base-100 shadow-inner md:hidden">
-        <ul className="flex justify-between items-center p-4">
-          {navItems.map(item => (
-            <li key={item.to}>
-              {item.to === "/post" ? (
-                <NavLink to="/post" className="flex flex-col items-center btn-primary px-2 py-2 rounded-3xl">
-                  <PostIcon />
-                  <p className="text-xs font-bold">投稿する</p>
-                </NavLink>
-              ) : (
-                renderNavItem(item)
-              )}
-            </li>
-          ))}
-          <li>
-            <div className="drawer">
-              <input id="menu-drawer" type="checkbox" className="drawer-toggle" />
-              <div className="drawer-content flex flex-col items-center">
-                <MenuIcon />
-                <label htmlFor="menu-drawer" className="drawer-overlay">メニュー</label>
-              </div>
-              <div className="drawer-side">
-                <label htmlFor="menu-drawer" aria-label="close sidebar" className="drawer-overlay" />
-                <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
-                  {menuItems.map((item) => (
-                    <li key={item.to}>
-                      <NavLink to={item.to} className="flex items-center p-2 rounded" onClick={() => document.getElementById("menu-drawer")?.click()}>
-                        <item.icon />
-                        <p className="ml-2">{item.text}</p>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </nav>
-
+      {/* md以下の画面サイズ向けメニュー */}
+      <div className="md:hidden tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
+        <NavLink to="/post">
+          <button className="btn btn-primary btn-circle" type="button">
+            <MdOutlinePostAdd className="text-4xl" />
+          </button>
+        </NavLink>
+      </div>
       <footer className="bg-base-100 py-8 md:py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-center items-center">
