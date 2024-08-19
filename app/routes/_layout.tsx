@@ -130,7 +130,10 @@ export default function Component() {
                   >
                   ✕
                   </button>
-                  <ul className="p-4 w-50 text-base-content min-h-screen py-20 flex flex-col">
+                  <div className="mt-2">
+                    <ThemeSwitcher />
+                  </div>
+                  <ul className="p-4 w-50 text-base-content min-h-screen py-24 flex flex-col">
                     {navItems.map((item) => {
                       return (
                         <li key={item.to} className="justify-center">
