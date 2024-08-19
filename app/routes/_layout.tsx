@@ -93,7 +93,6 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
           }} type="button">
             <SearchIcon />
           </button>
-          {renderSearchModal()}
         </div>
       </div>
     </header>
@@ -109,56 +108,66 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
         </h1>
       </div>
       <div>
-        <div className="drawer drawer-end">
-          <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
-        <div className="drawer-content flex justify-end">
-          <label htmlFor="drawer-toggle" className="btn btn-ghost">
-            <MenuIcon />
-          </label>
+        <div className="tooltip tooltip-bottom" data-tip="検索する">
+          <button className="btn btn-ghost" onClick={() => {
+            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+            searchModal?.showModal();
+          }} type="button">
+            <SearchIcon />
+          </button>
         </div>
-        <div className="drawer-side">
-          <label htmlFor="drawer-toggle" className="drawer-overlay"/>
-          <div className="bg-base-200">
-            <button
-              className="btn btn-ghost absolute right-4 top-2"
-              type="button"
-              onClick={() => {
-                document.getElementById('drawer-toggle')?.click();
-              }}
-            >
-              ✕
-            </button>
-            <div className="mt-3 ml-2">
-              <ThemeSwitcher />
+        <div>
+          <div className="drawer drawer-end">
+            <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+          <div className="drawer-content flex justify-end">
+            <label htmlFor="drawer-toggle" className="btn btn-ghost">
+              <MenuIcon />
+            </label>
+          </div>
+          <div className="drawer-side">
+            <label htmlFor="drawer-toggle" className="drawer-overlay"/>
+            <div className="bg-base-200">
+              <button
+                className="btn btn-ghost absolute right-4 top-2"
+                type="button"
+                onClick={() => {
+                  document.getElementById('drawer-toggle')?.click();
+                }}
+              >
+                ✕
+              </button>
+              <div className="mt-3 ml-2">
+                <ThemeSwitcher />
+              </div>
+              <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
+                {navItems.map((item) => (
+                  <li key={item.to} className="justify-center">
+                    {item.to === "/logout" ? (
+                      <button onClick={() => {
+                        document.getElementById('drawer-toggle')?.click();
+                      }}
+                      className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                      type="button"
+                      >
+                        <LogoutIcon/>
+                        <SignOutButton redirectUrl="/">
+                          {"ログアウト"}
+                        </SignOutButton>
+                      </button>
+                    ) : (
+                      <NavLink to={item.to} onClick={() => {
+                        document.getElementById('drawer-toggle')?.click();
+                      }}
+                      className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                      >
+                        <item.icon />
+                        {item.text}
+                      </NavLink>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
-              {navItems.map((item) => (
-                <li key={item.to} className="justify-center">
-                  {item.to === "/logout" ? (
-                    <button onClick={() => {
-                      document.getElementById('drawer-toggle')?.click();
-                    }}
-                    className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                    type="button"
-                    >
-                      <LogoutIcon/>
-                      <SignOutButton redirectUrl="/">
-                        {"ログアウト"}
-                      </SignOutButton>
-                    </button>
-                  ) : (
-                    <NavLink to={item.to} onClick={() => {
-                      document.getElementById('drawer-toggle')?.click();
-                    }}
-                    className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                    >
-                      <item.icon />
-                      {item.text}
-                    </NavLink>
-                  )}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </div>
@@ -192,6 +201,7 @@ export default function Component() {
       <div className="block md:hidden">
         {renderMobileHeader(navItems)}
       </div>
+      {renderSearchModal()}
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
         <div className="pt-16">
           <Outlet />
