@@ -16,12 +16,8 @@ import { useUser, SignOutButton } from "@clerk/remix";
 import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
 import { useEffect } from "react";
 
-
-export default function Component() {
-  const { isSignedIn } = useUser();
-  console.log("isSignedIn", isSignedIn);
-
-  const navItems = [
+function getNavItems(isSignedIn: boolean){
+  const items = [
     { to: "/", icon: HomeIcon, text: "トップ" },
     { to: "/random", icon: RandomIcon, text: "ランダム" },
     { to: "/post", icon: PostIcon, text: "投稿する" },
@@ -30,18 +26,150 @@ export default function Component() {
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
     ...(isSignedIn
-      ? [{
-          to: "/logout",
-          text: "ログアウト",
-          icon: LogoutIcon,
-        }]
+      ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
       : [
           { to: "/signup", text: "サインアップ", icon: SignupIcon },
           { to: "/login", text: "ログイン", icon: LoginIcon },
         ]),
   ];
+  return items;
+}
+
+function renderSearchModal(){
+  return (
+    <dialog id="search-modal" className="modal">
+    <div className="modal-box">
+      <div className="mt-6">
+        <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
+          const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+          searchModal?.close();
+        }}>
+          <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
+          <button type="submit" className="btn btn-primary ml-4">
+            <MdSearch />
+          </button>
+          <input type="hidden" name="action" value="firstSearch" />
+          <form method="dialog">
+            <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+        </Form>
+      </div>
+    </div>
+    <form method="dialog" className="modal-backdrop">
+      <button type="submit">閉じる</button>
+    </form>
+  </dialog> 
+  )
+}
+
+function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
+  return (
+    <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 grid grid-cols-[2fr,10fr,1fr]">
+    <div>
+      <h1 className="text-lg font-bold">
+        <NavLink to="/">健常者エミュレータ事例集</NavLink>
+      </h1>
+    </div>
+    <div className="flex justify-center">
+      <ThemeSwitcher />
+      <ul className="flex gap-x-4">
+        {navItems.map((item) => (
+          <li key={item.to} className="hover:font-bold rounded-lg">
+            {item.to === "/logout" ? (
+              <SignOutButton redirectUrl="/">ログアウト</SignOutButton>
+            ) : (
+              <NavLink to={item.to}>{item.text}</NavLink>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div className="flex justify-end">
+      <div className="tooltip tooltip-bottom" data-tip="検索する">
+        <button className="btn btn-ghost" onClick={() => {
+          const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+          searchModal?.showModal();
+        }} type="button">
+          <MdSearch />
+        </button>
+        {renderSearchModal()}
+      </div>
+    </div>
+  </header>
+);
+}
+
+function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
+  return (
+    <header className="navbar fixed z-10 border-b p-4 border-base-200 bg-base-100 grid grid-cols-2">
+    <div>
+      <h1 className="text-xl font-bold">
+        <NavLink to="/">健エミュ</NavLink>
+      </h1>
+    </div>
+    <div>
+      <div className="drawer drawer-end">
+        <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+        <div className="drawer-content flex justify-end">
+          <label htmlFor="drawer-toggle" className="btn btn-ghost">
+            <MdMenu />
+          </label>
+        </div>
+        <div className="drawer-side">
+          <label htmlFor="drawer-toggle" className="drawer-overlay"/>
+          <div className="bg-base-100">
+            <button
+              className="btn btn-ghost absolute right-4 top-2"
+              type="button"
+              onClick={() => {
+                document.getElementById('drawer-toggle')?.click();
+              }}
+            >
+              ✕
+            </button>
+            <div className="mt-2">
+              <ThemeSwitcher />
+            </div>
+            <ul className="p-4 w-50 text-base-content min-h-screen py-24 flex flex-col">
+              {navItems.map((item) => (
+                <li key={item.to} className="justify-center">
+                  {item.to === "/logout" ? (
+                    <button onClick={() => {
+                      document.getElementById('drawer-toggle')?.click();
+                    }}
+                    className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                    type="button"
+                    >
+                      <LogoutIcon/>
+                      <SignOutButton redirectUrl="/">
+                        {"ログアウト"}
+                      </SignOutButton>
+                    </button>
+                  ) : (
+                    <NavLink to={item.to} onClick={() => {
+                      document.getElementById('drawer-toggle')?.click();
+                    }}
+                    className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                    >
+                      <item.icon />
+                      {item.text}
+                    </NavLink>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  )
+}
 
 
+export default function Component() {
+  const { isSignedIn } = useUser();
+  const navItems = getNavItems(isSignedIn ?? false);
 
   useEffect(()=> {
     const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
@@ -58,140 +186,11 @@ export default function Component() {
   return (
     <div className="grid grid-cols-1 min-h-screen">
       <div className="hidden md:block">
-        <header className="navbar z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-[2fr,10fr,1fr]">
-          <div>
-            <h1 className="text-lg font-bold">
-            <NavLink to="/">健常者エミュレータ事例集</NavLink>
-            </h1>
-          </div>
-          <div className="flex justify-center">
-            <ThemeSwitcher />
-            <ul className="flex gap-x-4">
-              {navItems.map((item) => {
-                if (item.to === "/logout"){
-                  return (
-                    <li key={item.to} className="hover:font-bold rounded-lg">
-                      <SignOutButton redirectUrl="/">
-                        ログアウト
-                      </SignOutButton>
-                    </li>
-                  )
-                }
-                return (
-                  <li key={item.to} className="hover:font-bold rounded-lg">
-                    <NavLink to={item.to}>{item.text}</NavLink>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-          <div className="flex justify-end" >
-            <div className="tooltip tooltip-bottom" data-tip="検索する">
-              <button className="btn btn-ghost" onClick={()=>{
-                const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-                searchModal?.showModal();
-              }} type="button">
-                <MdSearch />
-              </button>
-              <dialog id="search-modal" className="modal">
-                <div className="modal-box">
-                  <div className="mt-6">
-                    <Form method="post" action="/search" className="flex flex-row" onSubmit={()=>{
-                      const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-                      searchModal?.close();
-                    }}>
-                      <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
-                        <button type="submit" className="btn btn-primary ml-4">
-                          <MdSearch />
-                        </button>
-                      <input type="hidden" name="action" value="firstSearch" />
-                      <form method="dialog">
-                        <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-                      </form>
-                    </Form>
-                  </div>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                  <button type="submit">閉じる</button>
-                </form>
-              </dialog>
-            </div>
-          </div>
-        </header>
+        {renderDesktopHeader(navItems)}
       </div>
       <div className="block md:hidden">
-        <header className="navbar fixed z-10 border-b p-4 border-base-200  bg-base-100 grid grid-cols-2">
-          <div>
-            <h1 className="text-xl font-bold">
-            <NavLink to="/">健エミュ</NavLink>
-            </h1>
-          </div>
-          <div>
-            <div className="drawer drawer-end">
-              <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
-              <div className="drawer-content flex justify-end">
-                <label htmlFor="drawer-toggle" className="btn btn-ghost">
-                  <MdMenu />
-                </label>
-              </div>
-              <div className="drawer-side">
-                <label htmlFor="drawer-toggle" className="drawer-overlay"/>
-                <div className="bg-base-100">
-                  <button
-                    className="btn btn-ghost absolute right-4 top-2"
-                    type="button"
-                    onClick={() => {
-                      document.getElementById('drawer-toggle')?.click();
-                    }}
-                  >
-                  ✕
-                  </button>
-                  <div className="mt-2">
-                    <ThemeSwitcher />
-                  </div>
-                  <ul className="p-4 w-50 text-base-content min-h-screen py-24 flex flex-col">
-                    {navItems.map((item) => {
-                      return (
-                        <li key={item.to} className="justify-center">
-                          {item.to === "/logout" && 
-                          (
-                            <button onClick={
-                              () => {
-                              document.getElementById('drawer-toggle')?.click();
-                            }}
-                              className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                              type="button"
-                            >
-                            <LogoutIcon/>
-                            <SignOutButton redirectUrl="/">
-                            {"ログアウト"}
-                            </SignOutButton>
-                            </button>
-                          )
-                          }
-                          {item.to !== "/logout" &&
-                          <NavLink to={item.to} onClick={
-                            () => {
-                            document.getElementById('drawer-toggle')?.click();
-                          }}
-                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                          >
-                            <item.icon />
-                            {item.text}
-                          </NavLink>
-                          }
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        {renderMobileHeader(navItems)}
       </div>
-
-
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
         <div className="pt-16">
           <Outlet />
