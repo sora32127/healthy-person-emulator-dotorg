@@ -10,12 +10,10 @@ import GuidelineIcon from "~/components/icons/GuidelineIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
 import SignupIcon from "~/components/icons/SignupIcon";
 import LoginIcon from "~/components/icons/LoginIcon";
-import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
 import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
-import { H3 } from "~/components/Headings";
 import { useEffect } from "react";
 
 
