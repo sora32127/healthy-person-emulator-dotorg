@@ -38,7 +38,7 @@ function getNavItems(isSignedIn: boolean){
 
 function renderSearchModal(){
   return (
-    <dialog id="search-modal" className="modal">
+    <dialog id="search-modal" className="modal -top-1/4">
     <div className="modal-box">
       <div className="mt-6">
         <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
