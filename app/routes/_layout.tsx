@@ -50,9 +50,10 @@ function renderSearchModal(){
             <SearchIcon />
           </button>
           <input type="hidden" name="action" value="firstSearch" />
-          <form method="dialog">
-            <button type="submit" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-          </form>
+          <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
+            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+            searchModal?.close();
+          }}>✕</button>
         </Form>
       </div>
     </div>
@@ -101,13 +102,13 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar fixed z-40 border-b px-2 border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
       <div>
         <h1 className="text-xl font-bold">
           <NavLink to="/">健常者エミュレータ事例集</NavLink>
         </h1>
       </div>
-      <div>
+      <div className="flex flex-row">
         <div className="tooltip tooltip-bottom" data-tip="検索する">
           <button className="btn btn-ghost" onClick={() => {
             const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
