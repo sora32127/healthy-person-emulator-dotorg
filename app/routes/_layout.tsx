@@ -128,10 +128,10 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
             >
               ✕
             </button>
-            <div className="mt-2">
+            <div className="mt-3 ml-2">
               <ThemeSwitcher />
             </div>
-            <ul className="p-4 w-50 text-base-content min-h-screen py-24 flex flex-col">
+            <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
               {navItems.map((item) => (
                 <li key={item.to} className="justify-center">
                   {item.to === "/logout" ? (
