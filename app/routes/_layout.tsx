@@ -15,6 +15,7 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
 import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
 import { useEffect } from "react";
+import MenuIcon from "~/components/icons/MenuIcon";
 
 function getNavItems(isSignedIn: boolean){
   const items = [
@@ -46,7 +47,7 @@ function renderSearchModal(){
         }}>
           <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
           <button type="submit" className="btn btn-primary ml-4">
-            <MdSearch />
+            <SearchIcon />
           </button>
           <input type="hidden" name="action" value="firstSearch" />
           <form method="dialog">
@@ -90,7 +91,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
             const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
             searchModal?.showModal();
           }} type="button">
-            <MdSearch />
+            <SearchIcon />
           </button>
           {renderSearchModal()}
         </div>
@@ -101,7 +102,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
   return (
-    <header className="navbar fixed z-50 border-b p-4 border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-40 border-b p-4 border-base-200 bg-base-100 flex justify-between">
       <div>
         <h1 className="text-xl font-bold">
           <NavLink to="/">健常者エミュレータ事例集</NavLink>
@@ -112,7 +113,7 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
           <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
         <div className="drawer-content flex justify-end">
           <label htmlFor="drawer-toggle" className="btn btn-ghost">
-            <MdMenu />
+            <MenuIcon />
           </label>
         </div>
         <div className="drawer-side">
