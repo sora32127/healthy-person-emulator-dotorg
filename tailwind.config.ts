@@ -50,6 +50,8 @@ export default {
           info: "#00118F",
           error: "#B91C1C",
           "base-100": "#f5f5f5",
+          "base-200": "#e5e5e5",
+          "base-300": "#d4d4d4",
         },
       },
       {
