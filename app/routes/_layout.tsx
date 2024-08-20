@@ -193,7 +193,7 @@ export default function Component() {
         {renderMobileHeader(navItems, handleSearchModalOpen)}
       </div>
       <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
-      <div className="modal-box">
+      <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
         <div className="mt-6">
           <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
             handleSearchModalOpen(false);
@@ -225,7 +225,7 @@ export default function Component() {
           handleSearchModalOpen(false);
         }}>閉じる</button>
       </form>
-    </dialog> 
+    </dialog>
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
         <div>
           <Outlet />
