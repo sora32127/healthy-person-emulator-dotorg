@@ -4,3 +4,6 @@ Disallow: /wp-json/
 Disallow: /archives/tag/
 Disallow: /archives/*/feed
 Disallow: /wp-login.php
+Disallow: /archives/edit/
+Disallow: /tags/
+Disallow: /tag/

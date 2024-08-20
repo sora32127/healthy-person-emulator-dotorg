@@ -1,7 +1,7 @@
-import { Form, Outlet } from "@remix-run/react";
-import { NavLink } from "react-router-dom";
-import ThemeSwitcher from "~/components/ThemeSwitcher";
-import HomeIcon from "~/components/icons/HomeIcon";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Form, Outlet, NavLink } from "@remix-run/react";
+import { useUser, SignOutButton } from "@clerk/remix";
+
 import RandomIcon from "~/components/icons/RandomIcon";
 import PostIcon from "~/components/icons/PostIcon";
 import SearchIcon from "~/components/icons/SearchIcon";
@@ -10,158 +10,234 @@ import GuidelineIcon from "~/components/icons/GuidelineIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
 import SignupIcon from "~/components/icons/SignupIcon";
 import LoginIcon from "~/components/icons/LoginIcon";
-import MenuIcon from "~/components/icons/MenuIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
-import { useUser, SignOutButton } from "@clerk/remix";
+import MenuIcon from "~/components/icons/MenuIcon";
 
-export default function Component() {
-  const { isSignedIn } = useUser();
+import ThemeSwitcher from "~/components/ThemeSwitcher";
 
-  const navItems = [
-    { to: "/", icon: HomeIcon, text: "トップ" },
+
+function getNavItems(isSignedIn: boolean){
+  const items = [
     { to: "/random", icon: RandomIcon, text: "ランダム" },
-    { to: "/post", icon: PostIcon, text: "投稿する" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
-  ];
-
-  const menuItems = [
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
     { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
     ...(isSignedIn
-      ? [{
-          to: "#",
-          text: "ログアウト",
-          icon: LogoutIcon,
-        }]
+      ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
       : [
           { to: "/signup", text: "サインアップ", icon: SignupIcon },
           { to: "/login", text: "ログイン", icon: LoginIcon },
         ]),
   ];
+  return items;
+}
 
-  const renderNavItem = (item: { to: string; icon: React.ComponentType; text: string; onClick?: () => void }): JSX.Element => {
-    const content = (
-      <>
-        <item.icon />
-        <p className="text-xs md:text-sm md:ml-4">{item.text}</p>
-      </>
-    );
-
-    if (item.text === "ログアウト") {
-      return (
-        <SignOutButton redirectUrl="/">
-          <button className="flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit" type="button">
-            {content}
-          </button>
-        </SignOutButton>
-      );
-    }
-
-    return (
-      <NavLink
-        key={item.to}
-        to={item.to}
-        className={({ isActive }) =>
-          `flex items-center md:items-start md:flex-row flex-col text-base-content md:hover:bg-base-200 md:py-2 md:pr-4 md:pl-3 rounded md:ml-4 w-fit ${
-            isActive ? "font-bold md:bg-base-300" : ""
-          }`
-        }
-      >
-        {content}
-      </NavLink>
-    );
-  };
-
+function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
   return (
-    <div className="grid grid-cols-1 min-h-screen">
-      <header className="fixed top-0 w-full bg-base-100 shadow z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold hidden md:block">
-                <NavLink to="/">健常者エミュレータ事例集</NavLink>
-              </h1>
-              <Form method="post" action="/search" className="flex items-center">
-                <input type="text" placeholder="検索" className="input input-bordered w-40 md:w-64 p-2 rounded-lg" name="query"/>
-                <button className="btn btn-square btn-ghost ml-2" title="search" type="submit">
-                  <SearchIcon/> 
-                </button>
-                <input type="hidden" name="action" value="firstSearch"/>
-              </Form>
-            </div>
-            <ThemeSwitcher />
-          </div>
-        </div>
-      </header>
-
-      <main className="grid md:grid-cols-[auto,1fr] pt-16">
-        <nav className="hidden md:block w-64 bg-base-100 border-r border-neutral">
-          <div className="fixed top-32 bottom-0 w-64 p-4 overflow-y-auto">
-            <ul className="space-y-4">
-              {navItems.map((item) => item.to !== "/post" && (
-                <li key={item.to}>{renderNavItem(item)}</li>
-              ))}
-              {menuItems.map((item) => (
-                <li key={item.to}>{renderNavItem(item)}</li>
-              ))}
-              <li>
-                <NavLink
-                  to="/post"
-                  className="flex flex-col md:flex-row items-center bg-[#99D9EA] hover:bg-teal-100 text-slate-950 px-4 py-4 mt-20 rounded-full"
-                >
-                  <PostIcon />
-                  <p className="text-xs px-4 font-bold">投稿する</p>
-                </NavLink>
-              </li>
-            </ul>
-          </div>
-        </nav>
-        <div className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
-          <Outlet />
-        </div>
-      </main>
-
-      <nav className="fixed bottom-0 w-full bg-base-100 shadow-inner md:hidden">
-        <ul className="flex justify-between items-center p-4">
-          {navItems.map(item => (
-            <li key={item.to}>
-              {item.to === "/post" ? (
-                <NavLink to="/post" className="flex flex-col items-center btn-primary px-2 py-2 rounded-3xl">
-                  <PostIcon />
-                  <p className="text-xs font-bold">投稿する</p>
-                </NavLink>
+    <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
+      <div className="flex-none">
+        <h1 className="text-lg font-bold">
+          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+        </h1>
+      </div>
+      <div className="flex-1 flex justify-center items-center">
+        <ThemeSwitcher />
+        <ul className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-2">
+          {navItems.map((item) => (
+            <li key={item.to} className="hover:font-bold rounded-lg hover:bg-base-200 py-2">
+              {item.to === "/logout" ? (
+                <SignOutButton redirectUrl="/">ログアウト</SignOutButton>
               ) : (
-                renderNavItem(item)
+                <NavLink to={item.to} className="px-2 py-1 text-sm">{item.text}</NavLink>
               )}
             </li>
           ))}
-          <li>
-            <div className="drawer">
-              <input id="menu-drawer" type="checkbox" className="drawer-toggle" />
-              <div className="drawer-content flex flex-col items-center">
-                <MenuIcon />
-                <label htmlFor="menu-drawer" className="drawer-overlay">メニュー</label>
-              </div>
-              <div className="drawer-side">
-                <label htmlFor="menu-drawer" aria-label="close sidebar" className="drawer-overlay" />
-                <ul className="menu pt-32 w-80 min-h-full bg-base-100 text-base-content">
-                  {menuItems.map((item) => (
-                    <li key={item.to}>
-                      <NavLink to={item.to} className="flex items-center p-2 rounded" onClick={() => document.getElementById("menu-drawer")?.click()}>
-                        <item.icon />
-                        <p className="ml-2">{item.text}</p>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </li>
         </ul>
-      </nav>
+      </div>
+      <div className="flex-none">
+        <div className="tooltip tooltip-bottom" data-tip="検索する">
+          <button className="btn btn-ghost" onClick={() => {
+            handleSearchModalOpen(true);
+          }} type="button">
+            <SearchIcon />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
 
+function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
+  return (
+    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
+      <div>
+        <h1 className="text-xl font-bold">
+          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+        </h1>
+      </div>
+      <div className="flex flex-row">
+        <div className="tooltip tooltip-bottom" data-tip="検索する">
+          <button className="btn btn-ghost" onClick={() => {handleSearchModalOpen(true)}} type="button">
+            <SearchIcon />
+          </button>
+        </div>
+        <div>
+          <div className="drawer drawer-end">
+            <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
+          <div className="drawer-content flex justify-end">
+            <label htmlFor="drawer-toggle" className="btn btn-ghost">
+              <MenuIcon />
+            </label>
+          </div>
+          <div className="drawer-side">
+            <label htmlFor="drawer-toggle" className="drawer-overlay"/>
+            <div className="bg-base-200">
+              <button
+                className="btn btn-ghost absolute right-4 top-2"
+                type="button"
+                onClick={() => {
+                  document.getElementById('drawer-toggle')?.click();
+                }}
+              >
+                ✕
+              </button>
+              <div className="mt-3 ml-2">
+                <ThemeSwitcher />
+              </div>
+              <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
+                {navItems.map((item) => (
+                  <li key={item.to} className="justify-center">
+                    {item.to === "/logout" ? (
+                      <div
+                        onClick={() => {
+                          document.getElementById('drawer-toggle')?.click();
+                          }}
+                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2 cursor-pointer"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              document.getElementById('drawer-toggle')?.click();
+                            }
+                          }}
+                        > 
+                          <LogoutIcon/>
+                          <SignOutButton redirectUrl="/">
+                            ログアウト
+                          </SignOutButton>
+                        </div>
+                    ) : (
+                      <NavLink to={item.to} onClick={() => {
+                        document.getElementById('drawer-toggle')?.click();
+                      }}
+                      className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                      >
+                        <item.icon />
+                        {item.text}
+                      </NavLink>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  )
+}
+
+
+export default function Component() {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { isSignedIn } = useUser();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  const navItems = getNavItems(isSignedIn ?? false);
+  const handleSearchModalOpen = useCallback((status: boolean) => {
+    setIsSearchModalOpen(status);
+  }, []);
+
+  useEffect(()=> {
+    if (isSearchModalOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    return () => {
+      if (searchInputRef.current) {
+        // フォーカスを解除する
+        searchInputRef.current.blur();
+      }
+    }
+  }, [isSearchModalOpen]);
+
+  useEffect(()=> {
+    const handleKeyDownForSearch = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "f") {
+        event.preventDefault();
+        handleSearchModalOpen(true);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDownForSearch);
+    return () => window.removeEventListener('keydown', handleKeyDownForSearch);
+  }, [handleSearchModalOpen]);
+
+
+  return (
+    <div className="grid grid-cols-1 min-h-screen">
+      <div className="hidden md:block">
+        {renderDesktopHeader(navItems, handleSearchModalOpen)}
+      </div>
+      <div className="block md:hidden">
+        {renderMobileHeader(navItems, handleSearchModalOpen)}
+      </div>
+      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
+      <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
+        <div className="mt-6">
+          <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
+            handleSearchModalOpen(false);
+          }}>
+            <input
+              type="text"
+              name="query"
+              placeholder="検索する..."
+              className="input input-bordered w-full placeholder-slate-500"
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="btn btn-primary ml-4" onSubmit={() => {
+              handleSearchModalOpen(false);
+              setSearchQuery("");
+            }}>
+              <SearchIcon />
+            </button>
+            <input type="hidden" name="action" value="firstSearch" />
+            <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
+              handleSearchModalOpen(false);
+            }}>✕</button>
+          </Form>
+        </div>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button type="submit" onClick={() => {
+          handleSearchModalOpen(false);
+        }}>閉じる</button>
+      </form>
+    </dialog>
+      <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
+        <div>
+          <Outlet />
+        </div>
+      </main>
+      <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
+        <NavLink to="/post">
+          <button className="btn btn-primary btn-circle btn-lg" type="button">
+            <PostIcon />
+          </button>
+        </NavLink>
+      </div>
       <footer className="bg-base-100 py-8 md:py-4">
         <div className="container mx-auto px-4">
           <div className="flex justify-center items-center">
