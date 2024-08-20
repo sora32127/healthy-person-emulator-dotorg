@@ -43,19 +43,18 @@ export default {
     themes: [
       {
         light: {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          ...require("daisyui/src/theming/themes")["light"],
+          ...require("daisyui/src/theming/themes").light,
           primary: "#99D9EA",
           secondary: "#264AF4",
           tertiary: "#00118F",
           info: "#00118F",
-          error: "#B91C1C"
+          error: "#B91C1C",
+          "base-100": "#f5f5f5",
         },
       },
       {
         dark: {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
-          ...require("daisyui/src/theming/themes")["dark"],
+          ...require("daisyui/src/theming/themes").dark,
           primary: "#99D9EA",
           secondary: "#264AF4",
           tertiary: "#00118F",
