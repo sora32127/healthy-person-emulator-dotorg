@@ -1,16 +1,19 @@
-import { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
-import { prisma } from "~/modules/db.server";
 import { NodeHtmlMarkdown } from "node-html-markdown"
+import { useState } from "react";
+import { getAuth } from "@clerk/remix/ssr.server";
+import { marked } from 'marked';
+
+import type { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { Tokens } from 'marked';
+
+import { prisma } from "~/modules/db.server";
 import { H1, H2 } from "~/components/Headings";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
-import { useState } from "react";
-// @ts-expect-error : markedの型定義が存在しないため、anyとしている
-import { marked } from 'marked';
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { getAuth } from "@clerk/remix/ssr.server";
 import { setVisitorCookieData } from "~/modules/visitor.server";
 
 async function requireUserId(args: LoaderFunctionArgs) {
@@ -230,7 +233,7 @@ export default function EditPost() {
               <div className="mt-2">
                 <p className="my-4">変更後：</p>
                 <div className="flex flex-wrap">
-                  {selectedTags && selectedTags.map((tag) => (
+                  {selectedTags?.map((tag) => (
                     <span
                       key={tag}
                       className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
@@ -279,7 +282,7 @@ export default function EditPost() {
                 </tr>
               </thead>
               <tbody>
-              {editHistory && editHistory.map((edit: { postRevisionNumber: number; postEditDateJst: Date; editorUserId: string; postTitleBeforeEdit: string; postTitleAfterEdit: string; postContentBeforeEdit: string; postContentAfterEdit: string; }) => (
+              {editHistory?.map((edit: { postRevisionNumber: number; postEditDateJst: Date; editorUserId: string; postTitleBeforeEdit: string; postTitleAfterEdit: string; postContentBeforeEdit: string; postContentAfterEdit: string; }) => (
                  <tr key={edit.postRevisionNumber}>
                    <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
                    <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
@@ -291,7 +294,7 @@ export default function EditPost() {
                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
                          const excerpt = part.value.slice(start, end);
                          return (
-                           <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                           <span className={part.added ? 'bg-green-200' : 'bg-red-200'}>
                              {excerpt}
                            </span>
                          );
@@ -306,7 +309,7 @@ export default function EditPost() {
                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
                          const excerpt = part.value.slice(start, end);
                          return (
-                           <span key={index} className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                           <span className={part.added ? 'bg-green-200' : 'bg-red-200'}>
                              {excerpt}
                            </span>
                          );
@@ -353,15 +356,19 @@ export const action: ActionFunction = async (args) => {
     newRevisionNumber = 1;
   }
 
-
-
-  // 通常のレンダラーでは、Markdownテーブルの一行目が<thead>タグで囲まれてしまうため、カスタムレンダラーを使用する
+  /*
+  - Markdedではマークダウン形式で書かれたテキストをHTMLに変換する役割を持っている
+  - デフォルトのレンダラーでは、テーブルの一番上の行を<thead>タグで囲んでしまうため、HTMLで表示した際に5W1H+Then状況説明の「Who(誰が)」の行が見出しとして表示されてしまう
+  - そこで、カスタムレンダラーを使用して、テーブルの一番上の行を<thead>タグで囲んでしまうのを防ぎ、<tbody>として扱うようにする
+  */
+  
   const renderer = new marked.Renderer();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  renderer.table = (header: string, body: any) => {
-    const modifiedHeader = header.replace(/<thead>|<\/thead>/g, '').replace(/<th>/g, '<td>').replace(/<\/th>/g, '</td>');
-    return `<table><tbody>${modifiedHeader}${body}</tbody></table>`;
+  renderer.table = (token: Tokens.Table) => {
+    const modifiedHeader = token.header.map((cell) => `<td>${cell.text}</td>`).join('');
+    const body = token.rows.map((row) => `<tr>${row.map((cell) => `<td>${cell.text}</td>`).join('')}</tr>`).join('');
+    return `<table><tbody><tr>${modifiedHeader}</tr>${body}</tbody></table>`;
   };
+
   marked.use({ renderer });
 
   const updatedPost = await prisma.$transaction(async (prisma) => {
@@ -369,7 +376,7 @@ export const action: ActionFunction = async (args) => {
       where: { postId },
       data: {
         postTitle,
-        postContent: marked(postContent as string),
+        postContent: await marked(postContent as string),
       }
     })
     
@@ -398,7 +405,7 @@ export const action: ActionFunction = async (args) => {
         postTitleBeforeEdit: latestPost.postTitle,
         postTitleAfterEdit: postTitle,
         postContentBeforeEdit: latestPost.postContent,
-        postContentAfterEdit: marked(postContent as string),
+        postContentAfterEdit: await marked(postContent as string),
       },
     });
   
