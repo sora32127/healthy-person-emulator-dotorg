@@ -192,7 +192,7 @@ export default function Component() {
       <div className="block md:hidden">
         {renderMobileHeader(navItems, handleSearchModalOpen)}
       </div>
-      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""} -top-1/4`}>
+      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
       <div className="modal-box">
         <div className="mt-6">
           <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
