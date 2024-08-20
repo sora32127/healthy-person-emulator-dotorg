@@ -1,7 +1,7 @@
-import { Form, Outlet } from "@remix-run/react";
-import { NavLink } from "react-router-dom";
-import ThemeSwitcher from "~/components/ThemeSwitcher";
-import HomeIcon from "~/components/icons/HomeIcon";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Form, Outlet, NavLink } from "@remix-run/react";
+import { useUser, SignOutButton } from "@clerk/remix";
+
 import RandomIcon from "~/components/icons/RandomIcon";
 import PostIcon from "~/components/icons/PostIcon";
 import SearchIcon from "~/components/icons/SearchIcon";
@@ -12,10 +12,10 @@ import SignupIcon from "~/components/icons/SignupIcon";
 import LoginIcon from "~/components/icons/LoginIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
-import { useUser, SignOutButton } from "@clerk/remix";
-import { MdOutlinePostAdd } from "react-icons/md";
-import { useCallback, useEffect, useRef, useState } from "react";
 import MenuIcon from "~/components/icons/MenuIcon";
+
+import ThemeSwitcher from "~/components/ThemeSwitcher";
+
 
 function getNavItems(isSignedIn: boolean){
   const items = [
