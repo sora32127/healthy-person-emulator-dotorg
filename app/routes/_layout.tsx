@@ -14,7 +14,7 @@ import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
 import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import MenuIcon from "~/components/icons/MenuIcon";
 
 function getNavItems(isSignedIn: boolean){
@@ -36,35 +36,7 @@ function getNavItems(isSignedIn: boolean){
   return items;
 }
 
-function renderSearchModal(){
-  return (
-    <dialog id="search-modal" className="modal -top-1/4">
-    <div className="modal-box">
-      <div className="mt-6">
-        <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
-          const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-          searchModal?.close();
-        }}>
-          <input type="text" name="query" placeholder="検索する..." className="input input-bordered w-full placeholder-slate-500"/>
-          <button type="submit" className="btn btn-primary ml-4">
-            <SearchIcon />
-          </button>
-          <input type="hidden" name="action" value="firstSearch" />
-          <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
-            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-            searchModal?.close();
-          }}>✕</button>
-        </Form>
-      </div>
-    </div>
-    <form method="dialog" className="modal-backdrop">
-      <button type="submit">閉じる</button>
-    </form>
-  </dialog> 
-  )
-}
-
-function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
+function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
   return (
     <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
       <div className="flex-none">
@@ -89,8 +61,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
       <div className="flex-none">
         <div className="tooltip tooltip-bottom" data-tip="検索する">
           <button className="btn btn-ghost" onClick={() => {
-            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-            searchModal?.showModal();
+            handleSearchModalOpen(true);
           }} type="button">
             <SearchIcon />
           </button>
@@ -100,7 +71,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>){
   );
 }
 
-function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
+function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
   return (
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
       <div>
@@ -110,10 +81,7 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
       </div>
       <div className="flex flex-row">
         <div className="tooltip tooltip-bottom" data-tip="検索する">
-          <button className="btn btn-ghost" onClick={() => {
-            const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
-            searchModal?.showModal();
-          }} type="button">
+          <button className="btn btn-ghost" onClick={() => {handleSearchModalOpen(true)}} type="button">
             <SearchIcon />
           </button>
         </div>
@@ -184,30 +152,82 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
 
 
 export default function Component() {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { isSignedIn } = useUser();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
   const navItems = getNavItems(isSignedIn ?? false);
+  const handleSearchModalOpen = useCallback((status: boolean) => {
+    setIsSearchModalOpen(status);
+  }, []);
 
   useEffect(()=> {
-    const searchModal = document?.getElementById('search-modal') as HTMLDialogElement;
+    if (isSearchModalOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    return () => {
+      if (searchInputRef.current) {
+        // フォーカスを解除する
+        searchInputRef.current.blur();
+      }
+    }
+  }, [isSearchModalOpen]);
+
+  useEffect(()=> {
     const handleKeyDownForSearch = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "f") {
         event.preventDefault();
-        searchModal?.showModal();
+        handleSearchModalOpen(true);
       }
     }
     window.addEventListener('keydown', handleKeyDownForSearch);
     return () => window.removeEventListener('keydown', handleKeyDownForSearch);
-  }, []);
+  }, [handleSearchModalOpen]);
+
 
   return (
     <div className="grid grid-cols-1 min-h-screen">
       <div className="hidden md:block">
-        {renderDesktopHeader(navItems)}
+        {renderDesktopHeader(navItems, handleSearchModalOpen)}
       </div>
       <div className="block md:hidden">
-        {renderMobileHeader(navItems)}
+        {renderMobileHeader(navItems, handleSearchModalOpen)}
       </div>
-      {renderSearchModal()}
+      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""} -top-1/4`}>
+      <div className="modal-box">
+        <div className="mt-6">
+          <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
+            handleSearchModalOpen(false);
+          }}>
+            <input
+              type="text"
+              name="query"
+              placeholder="検索する..."
+              className="input input-bordered w-full placeholder-slate-500"
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="btn btn-primary ml-4" onSubmit={() => {
+              handleSearchModalOpen(false);
+              setSearchQuery("");
+            }}>
+              <SearchIcon />
+            </button>
+            <input type="hidden" name="action" value="firstSearch" />
+            <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
+              handleSearchModalOpen(false);
+            }}>✕</button>
+          </Form>
+        </div>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button type="submit" onClick={() => {
+          handleSearchModalOpen(false);
+        }}>閉じる</button>
+      </form>
+    </dialog> 
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
         <div>
           <Outlet />
