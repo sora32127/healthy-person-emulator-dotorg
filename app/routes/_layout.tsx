@@ -204,7 +204,7 @@ export default function Component() {
       </div>
       {renderSearchModal()}
       <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
-        <div className="pt-16">
+        <div>
           <Outlet />
         </div>
       </main>
