@@ -3,6 +3,9 @@ import TagCard from "./TagCard";
 import RelativeDate from "./RelativeDate";
 import { LiaThumbsUpSolid, LiaThumbsDownSolid } from "react-icons/lia";
 import { FaRegComments } from "react-icons/fa6";
+import CommentIcon from "./icons/CommentIcon";
+import ThumbsDownIcon from "./icons/ThumbsDownIcon";
+import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 
 export interface PostCardProps {
     postId: number;
@@ -55,16 +58,16 @@ export default function PostCard({
                     </div>
                     <div className="flex items-center gap-x-4">
                         <div className="flex items-center">
-                            <LiaThumbsUpSolid/>
+                            <ThumbsUpIcon/>
                             <span className="text-sm text-base-content ml-1">{countLikes}</span>
                         </div>
                         <div className="flex items-center">
-                            <LiaThumbsDownSolid/>
+                            <ThumbsDownIcon/>
                             <span className="text-sm text-base-content ml-1">{countDislikes}</span>
                         </div>
                         {countComments !== undefined && (
                             <div className="flex items-center">
-                                <FaRegComments/>
+                                <CommentIcon/>
                                 <span className="text-sm text-base-content ml-1">{countComments}</span>
                             </div>
                         )}
