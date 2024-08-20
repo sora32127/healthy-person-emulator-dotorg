@@ -233,7 +233,7 @@ export default function Component() {
       </main>
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
         <NavLink to="/post">
-          <button className="btn btn-primary btn-circle" type="button">
+          <button className="btn btn-primary btn-circle btn-lg" type="button">
             <PostIcon />
           </button>
         </NavLink>

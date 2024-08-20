@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { MdOutlineLightMode, MdOutlineDarkMode } from "react-icons/md";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function ThemeSwitcher() {
   const [nowTheme, setNowTheme] = useState<string>();
-  const [isChanging, setIsChanging] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
 
   useEffect(() => {
@@ -24,7 +22,6 @@ export default function ThemeSwitcher() {
     window.localStorage.setItem("theme", newTheme);
     setNowTheme(newTheme);
     document.querySelector("html")?.setAttribute("data-theme", newTheme);
-    setTimeout(() => setIsChanging(false), 500);
     setTimeout(() => setIsChanging(false), 500);
   };
 
