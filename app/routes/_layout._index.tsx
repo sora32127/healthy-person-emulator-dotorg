@@ -94,19 +94,21 @@ function PostSection({ title, posts, identifier, children }: PostSectionProps) {
     return (
         <section className={`${identifier}-posts`}>
             <H2>{title}</H2>
-            {posts.map((post) => (
-                <PostCard
-                    key={`${identifier}-${post.postId}`}
-                    postId={post.postId}
-                    postTitle={post.postTitle}
-                    postDateGmt={post.postDateGmt}
-                    tagNames={post.tags.map((tag) => tag.tagName)}
-                    countLikes={post.countLikes}
-                    countDislikes={post.countDislikes}
-                    countComments={post.countComments}
-                    identifier={identifier}
-                />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {posts.map((post) => (
+                    <PostCard
+                        key={`${identifier}-${post.postId}`}
+                        postId={post.postId}
+                        postTitle={post.postTitle}
+                        postDateGmt={post.postDateGmt}
+                        tagNames={post.tags.map((tag) => tag.tagName)}
+                        countLikes={post.countLikes}
+                        countDislikes={post.countDislikes}
+                        countComments={post.countComments}
+                        identifier={identifier}
+                    />
+                ))}
+            </div>
             {children}
         </section>
     );
