@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { Form, NavLink, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
+import { json } from '@remix-run/node';
+import { useState, useEffect } from 'react';
+import { Turnstile } from '@marsidev/react-turnstile';
+import type { ActionFunctionArgs, MetaFunction } from '@remix-run/node';
+
 import DynamicTextInput from '~/components/SubmitFormComponents/DynamicTextInput';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import SituationInput from '~/components/SubmitFormComponents/SituationInput';
@@ -10,14 +15,11 @@ import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationCheckBox';
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
 import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
-import { ActionFunctionArgs, json } from '@remix-run/node';
-import { Form, MetaFunction, NavLink, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react';
-import { prisma } from '~/modules/db.server';
-import { Turnstile } from '@marsidev/react-turnstile';
-import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
-import { createEmbedding } from '~/modules/embedding.server';
 import { Modal } from '~/components/Modal';
 
+import { prisma } from '~/modules/db.server';
+import { getClientIPAddress } from 'remix-utils/get-client-ip-address';
+import { createEmbedding } from '~/modules/embedding.server';
 
 interface Tag {
     tagName: string;
