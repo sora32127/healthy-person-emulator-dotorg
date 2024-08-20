@@ -118,16 +118,18 @@ function CommentSection({ title, comments }: CommentSectionProps) {
     return (
         <section className="recent-comments">
             <H2>{title}</H2>
-            {comments.map((comment) => (
-                <CommentShowCard
-                    key={comment.commentId}
-                    commentContent={comment.commentContent}
-                    commentDateGmt={comment.commentDateGmt}
-                    commentAuthor={comment.commentAuthor}
-                    postId={comment.postId}
-                    dimPosts={comment.dimPosts}
-                />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {comments.map((comment) => (
+                    <CommentShowCard
+                        key={comment.commentId}
+                        commentContent={comment.commentContent}
+                        commentDateGmt={comment.commentDateGmt}
+                        commentAuthor={comment.commentAuthor}
+                        postId={comment.postId}
+                        dimPosts={comment.dimPosts}
+                    />
+                ))}
+            </div>
         </section>
     );
 }
