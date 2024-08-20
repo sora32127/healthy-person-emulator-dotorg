@@ -144,17 +144,22 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>){
                 {navItems.map((item) => (
                   <li key={item.to} className="justify-center">
                     {item.to === "/logout" ? (
-                      <button onClick={() => {
-                        document.getElementById('drawer-toggle')?.click();
-                      }}
-                      className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                      type="button"
-                      >
-                        <LogoutIcon/>
-                        <SignOutButton redirectUrl="/">
-                          {"ログアウト"}
-                        </SignOutButton>
-                      </button>
+                      <div
+                        onClick={() => {
+                          document.getElementById('drawer-toggle')?.click();
+                          }}
+                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2 cursor-pointer"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              document.getElementById('drawer-toggle')?.click();
+                            }
+                          }}
+                        > 
+                          <LogoutIcon/>
+                          <SignOutButton redirectUrl="/">
+                            ログアウト
+                          </SignOutButton>
+                        </div>
                     ) : (
                       <NavLink to={item.to} onClick={() => {
                         document.getElementById('drawer-toggle')?.click();
