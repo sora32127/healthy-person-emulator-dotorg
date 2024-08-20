@@ -13,15 +13,13 @@ import LoginIcon from "~/components/icons/LoginIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import { useUser, SignOutButton } from "@clerk/remix";
-import { MdOutlinePostAdd, MdSearch, MdMenu } from "react-icons/md";
+import { MdOutlinePostAdd } from "react-icons/md";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MenuIcon from "~/components/icons/MenuIcon";
 
 function getNavItems(isSignedIn: boolean){
   const items = [
-    { to: "/", icon: HomeIcon, text: "トップ" },
     { to: "/random", icon: RandomIcon, text: "ランダム" },
-    { to: "/post", icon: PostIcon, text: "投稿する" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
