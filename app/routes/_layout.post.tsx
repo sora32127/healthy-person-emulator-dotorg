@@ -67,10 +67,10 @@ export default function Component() {
     const submit = useSubmit();
 
     useEffect(() => {
-        if (actionData?.success == false) {
+        if (actionData?.success === false) {
           setShowErrorModal(true);
           setIsSubmitting(false);
-        } else if (actionData?.success == true) {
+        } else if (actionData?.success === true) {
           setShowSuccessModal(true);
           setTimeout(() => {
             clearInputs();
@@ -193,7 +193,7 @@ export default function Component() {
     <div className="templateSubmitForm">
         <Form method="post" onSubmit={handleSubmit}>
         <UserExplanation />
-        <br></br>
+        <br/>
         <NavLink
             className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
             to="/freeStylePost"
@@ -205,15 +205,15 @@ export default function Component() {
             parentComponentStateValues={situationValues}
             selectedType={selectedType}
         />
-        <br></br>
-        <br></br>
+        <br/>
+        <br/>
         <DynamicTextInput
             description='書ききれなかった前提条件はありますか？'
             onInputChange={handleAssumptionChange}
             parentComponentStateValues={assumptionValues}
         />
-        <br></br>
-        <br></br>
+        <br/>
+        <br/>
         {selectedType === 'misDeed' ? (
             <>
             <StaticTextInput
@@ -269,7 +269,7 @@ export default function Component() {
             counterFactualReflectionValues={counterFactualReflectionValues}
             noteValues={noteValues}
         />
-        <br></br>
+        <br/>
         <StaticTextInput
             row={1}
             title='タイトル'
@@ -282,7 +282,7 @@ export default function Component() {
             parentComponentStateValues={selectedTags}
             allTagsOnlyForSearch={allTagsOnlyForSearch}
         />
-        <br></br>
+        <br/>
         <TagCreateBox
             handleTagCreated={handleTagCreated}
             handleTagRemoved={handleTagRemoved}
@@ -384,9 +384,9 @@ export async function action({ request }:ActionFunctionArgs ) {
           </ul>
         ` : ''}
         <h3>
-          ${selectedType == 'misDeed'
+          ${selectedType === 'misDeed'
             ? '健常行動ブレイクポイント'
-            : selectedType == 'goodDeed'
+            : selectedType === 'goodDeed'
             ? 'なぜやってよかったのか'
             : ''}
         </h3>
@@ -395,9 +395,9 @@ export async function action({ request }:ActionFunctionArgs ) {
         </ul>
 
         <h3>
-          ${selectedType == 'misDeed'
+          ${selectedType === 'misDeed'
             ? 'どうすればよかったか'
-            : selectedType == 'goodDeed'
+            : selectedType === 'goodDeed'
             ? 'やらなかったらどうなっていたか'
             : ''}
         </h3>
@@ -488,7 +488,7 @@ export const meta: MetaFunction = () => {
     const ogType = "article";
     const ogTitle = title;
     const ogDescription = description;
-    const ogUrl = `https://healthy-person-emulator.org/post`;
+    const ogUrl = "https://healthy-person-emulator.org/post";
     const twitterCard = "summary"
     const twitterSite = "@helthypersonemu"
     const twitterTitle = title
