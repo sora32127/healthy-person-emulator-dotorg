@@ -61,6 +61,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
           <button className="btn btn-ghost" onClick={() => {
             handleSearchModalOpen(true);
           }} type="button">
+            {"Ctrl+kで検索"}
             <SearchIcon />
           </button>
         </div>
