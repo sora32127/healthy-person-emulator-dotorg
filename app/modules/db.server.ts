@@ -82,7 +82,10 @@ async function getPostByPostId(postId: number): Promise<PostData> {
         }
     }).then((post) => {
         if (!post) {
-            throw new Error("Post not found");
+            throw new Response(null, {
+                status: 404,
+                statusText: "Post Not Found",
+            });
         }
         const postData = {
             ...post,

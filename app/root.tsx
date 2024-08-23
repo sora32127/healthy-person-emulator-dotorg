@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
+  useNavigate,
   useRouteError,
 } from "@remix-run/react";
 
@@ -15,6 +16,8 @@ import { rootAuthLoader } from "@clerk/remix/ssr.server";
 import { ClerkApp } from "@clerk/remix";
 import { jaJP } from "@clerk/localizations"
 import { PageTransitionProgressBar } from "./components/PageTransitionProgressBar";
+import { useCallback, useEffect } from "react";
+import { FaSpinner } from "react-icons/fa";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -59,14 +62,29 @@ export default ClerkApp(App, {
 
 export function ErrorBoundary() {
   const error = useRouteError();
+  const navigate = useNavigate();
 
   if (isRouteErrorResponse(error) && error.status === 404) {
+    const handleTimeOut = useCallback(() => {
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+    }, [navigate]);
+
+    useEffect(() => {
+      handleTimeOut();
+    }, [handleTimeOut]);
+
     return (
       <div className="container mx-auto px-4 text-center">
         <h1 className="text-4xl font-bold mt-32 mb-8">お探しのページは見つかりませんでした</h1>
-        <NavLink to="/" className="btn-primary font-bold py-2 px-4 rounded">
-          トップページに戻る
-        </NavLink>
+        <div>
+          <div className="flex items-center justify-center">
+            <FaSpinner className="animate-spin text-green-300 mr-2" />
+            <p>トップページにリダイレクトしています</p>
+          </div>
+          <p>自動的に切り替わらない場合、<NavLink to="/" className="text-info underline underline-offset-4">こちら</NavLink>をクリックしてください</p>
+        </div>
       </div>
     );
   }
