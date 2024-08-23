@@ -174,7 +174,7 @@ export default function Component() {
 
   useEffect(()=> {
     const handleKeyDownForSearch = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "f") {
+      if (event.ctrlKey && event.key === "k") {
         event.preventDefault();
         handleSearchModalOpen(true);
       }
