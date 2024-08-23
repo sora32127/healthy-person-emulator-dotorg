@@ -61,6 +61,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
           <button className="btn btn-ghost" onClick={() => {
             handleSearchModalOpen(true);
           }} type="button">
+            {"Ctrl+kで検索"}
             <SearchIcon />
           </button>
         </div>
@@ -174,9 +175,12 @@ export default function Component() {
 
   useEffect(()=> {
     const handleKeyDownForSearch = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "f") {
+      if (event.ctrlKey && event.key === "k") {
         event.preventDefault();
         handleSearchModalOpen(true);
+      }
+      if (event.key === "Escape") {
+        handleSearchModalOpen(false);
       }
     }
     window.addEventListener('keydown', handleKeyDownForSearch);
