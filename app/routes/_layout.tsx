@@ -178,6 +178,9 @@ export default function Component() {
         event.preventDefault();
         handleSearchModalOpen(true);
       }
+      if (event.key === "Escape") {
+        handleSearchModalOpen(false);
+      }
     }
     window.addEventListener('keydown', handleKeyDownForSearch);
     return () => window.removeEventListener('keydown', handleKeyDownForSearch);
