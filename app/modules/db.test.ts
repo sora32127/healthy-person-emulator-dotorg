@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ArchiveDataEntry, getSearchResults } from "./db.server";
+import { ArchiveDataEntry, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
 
 test("記事ID23576の正しいデータを返すこと", async () => {
     const archiveDataEntry = await ArchiveDataEntry.getData(23576);
@@ -18,14 +18,32 @@ test("記事ID23576の正しいデータを返すこと", async () => {
 });
 
 describe("getSearchResultsが正しいデータを返すこと", async () => {
+    /*
+    - 形式の正しさはparseでチェックする
+    - 中身の正しさはtitleでチェックする
+    */
     describe("キーワードなし、タグなしの場合", async () => {
-        test("時系列順, 1ページ目", async () => {
+        const timeAscTitles = [
+            "就職活動で「本当は働きたくないんですが...」と言ってはいけない",
+            "文化祭でゲイポルノビデオ作品を切り貼りしたポスターを作ってはいけない",
+            "就職活動で他社の志望度が高いと言ってはならない",
+            "人と話す時は目を見てハッキリした声で話した方がよい",
+            "親孝行した方がよい",
+            "他人との非日常的な食事中に美味しいと感じている旨を伝えなければならない",
+            "声が小さいことを指摘された後に最大音量で発声してはならない",
+            "「テーマは自由に決めてよい」と言われた場合に本当に自由に決定してはいけない",
+            "LINEの返信時には30分以上空けなければならない",
+            "他人がケガをした際にまずする話の議題は「ミトコンドリア」ではない",
+        ]
+        test("時系列昇順, 1ページ目", async () => {
+
             const searchResults = await getSearchResults(
                 "",
                 [],
                 1,
-                "timeDesc"
+                "timeAsc"
             );
+            searchResultsSchema.parse(searchResults);
             // meta
             expect(searchResults.meta.totalCount).toBeGreaterThan(8000);
             const countOfUnReccommendedTags = searchResults.meta.tags.filter((tag) => tag.tagName === "やってはいけないこと")[0].count;
@@ -33,6 +51,10 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
 
             // results
             expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                expect(result.postTitle).toBe(timeAscTitles[index]);
+                PostCardDataSchema.parse(result);
+            })
         })
     })
 });

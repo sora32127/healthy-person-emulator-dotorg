@@ -45,7 +45,7 @@ export async function getPostDataForSitemap() {
     })
 }
 
-const PostDataSchema = z.object({
+export const PostDataSchema = z.object({
     postId: z.number(),
     postTitle: z.string(),
     postContent: z.string(),
@@ -252,7 +252,7 @@ export class ArchiveDataEntry {
 
 }
 
-const PostCardDataSchema = z.object({
+export const PostCardDataSchema = z.object({
     postId: z.number(),
     postTitle: z.string(),
     postDateGmt: z.date(),
@@ -524,7 +524,7 @@ export async function getRecentComments(){
 
 */
 
-const searchResultsSchema = z.object({
+export const searchResultsSchema = z.object({
     meta: z.object({
         totalCount: z.number(),
         tags: z.array(z.object({
