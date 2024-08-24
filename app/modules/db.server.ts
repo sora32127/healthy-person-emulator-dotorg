@@ -546,7 +546,7 @@ type OrderBy = "like" | "timeDesc" | "timeAsc"
 
 export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
     const separatedQuery = q.split(" "); //　検索キーワードはスペースで分割する想定である
-    const offset = p * 10;
+    const offset = (p - 1) * 10;
 
     if (q === "" && tags.length === 0) {
         const totalCount = await prisma.dimPosts.count();
@@ -575,6 +575,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             },
             orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
             take: 10,
+            skip: offset,
         })
         const countComments = await prisma.dimComments.groupBy({
             by: ["postId"],

@@ -34,6 +34,16 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             "「テーマは自由に決めてよい」と言われた場合に本当に自由に決定してはいけない",
             "LINEの返信時には30分以上空けなければならない",
             "他人がケガをした際にまずする話の議題は「ミトコンドリア」ではない",
+            "他人のペットの死をジョークにしない",
+            "pixiv共有リンクから人のpixivアカウントを特定してはいけない。",
+            "なりすまし行為をしてはいけない",
+            "ガンを告知された時あのセリフを言ってはいけない",
+            "複数の条件をひとつの質問に押し込んではいけない",
+            "休憩時間に昼飯も食わず外を歩き回らないほうがいい",
+            "感情の根拠を問わない",
+            "1人でプリクラを撮って他者にそのプリクラを配ってはいけない",
+            "人に突然お金をあげてはいけない",
+            "自分のアパートのゴミ捨て場があるのに自治会のゴミ捨て場にゴミを捨ててはいけない",
         ]
         test("時系列昇順, 1ページ目", async () => {
 
@@ -53,6 +63,20 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             expect(searchResults.results).toHaveLength(10);
             searchResults.results.forEach((result, index) => {
                 expect(result.postTitle).toBe(timeAscTitles[index]);
+                PostCardDataSchema.parse(result);
+            })
+        })
+        test("時系列昇順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                2,
+                "timeAsc"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                expect(result.postTitle).toBe(timeAscTitles[index + 10]);
                 PostCardDataSchema.parse(result);
             })
         })
