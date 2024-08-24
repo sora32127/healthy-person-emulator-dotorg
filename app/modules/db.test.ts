@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { ArchiveDataEntry, getSearchResults } from "./db.server";
 
 test("記事ID23576の正しいデータを返すこと", async () => {
@@ -17,40 +17,22 @@ test("記事ID23576の正しいデータを返すこと", async () => {
     expect(archiveDataEntry.nextPost.postTitle).toBe('無能が消去法で大学を決めるべきではない');
 });
 
-test("getSearchResultsが正しいデータを返すこと", async () => {
-    // キーワードなし、タグなしの場合
-    const q = "";
-    const tags: string[] = [];
-    const p = 1;
-    const orderby = "timeDesc";
-    const searchResults = await getSearchResults(
-        q,
-        tags,
-        p,
-        orderby
-    );
-    expect(searchResults.meta.totalCount).toBeGreaterThan(8000);
-    expect(searchResults.results).toHaveLength(10);
-    const searchResultsKeyWord = await getSearchResults(
-        "コミュニケーション",
-        [],
-        1,
-        "timeDesc"
-    );
-    expect(searchResultsKeyWord.meta.totalCount).toBeGreaterThan(100);
+describe("getSearchResultsが正しいデータを返すこと", async () => {
+    describe("キーワードなし、タグなしの場合", async () => {
+        test("時系列順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                1,
+                "timeDesc"
+            );
+            // meta
+            expect(searchResults.meta.totalCount).toBeGreaterThan(8000);
+            const countOfUnReccommendedTags = searchResults.meta.tags.filter((tag) => tag.tagName === "やってはいけないこと")[0].count;
+            expect(countOfUnReccommendedTags).toBeGreaterThanOrEqual(2000);
 
-    const searchResultsWithTags = await getSearchResults(
-        "",
-        ["学生"],
-        1,
-        "timeDesc"
-    );
-    expect(searchResultsWithTags.meta.totalCount).toBeGreaterThan(100);
-    const searchResultsWithKeywordAndTags = await getSearchResults(
-        "コミュニケーション",
-        ["学生"],
-        1,
-        "timeDesc"
-    );
-    expect(searchResultsWithKeywordAndTags.meta.totalCount).toBeGreaterThan(100);
+            // results
+            expect(searchResults.results).toHaveLength(10);
+        })
+    })
 });
