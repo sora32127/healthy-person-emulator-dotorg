@@ -542,7 +542,7 @@ const searchResultsSchema = z.object({
 })
 
 type SearchResults = z.infer<typeof searchResultsSchema>;
-type OrderBy = "like" | "timeDesc"
+type OrderBy = "like" | "timeDesc" | "timeAsc"
 
 export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
     const separatedQuery = q.split(" "); //　検索キーワードはスペースで分割する想定である
@@ -573,7 +573,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countDislikes: true,
                 ogpImageUrl: true,
             },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
             take: 10,
         })
         const countComments = await prisma.dimComments.groupBy({
@@ -633,7 +633,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
 
         const posts = await prisma.$queryRaw`
         SELECT post_id FROM dim_posts WHERE post_content &@~ ${separatedQuery.join(" AND ")} OR (post_title &@~ ${separatedQuery.join(" AND ")})
-        ORDER BY ${orderby === "like" ? "count_likes" : "post_date_gmt"} DESC
+        ORDER BY ${orderby === "like" ? "count_likes" : orderby === "timeDesc" ? "post_date_gmt" : "post_date_gmt"} ${orderby === "timeAsc" ? "ASC" : "DESC"}
         OFFSET ${offset} LIMIT 10;
         ` as { post_id: number }[]
         const postIds = posts.map((post) => post.post_id)
@@ -750,7 +750,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                     }
                 }
             },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
             take: 10,
         })
 
@@ -805,7 +805,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             post_content &@~ ${separatedQuery.join(" AND ")}
             OR (post_title &@~ ${separatedQuery.join(" AND ")})
         )
-        ORDER BY ${orderby === "like" ? "count_likes" : "post_date_gmt"} DESC
+        ORDER BY ${orderby === "like" ? "count_likes" : orderby === "timeDesc" ? "post_date_gmt" : "post_date_gmt"} ${orderby === "timeAsc" ? "ASC" : "DESC"}
         ` as { post_id: number }[]
         const totalCount = totalCountRaw.length
 
@@ -837,7 +837,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countDislikes: true,
                 ogpImageUrl: true,
             },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
             take: 10,
         })
 
