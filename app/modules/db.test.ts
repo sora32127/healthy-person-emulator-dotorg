@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ArchiveDataEntry } from "./db.server";
+import { ArchiveDataEntry, getSearchResults } from "./db.server";
 
 test("記事ID23576の正しいデータを返すこと", async () => {
     const archiveDataEntry = await ArchiveDataEntry.getData(23576);
@@ -15,4 +15,21 @@ test("記事ID23576の正しいデータを返すこと", async () => {
     expect(archiveDataEntry.similarPosts).toHaveLength(15);
     expect(archiveDataEntry.previousPost.postTitle).toBe('無知識でアナルにローターを入れるべきでは無い');
     expect(archiveDataEntry.nextPost.postTitle).toBe('無能が消去法で大学を決めるべきではない');
+});
+
+test("getSearchResultsが正しいデータを返すこと", async () => {
+    // キーワードなし、タグなしの場合
+    const q = "";
+    const tags: string[] = [];
+    const p = 1;
+    const orderby = "timeDesc";
+    const searchResults = await getSearchResults(
+        q,
+        tags,
+        p,
+        orderby
+    );
+    console.log(searchResults);
+    expect(searchResults.meta.totalCount).toBeGreaterThan(8000);
+    expect(searchResults.results).toHaveLength(10);
 });

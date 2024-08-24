@@ -448,3 +448,153 @@ export async function getRecentComments(){
 
     return recentComments;
 }
+
+/*
+# 検索ロジックの詳細について
+検索ロジックは複雑なので、コメントを入れて説明する
+
+## Input:
+- 検索キーワード (q)
+- タグ (tags)
+- ページ番号 (p)
+- 並び替え識別子 (orderby)
+
+## Output: 
+- 検索メタデータ
+  - 合計結果表示数：ページネーションに使う
+  - タグ名とタグ数の対応データ：ファセットフィルタに使う
+  - 検索パラメータの集合：結果表示に使う
+- 検索結果
+  - ポストカードデータ
+    - postId
+    - postTitle
+    - postDateGmt
+    - tagNames
+    - countLikes
+    - countDislikes
+    - OG画像URL
+    - コメント数
+
+## 検索ロジックの詳細
+検索キーワード、およびタグの値に応じて場合分けを行う
+1. 検索キーワードが空で、タグの値が空の場合
+→　全件検索として扱う。通常のフィードと同様のもの。
+
+2. 検索キーワードに値があり、タグが空の場合
+→　検索キーワードによる絞り込みを行う。
+
+3. 検索キーワードが空で、タグに値がある場合
+→　タグによる絞り込みを行う。
+
+4. 検索キーワードに値があり、タグに値がある場合
+→　検索キーワードによる絞り込みを行った後、タグによる絞り込みを行う。
+
+## 検索ロジックの詳細
+
+### 1. 検索キーワードが空で、タグの値が空の場合
+簡単なので割愛する
+
+### 2. 検索キーワードに値があり、タグが空の場合
+- 検索ワードによる投稿の絞り込みを行う
+- タグ数を算出する
+- ページネーションのためのメタデータを作成する
+- 検索結果を作成する
+
+### 3. 検索キーワードが空で、タグに値がある場合
+- タグによる投稿の絞り込みを行う
+- タグ数を算出する
+- ページネーションのためのメタデータを作成する
+- 検索結果を作成する
+
+### 4. 検索キーワードに値があり、タグに値がある場合
+- 検索ワードによる投稿の絞り込みを行う
+- タグによる投稿の絞り込みを行う
+- タグ数を算出する
+- ページネーションのためのメタデータを作成する
+- 検索結果を作成する
+
+*/
+
+const searchResultsSchema = z.object({
+    meta: z.object({
+        totalCount: z.number(),
+        tags: z.array(z.object({
+            tagName: z.string(),
+            count: z.number(),
+        })),
+        searchParams: z.object({
+            q: z.string(),
+            tags: z.array(z.string()),
+            p: z.number(),
+            orderby: z.string(),
+        }),
+    }),
+    results: z.array(PostCardDataSchema),
+})
+
+type SearchResults = z.infer<typeof searchResultsSchema>;
+type OrderBy = "like" | "timeDesc"
+
+export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
+    if (q === "" && tags.length === 0) {
+        const totalCount = await prisma.dimPosts.count();
+        const tagsCount = await prisma.relPostTags.groupBy({
+            by: ["tagId"],
+            _count: { postId: true },
+        })
+        const tagNames = await prisma.dimTags.findMany({
+            where: { tagId: { in: tagsCount.map((tag) => tag.tagId) } },
+            select: { tagName: true, tagId: true },
+        })
+        const tags = tagsCount.map((tag) => {
+            return {
+                tagName: tagNames.find((tagName) => tagName.tagId === tag.tagId)?.tagName || "",
+                count: tag._count.postId,
+            }
+        })
+        const posts = await prisma.dimPosts.findMany({
+            select: {
+                postId: true,
+                postTitle: true,
+                postDateGmt: true,
+                countLikes: true,
+                countDislikes: true,
+                ogpImageUrl: true,
+            },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            take: 10,
+        })
+        const countComments = await prisma.dimComments.groupBy({
+            by: ["postId"],
+            _count: { commentId: true },
+            where: { postId: { in: posts.map((post) => post.postId) } },
+        })
+        const postTags = await prisma.relPostTags.findMany({
+            where: { postId: { in: posts.map((post) => post.postId) } },
+            select: {
+                postId: true,
+                dimTag: {
+                    select: {
+                        tagName: true,
+                        tagId: true,
+                    }
+                }
+            }
+        })
+        const postsWithCountComments = posts.map((post) => {
+            return {
+                ...post,
+                countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
+                tags: postTags.filter((tag) => tag.postId === post.postId).map((tag) => tag.dimTag),
+            }
+        })
+        return {
+            meta: {
+                totalCount,
+                tags,
+                searchParams: { q: "", tags: [], p, orderby },
+            },
+            results: postsWithCountComments,
+        }
+    }
+}
