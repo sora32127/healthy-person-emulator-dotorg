@@ -887,3 +887,25 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         results: [],
     }
 }
+
+export async function getRecentPostTitlesForTest(): Promise<string[]> {
+    const posts = await prisma.dimPosts.findMany({
+        select: {
+            postTitle: true,
+        },
+        orderBy: { postDateGmt: "desc" },
+        take: 20,
+    })
+    return posts.map((post) => post.postTitle)
+}
+
+export async function getMostLikedPostTitlesForTest(): Promise<string[]>{
+    const posts = await prisma.dimPosts.findMany({
+        select: {
+            postTitle: true
+        },
+        orderBy: { countLikes: "desc"},
+        take: 20
+    })
+    return posts.map((post) => post.postTitle)
+}

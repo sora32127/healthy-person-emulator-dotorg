@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ArchiveDataEntry, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
+import { ArchiveDataEntry, getMostLikedPostTitlesForTest, getRecentPostTitlesForTest, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
 
 test("記事ID23576の正しいデータを返すこと", async () => {
     const archiveDataEntry = await ArchiveDataEntry.getData(23576);
@@ -45,6 +45,8 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             "人に突然お金をあげてはいけない",
             "自分のアパートのゴミ捨て場があるのに自治会のゴミ捨て場にゴミを捨ててはいけない",
         ]
+        const recentPostTitles = await getRecentPostTitlesForTest();
+        const mostLikedPostTitles = await getMostLikedPostTitlesForTest();
         test("時系列昇順, 1ページ目", async () => {
 
             const searchResults = await getSearchResults(
@@ -78,6 +80,62 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             searchResults.results.forEach((result, index) => {
                 expect(result.postTitle).toBe(timeAscTitles[index + 10]);
                 PostCardDataSchema.parse(result);
+            })
+        })
+        test("時系列降順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                1,
+                "timeDesc"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postTitle).toBe(recentPostTitles[index]);
+            })
+        })
+        test("時系列降順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                2,
+                "timeDesc"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postTitle).toBe(recentPostTitles[index + 10]);
+            })
+        })
+        test("いいね降順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                1,
+                "like"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postTitle).toBe(mostLikedPostTitles[index]);
+            })
+        })
+        test("いいね降順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                [],
+                2,
+                "like"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postTitle).toBe(mostLikedPostTitles[index + 10]);
             })
         })
     })
