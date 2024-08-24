@@ -1,9 +1,10 @@
-import { Form, useLoaderData } from "@remix-run/react";
-import { H1, H2 } from "~/components/Headings";
-import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
-import { prisma } from "~/modules/db.server";
-import PostCard, { PostCardProps }  from "~/components/PostCard";
 import { useState } from "react";
+import { Form, useLoaderData } from "@remix-run/react";
+import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { prisma } from "~/modules/db.server";
+import { H1, H2 } from "~/components/Headings";
+import PostCard, { type PostCardProps }  from "~/components/PostCard";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 
 interface Tag {
@@ -11,10 +12,16 @@ interface Tag {
   count: number;
 }
 
+interface WhereConditions {
+  OR?: { [key: string]: { contains: string } }[];
+  AND?: { rel_post_tags: { some: { dimTag: { tagName: string } } } }[];
+  postId?: number;
+}
+
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const pageNumber = parseInt(url.searchParams.get("p") || "1");
+  const pageNumber = Number.parseInt(url.searchParams.get("p") || "1");
   const orderby = url.searchParams.get("orderby") || "timeDesc";
   const searchQuery = url.searchParams.get("q") || null;
   const searchTags = url.searchParams.get("tags")?.split(" ") || null;
@@ -38,8 +45,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     count: tag._count.relPostTags,
   }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const whereConditions: any = {}
+  const whereConditions: WhereConditions = {}
 
   if (searchQuery) {
     whereConditions.OR = [
@@ -118,34 +124,36 @@ export const loader: LoaderFunction = async ({ request }) => {
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get("action");
-  const currentPage = parseInt(formData.get("currentPage") as string);
-  const totalPages = parseInt(formData.get("totalPages") as string);
+  const currentPage = Number.parseInt(formData.get("currentPage") as string);
+  const totalPages = Number.parseInt(formData.get("totalPages") as string);
   const tags = formData.get("tags")?.toString().split("+") ?? null;
   const query = formData.get("query")?.toString() ?? null;
   const orderby = formData.get("orderby") ?? "timeDesc";
 
-  const encodedQueryString = query && query != '' ? `&q=${encodeURIComponent(query)}` : "";
+  const encodedQueryString = query && query !== '' ? `&q=${encodeURIComponent(query)}` : "";
   const encodedTagsString =  tags && tags.filter(tag => tag !== '').length > 0 ? `&tags=${tags.map(tag => encodeURIComponent(tag)).join("+")}` : "";
 
   if (action === "firstSearch" || action === "firstPage") {
     return redirect(
       `/search?p=1&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "prevPage") {
+  }
+  if (action === "prevPage") {
     return redirect(
       `/search?p=${currentPage - 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "nextPage") {
+  }
+  if (action === "nextPage") {
     return redirect(
       `/search?p=${currentPage + 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "lastPage") {
+  }
+  if (action === "lastPage") {
     return redirect(
       `/search?p=${totalPages}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else {
-    return redirect("/search");
   }
+  return redirect("/search");
 };
 
 export default function SearchPage() {
@@ -225,7 +233,7 @@ export default function SearchPage() {
       <input type="hidden" name="query" value={queryText} />
       <input type="hidden" name="action" value="firstSearch" />
       <input type="hidden" name="orderby" value={currentOrderBy} />
-      <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}></button>
+      <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}/>
     </Form>
 
     <div className="search-results">
