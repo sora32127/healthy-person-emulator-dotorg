@@ -24,7 +24,12 @@ function getPrismaClient(): PrismaClient {
     return prismaInstance;
 }
 
-export const prisma = getPrismaClient();
+
+export let prisma = getPrismaClient();
+
+if (import.meta.env.MODE !== "production" && global.__prisma) {
+    prisma = global.__prisma;
+}
 
 export async function getPostDataForSitemap() {
     const posts = await prisma.dimPosts.findMany({
@@ -491,6 +496,10 @@ export async function getRecentComments(){
 
 ## 検索ロジックの詳細
 
+前提：
+- 検索キーワードが複数ある場合、すべてのキーワードが含まれる投稿を検索する
+- 検索キーワードはタイトルと本文に含まれるものとする
+
 ### 1. 検索キーワードが空で、タグの値が空の場合
 簡単なので割愛する
 
@@ -536,6 +545,9 @@ type SearchResults = z.infer<typeof searchResultsSchema>;
 type OrderBy = "like" | "timeDesc"
 
 export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
+    const separatedQuery = q.split(" "); //　検索キーワードはスペースで分割する想定である
+    const offset = p * 10;
+
     if (q === "" && tags.length === 0) {
         const totalCount = await prisma.dimPosts.count();
         const tagsCount = await prisma.relPostTags.groupBy({
@@ -595,6 +607,98 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 searchParams: { q: "", tags: [], p, orderby },
             },
             results: postsWithCountComments,
+        }
+    }
+
+    if (q !== "" && tags.length === 0) {
+        /*
+        元SQLは以下のようになる
+        ```sql
+        SELECT
+            count(*)
+        FROM
+            dim_posts
+        WHERE
+            post_content &@~ 'コミュニケーション AND 人間関係'
+            or
+            (post_title like '%コミュニケーション%' and post_title like '%人間関係%');
+        ```
+        - pgroongaの&@~演算子を利用している
+
+        */
+        const totalCountRaw = await prisma.$queryRaw`
+        SELECT count(*) FROM dim_posts WHERE post_content &@~ ${separatedQuery.join(" AND ")} OR (post_title &@~ ${separatedQuery.join(" AND ")});
+        ` as { count: string }[]
+        const totalCount = Number.parseInt(totalCountRaw[0].count) // "368n"のような文字列になっているので直す
+
+        const posts = await prisma.$queryRaw`
+        SELECT post_id FROM dim_posts WHERE post_content &@~ ${separatedQuery.join(" AND ")} OR (post_title &@~ ${separatedQuery.join(" AND ")})
+        ORDER BY ${orderby === "like" ? "count_likes" : "post_date_gmt"} DESC
+        OFFSET ${offset} LIMIT 10;
+        ` as { post_id: number }[]
+        const postIds = posts.map((post) => post.post_id)
+
+        const tagCounts = await prisma.relPostTags.groupBy({
+            by: ["tagId"],
+            _count: { postId: true },
+            where: { postId: { in: postIds } },
+        })
+        const tagNames = await prisma.dimTags.findMany({
+            where: { tagId: { in: tagCounts.map((tag) => tag.tagId) } },
+            select: { tagName: true, tagId: true },
+        })
+        const tags = tagCounts.map((tag) => {
+            return {
+                tagName: tagNames.find((tagName) => tagName.tagId === tag.tagId)?.tagName || "",
+                count: tag._count.postId,
+            }
+        })
+
+        const postData = await prisma.dimPosts.findMany({
+            where: { postId: { in: postIds } },
+            select: {
+                postId: true,
+                postTitle: true,
+                postDateGmt: true,
+                countLikes: true,
+                countDislikes: true,
+                ogpImageUrl: true,
+            },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+        })
+        const commentCounts = await prisma.dimComments.groupBy({
+            by: ["postId"],
+            _count: { commentId: true },
+            where: { postId: { in: postIds } },
+        })
+
+        const postTags = await prisma.relPostTags.findMany({
+            where: { postId: { in: postIds } },
+            select: {
+                postId: true,
+                dimTag: {
+                    select: {
+                        tagName: true,
+                        tagId: true,
+                    }
+                }
+            }
+        })
+
+        const postsWithData = postData.map((post) => {
+            return {
+                ...post,
+                countComments: commentCounts.find((c) => c.postId === post.postId)?._count.commentId || 0,
+                tags: postTags.filter((tag) => tag.postId === post.postId).map((tag) => tag.dimTag),
+            }
+        })
+        return {
+            meta: {
+                totalCount,
+                tags,
+                searchParams: { q, tags: [], p, orderby },
+            },
+            results: postsWithData,
         }
     }
 }

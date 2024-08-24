@@ -29,7 +29,13 @@ test("getSearchResultsが正しいデータを返すこと", async () => {
         p,
         orderby
     );
-    console.log(searchResults);
     expect(searchResults.meta.totalCount).toBeGreaterThan(8000);
     expect(searchResults.results).toHaveLength(10);
+    const searchResultsKeyWord = await getSearchResults(
+        "コミュニケーション",
+        [],
+        1,
+        "timeDesc"
+    );
+    expect(searchResultsKeyWord.meta.totalCount).toBeGreaterThan(100);
 });
