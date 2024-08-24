@@ -790,4 +790,99 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             results: postsWithData,
         }
     }
+    if (q !== "" && tags.length > 0) {
+        const postIdsWithTags = await prisma.relPostTags.findMany({
+            where: { dimTag: { tagName: { in: tags } } },
+            select: { postId: true },
+        }).then((postIds) => {
+            return postIds.map((post) => post.postId)
+        })
+
+        const totalCountRaw = await prisma.$queryRaw`
+        SELECT post_id FROM dim_posts WHERE
+        post_id IN (${postIdsWithTags.join(",")})
+        AND (
+            post_content &@~ ${separatedQuery.join(" AND ")}
+            OR (post_title &@~ ${separatedQuery.join(" AND ")})
+        )
+        ORDER BY ${orderby === "like" ? "count_likes" : "post_date_gmt"} DESC
+        ` as { post_id: number }[]
+        const totalCount = totalCountRaw.length
+
+        const tagCounts = await prisma.relPostTags.groupBy({
+            by: ["tagId"],
+            _count: { postId: true },
+            where: { postId: { in: postIdsWithTags } },
+        })
+        
+        const tagNames = await prisma.dimTags.findMany({
+            where: { tagId: { in: tagCounts.map((tag) => tag.tagId) } },
+            select: { tagName: true, tagId: true },
+        })
+
+        const totalTags = tagCounts.map((tag) => {
+            return {
+                tagName: tagNames.find((tagName) => tagName.tagId === tag.tagId)?.tagName || "",
+                count: tag._count.postId,
+            }
+        })
+
+        const posts = await prisma.dimPosts.findMany({
+            where: { postId: { in: postIdsWithTags } },
+            select: {
+                postId: true,
+                postTitle: true,
+                postDateGmt: true,
+                countLikes: true,
+                countDislikes: true,
+                ogpImageUrl: true,
+            },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            take: 10,
+        })
+
+        const postTags = await prisma.relPostTags.findMany({
+            where: { postId: { in: posts.map((post) => post.postId) } },
+            select: {
+                postId: true,
+                dimTag: {
+                    select: {
+                        tagName: true,
+                        tagId: true,
+                    }
+                }
+            }
+        })
+
+        const commentCounts = await prisma.dimComments.groupBy({
+            by: ["postId"],
+            _count: { commentId: true },
+            where: { postId: { in: posts.map((post) => post.postId) } },
+        })
+
+        const postsWithData = posts.map((post) => {
+            return {
+                ...post,
+                countComments: commentCounts.find((c) => c.postId === post.postId)?._count.commentId || 0,
+                tags: postTags.filter((tag) => tag.postId === post.postId).map((tag) => tag.dimTag),
+            }
+        })
+
+        return {
+            meta: {
+                totalCount,
+                tags: totalTags,
+                searchParams: { q, tags, p, orderby },
+            },
+            results: postsWithData,
+        }
+    }
+    return {
+        meta: {
+            totalCount: 0,
+            tags: [],
+            searchParams: { q, tags, p, orderby },
+        },
+        results: [],
+    }
 }

@@ -46,4 +46,11 @@ test("getSearchResultsが正しいデータを返すこと", async () => {
         "timeDesc"
     );
     expect(searchResultsWithTags.meta.totalCount).toBeGreaterThan(100);
+    const searchResultsWithKeywordAndTags = await getSearchResults(
+        "コミュニケーション",
+        ["学生"],
+        1,
+        "timeDesc"
+    );
+    expect(searchResultsWithKeywordAndTags.meta.totalCount).toBeGreaterThan(100);
 });
