@@ -38,4 +38,12 @@ test("getSearchResultsが正しいデータを返すこと", async () => {
         "timeDesc"
     );
     expect(searchResultsKeyWord.meta.totalCount).toBeGreaterThan(100);
+
+    const searchResultsWithTags = await getSearchResults(
+        "",
+        ["学生"],
+        1,
+        "timeDesc"
+    );
+    expect(searchResultsWithTags.meta.totalCount).toBeGreaterThan(100);
 });
