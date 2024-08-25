@@ -654,7 +654,9 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             select post_id, count_likes, post_date_gmt from post_id_titlematch
         )
         select post_id, count_likes, post_date_gmt from post_id_union
-        order by ${orderby === "like" ? Prisma.sql`count_likes DESC` : orderby === "timeDesc" ? Prisma.sql`post_date_gmt DESC` : Prisma.sql`post_date_gmt ASC`}
+        order by ${
+            orderby === "like" ? Prisma.sql`count_likes DESC, post_date_gmt DESC` : orderby === "timeDesc" ? Prisma.sql`post_date_gmt DESC` : 
+            Prisma.sql`post_date_gmt ASC`}
         `
 
         const posts = await prisma.$queryRaw(postIdsQuery) as { 
@@ -710,7 +712,11 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         })
 
         const postIdsWithOffset = posts.slice(offset, offset + 10).map((post) => post.post_id);
-
+        /*
+        - Prismaでは、二つ以上のカラムの値に基づいてソートすることはできない
+          - SQLで言えばorder by count_likes desc, post_date_gmt descというようなもの
+        - そのため、ソートはSQL側ではなくサーバー側で実行している
+        */
         const postData = await prisma.dimPosts.findMany({
             where: { postId: { in: postIdsWithOffset } },
             select: {
@@ -720,9 +726,22 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countLikes: true,
                 countDislikes: true,
                 ogpImageUrl: true,
-            },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" }
+            }
+        }).then((posts) => {
+            return posts.sort((a, b) => {
+                if (orderby === "like") {
+                    if (b.countLikes !== a.countLikes) {
+                        return b.countLikes - a.countLikes;
+                    } 
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                if (orderby === "timeDesc") {
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                return new Date(a.postDateGmt).getTime() - new Date(b.postDateGmt).getTime();
+            });
         })
+
         const commentCounts = await prisma.dimComments.groupBy({
             by: ["postId"],
             _count: { commentId: true },
@@ -964,4 +983,46 @@ export async function getMostLikedPostTitlesForTest(): Promise<string[]>{
         take: 20
     })
     return posts.map((post) => post.postTitle)
+}
+
+export async function getMostRecentKeywardPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    With post_id_contentmatch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_content &@~ 'いけない 人'
+        ), post_id_titlematch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_title like '%いけない%' and post_title like '%人%'
+        ), post_id_union as (
+            select post_id, count_likes, post_date_gmt from post_id_contentmatch
+            union
+            select post_id, count_likes, post_date_gmt from post_id_titlematch
+        )
+        select post_id from post_id_union
+        order by post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
+
+export async function getMostLikedKeywardPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    With post_id_contentmatch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_content &@~ 'いけない 人'
+        ), post_id_titlematch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_title like '%いけない%' and post_title like '%人%'
+        ), post_id_union as (
+            select post_id, count_likes, post_date_gmt from post_id_contentmatch
+            union
+            select post_id, count_likes, post_date_gmt from post_id_titlematch
+        )
+        select post_id from post_id_union
+        order by count_likes desc, post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
 }

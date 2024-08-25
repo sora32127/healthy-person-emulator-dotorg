@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ArchiveDataEntry, getMostLikedPostTitlesForTest, getRecentPostTitlesForTest, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
+import { ArchiveDataEntry, getMostLikedKeywardPostIdsForTest, getMostLikedPostTitlesForTest, getMostRecentKeywardPostIdsForTest, getRecentPostTitlesForTest, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
 
 /*
 test("記事ID23576の正しいデータを返すこと", async () => {
@@ -167,7 +167,9 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
                 20224,
                 25548,
             ]
-        
+        const mostRecentPostIds = await getMostRecentKeywardPostIdsForTest();
+        const mostLikedPostIds = await getMostLikedKeywardPostIdsForTest();
+     
         test("投稿日昇順, 1ページ目", async () => {
             const searchResults = await getSearchResults(
                 "いけない 人",
@@ -176,7 +178,6 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
                 "timeAsc"
             );
             searchResultsSchema.parse(searchResults);
-            console.log(searchResults);
             expect(searchResults.meta.totalCount).toBeGreaterThan(1150);
             expect(searchResults.meta.tags.length).toBeGreaterThan(550);
             const countOfUnReccommendedTags = searchResults.meta.tags.filter((tag) => tag.tagName === "やってはいけないこと")[0].count;
@@ -201,7 +202,58 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
                 expect(result.postId).toBe(timeAscIds[index + 10]);
             })
         })
+        test("投稿日降順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                1,
+                "timeDesc"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(mostRecentPostIds[index]);
+            })
+        })
 
-
+        test("投稿日降順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                2,
+                "timeDesc"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(mostRecentPostIds[index + 10]);
+            })
+        })
+        test("いいね降順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                1,
+                "like"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(mostLikedPostIds[index]);
+            })
+        })
+        test("いいね降順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                2,
+                "like"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(mostLikedPostIds[index + 10]);
+            })
+        })
     })
 });
