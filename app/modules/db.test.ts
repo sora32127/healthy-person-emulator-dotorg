@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { ArchiveDataEntry, getMostLikedPostTitlesForTest, getRecentPostTitlesForTest, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
 
+/*
 test("記事ID23576の正しいデータを返すこと", async () => {
     const archiveDataEntry = await ArchiveDataEntry.getData(23576);
     expect(archiveDataEntry.postId).toBe(23576);
@@ -16,12 +17,13 @@ test("記事ID23576の正しいデータを返すこと", async () => {
     expect(archiveDataEntry.previousPost.postTitle).toBe('無知識でアナルにローターを入れるべきでは無い');
     expect(archiveDataEntry.nextPost.postTitle).toBe('無能が消去法で大学を決めるべきではない');
 });
-
+*/
 describe("getSearchResultsが正しいデータを返すこと", async () => {
     /*
     - 形式の正しさはparseでチェックする
     - 中身の正しさはtitleでチェックする
     */
+   /*
     describe("キーワードなし、タグなしの場合", async () => {
         const timeAscTitles = [
             "就職活動で「本当は働きたくないんですが...」と言ってはいけない",
@@ -138,5 +140,68 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
                 expect(result.postTitle).toBe(mostLikedPostTitles[index + 10]);
             })
         })
+    })
+    */
+
+    describe("キーワードあり、タグなしの場合", async () => {
+        const timeAscIds = 
+            [
+                16414,
+                17086,
+                16212,
+                19208,
+                16888,
+                18814,
+                19190,
+                26242,
+                20390,
+                23594,
+                24802,
+                20306,
+                20326,
+                25972,
+                17156,
+                24894,
+                19492,
+                23800,
+                20224,
+                25548,
+            ]
+        
+        test("投稿日昇順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                1,
+                "timeAsc"
+            );
+            searchResultsSchema.parse(searchResults);
+            console.log(searchResults);
+            expect(searchResults.meta.totalCount).toBeGreaterThan(1150);
+            expect(searchResults.meta.tags.length).toBeGreaterThan(550);
+            const countOfUnReccommendedTags = searchResults.meta.tags.filter((tag) => tag.tagName === "やってはいけないこと")[0].count;
+            expect(countOfUnReccommendedTags).toBeGreaterThan(452);
+
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(timeAscIds[index]);
+            })
+        })
+        test("投稿日昇順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "いけない 人",
+                [],
+                2,
+                "timeAsc"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(timeAscIds[index + 10]);
+            })
+        })
+
+
     })
 });

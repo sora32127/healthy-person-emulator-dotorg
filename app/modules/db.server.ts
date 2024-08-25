@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { Prisma, PrismaClient } from "@prisma/client"
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { z } from "zod"
 
@@ -13,7 +13,7 @@ function getPrismaClient(): PrismaClient {
         return prismaInstance;
     }
 
-    const isProduction = import.meta.env.MODE === "production";
+    const isProduction = process.env.NODE_ENV === "production";
     prismaInstance = new PrismaClient();
 
     // 開発環境でのホットリロード対策
@@ -27,7 +27,7 @@ function getPrismaClient(): PrismaClient {
 
 export let prisma = getPrismaClient();
 
-if (import.meta.env.MODE !== "production" && global.__prisma) {
+if (process.env.NODE_ENV !== "production" && global.__prisma) {
     prisma = global.__prisma;
 }
 
@@ -615,34 +615,88 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         /*
         元SQLは以下のようになる
         ```sql
-        SELECT
-            count(*)
-        FROM
-            dim_posts
-        WHERE
-            post_content &@~ 'コミュニケーション AND 人間関係'
-            or
-            (post_title like '%コミュニケーション%' and post_title like '%人間関係%');
+        With post_id_contentmatch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_content &@~ 'いけない 人'
+        ), post_id_titlematch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_title like '%いけない%' and post_title like '%人%'
+        ), post_id_union as (
+            select post_id, count_likes, post_date_gmt from post_id_contentmatch
+            union
+            select post_id, count_likes, post_date_gmt from post_id_titlematch
+        )
+        select post_id, count_likes, post_date_gmt from post_id_union
+        order by post_date_gmt desc;
         ```
-        - pgroongaの&@~演算子を利用している
+        - contentとtitleの両方に対してpgroongaの&@~演算子を利用することはできない
+          - インデックスを設定しようとするとtimeoutになり、インデックスを作成できていない
+          - そのため、クエリを発行しようとするとtimeoutになり、実用的ではない
+        - そのため、演算子によってサブクエリを分けている
+        */
+
+        const contentQuery = `'${separatedQuery.map((query) => `${query}`).join(" ")}'`
+
+        const postIdsQuery = Prisma.sql`
+        with post_id_contentmatch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_content &@~ ${Prisma.raw(contentQuery)}
+        ), post_id_titlematch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%${query}%'`).join(" AND "))}
+        ), post_id_union as (
+            select post_id, count_likes, post_date_gmt from post_id_contentmatch
+            union
+            select post_id, count_likes, post_date_gmt from post_id_titlematch
+        )
+        select post_id, count_likes, post_date_gmt from post_id_union
+        order by ${orderby === "like" ? Prisma.sql`count_likes DESC` : orderby === "timeDesc" ? Prisma.sql`post_date_gmt DESC` : Prisma.sql`post_date_gmt ASC`}
+        `
+
+        const posts = await prisma.$queryRaw(postIdsQuery) as { 
+            post_id: number,
+            count_likes: number,
+            post_date_gmt: Date,
+        }[];
+        const totalCount = posts.length;
+        /*
+        タグ確認用SQL
+        With post_id_contentmatch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_content &@~ 'いけない 人'
+        ), post_id_titlematch as (
+            select post_id, count_likes, post_date_gmt
+            from dim_posts
+            where post_title like '%いけない%' and post_title like '%人%'
+        ), post_id_union as (
+            select post_id, count_likes, post_date_gmt from post_id_contentmatch
+            union
+            select post_id, count_likes, post_date_gmt from post_id_titlematch
+        ), post_ids as (
+                select post_id from post_id_union
+        ), tagcount as (
+            select
+                tag_name,
+                count(*)
+            from rel_post_tags
+            left join dim_tags
+            on rel_post_tags.tag_id = dim_tags.tag_id
+            where rel_post_tags.post_id in (select post_id from post_ids)
+            group by 1
+        )
+        select * from tagcount
+        order by 2 desc;
 
         */
-        const totalCountRaw = await prisma.$queryRaw`
-        SELECT count(*) FROM dim_posts WHERE post_content &@~ ${separatedQuery.join(" AND ")} OR (post_title &@~ ${separatedQuery.join(" AND ")});
-        ` as { count: string }[]
-        const totalCount = Number.parseInt(totalCountRaw[0].count) // "368n"のような文字列になっているので直す
-
-        const posts = await prisma.$queryRaw`
-        SELECT post_id FROM dim_posts WHERE post_content &@~ ${separatedQuery.join(" AND ")} OR (post_title &@~ ${separatedQuery.join(" AND ")})
-        ORDER BY ${orderby === "like" ? "count_likes" : orderby === "timeDesc" ? "post_date_gmt" : "post_date_gmt"} ${orderby === "timeAsc" ? "ASC" : "DESC"}
-        OFFSET ${offset} LIMIT 10;
-        ` as { post_id: number }[]
-        const postIds = posts.map((post) => post.post_id)
-
         const tagCounts = await prisma.relPostTags.groupBy({
             by: ["tagId"],
             _count: { postId: true },
-            where: { postId: { in: postIds } },
+            where: { postId: { in: posts.map((post) => post.post_id) } },
         })
         const tagNames = await prisma.dimTags.findMany({
             where: { tagId: { in: tagCounts.map((tag) => tag.tagId) } },
@@ -655,8 +709,10 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             }
         })
 
+        const postIdsWithOffset = posts.slice(offset, offset + 10).map((post) => post.post_id);
+
         const postData = await prisma.dimPosts.findMany({
-            where: { postId: { in: postIds } },
+            where: { postId: { in: postIdsWithOffset } },
             select: {
                 postId: true,
                 postTitle: true,
@@ -665,16 +721,16 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countDislikes: true,
                 ogpImageUrl: true,
             },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : { postDateGmt: "desc" },
+            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" }
         })
         const commentCounts = await prisma.dimComments.groupBy({
             by: ["postId"],
             _count: { commentId: true },
-            where: { postId: { in: postIds } },
+            where: { postId: { in: postIdsWithOffset } },
         })
 
         const postTags = await prisma.relPostTags.findMany({
-            where: { postId: { in: postIds } },
+            where: { postId: { in: postIdsWithOffset } },
             select: {
                 postId: true,
                 dimTag: {
