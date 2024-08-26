@@ -1248,3 +1248,87 @@ export async function getOldestKeywardPostIdsForTest(): Promise<number[]> {
     ` as { post_id: number }[]
     return postIds.map((post) => post.post_id)
 }
+
+export async function getLatestKeywardTagPostIdsForTest(): Promise<number[]>{
+    const postIds = await prisma.$queryRaw`
+    with keyward_titlematch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_title like '%人%'
+        and post_title like '%いけない%'
+        ),
+    keyward_contentmatch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_content &@~ '人 いけない'
+    ),
+    keyward_intersection as (
+        select * from keyward_titlematch
+        union
+        select * from keyward_contentmatch
+    ),
+    tag_tagmatch as (
+        select post_id from rel_post_tags
+        left join dim_tags
+        on rel_post_tags.tag_id = dim_tags.tag_id
+        where dim_tags.tag_name in ('コミュニケーション', 'やってはいけないこと')
+        group by post_id
+        having count(*) >= 2
+    ),
+    tag_post as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_id in (select post_id from tag_tagmatch)
+    ),
+    keyward_tag_intersection as (
+        select * from keyward_intersection
+        INTERSECT
+        select * from tag_post
+    )
+    select post_id from keyward_tag_intersection
+    order by post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
+
+export async function getMostLikedKeywardTagPostIdsForTest(): Promise<number[]>{
+    const postIds = await prisma.$queryRaw`
+    with keyward_titlematch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_title like '%人%'
+        and post_title like '%いけない%'
+        ),
+    keyward_contentmatch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_content &@~ '人 いけない'
+    ),
+    keyward_intersection as (
+        select * from keyward_titlematch
+        union
+        select * from keyward_contentmatch
+    ),
+    tag_tagmatch as (
+        select post_id from rel_post_tags
+        left join dim_tags
+        on rel_post_tags.tag_id = dim_tags.tag_id
+        where dim_tags.tag_name in ('コミュニケーション', 'やってはいけないこと')
+        group by post_id
+        having count(*) >= 2
+    ),
+    tag_post as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_id in (select post_id from tag_tagmatch)
+    ),
+    keyward_tag_intersection as (
+        select * from keyward_intersection
+        INTERSECT
+        select * from tag_post
+    )
+    select post_id from keyward_tag_intersection
+    order by count_likes desc, post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
