@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ArchiveDataEntry, getMostLikedKeywardPostIdsForTest, getMostLikedPostTitlesForTest, getMostRecentKeywardPostIdsForTest, getRecentPostTitlesForTest, getSearchResults, PostCardDataSchema, searchResultsSchema } from "./db.server";
+import { ArchiveDataEntry, getMostLikedKeywardPostIdsForTest, getMostLikedPostTitlesForTest, getMostRecentKeywardPostIdsForTest, getRecentPostTitlesForTest, getOldestTagPostIdsForTest, getSearchResults, PostCardDataSchema, searchResultsSchema, getMostRecentTagPostIdsForTest, getMostLikedTagPostIdsForTest } from "./db.server";
 
 /*
 test("記事ID23576の正しいデータを返すこと", async () => {
@@ -141,7 +141,7 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             })
         })
     })
-    */
+    
 
     describe("キーワードあり、タグなしの場合", async () => {
         const timeAscIds = 
@@ -255,5 +255,152 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
                 expect(result.postId).toBe(mostLikedPostIds[index + 10]);
             })
         })
+    })
+    */
+    describe("タグあり、キーワードなしの場合", async () => {
+        /* 行数確認用SQL
+        with tag_ids as (
+            select tag_id, tag_name from dim_tags
+            where tag_name in (
+                'やってはいけないこと', '対人関係'
+            )
+        ),
+        tag_count as (
+        select
+            post_id
+        from rel_post_tags
+        where tag_id in (select tag_id from tag_ids)
+        group by 1
+        having count(*) = 2
+        )
+        select count(*) from tag_count;
+        */
+        /*
+        タグの投稿数確認用SQL
+        with tag_ids as (
+            select tag_id, tag_name from dim_tags
+            where tag_name in (
+                'やってはいけないこと', '対人関係'
+            )
+            ),
+        post_ids as (
+            select
+                post_id
+            from rel_post_tags
+            where tag_id in (select tag_id from tag_ids)
+            group by 1
+            having count(*) = 2
+            ),
+        rel_tags as (
+            select
+                rel_post_tags.post_id,
+                dim_tags.tag_id,
+                tag_name
+            from rel_post_tags
+            left join dim_tags
+            on rel_post_tags.tag_id = dim_tags.tag_id
+            where post_id in (select post_id from post_ids)
+            )
+        select
+            tag_name,
+            count(distinct post_id) as post_count
+        from rel_tags
+        group by 1
+        order by 2 desc
+        */
+        const timeAscPostIds = await getOldestTagPostIdsForTest();
+        const timeDescPostIds = await getMostRecentTagPostIdsForTest();
+        const mostLikedPostIds = await getMostLikedTagPostIdsForTest();
+        test("投稿日昇順, 1ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                ["やってはいけないこと", "対人関係"],
+                1,
+                "timeAsc"
+            );
+            searchResultsSchema.parse(searchResults);
+            expect(searchResults.meta.totalCount).toBeGreaterThan(330);
+            expect(searchResults.meta.totalCount).toBeLessThan(500);
+            expect(searchResults.meta.tags.length).toBeGreaterThan(265);
+            expect(searchResults.meta.tags.length).toBeLessThan(400);
+            expect(searchResults.meta.tags.filter((tag) => tag.tagName === "やってはいけないこと")[0].count).toBe(searchResults.meta.totalCount);
+            expect(searchResults.meta.tags.filter((tag) => tag.tagName === "対人関係")[0].count).toBe(searchResults.meta.totalCount);
+            const countOfUnReccommendedTags = searchResults.meta.tags.filter((tag) => tag.tagName === "人間関係")[0].count;
+            expect(countOfUnReccommendedTags).toBeGreaterThan(75);
+
+            expect(searchResults.results).toHaveLength(10);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(timeAscPostIds[index]);
+            })
+        })
+        test("投稿日昇順, 2ページ目", async () => {
+            const searchResults = await getSearchResults(
+                "",
+                ["やってはいけないこと", "対人関係"],
+                2,
+                "timeAsc"
+            );
+            searchResultsSchema.parse(searchResults);
+            searchResults.results.forEach((result, index) => {
+                PostCardDataSchema.parse(result);
+                expect(result.postId).toBe(timeAscPostIds[index + 10]);
+            })
+        })
+        
+       test("投稿日降順, 1ページ目", async () => {
+        const searchResults = await getSearchResults(
+            "",
+            ["やってはいけないこと", "対人関係"],
+            1,
+            "timeDesc"
+        );
+        searchResultsSchema.parse(searchResults);
+        expect(searchResults.results).toHaveLength(10);
+        searchResults.results.forEach((result, index) => {
+            PostCardDataSchema.parse(result);
+            expect(result.postId).toBe(timeDescPostIds[index]);
+        })
+       })
+       test("投稿日降順, 2ページ目", async () => {
+        const searchResults = await getSearchResults(
+            "",
+            ["やってはいけないこと", "対人関係"],
+            2,
+            "timeDesc"
+        );
+        searchResultsSchema.parse(searchResults);
+        expect(searchResults.results).toHaveLength(10);
+        searchResults.results.forEach((result, index) => {
+            PostCardDataSchema.parse(result);
+            expect(result.postId).toBe(timeDescPostIds[index + 10]);
+        })
+       })
+    test("いいね降順, 1ページ目", async () => {
+        const searchResults = await getSearchResults(
+            "",
+            ["やってはいけないこと", "対人関係"],
+            1,
+            "like"
+        );
+        searchResultsSchema.parse(searchResults);
+        searchResults.results.forEach((result, index) => {
+            PostCardDataSchema.parse(result);
+            expect(result.postId).toBe(mostLikedPostIds[index]);
+        })
+    })
+    test("いいね降順, 2ページ目", async () => {
+        const searchResults = await getSearchResults(
+            "",
+            ["やってはいけないこと", "対人関係"],
+            2,
+            "like"
+        );
+        searchResultsSchema.parse(searchResults);
+        searchResults.results.forEach((result, index) => {
+            PostCardDataSchema.parse(result);
+            expect(result.postId).toBe(mostLikedPostIds[index + 10]);
+        })
+    })
     })
 });

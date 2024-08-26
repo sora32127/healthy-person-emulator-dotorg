@@ -780,33 +780,62 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
 
     if (q === "" && tags.length > 0) {
         // タグによる絞り込みを行う
-        const tagCounts = await prisma.relPostTags.groupBy({
-            by: ["tagId"],
-            _count: { postId: true },
-            where: { dimTag: { tagName: { in: tags } } },
-        })
-        const tagNames = await prisma.dimTags.findMany({
-            where: { tagId: { in: tagCounts.map((tag) => tag.tagId) } },
-            select: { tagName: true, tagId: true },
-        })
-        const tagsTotal = tagCounts.map((tag) => {
-            return {
-                tagName: tagNames.find((tagName) => tagName.tagId === tag.tagId)?.tagName || "",
-                count: tag._count.postId,
-            }
-        })
+        const tagsTotalRaw = await prisma.$queryRaw`
+        with tag_ids as (
+            select tag_id, tag_name from dim_tags
+            where tag_name in (${Prisma.join(tags)})
+        ),
+        post_ids as (
+            select
+                post_id
+            from rel_post_tags
+            where tag_id in (select tag_id from tag_ids)
+            group by 1
+            having count(*) = ${tags.length}
+        ),
+        rel_tags as (
+            select
+                rel_post_tags.post_id,
+                dim_tags.tag_id,
+                tag_name
+            from rel_post_tags
+            left join dim_tags
+            on rel_post_tags.tag_id = dim_tags.tag_id
+            where post_id in (select post_id from post_ids)
+        )
+        select
+            tag_name as tagname,
+            count(distinct post_id)::integer as count
+        from rel_tags
+        group by 1
+        order by 2 desc
+        ` as { tagname: string, count: bigint }[]
+        // 以下二つの理由により、変換する必要がある
+        // 1. countがintegerではなくbigintになっているため、変換する必要があるため
+        // 2. シリアライゼーションの都合上「tagname」ではなく「tagName」とする必要があるため
+        const tagsTotal = tagsTotalRaw.map((tag) => ({
+            tagName: tag.tagname,
+            count: Number(tag.count),
+        }))
 
-        const totalCount = await prisma.dimPosts.count({
-            where: {
-                rel_post_tags: {
-                    some: {
-                        dimTag: {
-                            tagName: { in: tags }
-                        }
-                    }
-                }
-            }
-        })
+        const totalCountRaw = await prisma.$queryRaw`
+        with tag_ids as (
+            select tag_id, tag_name from dim_tags
+            where tag_name in (
+                ${Prisma.join(tags)}
+            )
+        ),
+        tag_count as (
+        select
+            post_id
+        from rel_post_tags
+        where tag_id in (select tag_id from tag_ids)
+        group by 1
+        having count(*) = ${tags.length}
+        )
+        select count(*) as count from tag_count;
+        ` as { count: bigint }[]
+        const totalCount = Number(totalCountRaw[0].count)
 
         const posts = await prisma.dimPosts.findMany({
             select: {
@@ -828,6 +857,20 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             },
             orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
             take: 10,
+            skip: offset,
+        }).then((posts) => {
+            return posts.sort((a, b) => {
+                if (orderby === "like") {
+                    if (b.countLikes !== a.countLikes) {
+                        return b.countLikes - a.countLikes;
+                    } 
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                if (orderby === "timeDesc") {
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                return new Date(a.postDateGmt).getTime() - new Date(b.postDateGmt).getTime();
+            });
         })
 
         const commentCounts = await prisma.dimComments.groupBy({
@@ -1026,3 +1069,43 @@ export async function getMostLikedKeywardPostIdsForTest(): Promise<number[]> {
     ` as { post_id: number }[]
     return postIds.map((post) => post.post_id)
 }
+
+export async function getOldestTagPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    with post_ids as (
+        select distinct post_id from rel_post_tags
+        where tag_id in (5, 17)
+        )
+    select post_id from dim_posts
+    where post_id in (select post_id from post_ids)
+    order by post_date_gmt asc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
+
+export async function getMostRecentTagPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    with post_ids as (
+        select distinct post_id from rel_post_tags
+        where tag_id in (5, 17)
+        )
+    select post_id from dim_posts
+    where post_id in (select post_id from post_ids)
+    order by post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
+
+export async function getMostLikedTagPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    with post_ids as (
+        select distinct post_id from rel_post_tags
+        where tag_id in (5, 17)
+        )
+    select post_id from dim_posts
+    where post_id in (select post_id from post_ids)
+    order by count_likes desc, post_date_gmt desc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
+
