@@ -266,7 +266,7 @@ export const PostCardDataSchema = z.object({
     countComments: z.number(),
 })
 
-type PostCardData = z.infer<typeof PostCardDataSchema>;
+export type PostCardData = z.infer<typeof PostCardDataSchema>;
 
 export async function getRecentPosts(): Promise<PostCardData[]>{
     const recentPosts = await prisma.dimPosts.findMany({

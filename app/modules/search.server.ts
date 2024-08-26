@@ -89,8 +89,8 @@ export const searchResultsSchema = z.object({
     results: z.array(PostCardDataSchema),
 })
 
-type SearchResults = z.infer<typeof searchResultsSchema>;
-type OrderBy = "like" | "timeDesc" | "timeAsc"
+export type SearchResults = z.infer<typeof searchResultsSchema>;
+export type OrderBy = "like" | "timeDesc" | "timeAsc"
 
 
 export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
@@ -649,6 +649,6 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             tags: [],
             searchParams: { q, tags, p, orderby },
         },
-        results: [],
+        results : []
     }
 }
