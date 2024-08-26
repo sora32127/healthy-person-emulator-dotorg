@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form, useFetcher, useLoaderData } from "@remix-run/react";
+import { Form, useFetcher, useLoaderData, useSubmit } from "@remix-run/react";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { H1, H2 } from "~/components/Headings";
@@ -61,6 +61,22 @@ export default function SearchPage() {
   const [searchTags, setSearchTags] = useState<string[]>([]);
   const SearchResults = searchResults as SearchResults;
 
+  const submit = useSubmit();
+
+  const currentPage = SearchResults.meta.searchParams.p;
+  const totalPages = Math.ceil(SearchResults.meta.totalCount / 10); // 1ページあたり10件と仮定
+
+  const handlePageChange = (action: string) => {
+    const form = new FormData();
+    form.append("action", action);
+    form.append("currentPage", currentPage.toString());
+    form.append("totalPages", totalPages.toString());
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", SearchResults.meta.searchParams.orderby);
+    submit(form, { method: "post" });
+  };
+
   
   return (
     <div>
@@ -105,7 +121,44 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
-      <div className="search-navigation">
+        <div className="search-navigation flex justify-center">
+          <div className="join">
+          <button
+            className="join-item btn"
+            onClick={() => handlePageChange("firstPage")}
+            disabled={currentPage === 1}
+            type="submit"
+          >
+            «
+          </button>
+          <button
+            className="join-item btn"
+            onClick={() => handlePageChange("prevPage")}
+            disabled={currentPage === 1}
+            type="submit"
+          >
+            ‹
+          </button>
+          <div className="join-item bg-base-200 font-bold text-lg flex items-center justify-center min-w-[100px]">
+            {currentPage} / {totalPages}
+          </div>
+          <button
+            className="join-item btn"
+            onClick={() => handlePageChange("nextPage")}
+            disabled={currentPage === totalPages}
+            type="submit"
+          >
+            ›
+          </button>
+          <button
+            className="join-item btn"
+            onClick={() => handlePageChange("lastPage")}
+            disabled={currentPage === totalPages}
+            type="submit"
+          >
+            »
+          </button>
+        </div>
       </div>
       </div>
     </div>
