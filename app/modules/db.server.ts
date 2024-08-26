@@ -910,28 +910,100 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         }
     }
     if (q !== "" && tags.length > 0) {
-        const postIdsWithTags = await prisma.relPostTags.findMany({
-            where: { dimTag: { tagName: { in: tags } } },
-            select: { postId: true },
-        }).then((postIds) => {
-            return postIds.map((post) => post.postId)
-        })
-
-        const totalCountRaw = await prisma.$queryRaw`
-        SELECT post_id FROM dim_posts WHERE
-        post_id IN (${postIdsWithTags.join(",")})
-        AND (
-            post_content &@~ ${separatedQuery.join(" AND ")}
-            OR (post_title &@~ ${separatedQuery.join(" AND ")})
+        /*
+        元クエリは以下の通り
+        ```sql
+        with keyward_titlematch as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where post_title like '%人%'
+            and post_title like '%いけない%'
+        ),
+        keyward_contentmatch as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where post_content &@~ '人 いけない'
+        ),
+        keyward_intersection as (
+            select * from keyward_titlematch
+            union
+            select * from keyward_contentmatch
+        ),
+        tag_tagmatch as (
+            select post_id from rel_post_tags
+            left join dim_tags
+            on rel_post_tags.tag_id = dim_tags.tag_id
+            where dim_tags.tag_name in ('コミュニケーション', 'やってはいけないこと')
+            group by post_id
+            having count(*) >= 2
+        ),
+        tag_post as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where post_id in (select post_id from tag_tagmatch)
+        ),
+        keyward_tag_intersection as (
+            select * from keyward_intersection
+            INTERSECT
+            select * from tag_post
         )
-        ORDER BY ${orderby === "like" ? "count_likes" : orderby === "timeDesc" ? "post_date_gmt" : "post_date_gmt"} ${orderby === "timeAsc" ? "ASC" : "DESC"}
-        ` as { post_id: number }[]
-        const totalCount = totalCountRaw.length
+        select * from keyward_tag_intersection
+        ```
+        */
+
+        const searchQuery = Prisma.sql`
+        with keyward_titlematch as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%${query}%'`).join(" AND "))}
+        ),
+        keyward_contentmatch as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where post_content &@~ '${Prisma.raw(separatedQuery.map((query) => `${query}`).join(" "))}'
+        ),
+        keyward_intersection as (
+            select * from keyward_titlematch
+            union
+            select * from keyward_contentmatch
+        ),
+        tag_tagmatch as (
+            select post_id from rel_post_tags
+            left join dim_tags
+            on rel_post_tags.tag_id = dim_tags.tag_id
+            where dim_tags.tag_name in (${Prisma.join(tags)})
+            group by post_id
+            having count(*) >= ${tags.length}
+        ),
+        tag_post as (
+            select post_id, post_date_gmt, count_likes
+            from dim_posts
+            where post_id in (select post_id from tag_tagmatch)
+        ),
+        keyward_tag_intersection as (
+            select * from keyward_intersection
+            INTERSECT
+            select * from tag_post
+        )
+        select * from keyward_tag_intersection
+        `
+        const searchResultsRaw = await prisma.$queryRaw(searchQuery) as {
+            post_id: bigint,
+            post_date_gmt: Date,
+            count_likes: bigint,
+        }[]
+        const searchResults = searchResultsRaw.map((post) => ({
+            postId: Number(post.post_id),
+            postDateGmt: post.post_date_gmt,
+            countLikes: Number(post.count_likes),
+        }))
+        const totalCount = searchResults.length
+        const postIds = searchResults.map((post) => post.postId)
 
         const tagCounts = await prisma.relPostTags.groupBy({
             by: ["tagId"],
             _count: { postId: true },
-            where: { postId: { in: postIdsWithTags } },
+            where: { postId: { in: postIds } },
         })
         
         const tagNames = await prisma.dimTags.findMany({
@@ -946,8 +1018,23 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             }
         })
 
+        const sortedPosts = searchResults.sort((a, b) => {
+            if (orderby === "like") {
+                if (b.countLikes !== a.countLikes) {
+                    return b.countLikes - a.countLikes;
+                } 
+                return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+            }
+
+            if (orderby === "timeDesc") {
+                return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+            }
+            return new Date(a.postDateGmt).getTime() - new Date(b.postDateGmt).getTime();
+        })
+        const postIdsWithOffset = sortedPosts.slice(offset, offset + 10).map((post) => post.postId)
+
         const posts = await prisma.dimPosts.findMany({
-            where: { postId: { in: postIdsWithTags } },
+            where: { postId: { in: postIdsWithOffset } },
             select: {
                 postId: true,
                 postTitle: true,
@@ -956,12 +1043,23 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countDislikes: true,
                 ogpImageUrl: true,
             },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
-            take: 10,
+        }).then((posts) => {
+            return posts.sort((a, b) => {
+                if (orderby === "like") {
+                    if (b.countLikes !== a.countLikes) {
+                        return b.countLikes - a.countLikes;
+                    } 
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                if (orderby === "timeDesc") {
+                    return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
+                }
+                return new Date(a.postDateGmt).getTime() - new Date(b.postDateGmt).getTime();
+            });
         })
 
         const postTags = await prisma.relPostTags.findMany({
-            where: { postId: { in: posts.map((post) => post.postId) } },
+            where: { postId: { in: postIdsWithOffset } },
             select: {
                 postId: true,
                 dimTag: {
@@ -976,7 +1074,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         const commentCounts = await prisma.dimComments.groupBy({
             by: ["postId"],
             _count: { commentId: true },
-            where: { postId: { in: posts.map((post) => post.postId) } },
+            where: { postId: { in: postIdsWithOffset } },
         })
 
         const postsWithData = posts.map((post) => {
@@ -1109,3 +1207,44 @@ export async function getMostLikedTagPostIdsForTest(): Promise<number[]> {
     return postIds.map((post) => post.post_id)
 }
 
+export async function getOldestKeywardPostIdsForTest(): Promise<number[]> {
+    const postIds = await prisma.$queryRaw`
+    with keyward_titlematch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_title like '%人%'
+        and post_title like '%いけない%'
+        ),
+    keyward_contentmatch as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_content &@~ '人 いけない'
+    ),
+    keyward_intersection as (
+        select * from keyward_titlematch
+        union
+        select * from keyward_contentmatch
+    ),
+    tag_tagmatch as (
+        select post_id from rel_post_tags
+        left join dim_tags
+        on rel_post_tags.tag_id = dim_tags.tag_id
+        where dim_tags.tag_name in ('コミュニケーション', 'やってはいけないこと')
+        group by post_id
+        having count(*) >= 2
+    ),
+    tag_post as (
+        select post_id, post_date_gmt, count_likes
+        from dim_posts
+        where post_id in (select post_id from tag_tagmatch)
+    ),
+    keyward_tag_intersection as (
+        select * from keyward_intersection
+        INTERSECT
+        select * from tag_post
+    )
+    select post_id from keyward_tag_intersection
+    order by post_date_gmt asc limit 20;
+    ` as { post_id: number }[]
+    return postIds.map((post) => post.post_id)
+}
