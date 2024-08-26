@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Form, useFetcher, useLoaderData, useSubmit } from "@remix-run/react";
-import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
+import { Form, useLoaderData, useSubmit } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
-import { H1, H2 } from "~/components/Headings";
-import PostCard, { type PostCardProps }  from "~/components/PostCard";
+import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
+import { H1 } from "~/components/Headings";
+import PostCard  from "~/components/PostCard";
+import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getSearchResults, type SearchResults, type OrderBy } from "~/modules/search.server";
 import type { PostCardData } from "~/modules/db.server";
-import { Accordion, AccordionItem } from "~/components/Accordion";
 
 
 export const loader: LoaderFunction = async ({ request }) => {
