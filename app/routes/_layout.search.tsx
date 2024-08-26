@@ -77,6 +77,17 @@ export default function SearchPage() {
     submit(form, { method: "post" });
   };
 
+  const handleSortOrderChange = (orderby: OrderBy) => {
+    // 並び順を変更する場合、実質最初のページに戻るのと同じなので、actionをfirstSearchにする
+    const form = new FormData();
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("totalPages", totalPages.toString());
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", orderby);
+    submit(form, { method: "post" });
+  };
   
   return (
     <div>
@@ -106,6 +117,19 @@ export default function SearchPage() {
           </Form>
         </div>
         <div className="search-results">
+          <div className="search-meta-data">
+            <p>検索結果: {SearchResults.meta.totalCount}件</p>
+            {SearchResults.meta.searchParams.q && <p>キーワード: {SearchResults.meta.searchParams.q}</p>}
+            {SearchResults.meta.searchParams.tags.length > 0 && <p>タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+          </div>
+          <div className="search-sort-order py-2">
+            <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
+              <option disabled selected>並び順を変更する</option>
+              <option value="timeDesc">新着順</option>
+              <option value="timeAsc">古い順</option>
+              <option value="like">いいね順</option>
+            </select>
+          </div>
           <div className="container mx-auto px-4">
             {SearchResults.results.map((post: PostCardData) => (
               <PostCard
