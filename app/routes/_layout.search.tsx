@@ -57,11 +57,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function SearchPage() {
   const { searchResults } = useLoaderData<typeof loader>();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchTags, setSearchTags] = useState<string[]>([]);
-  const [searchOrderby, setSearchOrderby] = useState<OrderBy>("timeDesc");
   const SearchResults = searchResults as SearchResults;
-
+  const [searchQuery, setSearchQuery] = useState(SearchResults.meta.searchParams.q);
+  const [searchTags, setSearchTags] = useState<string[]>(SearchResults.meta.searchParams.tags);
+  const [searchOrderby, setSearchOrderby] = useState<OrderBy>(SearchResults.meta.searchParams.orderby as OrderBy);
   const submit = useSubmit();
 
   const currentPage = SearchResults.meta.searchParams.p;
