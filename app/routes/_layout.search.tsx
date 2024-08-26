@@ -59,6 +59,7 @@ export default function SearchPage() {
   const { searchResults } = useLoaderData<typeof loader>();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchTags, setSearchTags] = useState<string[]>([]);
+  const [searchOrderby, setSearchOrderby] = useState<OrderBy>("timeDesc");
   const SearchResults = searchResults as SearchResults;
 
   const submit = useSubmit();
@@ -88,6 +89,16 @@ export default function SearchPage() {
     form.append("orderby", orderby);
     submit(form, { method: "post" });
   };
+
+  const handleSearchSubmit = () => {
+    const form = new FormData();
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", searchOrderby);
+    submit(form, { method: "post" });
+  }
   
   return (
     <div>
@@ -113,6 +124,9 @@ export default function SearchPage() {
                   />
                 </AccordionItem>
               </Accordion>
+            </div>
+            <div className="flex justify-center md:justify-end">
+              <button type="submit" className="btn btn-primary" onClick={handleSearchSubmit}>検索</button>
             </div>
           </Form>
         </div>
