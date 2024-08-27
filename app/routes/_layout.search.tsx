@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Form, useLoaderData, useSubmit } from "@remix-run/react";
+import { useState, useEffect } from "react";
+import { Form, useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { H1 } from "~/components/Headings";
@@ -65,6 +65,8 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState(SearchResults.meta.searchParams.q);
   const [searchTags, setSearchTags] = useState<string[]>(SearchResults.meta.searchParams.tags);
   const [searchOrderby, setSearchOrderby] = useState<OrderBy>(SearchResults.meta.searchParams.orderby as OrderBy);
+  const [isSearching, setIsSearching] = useState(false);
+  const navigation = useNavigation();
   const submit = useSubmit();
 
   const currentPage = SearchResults.meta.searchParams.p;
@@ -104,7 +106,25 @@ export default function SearchPage() {
     form.append("orderby", searchOrderby);
     submit(form, { method: "post" });
   }
-  
+
+  const handleTagsSelected = (newTags: string[]) => {
+    setSearchTags(newTags);
+    const form = new FormData();
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("query", searchQuery);
+    form.append("tags", newTags.join("+"));
+    form.append("orderby", searchOrderby);
+    submit(form, { 
+      method: "post",
+      preventScrollReset: true
+    });
+  };
+
+  useEffect(() => {
+    setIsSearching(navigation.state === "submitting" || navigation.state === "loading");
+  }, [navigation.state]);
+
   return (
     <div>
       <H1>検索</H1>
@@ -124,7 +144,7 @@ export default function SearchPage() {
                 <AccordionItem title="タグ選択">
                   <TagSelectionBox
                     allTagsOnlyForSearch={SearchResults.meta.tags}
-                    onTagsSelected={setSearchTags}
+                    onTagsSelected={handleTagsSelected}
                     parentComponentStateValues={searchTags}
                   />
                 </AccordionItem>
@@ -135,6 +155,12 @@ export default function SearchPage() {
             </div>
           </Form>
         </div>
+        {isSearching && (
+          <div className="flex justify-center items-center my-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+            <span className="ml-2">検索中...</span>
+          </div>
+        )}
         <div className="search-results">
           <div className="search-meta-data my-3">
             <p>検索結果: {SearchResults.meta.totalCount}件</p>
