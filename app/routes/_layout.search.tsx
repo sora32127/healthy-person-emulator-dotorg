@@ -108,7 +108,7 @@ export default function SearchPage() {
   return (
     <div>
       <H1>検索</H1>
-      <div className="container mx-auto px-4">
+      <div className="container">
         <div className="search-input">
           <Form method="post" action="/search" onSubmit={(event) => handleSearchSubmit(event)}>
             <input
@@ -136,7 +136,7 @@ export default function SearchPage() {
           </Form>
         </div>
         <div className="search-results">
-          <div className="search-meta-data">
+          <div className="search-meta-data my-3">
             <p>検索結果: {SearchResults.meta.totalCount}件</p>
             {SearchResults.meta.searchParams.q && <p>キーワード: {SearchResults.meta.searchParams.q}</p>}
             {SearchResults.meta.searchParams.tags.length > 0 && <p>タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
@@ -149,7 +149,7 @@ export default function SearchPage() {
               <option selected={searchOrderby === "like"} value="like">いいね順</option>
             </select>
           </div>
-          <div className="container mx-auto px-4">
+          <div className="search-results-container">
             {SearchResults.results.map((post: PostCardData) => (
               <PostCard
                 key={post.postId}
