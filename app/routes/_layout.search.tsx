@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, useLoaderData, useSubmit } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
@@ -131,7 +131,7 @@ export default function SearchPage() {
               </Accordion>
             </div>
             <div className="flex justify-center md:justify-end">
-              <button type="submit" className="btn btn-primary">検索</button>
+              <button type="submit" className="btn btn-primary w-full md:w-1/5">検索</button>
             </div>
           </Form>
         </div>
