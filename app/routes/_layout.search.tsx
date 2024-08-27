@@ -144,9 +144,9 @@ export default function SearchPage() {
           <div className="search-sort-order py-2">
             <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
               <option disabled selected>並び順を変更する</option>
-              <option value="timeDesc">新着順</option>
-              <option value="timeAsc">古い順</option>
-              <option value="like">いいね順</option>
+              <option selected={searchOrderby === "timeDesc"} value="timeDesc">新着順</option>
+              <option selected={searchOrderby === "timeAsc"} value="timeAsc">古い順</option>
+              <option selected={searchOrderby === "like"} value="like">いいね順</option>
             </select>
           </div>
           <div className="container mx-auto px-4">
