@@ -27,6 +27,7 @@
     "crypto-js": "^4.2.0",
     "csv-parse": "^5.5.6",
     "diff": "^5.2.0",
+    "framer-motion": "^11.3.30",
     "html-react-parser": "^5.1.12",
     "is-ip": "^5.0.1",
     "isbot": "^5.1.16",

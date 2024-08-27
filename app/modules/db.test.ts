@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { ArchiveDataEntry } from "./db.server";
 
+
 test("記事ID23576の正しいデータを返すこと", async () => {
     const archiveDataEntry = await ArchiveDataEntry.getData(23576);
     expect(archiveDataEntry.postId).toBe(23576);

@@ -1,310 +1,254 @@
-import { Form, useLoaderData } from "@remix-run/react";
-import { H1, H2 } from "~/components/Headings";
-import { ActionFunction, LoaderFunction, MetaFunction, json, redirect } from "@remix-run/node";
-import { prisma } from "~/modules/db.server";
-import PostCard, { PostCardProps }  from "~/components/PostCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Form, useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
+import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
+import { H1 } from "~/components/Headings";
+import PostCard  from "~/components/PostCard";
+import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-
-interface Tag {
-  tagName: string;
-  count: number;
-}
-
+import { getSearchResults, type SearchResults, type OrderBy } from "~/modules/search.server";
+import type { PostCardData } from "~/modules/db.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const pageNumber = parseInt(url.searchParams.get("p") || "1");
-  const orderby = url.searchParams.get("orderby") || "timeDesc";
-  const searchQuery = url.searchParams.get("q") || null;
-  const searchTags = url.searchParams.get("tags")?.split(" ") || null;
-  
-  const tags = await prisma.dimTags.findMany({
-    select: {
-      tagName: true,
-      _count: {
-        select: { relPostTags: true },
-      },
-    },
-    orderBy: {
-      relPostTags: {
-        _count: "desc",
-      },
-    },
-  });
-
-  const allTagsForSearch: Tag[] = tags.map((tag) => ({
-    tagName: tag.tagName,
-    count: tag._count.relPostTags,
-  }));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const whereConditions: any = {}
-
-  if (searchQuery) {
-    whereConditions.OR = [
-      { postTitle: { contains: searchQuery } },
-      { postContent: { contains: searchQuery } },
-    ];
-  }
-
-  if (searchTags && searchTags.length > 0) {
-    whereConditions.AND = searchTags.map(tag => ({
-      rel_post_tags: {
-        some: {
-          dimTag: {
-            tagName: tag,
-          },
-        },
-      },
-    }));
-  }
-  
-  if (!searchQuery && !searchTags) {
-    whereConditions.postId = -1;
-  }
-
-  const totalCount = await prisma.dimPosts.count({
-    where: whereConditions,
-  });
-
-  const searchResultRaw = await prisma.dimPosts.findMany({
-    select : {
-      postId: true,
-      postTitle: true,
-      postDateGmt: true,
-      postContent: true,
-      rel_post_tags: {
-        select: {
-          dimTag: {
-            select: {
-              tagName: true,
-            },
-          },
-        },
-      },
-      countLikes: true,
-      countDislikes: true,
-    },
-    where: whereConditions,
-    orderBy: orderby === "timeDesc" ? { postDateGmt: "desc" } : { countLikes: "desc" },
-    skip: (pageNumber - 1) * 10,
-    take: 10,
-  });
-
-  const searchResult = searchResultRaw.map((post) => {
-    const tagNames = post.rel_post_tags.map((relPostTag) => relPostTag.dimTag.tagName);
-    return {
-      postId: post.postId,
-      postTitle: post.postTitle,
-      postDateGmt: post.postDateGmt,
-      tagNames,
-      countLikes: post.countLikes,
-      countDislikes: post.countDislikes,
-    };
-  });
-
-  return json({
-    data: searchResult,
-    allTagsForSearch,
-    pageNumber,
-    tags: searchTags,
-    query: searchQuery,
-    orderby: orderby ?? "timeDesc",
-    totalCount,
-  });
-};
+  const pageNumber = Number.parseInt(url.searchParams.get("p") || "1");
+  const orderby = (url.searchParams.get("orderby") || "timeDesc") as OrderBy;
+  const searchQuery = url.searchParams.get("q") || "";
+  const searchTags = url.searchParams.get("tags")?.split(" ") || [];
+  const searchResults = await getSearchResults(searchQuery, searchTags, pageNumber, orderby ) as SearchResults;
+  return json({ searchResults });
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get("action");
-  const currentPage = parseInt(formData.get("currentPage") as string);
-  const totalPages = parseInt(formData.get("totalPages") as string);
+  const currentPage = Number.parseInt(formData.get("currentPage") as string);
+  const totalPages = Number.parseInt(formData.get("totalPages") as string);
   const tags = formData.get("tags")?.toString().split("+") ?? null;
   const query = formData.get("query")?.toString() ?? null;
   const orderby = formData.get("orderby") ?? "timeDesc";
+  /*
+  - 全角空白の場合は%E3%80%80としてエンコードされ、半角空白の場合は%20としてエンコードされるが、このブレを吸収する仕組みをaction関数内部で実装する
+  - この実装がないと、検索結果にブレが生じてしまい、「全角空白で区切るか半角空白で区切るか」で検索結果が変わってしまう
+  */
+  const normalizeSpaces = (str: string) => str.replace(/[\s　]+/g, ' ').trim();
 
-  const encodedQueryString = query && query != '' ? `&q=${encodeURIComponent(query)}` : "";
+  const encodedQueryString = query && query !== '' ? `&q=${encodeURIComponent(normalizeSpaces(query))}` : "";
   const encodedTagsString =  tags && tags.filter(tag => tag !== '').length > 0 ? `&tags=${tags.map(tag => encodeURIComponent(tag)).join("+")}` : "";
 
   if (action === "firstSearch" || action === "firstPage") {
     return redirect(
       `/search?p=1&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "prevPage") {
+  }
+  if (action === "prevPage") {
     return redirect(
       `/search?p=${currentPage - 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "nextPage") {
+  }
+  if (action === "nextPage") {
     return redirect(
       `/search?p=${currentPage + 1}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else if (action === "lastPage") {
+  }
+  if (action === "lastPage") {
     return redirect(
       `/search?p=${totalPages}&orderby=${orderby}${encodedQueryString}${encodedTagsString}`
     );
-  } else {
-    return redirect("/search");
   }
+  return redirect("/search");
 };
 
 export default function SearchPage() {
-  const {
-    data,
-    allTagsForSearch,
-    totalCount,
-    pageNumber,
-    tags,
-    query,
-    orderby,
-  } = useLoaderData<typeof loader>();
+  const { searchResults } = useLoaderData<typeof loader>();
+  const SearchResults = searchResults as SearchResults;
+  const [searchQuery, setSearchQuery] = useState(SearchResults.meta.searchParams.q);
+  const [searchTags, setSearchTags] = useState<string[]>(SearchResults.meta.searchParams.tags);
+  const [searchOrderby, setSearchOrderby] = useState<OrderBy>(SearchResults.meta.searchParams.orderby as OrderBy);
+  const [isSearching, setIsSearching] = useState(false);
+  const navigation = useNavigation();
+  const submit = useSubmit();
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
-  const [selectedTags, setSelectedTags] = useState<string[]>(tags ?? []);
-  const [queryText, setQueryText] = useState<string>(query ?? "");
-  const [currentOrderBy] = useState<string>(orderby || "timeDesc");
-  const totalPages = Math.ceil(totalCount / 10);
+  const currentPage = SearchResults.meta.searchParams.p;
+  const totalPages = Math.ceil(SearchResults.meta.totalCount / 10); // 1ページあたり10件と仮定
+
+  const handlePageChange = (action: string) => {
+    const form = new FormData();
+    setIsAccordionOpen(false);
+    form.append("action", action);
+    form.append("currentPage", currentPage.toString());
+    form.append("totalPages", totalPages.toString());
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", SearchResults.meta.searchParams.orderby);
+    submit(form, { method: "post" });
+  };
+
+  const handleSortOrderChange = (orderby: OrderBy) => {
+    // 並び順を変更する場合、実質最初のページに戻るのと同じなので、actionをfirstSearchにする
+    const form = new FormData();
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("totalPages", totalPages.toString());
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", orderby);
+    submit(form, { method: "post" });
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData();
+    console.log(searchQuery, searchTags, searchOrderby);
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("query", searchQuery);
+    form.append("tags", searchTags.join("+"));
+    form.append("orderby", searchOrderby);
+    submit(form, { method: "post" });
+  }
+
+  const handleTagsSelected = (newTags: string[]) => {
+    setSearchTags(newTags);
+    const form = new FormData();
+    form.append("action", "firstSearch");
+    form.append("currentPage", "1");
+    form.append("query", searchQuery);
+    form.append("tags", newTags.join("+"));
+    form.append("orderby", searchOrderby);
+    submit(form, { 
+      method: "post",
+      preventScrollReset: true
+    });
+  };
+
+  useEffect(() => {
+    const action = navigation.formData?.get("action")?.toString();
+    setIsSearching(
+      (navigation.state === "submitting" || navigation.state === "loading") && (action?.includes("Search") ?? false)
+    );
+  }, [navigation.state, navigation.formData]);
 
   return (
-    <div className="container mx-auto px-4">
-      <H1>検索</H1>
-      <Form action="/search" method="post" className="mb-8" id="searchForm">
-        <input
-          type="text"
-          name="q"
-          defaultValue={queryText}
-          onChange={(e) => setQueryText(e.target.value)}
-          className="input input-bordered px-4 py-2 w-full  mb-2 md:mb-0 md:w-5/6 placeholder-slate-500 border-neutral"
-          placeholder="検索キーワードを入力"
-        />
-        <button
-          type="submit"
-          className="btn-secondary px-6 py-2 rounded mt-2 md:mt-0 md:ml-2 w-full md:w-auto"
-          name="action"
-          value="firstSearch"
-        >
-          検索
-        </button>
-        <div className="pt-4 md:pr-12">
-          <TagSelectionBox
-            onTagsSelected={(tags) => setSelectedTags(tags)}
-            parentComponentStateValues={selectedTags}
-            allTagsOnlyForSearch={allTagsForSearch}
-          />
-        </div>
-        <input type="hidden" name="tags" value={selectedTags.join("+")} />
-        <input type="hidden" name="query" value={queryText} />
-        <input type="hidden" name="orderby" value={currentOrderBy} />
-    </Form>
-
-    {data && data.length > 0 ? (
-    <>
     <div>
-      <H2>検索結果</H2>
-      <p>合計{totalCount}件中 {pageNumber * 10 - 9} - {Math.min(pageNumber * 10, totalCount)} 件を表示</p>
-      {query && (
-        <p>キーワード: {query}</p>
-      )}
-      {tags && tags.length > 0 && (
-        <p>タグ: {tags.join(", ")}</p>
-      )}
-    </div>
-    <Form action="/search" method="post" id="orderbyForm" preventScrollReset>
-      <div className="bg-base-100 max-w-xs flex flex-col items-start rounded-lg my-4">
-        <p className="mb-2">並び替え</p>
-        <div className="flex space-x-4">
-          <button type="submit" name="orderby" value="timeDesc" className="btn btn-outline">
-            投稿日時順
+      <H1>検索</H1>
+      <div className="container">
+        <div className="search-input">
+          <Form method="post" action="/search" onSubmit={(event) => handleSearchSubmit(event)}>
+            <input
+              type="text"
+              name="q"
+              placeholder="テキストを入力..."
+              className="input input-bordered w-full placeholder-slate-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="my-4">
+              <Accordion>
+                <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
+                  <TagSelectionBox
+                    allTagsOnlyForSearch={SearchResults.meta.tags}
+                    onTagsSelected={handleTagsSelected}
+                    parentComponentStateValues={searchTags}
+                  />
+                </AccordionItem>
+              </Accordion>
+            </div>
+            <div className="flex justify-center md:justify-end">
+              <button type="submit" className="btn btn-primary w-full md:w-1/5">検索</button>
+            </div>
+          </Form>
+        </div>
+        <div className="search-results">
+        <div className="search-meta-data my-3 min-h-[80px]">
+          {isSearching ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+              <span className="ml-2">検索中...</span>
+            </div>
+          ) : (SearchResults.meta.searchParams.q !== "" || SearchResults.meta.searchParams.tags.length > 0) ? (
+            <div className="h-full flex flex-col justify-center">
+              <p>検索結果: {SearchResults.meta.totalCount}件</p>
+              {SearchResults.meta.searchParams.q && <p className="truncate">キーワード: {SearchResults.meta.searchParams.q}</p>}
+              {SearchResults.meta.searchParams.tags.length > 0 && <p className="truncate">タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+              {SearchResults.meta.totalCount === 0 && <p>検索結果がありません</p>}
+            </div>
+            ) : (
+              <div/>
+            )}
+        </div>
+          <div className="search-sort-order py-2">
+            {SearchResults.meta.totalCount > 0 && (
+            <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
+              <option disabled selected>並び順を変更する</option>
+              <option selected={searchOrderby === "timeDesc"} value="timeDesc">新着順</option>
+              <option selected={searchOrderby === "timeAsc"} value="timeAsc">古い順</option>
+              <option selected={searchOrderby === "like"} value="like">いいね順</option>
+            </select>
+            )}
+          </div>
+          <div className="search-results-container">
+            {SearchResults.results.map((post: PostCardData) => (
+              <PostCard
+                key={post.postId}
+                postId={post.postId}
+                postTitle={post.postTitle}
+                postDateGmt={post.postDateGmt.toString()}
+                countLikes={post.countLikes}
+                countDislikes={post.countDislikes}
+                countComments={post.countComments}
+                tagNames={post.tags.map((tag) => tag.tagName)}
+              />
+            ))}
+          </div>
+        </div>
+        
+        <div className="search-navigation flex justify-center my-4">
+        { totalPages >= 1 && (
+          <div className="join">
+            <button
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("firstPage")}
+            disabled={currentPage === 1}
+            type="submit"
+          >
+            «
           </button>
-          <button type="submit" name="orderby" value="like" className="btn btn-outline">
-            いいね数順
+          <button
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("prevPage")}
+            disabled={currentPage === 1}
+            type="submit"
+          >
+            ‹
+          </button>
+          <div className="join-item bg-base-200 font-bold text-lg flex items-center justify-center min-w-[100px]">
+            {currentPage} / {totalPages}
+          </div>
+          <button
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("nextPage")}
+            disabled={currentPage === totalPages}
+            type="submit"
+          >
+            ›
+          </button>
+          <button
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("lastPage")}
+            disabled={currentPage === totalPages}
+            type="submit"
+          >
+            »
           </button>
         </div>
+      )}
       </div>
-      <input type="hidden" name="currentPage" value="1" />
-      <input type="hidden" name="tags" value={selectedTags.join("+")} />
-      <input type="hidden" name="query" value={queryText} />
-      <input type="hidden" name="action" value="firstSearch" />
-      <input type="hidden" name="orderby" value={currentOrderBy} />
-      <button type="submit" name="action" value="firstSearch" style={{ display: 'none' }}></button>
-    </Form>
-
-    <div className="search-results">
-      {data.map((post: PostCardProps) => (
-        <PostCard
-          key={post.postId}
-          postId={post.postId}
-          postTitle={post.postTitle}
-          postDateGmt={post.postDateGmt}
-          tagNames={post.tagNames}
-          countLikes={post.countLikes}
-          countDislikes={post.countDislikes}
-        />
-      ))}
+      </div>
     </div>
-    <div className="flex justify-center mt-8">
-    <Form method="post" className="flex items-center">
-      <input type="hidden" name="currentPage" value={pageNumber} />
-      <input type="hidden" name="totalPages" value={totalPages} />
-      <input type="hidden" name="tags" value={tags?.join("+")} />
-      <input type="hidden" name="query" value={query} />
-      <input type="hidden" name="orderby" value={orderby} />
-      <button
-        type="submit"
-        name="action"
-        value="firstPage"
-        disabled={pageNumber === 1}
-        className={`px-2 py-2 mx-1 ${pageNumber === 1?
-          "bg-gray-200 text-gray-500 cursor-not-allowed":
-          "btn-secondary"}
-          rounded search-go-to-first-page`}
-        >
-        最初
-      </button>
-      <button
-        type="submit"
-        name="action"
-        value="prevPage"
-        disabled={pageNumber === 1}
-        className={`px-2 py-2 mx-1 ${pageNumber === 1?
-        "bg-gray-200 text-gray-500 cursor-not-allowed":
-        "btn-secondary"}
-        rounded search-go-to-previous-page`}
-        >
-        前へ
-      </button>
-      <span className="px-4 py-2 mx-1">
-      {pageNumber} / {totalPages}
-      </span>
-      <button
-      type="submit"
-      name="action"
-      value="nextPage"
-      disabled={pageNumber === totalPages}
-      className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "btn-secondary"}
-      rounded search-go-to-next-page`}
-        >
-        次へ
-      </button>
-      <button
-      type="submit"
-      name="action"
-      value="lastPage"
-      disabled={pageNumber === totalPages}
-      className={`px-2 py-2 mx-1 ${pageNumber === totalPages? "bg-gray-200 text-gray-500 cursor-not-allowed":
-      "btn-secondary"}
-      rounded search-go-to-last-page`}
-        >
-        最後
-      </button>
-    </Form>
-  </div>
-  </>
-  ) : (
-  <p>検索結果がありません。</p>
-  )}
-  </div>
-  );
+  )
+
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -312,15 +256,34 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: "Loading..." }];
   }
 
-  const { tags, query } = data;
+  const { tags, q, orderby, p } = data.searchResults.meta.searchParams;
+  function convertOrderBy(orderby: OrderBy) {
+    switch (orderby) {
+      case "timeDesc":
+        return "新着順";
+      case "timeAsc":
+        return "古い順";
+      case "like":
+        return "いいね順";
+    }
+  }
+
   let pageTitle = "検索結果";
-  if (query) {
-    pageTitle += ` キーワード: ${query}`;
+  if (q) {
+    pageTitle += ` キーワード: ${q}`;
   }
   if (tags && tags.length > 0) {
     pageTitle += " タグ"
     pageTitle += `: ${tags.join(", ")}`;
   }
+  if (p) {
+    pageTitle += ` ページ: ${p}`;
+  }
+  if (orderby) {
+    pageTitle += ` ${convertOrderBy(orderby)}`;
+  }
+  if ((q === "") && (tags.length === 0)) pageTitle = "検索する";
+  console.log(pageTitle)
 
   const description = "検索";
 

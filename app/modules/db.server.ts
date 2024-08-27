@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { Prisma, PrismaClient } from "@prisma/client"
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { z } from "zod"
 
@@ -13,7 +13,7 @@ function getPrismaClient(): PrismaClient {
         return prismaInstance;
     }
 
-    const isProduction = import.meta.env.MODE === "production";
+    const isProduction = process.env.NODE_ENV === "production";
     prismaInstance = new PrismaClient();
 
     // 開発環境でのホットリロード対策
@@ -24,7 +24,12 @@ function getPrismaClient(): PrismaClient {
     return prismaInstance;
 }
 
-export const prisma = getPrismaClient();
+
+export let prisma = getPrismaClient();
+
+if (process.env.NODE_ENV !== "production" && global.__prisma) {
+    prisma = global.__prisma;
+}
 
 export async function getPostDataForSitemap() {
     const posts = await prisma.dimPosts.findMany({
@@ -40,7 +45,7 @@ export async function getPostDataForSitemap() {
     })
 }
 
-const PostDataSchema = z.object({
+export const PostDataSchema = z.object({
     postId: z.number(),
     postTitle: z.string(),
     postContent: z.string(),
@@ -247,7 +252,7 @@ export class ArchiveDataEntry {
 
 }
 
-const PostCardDataSchema = z.object({
+export const PostCardDataSchema = z.object({
     postId: z.number(),
     postTitle: z.string(),
     postDateGmt: z.date(),
@@ -261,7 +266,7 @@ const PostCardDataSchema = z.object({
     countComments: z.number(),
 })
 
-type PostCardData = z.infer<typeof PostCardDataSchema>;
+export type PostCardData = z.infer<typeof PostCardDataSchema>;
 
 export async function getRecentPosts(): Promise<PostCardData[]>{
     const recentPosts = await prisma.dimPosts.findMany({
