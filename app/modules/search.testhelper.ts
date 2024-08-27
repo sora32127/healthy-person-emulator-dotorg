@@ -67,8 +67,11 @@ export async function getMostLikedKeywardPostIdsForTest(): Promise<number[]> {
 export async function getOldestTagPostIdsForTest(): Promise<number[]> {
     const postIds = await prisma.$queryRaw`
     with post_ids as (
-        select distinct post_id from rel_post_tags
+        select post_id
+        from rel_post_tags
         where tag_id in (5, 17)
+        group by post_id
+        having count(*) = 2
         )
     select post_id from dim_posts
     where post_id in (select post_id from post_ids)
@@ -80,8 +83,11 @@ export async function getOldestTagPostIdsForTest(): Promise<number[]> {
 export async function getMostRecentTagPostIdsForTest(): Promise<number[]> {
     const postIds = await prisma.$queryRaw`
     with post_ids as (
-        select distinct post_id from rel_post_tags
+        select post_id
+        from rel_post_tags
         where tag_id in (5, 17)
+        group by post_id
+        having count(*) = 2
         )
     select post_id from dim_posts
     where post_id in (select post_id from post_ids)
@@ -93,8 +99,11 @@ export async function getMostRecentTagPostIdsForTest(): Promise<number[]> {
 export async function getMostLikedTagPostIdsForTest(): Promise<number[]> {
     const postIds = await prisma.$queryRaw`
     with post_ids as (
-        select distinct post_id from rel_post_tags
+        select post_id
+        from rel_post_tags
         where tag_id in (5, 17)
+        group by post_id
+        having count(*) = 2
         )
     select post_id from dim_posts
     where post_id in (select post_id from post_ids)

@@ -316,6 +316,8 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             searchResults.results.forEach((result, index) => {
                 PostCardDataSchema.parse(result);
                 expect(result.postId).toBe(timeAscPostIds[index]);
+                expect(result.tags.filter((tag) => tag.tagName === "やってはいけないこと")).toHaveLength(1);
+                expect(result.tags.filter((tag) => tag.tagName === "対人関係")).toHaveLength(1);
             })
         })
         test("投稿日昇順, 2ページ目", async () => {
@@ -329,6 +331,8 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             searchResults.results.forEach((result, index) => {
                 PostCardDataSchema.parse(result);
                 expect(result.postId).toBe(timeAscPostIds[index + 10]);
+                expect(result.tags.filter((tag) => tag.tagName === "やってはいけないこと")).toHaveLength(1);
+                expect(result.tags.filter((tag) => tag.tagName === "対人関係")).toHaveLength(1);
             })
         })
         
@@ -411,6 +415,8 @@ describe("getSearchResultsが正しいデータを返すこと", async () => {
             searchResults.results.forEach((result, index) => {
                 PostCardDataSchema.parse(result);
                 expect(result.postId).toBe(oldestPostIds[index]);
+                expect(result.tags.filter((tag) => tag.tagName === "コミュニケーション")).toHaveLength(1);
+                expect(result.tags.filter((tag) => tag.tagName === "やってはいけないこと")).toHaveLength(1);
             })
         })
         test("投稿日昇順, 2ページ目", async () => {

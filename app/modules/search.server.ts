@@ -345,8 +345,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         rel_tags as (
             select
                 rel_post_tags.post_id,
-                dim_tags.tag_id,
-                tag_name
+                dim_tags.tag_name
             from rel_post_tags
             left join dim_tags
             on rel_post_tags.tag_id = dim_tags.tag_id
@@ -385,8 +384,35 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         select count(*) as count from tag_count;
         ` as { count: bigint }[]
         const totalCount = Number(totalCountRaw[0].count)
-
-        const posts = await prisma.dimPosts.findMany({
+        const posts = await prisma.$queryRaw`
+        with tag_ids as (
+            select tag_id, tag_name from dim_tags
+            where tag_name in (
+                ${Prisma.join(tags)}
+            )
+        ),
+        post_ids as (
+            select
+                post_id
+            from rel_post_tags
+            where tag_id in (select tag_id from tag_ids)
+            group by 1
+            having count(*) = ${tags.length}
+        )
+        select
+            post_id
+        from dim_posts
+        where post_id in (select post_id from post_ids)
+        order by ${
+            orderby === "like" ? Prisma.sql`count_likes DESC, post_date_gmt DESC` : orderby === "timeDesc" ? Prisma.sql`post_date_gmt DESC` : 
+            Prisma.sql`post_date_gmt ASC`}
+        limit 10 offset ${offset}
+        ` as {
+            post_id: bigint
+        }[]
+        const postIds = posts.map((post) => Number(post.post_id))
+        const postData = await prisma.dimPosts.findMany({
+            where: { postId: { in: postIds } },
             select: {
                 postId: true,
                 postTitle: true,
@@ -395,18 +421,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 countDislikes: true,
                 ogpImageUrl: true,
             },
-            where: {
-                rel_post_tags: {
-                    some: {
-                        dimTag: {
-                            tagName: { in: tags }
-                        }
-                    }
-                }
-            },
             orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
-            take: 10,
-            skip: offset,
         }).then((posts) => {
             return posts.sort((a, b) => {
                 if (orderby === "like") {
@@ -419,17 +434,18 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                     return new Date(b.postDateGmt).getTime() - new Date(a.postDateGmt).getTime();
                 }
                 return new Date(a.postDateGmt).getTime() - new Date(b.postDateGmt).getTime();
+
             });
         })
 
         const commentCounts = await prisma.dimComments.groupBy({
             by: ["postId"],
             _count: { commentId: true },
-            where: { postId: { in: posts.map((post) => post.postId) } },
+            where: { postId: { in: postData.map((post) => post.postId) } },
         })
 
         const postTags = await prisma.relPostTags.findMany({
-            where: { postId: { in: posts.map((post) => post.postId) } },
+            where: { postId: { in: postData.map((post) => post.postId) } },
             select: {
                 postId: true,
                 dimTag: {
@@ -441,7 +457,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
             }
         })
 
-        const postsWithData = posts.map((post) => {
+        const postsWithData = postData.map((post) => {
             return {
                 ...post,
                 countComments: commentCounts.find((c) => c.postId === post.postId)?._count.commentId || 0,
