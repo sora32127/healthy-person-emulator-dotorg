@@ -88,6 +88,9 @@ const TagSelectionBox = ({
                                 onMouseEnter={() => setHighlightedTag(tag.tagName)}
                                 onMouseLeave={() => setHighlightedTag(null)}
                                 type="button"
+                                transition={{
+                                    layout: { duration: 1.0, delay: 1.0 }
+                                }}
                             >
                                 <span className="flex items-center">
                                     <span>{tag.tagName}</span>
