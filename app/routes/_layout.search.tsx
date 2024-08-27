@@ -160,20 +160,22 @@ export default function SearchPage() {
         </div>
         <div className="search-results">
         <div className="search-meta-data my-3 min-h-[80px]">
-            {isSearching ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                <span className="ml-2">検索中...</span>
-              </div>
+          {isSearching ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+              <span className="ml-2">検索中...</span>
+            </div>
+          ) : (SearchResults.meta.searchParams.q !== "" || SearchResults.meta.searchParams.tags.length > 0) ? (
+            <div className="h-full flex flex-col justify-center">
+              <p>検索結果: {SearchResults.meta.totalCount}件</p>
+              {SearchResults.meta.searchParams.q && <p className="truncate">キーワード: {SearchResults.meta.searchParams.q}</p>}
+              {SearchResults.meta.searchParams.tags.length > 0 && <p className="truncate">タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+              {SearchResults.meta.totalCount === 0 && <p>検索結果がありません</p>}
+            </div>
             ) : (
-              <div className="h-full flex flex-col justify-center">
-                <p>検索結果: {SearchResults.meta.totalCount}件</p>
-                {SearchResults.meta.searchParams.q && <p className="truncate">キーワード: {SearchResults.meta.searchParams.q}</p>}
-                {SearchResults.meta.searchParams.tags.length > 0 && <p className="truncate">タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
-                {SearchResults.meta.totalCount === 0 && <p>検索結果がありません</p>}
-              </div>
+              <div/>
             )}
-          </div>
+        </div>
           <div className="search-sort-order py-2">
             {SearchResults.meta.totalCount > 0 && (
             <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
@@ -278,6 +280,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (orderby) {
     pageTitle += ` ${convertOrderBy(orderby)}`;
   }
+  if ((q === "") && (tags.length === 0)) pageTitle = "検索する";
+  console.log(pageTitle)
 
   const description = "検索";
 
