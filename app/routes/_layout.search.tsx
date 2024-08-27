@@ -100,7 +100,6 @@ export default function SearchPage() {
   const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData();
-    console.log(searchQuery, searchTags, searchOrderby);
     form.append("action", "firstSearch");
     form.append("currentPage", "1");
     form.append("query", searchQuery);
@@ -283,7 +282,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     pageTitle += ` ${convertOrderBy(orderby)}`;
   }
   if ((q === "") && (tags.length === 0)) pageTitle = "検索する";
-  console.log(pageTitle)
 
   const description = "検索";
 
