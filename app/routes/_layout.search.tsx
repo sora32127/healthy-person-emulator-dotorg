@@ -155,17 +155,20 @@ export default function SearchPage() {
             </div>
           </Form>
         </div>
-        {isSearching && (
-          <div className="flex justify-center items-center my-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-            <span className="ml-2">検索中...</span>
-          </div>
-        )}
         <div className="search-results">
-          <div className="search-meta-data my-3">
-            <p>検索結果: {SearchResults.meta.totalCount}件</p>
-            {SearchResults.meta.searchParams.q && <p>キーワード: {SearchResults.meta.searchParams.q}</p>}
-            {SearchResults.meta.searchParams.tags.length > 0 && <p>タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+        <div className="search-meta-data my-3 min-h-[80px]">
+            {isSearching ? (
+              <div className="flex justify-center items-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+                <span className="ml-2">検索中...</span>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col justify-center">
+                <p>検索結果: {SearchResults.meta.totalCount}件</p>
+                {SearchResults.meta.searchParams.q && <p className="truncate">キーワード: {SearchResults.meta.searchParams.q}</p>}
+                {SearchResults.meta.searchParams.tags.length > 0 && <p className="truncate">タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+              </div>
+            )}
           </div>
           <div className="search-sort-order py-2">
             <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
