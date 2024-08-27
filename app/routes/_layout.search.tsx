@@ -122,8 +122,11 @@ export default function SearchPage() {
   };
 
   useEffect(() => {
-    setIsSearching(navigation.state === "submitting" || navigation.state === "loading");
-  }, [navigation.state]);
+    const action = navigation.formData?.get("action")?.toString();
+    setIsSearching(
+      (navigation.state === "submitting" || navigation.state === "loading") && (action?.includes("Search") ?? false)
+    );
+  }, [navigation.state, navigation.formData]);
 
   return (
     <div>
