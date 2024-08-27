@@ -137,8 +137,8 @@ export default function SearchPage() {
             <input
               type="text"
               name="q"
-              placeholder="検索"
-              className="input input-bordered w-full"
+              placeholder="テキストを入力..."
+              className="input input-bordered w-full placeholder-slate-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
