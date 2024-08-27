@@ -9,7 +9,6 @@ import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getSearchResults, type SearchResults, type OrderBy } from "~/modules/search.server";
 import type { PostCardData } from "~/modules/db.server";
 
-
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const pageNumber = Number.parseInt(url.searchParams.get("p") || "1");
@@ -89,8 +88,10 @@ export default function SearchPage() {
     submit(form, { method: "post" });
   };
 
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const form = new FormData();
+    console.log(searchQuery, searchTags, searchOrderby);
     form.append("action", "firstSearch");
     form.append("currentPage", "1");
     form.append("query", searchQuery);
@@ -104,7 +105,7 @@ export default function SearchPage() {
       <H1>検索</H1>
       <div className="container mx-auto px-4">
         <div className="search-input">
-          <Form method="get" action="/search">
+          <Form method="post" action="/search" onSubmit={(event) => handleSearchSubmit(event)}>
             <input
               type="text"
               name="q"
@@ -125,7 +126,7 @@ export default function SearchPage() {
               </Accordion>
             </div>
             <div className="flex justify-center md:justify-end">
-              <button type="submit" className="btn btn-primary" onClick={handleSearchSubmit}>検索</button>
+              <button type="submit" className="btn btn-primary">検索</button>
             </div>
           </Form>
         </div>
