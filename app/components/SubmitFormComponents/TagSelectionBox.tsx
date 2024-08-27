@@ -27,6 +27,8 @@ const TagSelectionBox = ({
         } else {
             onTagsSelected([...parentComponentStateValues, tagName]);
         }
+        // ここでソートを強制的に適用
+        setSortBy(prevSort => prevSort);
     };
 
     const handleRemoveSelectedTag = (tagName: string) => {
@@ -72,10 +74,8 @@ const TagSelectionBox = ({
                     <AnimatePresence>
                         {filteredTags.map(tag => (
                             <motion.button
-                                key={`${tag.tagName}-${tag.count}`}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
+                                key={tag.tagName}
+                                layout
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 className={`px-3 py-1 rounded-full cursor-pointer text-sm ${
