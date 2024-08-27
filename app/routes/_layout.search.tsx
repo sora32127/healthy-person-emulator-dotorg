@@ -27,8 +27,13 @@ export const action: ActionFunction = async ({ request }) => {
   const tags = formData.get("tags")?.toString().split("+") ?? null;
   const query = formData.get("query")?.toString() ?? null;
   const orderby = formData.get("orderby") ?? "timeDesc";
+  /*
+  - 全角空白の場合は%E3%80%80としてエンコードされ、半角空白の場合は%20としてエンコードされるが、このブレを吸収する仕組みをaction関数内部で実装する
+  - この実装がないと、検索結果にブレが生じてしまい、「全角空白で区切るか半角空白で区切るか」で検索結果が変わってしまう
+  */
+  const normalizeSpaces = (str: string) => str.replace(/[\s　]+/g, ' ').trim();
 
-  const encodedQueryString = query && query !== '' ? `&q=${encodeURIComponent(query)}` : "";
+  const encodedQueryString = query && query !== '' ? `&q=${encodeURIComponent(normalizeSpaces(query))}` : "";
   const encodedTagsString =  tags && tags.filter(tag => tag !== '').length > 0 ? `&tags=${tags.map(tag => encodeURIComponent(tag)).join("+")}` : "";
 
   if (action === "firstSearch" || action === "firstPage") {
