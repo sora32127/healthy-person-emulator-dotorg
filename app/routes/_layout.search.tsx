@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Form, useLoaderData, useSubmit } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
@@ -164,10 +164,10 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
-        <div className="search-navigation flex justify-center">
+        <div className="search-navigation flex justify-center my-4">
           <div className="join">
           <button
-            className="join-item btn"
+            className="join-item btn btn-lg"
             onClick={() => handlePageChange("firstPage")}
             disabled={currentPage === 1}
             type="submit"
@@ -175,7 +175,7 @@ export default function SearchPage() {
             «
           </button>
           <button
-            className="join-item btn"
+            className="join-item btn btn-lg"
             onClick={() => handlePageChange("prevPage")}
             disabled={currentPage === 1}
             type="submit"
@@ -186,7 +186,7 @@ export default function SearchPage() {
             {currentPage} / {totalPages}
           </div>
           <button
-            className="join-item btn"
+            className="join-item btn btn-lg"
             onClick={() => handlePageChange("nextPage")}
             disabled={currentPage === totalPages}
             type="submit"
@@ -194,7 +194,7 @@ export default function SearchPage() {
             ›
           </button>
           <button
-            className="join-item btn"
+            className="join-item btn btn-lg"
             onClick={() => handlePageChange("lastPage")}
             disabled={currentPage === totalPages}
             type="submit"
