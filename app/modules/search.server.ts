@@ -98,7 +98,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
     const offset = (p - 1) * 10;
 
     if (q === "" && tags.length === 0) {
-        const totalCount = await prisma.dimPosts.count();
+        // 検索クエリがない場合は、タグ以外は何も返さない
         const tagsCount = await prisma.relPostTags.groupBy({
             by: ["tagId"],
             _count: { postId: true },
@@ -113,50 +113,13 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
                 count: tag._count.postId,
             }
         })
-        const posts = await prisma.dimPosts.findMany({
-            select: {
-                postId: true,
-                postTitle: true,
-                postDateGmt: true,
-                countLikes: true,
-                countDislikes: true,
-                ogpImageUrl: true,
-            },
-            orderBy: orderby === "like" ? { countLikes: "desc" } : orderby === "timeDesc" ? { postDateGmt: "desc" } : { postDateGmt: "asc" },
-            take: 10,
-            skip: offset,
-        })
-        const countComments = await prisma.dimComments.groupBy({
-            by: ["postId"],
-            _count: { commentId: true },
-            where: { postId: { in: posts.map((post) => post.postId) } },
-        })
-        const postTags = await prisma.relPostTags.findMany({
-            where: { postId: { in: posts.map((post) => post.postId) } },
-            select: {
-                postId: true,
-                dimTag: {
-                    select: {
-                        tagName: true,
-                        tagId: true,
-                    }
-                }
-            }
-        })
-        const postsWithCountComments = posts.map((post) => {
-            return {
-                ...post,
-                countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
-                tags: postTags.filter((tag) => tag.postId === post.postId).map((tag) => tag.dimTag),
-            }
-        })
         return {
             meta: {
-                totalCount,
+                totalCount: 0,
                 tags,
                 searchParams: { q: "", tags: [], p, orderby },
             },
-            results: postsWithCountComments,
+            results: [],
         }
     }
 

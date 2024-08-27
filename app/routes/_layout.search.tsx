@@ -170,16 +170,19 @@ export default function SearchPage() {
                 <p>検索結果: {SearchResults.meta.totalCount}件</p>
                 {SearchResults.meta.searchParams.q && <p className="truncate">キーワード: {SearchResults.meta.searchParams.q}</p>}
                 {SearchResults.meta.searchParams.tags.length > 0 && <p className="truncate">タグ: {SearchResults.meta.searchParams.tags.join(", ")}</p>}
+                {SearchResults.meta.totalCount === 0 && <p>検索結果がありません</p>}
               </div>
             )}
           </div>
           <div className="search-sort-order py-2">
+            {SearchResults.meta.totalCount > 0 && (
             <select onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)} className="select select-bordered select-sm">
               <option disabled selected>並び順を変更する</option>
               <option selected={searchOrderby === "timeDesc"} value="timeDesc">新着順</option>
               <option selected={searchOrderby === "timeAsc"} value="timeAsc">古い順</option>
               <option selected={searchOrderby === "like"} value="like">いいね順</option>
             </select>
+            )}
           </div>
           <div className="search-results-container">
             {SearchResults.results.map((post: PostCardData) => (
@@ -196,9 +199,11 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
+        
         <div className="search-navigation flex justify-center my-4">
+        { totalPages >= 1 && (
           <div className="join">
-          <button
+            <button
             className="join-item btn btn-lg"
             onClick={() => handlePageChange("firstPage")}
             disabled={currentPage === 1}
@@ -234,6 +239,7 @@ export default function SearchPage() {
             »
           </button>
         </div>
+      )}
       </div>
       </div>
     </div>
