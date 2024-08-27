@@ -209,14 +209,31 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: "Loading..." }];
   }
 
-  const { tags, query } = data;
+  const { tags, q, orderby, p } = data.searchResults.meta.searchParams;
+  function convertOrderBy(orderby: OrderBy) {
+    switch (orderby) {
+      case "timeDesc":
+        return "新着順";
+      case "timeAsc":
+        return "古い順";
+      case "like":
+        return "いいね順";
+    }
+  }
+
   let pageTitle = "検索結果";
-  if (query) {
-    pageTitle += ` キーワード: ${query}`;
+  if (q) {
+    pageTitle += ` キーワード: ${q}`;
   }
   if (tags && tags.length > 0) {
     pageTitle += " タグ"
     pageTitle += `: ${tags.join(", ")}`;
+  }
+  if (p) {
+    pageTitle += ` ページ: ${p}`;
+  }
+  if (orderby) {
+    pageTitle += ` ${convertOrderBy(orderby)}`;
   }
 
   const description = "検索";
