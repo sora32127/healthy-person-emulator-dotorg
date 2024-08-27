@@ -37,9 +37,8 @@ const TagSelectionBox = ({
         .sort((a, b) => {
             if (sortBy === 'count') {
                 return b.count - a.count;
-            } else {
-                return a.tagName.localeCompare(b.tagName, 'ja');
             }
+            return a.tagName.localeCompare(b.tagName, 'ja');
         });
 
     return (
@@ -49,7 +48,7 @@ const TagSelectionBox = ({
                 type="text"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
-                placeholder="タグを検索..."
+                placeholder="タグを検索"
                 className="input input-bordered w-full px-3 py-2 placeholder-slate-500  mb-4"
             />
             <div className="flex space-x-2 mb-4">
