@@ -68,12 +68,14 @@ export default function SearchPage() {
   const [isSearching, setIsSearching] = useState(false);
   const navigation = useNavigation();
   const submit = useSubmit();
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const currentPage = SearchResults.meta.searchParams.p;
   const totalPages = Math.ceil(SearchResults.meta.totalCount / 10); // 1ページあたり10件と仮定
 
   const handlePageChange = (action: string) => {
     const form = new FormData();
+    setIsAccordionOpen(false);
     form.append("action", action);
     form.append("currentPage", currentPage.toString());
     form.append("totalPages", totalPages.toString());
@@ -144,7 +146,7 @@ export default function SearchPage() {
             />
             <div className="my-4">
               <Accordion>
-                <AccordionItem title="タグ選択">
+                <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
                   <TagSelectionBox
                     allTagsOnlyForSearch={SearchResults.meta.tags}
                     onTagsSelected={handleTagsSelected}
