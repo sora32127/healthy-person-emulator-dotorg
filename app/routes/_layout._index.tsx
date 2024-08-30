@@ -78,7 +78,7 @@ export default function Feed() {
     };
 
     return (
-        <div className="mx-auto">
+        <div>
             <div role="tablist" className="tabs tabs-bordered mt-16 md:mt-0 sticky top-0 bg-base-100 z-10">
                 <input 
                     type="radio" 
@@ -108,7 +108,7 @@ export default function Feed() {
                     onChange={() => handleTabChange("random")}
                 />
             </div>
-            <div className="mt-6 px-4">
+            <div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
                     <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest" />
                     <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted" />
@@ -119,9 +119,6 @@ export default function Feed() {
                     <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
                 </div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "random" ? "block" : "none" }}>
-                    <div>
-
-                    </div>
                     <PostSection title="ランダム" posts={randomPosts} identifier="random">
                         <div className="flex justify-center">
                             <ReloadButton />
