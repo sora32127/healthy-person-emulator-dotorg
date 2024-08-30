@@ -271,7 +271,7 @@ export type PostCardData = z.infer<typeof PostCardDataSchema>;
 export async function getRecentPosts(): Promise<PostCardData[]>{
     const recentPosts = await prisma.dimPosts.findMany({
         orderBy: { postDateGmt: "desc" },
-        take: 10,
+        take: 12,
         select: {
             postId: true,
             postTitle: true,
@@ -328,7 +328,7 @@ export async function getRecentVotedPosts(): Promise<PostCardData[]>{
         },
         _count: { voteUserIpHash: true },
         orderBy: { _count: { voteUserIpHash: "desc" } },
-        take: 10,
+        take: 12,
     }).then((votes) => {
         return votes.map((vote) => vote.postId)
     })
@@ -429,7 +429,7 @@ export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData
 export async function getRecentComments(){
     const recentComments = await prisma.dimComments.findMany({
         orderBy: { commentDateJst: "desc" },
-        take: 10,
+        take: 12,
         select: {
             commentId: true,
             postId: true,
@@ -460,7 +460,7 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
     */
     const postCount = await prisma.dimPosts.count();
     const randomPostOffset = Math.max(
-        Math.floor(Math.random() * postCount) - 10,
+        Math.floor(Math.random() * postCount) - 12,
         0
     );
 
@@ -485,7 +485,7 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
         },
         orderBy: { uuid : "asc"},
         skip: randomPostOffset,
-        take: 10,
+        take: 12,
     })
     const commentCount = await prisma.dimComments.groupBy({
         by: ["postId"],
@@ -506,7 +506,7 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
 export async function getRandomComments(){
     const commentCount = await prisma.dimComments.count();
     const randomCommentOffset = Math.max(
-        Math.floor(Math.random() * commentCount) - 10,
+        Math.floor(Math.random() * commentCount) - 12,
         0
     );
 
@@ -521,7 +521,7 @@ export async function getRandomComments(){
         },
         orderBy: { uuid: "asc" },
         skip: randomCommentOffset,
-        take: 10,
+        take: 12,
     })
     return randomComments;
 }
