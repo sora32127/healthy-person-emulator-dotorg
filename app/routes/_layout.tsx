@@ -15,10 +15,12 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 
 import ThemeSwitcher from "~/components/ThemeSwitcher";
+import HomeIcon from "~/components/icons/HomeIcon";
 
 
 function getNavItems(isSignedIn: boolean){
   const items = [
+    { to: "/", icon: HomeIcon, text: "トップ" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
