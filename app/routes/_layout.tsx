@@ -20,7 +20,7 @@ import HomeIcon from "~/components/icons/HomeIcon";
 
 function getNavItems(isSignedIn: boolean){
   const items = [
-    { to: "/", icon: HomeIcon, text: "トップ" },
+    { to: "/?referrer=fromMenu", icon: HomeIcon, text: "トップ" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
@@ -40,7 +40,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
     <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
       <div className="flex-none">
         <h1 className="text-lg font-bold">
-          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
         </h1>
       </div>
       <div className="flex-1 flex justify-center items-center">
@@ -76,7 +76,7 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSear
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
       <div>
         <h1 className="text-xl font-bold">
-          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
         </h1>
       </div>
       <div className="flex flex-row">
