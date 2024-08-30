@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, useSearchParams } from "@remix-run/react";
+import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
@@ -110,8 +110,20 @@ export default function Feed() {
             </div>
             <div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
-                    <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest" />
-                    <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted" />
+                    <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest">
+                        <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
+                            <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
+                                最新の投稿を見る
+                            </NavLink>
+                        </button>
+                    </PostSection>
+                    <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted">
+                        <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
+                            <NavLink to="/feed?p=2&likeFrom=24&likeTo=0&type=like" className="block w-full h-full">
+                                最近いいねされた投稿を見る
+                            </NavLink>
+                        </button>
+                    </PostSection>
                     <CommentSection title="最近のコメント" comments={mostRecentComments} />
                 </div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "fixed" ? "block" : "none" }}>
@@ -139,7 +151,6 @@ function PostSection({ title, posts, identifier, children }: PostSectionProps) {
     return (
         <section className={`${identifier}-posts`}>
             <H2>{title}</H2>
-            {children}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {posts.map((post) => (
                     <PostCard
@@ -155,6 +166,7 @@ function PostSection({ title, posts, identifier, children }: PostSectionProps) {
                     />
                 ))}
             </div>
+            {children}
         </section>
     );
 }
@@ -163,7 +175,6 @@ function CommentSection({ title, comments, children }: CommentSectionProps) {
     return (
         <section className="recent-comments">
             <H2>{title}</H2>
-            {children}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {comments.map((comment) => (
                     <CommentShowCard
@@ -176,6 +187,7 @@ function CommentSection({ title, comments, children }: CommentSectionProps) {
                     />
                 ))}
             </div>
+            {children}
         </section>
     );
 }
