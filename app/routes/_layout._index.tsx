@@ -1,10 +1,11 @@
 import { json } from "@remix-run/node";
-import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
+import { useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
+import ReloadButton from "~/components/ReloadButton";
 
 type Post = {
     postId: number;
@@ -35,6 +36,7 @@ type PostSectionProps = {
 type CommentSectionProps = {
     title: string;
     comments: Comment[];
+    children?: React.ReactNode;
 };
 
 export const meta: MetaFunction = () => {
@@ -117,8 +119,19 @@ export default function Feed() {
                     <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
                 </div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "random" ? "block" : "none" }}>
-                    <PostSection title="ランダム" posts={randomPosts} identifier="random" />
-                    <CommentSection title="ランダム" comments={randomComments} />
+                    <div>
+
+                    </div>
+                    <PostSection title="ランダム" posts={randomPosts} identifier="random">
+                        <div className="flex justify-center">
+                            <ReloadButton />
+                        </div>
+                    </PostSection>
+                    <CommentSection title="ランダム" comments={randomComments}>
+                        <div className="flex justify-center">
+                            <ReloadButton />
+                        </div>
+                    </CommentSection>
                 </div>
             </div>
         </div>
@@ -129,6 +142,7 @@ function PostSection({ title, posts, identifier, children }: PostSectionProps) {
     return (
         <section className={`${identifier}-posts`}>
             <H2>{title}</H2>
+            {children}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {posts.map((post) => (
                     <PostCard
@@ -144,15 +158,15 @@ function PostSection({ title, posts, identifier, children }: PostSectionProps) {
                     />
                 ))}
             </div>
-            {children}
         </section>
     );
 }
 
-function CommentSection({ title, comments }: CommentSectionProps) {
+function CommentSection({ title, comments, children }: CommentSectionProps) {
     return (
         <section className="recent-comments">
             <H2>{title}</H2>
+            {children}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {comments.map((comment) => (
                     <CommentShowCard
