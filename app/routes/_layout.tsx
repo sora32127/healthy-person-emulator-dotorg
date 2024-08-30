@@ -19,7 +19,6 @@ import ThemeSwitcher from "~/components/ThemeSwitcher";
 
 function getNavItems(isSignedIn: boolean){
   const items = [
-    { to: "/random", icon: RandomIcon, text: "ランダム" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },

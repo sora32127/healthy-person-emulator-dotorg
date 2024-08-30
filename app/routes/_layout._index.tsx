@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node";
 import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
+import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
@@ -52,6 +52,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     const communityPosts = await getRecentPostsByTagId(986);
     const famedPosts = await getRecentPostsByTagId(575);
     const mostRecentComments = await getRecentComments();
+    const randomPosts = await getRandomPosts();
+    const randomComments = await getRandomComments();
 
     return json({
         tab,
@@ -60,11 +62,13 @@ export const loader: LoaderFunction = async ({ request }) => {
         communityPosts,
         famedPosts,
         mostRecentComments,
+        randomPosts,
+        randomComments,
     });
 }
 
 export default function Feed() {
-    const { tab, mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
+    const { tab, mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments, randomPosts, randomComments } = useLoaderData<typeof loader>();
     const [searchParams, setSearchParams] = useSearchParams();
     
     const handleTabChange = (newTab: string) => {
@@ -111,6 +115,10 @@ export default function Feed() {
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "fixed" ? "block" : "none" }}>
                     <PostSection title="殿堂入り" posts={famedPosts} identifier="famed" />
                     <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
+                </div>
+                <div role="tabpanel" className="tab-content" style={{ display: tab === "random" ? "block" : "none" }}>
+                    <PostSection title="ランダム" posts={randomPosts} identifier="random" />
+                    <CommentSection title="ランダム" comments={randomComments} />
                 </div>
             </div>
         </div>
