@@ -92,8 +92,16 @@ export default function Feed() {
                     checked={tab === "fixed"}
                     onChange={() => handleTabChange("fixed")}
                 />
+                <input
+                    type="radio"
+                    name="top-tab"
+                    role="tab"
+                    className="tab tab-lg"
+                    aria-label="ランダム"
+                    checked={tab === "random"}
+                    onChange={() => handleTabChange("random")}
+                />
             </div>
-
             <div className="mt-6 px-4">
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
                     <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest" />

@@ -1,66 +1,13 @@
-import { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import CommentShowCard from "~/components/CommentShowCard";
 import { H1 } from "~/components/Headings";
 import PostCard from "~/components/PostCard";
-import { prisma } from "~/modules/db.server";
+import { getRandomComments, getRandomPosts } from "~/modules/db.server";
 
 export async function loader(){
-    /*
-    prisma.dimPosts.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
-    */
-    const postCount = await prisma.dimPosts.count();
-    const randomPostOffset = Math.max(
-        Math.floor(Math.random() * postCount) - 10,
-        0
-        );
-    
-    const randomPostsRaw = await prisma.dimPosts.findMany({
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            rel_post_tags: {
-                select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                        },
-                    },
-                },
-            },
-        },
-        orderBy: { uuid : "asc"},
-        skip: randomPostOffset,
-        take: 10,
-    })
-
-    const randomPosts = randomPostsRaw.map((post) => {
-        const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
-        return { ...post, tagNames };
-    });
-
-    const commentCount = await prisma.dimComments.count();
-    const randomCommentOffset = Math.max(
-        Math.floor(Math.random() * commentCount) - 10,
-        0
-    );
-
-    const randomComments = await prisma.dimComments.findMany({
-        select: {
-            commentId: true,
-            commentContent: true,
-            commentDateGmt: true,
-            commentAuthor: true,
-            postId: true,
-            dimPosts: { select: { postTitle: true } },
-        },
-        orderBy: { uuid: "asc" },
-        skip: randomCommentOffset,
-        take: 10,
-    });
+    const randomPosts = await getRandomPosts();
+    const randomComments = await getRandomComments();
 
     return { randomPosts, randomComments }
 }
@@ -77,9 +24,10 @@ export default function Random() {
                         postId={post.postId}
                         postTitle={post.postTitle}
                         postDateGmt={post.postDateGmt}
-                        tagNames={post.tagNames}
+                        tagNames={post.tags.map((tag) => tag.tagName)}
                         countLikes={post.countLikes}
                         countDislikes={post.countDislikes}
+                        countComments={post.countComments}
                     />
                 ))}
             </div>
@@ -108,7 +56,7 @@ export const meta: MetaFunction = () => {
     const ogType = "article";
     const ogTitle = title;
     const ogDescription = description;
-    const ogUrl = `https://healthy-person-emulator.org/random`;
+    const ogUrl = "https://healthy-person-emulator.org/random";
     const twitterCard = "summary"
     const twitterSite = "@helthypersonemu"
     const twitterTitle = title
