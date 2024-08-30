@@ -138,7 +138,7 @@ async function getCommentsByPostId(postId: number): Promise<CommentData[]> {
 
     const commentsWithVoteCount = comments.map((comment) => {
         const likesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0;
-        const dislikesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 0)?._count.commentVoteId || 0;
+        const dislikesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count.commentVoteId || 0;
         return {
             ...comment,
             likesCount,
