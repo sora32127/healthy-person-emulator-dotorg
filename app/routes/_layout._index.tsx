@@ -1,6 +1,6 @@
 import { json } from "@remix-run/node";
-import { NavLink, useLoaderData } from "@remix-run/react";
-import type { MetaFunction } from "@remix-run/node";
+import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
+import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
@@ -42,9 +42,11 @@ export const meta: MetaFunction = () => {
       { title: "トップページ" },
       { name: "description", content: "現実世界のために" },
     ];
-  };
+};
 
-export async function loader() {
+export const loader: LoaderFunction = async ({ request }) => {
+    const url = new URL(request.url);
+    const tab = url.searchParams.get("tab") || "trend";
     const mostRecentPosts = await getRecentPosts();
     const recentVotedPosts = await getRecentVotedPosts();
     const communityPosts = await getRecentPostsByTagId(986);
@@ -52,6 +54,7 @@ export async function loader() {
     const mostRecentComments = await getRecentComments();
 
     return json({
+        tab,
         mostRecentPosts,
         recentVotedPosts,
         communityPosts,
@@ -60,32 +63,48 @@ export async function loader() {
     });
 }
 
-
-
 export default function Feed() {
-    const { mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
+    const { tab, mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments } = useLoaderData<typeof loader>();
+    const [searchParams, setSearchParams] = useSearchParams();
     
+    const handleTabChange = (newTab: string) => {
+        setSearchParams({ tab: newTab });
+    };
+
     return (
-        <div className="container mx-auto">
-            <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest">
-                <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
-                    <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
-                        最新の投稿を見る
-                    </NavLink>
-                </button>
-            </PostSection>
+        <div className="mx-auto">
+            <div role="tablist" className="tabs tabs-bordered sticky top-16 md:top-0 z-100">
+                <input 
+                    type="radio" 
+                    name="top-tab" 
+                    role="tab" 
+                    className="tab tab-lg" 
+                    aria-label="トレンド" 
+                    checked={tab === "trend"}
+                    onChange={() => handleTabChange("trend")}
+                />
+                <input 
+                    type="radio" 
+                    name="top-tab" 
+                    role="tab" 
+                    className="tab tab-lg" 
+                    aria-label="固定"
+                    checked={tab === "fixed"}
+                    onChange={() => handleTabChange("fixed")}
+                />
+            </div>
 
-            <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted">
-                <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
-                    <NavLink to="/feed?p=2&likeFrom=24&likeTo=0&type=like" className="block w-full h-full">
-                        最近いいねされた投稿を見る
-                    </NavLink>
-                </button>
-            </PostSection>
-
-            <CommentSection title="最新のコメント" comments={mostRecentComments} />
-            <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
-            <PostSection title="殿堂入り" posts={famedPosts} identifier="famed" />
+            <div className="mt-6 px-4">
+                <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
+                    <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest" />
+                    <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted" />
+                    <CommentSection title="最近のコメント" comments={mostRecentComments} />
+                </div>
+                <div role="tabpanel" className="tab-content" style={{ display: tab === "fixed" ? "block" : "none" }}>
+                    <PostSection title="殿堂入り" posts={famedPosts} identifier="famed" />
+                    <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
+                </div>
+            </div>
         </div>
     );
 }
