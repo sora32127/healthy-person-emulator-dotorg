@@ -73,7 +73,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
   return (
-    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
         <h1 className="text-xl font-bold">
           <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
@@ -231,7 +231,7 @@ export default function Component() {
         }}>閉じる</button>
       </form>
     </dialog>
-      <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
+      <main className="p-4 xl:mx-10 2xl:mx-96">
         <div>
           <Outlet />
         </div>

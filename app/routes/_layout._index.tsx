@@ -79,7 +79,7 @@ export default function Feed() {
 
     return (
         <div>
-            <div role="tablist" className="tabs tabs-bordered mt-16 md:mt-0 sticky top-0 bg-base-100 z-10">
+            <div role="tablist" className="min-w-max tabs tabs-bordered mt-16 md:mt-0 sticky top-0 bg-base-100 z-40 min-h-[4rem]">
                 <input 
                     type="radio" 
                     name="top-tab" 
