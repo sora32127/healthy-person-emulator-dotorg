@@ -4,6 +4,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction} from "@remix
 import { json, redirect } from "@remix-run/node";
 import { getFeedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
+import PostSection from "~/components/PostSection";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -94,18 +95,7 @@ export default function Feed() {
         </select>
       </div>
       <div className="feed-posts">
-      {postData.result.map((post) => (
-        <PostCard
-          key={post.postId}
-          postId={post.postId}
-          postTitle={post.postTitle}
-          postDateGmt={post.postDateGmt}
-          tagNames={post.tags.map((tag) => tag.tagName)}
-          countLikes={post.countLikes}
-          countDislikes={post.countDislikes}
-          countComments={post.countComments}
-        />
-      ))}
+        <PostSection posts={postData.result} />
       </div>
       <div className="search-navigation flex justify-center my-4">
         {totalPages >= 1 && (
@@ -166,6 +156,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const title = `フィード : ${
     type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
     type === "timeDesc" ? `新着順 ページ：${currentPage}` : 
+    type === "timeAsc" ? `古い順 ページ：${currentPage}` :
     type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
     `古い順 ${currentPage} ページ`
   }`

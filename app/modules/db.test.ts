@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { ArchiveDataEntry, getFeedPosts, getNewestPostIdsForTest, getOldestPostIdsForTest, getUnboundedLikesPostIdsForTest, PostCardDataSchema } from "./db.server";
+import { ArchiveDataEntry, CommentShowCardDataSchema, getFeedComments, getFeedPosts, getLikedCommentsForTest, getNewestPostIdsForTest, getOldestCommentIdsForTest, getOldestPostIdsForTest, getRecentCommentIdsForTest, getRecentComments, getUnboundedLikesCommentIdsForTest, getUnboundedLikesPostIdsForTest, PostCardDataSchema } from "./db.server";
 import { describe } from "node:test";
 
 
@@ -109,3 +109,107 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
         })
     })
 });
+
+describe("getFeedCommentsが正しいデータを返すこと", async () => {
+    const chunkSize = 12;
+    describe("新着順の場合", async () => {
+        test("新着順, 1ページ目", async () => {
+            const recentCommentIds = await getRecentCommentIdsForTest(chunkSize);
+            const pagingNumber = 1;
+            const type = "timeDesc";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+
+            expect(feedComments.meta.totalCount).toBeGreaterThan(10000);
+            expect(feedComments.meta.chunkSize).toBe(chunkSize);
+            expect(feedComments.meta.currentPage).toBe(pagingNumber);
+            expect(feedComments.meta.type).toBe(type);
+
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+                expect(comment.commentId).toBe(recentCommentIds[i]);
+            }
+        })
+
+        test("新着順, 2ページ目", async () => {
+            const recentCommentIds = await getRecentCommentIdsForTest(chunkSize);
+            const pagingNumber = 2;
+            const type = "timeDesc";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+                expect(comment.commentId).toBe(recentCommentIds[i+chunkSize]);
+            }
+        })
+
+        test("古い順, 1ページ目", async () => {
+            const oldestCommentIds = await getOldestCommentIdsForTest(chunkSize);
+            const pagingNumber = 1;
+            const type = "timeAsc";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+                expect(comment.commentId).toBe(oldestCommentIds[i]);
+            }
+        })
+
+        test("古い順, 2ページ目", async () => {
+            const oldestCommentIds = await getOldestCommentIdsForTest(chunkSize);
+            const pagingNumber = 2;
+            const type = "timeAsc";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+                expect(comment.commentId).toBe(oldestCommentIds[i+chunkSize]);
+            }
+        })
+
+
+        test("無期限いいね順, 1ページ目", async () => {
+            const unboundedLikesCommentIds = await getUnboundedLikesCommentIdsForTest(chunkSize);
+            const pagingNumber = 1;
+            const type = "unboundedLikes";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+            }
+        })
+
+        test("無期限いいね順, 2ページ目", async () => {
+            const unboundedLikesCommentIds = await getUnboundedLikesCommentIdsForTest(chunkSize);
+            const pagingNumber = 2;
+            const type = "unboundedLikes";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+            }
+        })
+
+        test("いいね順, 1ページ目", async () => {
+            const likesCommentIds = await getLikedCommentsForTest(chunkSize);
+            const pagingNumber = 1;
+            const type = "likes";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+            }
+        })
+
+        test("いいね順, 2ページ目", async () => {
+            const likesCommentIds = await getLikedCommentsForTest(chunkSize);
+            const pagingNumber = 2;
+            const type = "likes";
+            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
+            expect(feedComments.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
+                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
+            }
+        })
+    })
+})
