@@ -3,17 +3,17 @@ import { redirect, json } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import CommentShowCard from "~/components/CommentShowCard";
 import { H1 } from "~/components/Headings";
-import { getFeedComments } from "~/modules/db.server";
+import { getFeedComments, type FeedPostType } from "~/modules/db.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
-    const type = url.searchParams.get("type") || "timeDesc";
+    const type = url.searchParams.get("type") || "timeDesc" as FeedPostType;
     const pagingNumber = url.searchParams.get("p") || 1;
     const chunkSize = url.searchParams.get("chunkSize") || 12;
     const likeFromHour = url.searchParams.get("likeFromHour") || 48;
     const likeToHour = url.searchParams.get("likeToHour") || 0;
 
-    const commentFeedData = await getFeedComments(Number(pagingNumber), type, Number(chunkSize), Number(likeFromHour), Number(likeToHour));
+    const commentFeedData = await getFeedComments(Number(pagingNumber), type as FeedPostType, Number(chunkSize), Number(likeFromHour), Number(likeToHour));
 
     return json({ commentFeedData });
 }

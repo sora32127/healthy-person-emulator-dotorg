@@ -146,7 +146,13 @@ export default function Feed() {
                             </NavLink>
                         </button>
                     </PostSection>
-                    <CommentSection title="最近のコメント" comments={mostRecentComments} />
+                    <CommentSection title="最近のコメント" comments={mostRecentComments}>
+                        <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
+                            <NavLink to="/comment?p=2&type=timeDesc" className="block w-full h-full">
+                                最近のコメントを見る
+                            </NavLink>
+                        </button>
+                    </CommentSection>
                     <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest">
                         <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
                             <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">

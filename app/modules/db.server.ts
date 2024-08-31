@@ -563,7 +563,7 @@ export async function getRandomComments(chunkSize = 12): Promise<CommentShowCard
     return randomCommentsWithVoteCount;
 }
 
-type FeedPostType = "unboundedLikes" | "likes" | "timeDesc" | "timeAsc"
+export type FeedPostType = "unboundedLikes" | "likes" | "timeDesc" | "timeAsc"
 const PostFeedDataSchema = z.object({
     meta: z.object({
         totalCount: z.number(),
