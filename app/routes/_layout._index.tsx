@@ -86,7 +86,17 @@ export default function Feed() {
         */
         const drawerToggle = document.getElementById("drawer-toggle") as HTMLInputElement;
         const handleDrawerToggle = () => {
-            setIsDrawerOpen(drawerToggle.checked);
+            if (drawerToggle.checked) {
+                // ドロワーが開かれる場合の処理
+                setIsDrawerOpen(drawerToggle.checked);
+            }
+            if (!drawerToggle.checked) {
+                // ドロワーが閉じる場合の処理
+                // ドロワーの閉じるアニメーションと同じタイミングで処理するため、100msの遅延を設けている
+                setTimeout(() => {
+                    setIsDrawerOpen(drawerToggle.checked);
+                }, 100);
+            }
         }
         drawerToggle.addEventListener("change", handleDrawerToggle);
         return () => {
@@ -96,7 +106,7 @@ export default function Feed() {
 
     return (
         <div>
-            <div role="tablist" className={`min-w-max tabs tabs-bordered mt-16 md:mt-0 bg-base-100 z-40 min-h-[4rem] ${isDrawerOpen ? "" : "sticky top-0"}`}>
+            <div role="tablist" className={`transition min-w-max tabs tabs-bordered mt-16 md:mt-0 bg-base-100 z-40 min-h-[4rem] ${isDrawerOpen ? "" : "sticky top-0"}`}>
                 <input 
                     type="radio" 
                     name="top-tab" 
