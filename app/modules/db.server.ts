@@ -321,7 +321,7 @@ export async function getRecentVotedPosts(): Promise<PostCardData[]>{
         by: ["postId"],
         where: { 
             voteDateGmt : { 
-                gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+                gte: new Date(new Date().getTime() - 48 * 60 * 60 * 1000),
                 lte: new Date(),
             },
             voteTypeInt : { in : [1]}
@@ -524,5 +524,181 @@ export async function getRandomComments(){
         take: 12,
     })
     return randomComments;
+}
+
+type FeedPostType = "unboundedLikes" | "likes" | "timeDesc" | "timeAsc"
+const PostFeedDataSchema = z.object({
+    meta: z.object({
+        totalCount: z.number(),
+        currentPage: z.number(),
+        type: z.enum(["unboundedLikes", "likes", "timeDesc", "timeAsc"]),
+        likeFromHour: z.optional(z.number()),
+        likeToHour: z.optional(z.number()),
+        chunkSize: z.number(),
+    }),
+    result: z.array(PostCardDataSchema),
+})
+type PostFeedData = z.infer<typeof PostFeedDataSchema>;
+
+export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chunkSize = 12, likeFromHour = 24, likeToHour = 0,): Promise<PostFeedData>{
+    const offset = (pagingNumber - 1) * chunkSize;
+    if (["unboundedLikes", "timeDesc", "timeAsc"].includes(type)){
+        const posts = await prisma.$queryRaw`
+        select post_id, post_title, post_date_gmt, count_likes, count_dislikes, ogp_image_url
+        from dim_posts
+        ${type === "unboundedLikes" ? Prisma.raw("order by count_likes desc, post_date_gmt desc")
+        : type === "timeDesc" ? Prisma.raw("order by post_date_gmt desc")
+        : type === "timeAsc" ? Prisma.raw("order by post_date_gmt asc")
+        : Prisma.empty}
+        offset ${offset} limit ${chunkSize}
+        ` as { post_id: number; post_title: string; post_date_gmt: Date; count_likes: number; count_dislikes: number; ogp_image_url: string | null }[]
+        const commentCount = await prisma.dimComments.groupBy({
+            by: ["postId"],
+            _count: { commentId: true },
+            where: { postId: { in: posts.map((post) => post.post_id) } },
+        })
+        const tagNames = await prisma.relPostTags.findMany({
+            where: { postId: { in: posts.map((post) => post.post_id) } },
+            select: {
+                postId: true,
+                dimTag: {
+                    select: {
+                        tagId: true,
+                        tagName: true,
+                    }
+                }
+            },
+        })
+        const totalCount = await prisma.dimPosts.count();
+        const postData = posts.map((post) => {
+            return {
+                postId: post.post_id,
+                postTitle: post.post_title,
+                postDateGmt: post.post_date_gmt,
+                countLikes: post.count_likes,
+                countDislikes: post.count_dislikes,
+                ogpImageUrl: post.ogp_image_url,
+                tags: tagNames.filter((tag) => tag.postId === post.post_id).map((tag) => tag.dimTag),
+                countComments: commentCount.find((c) => c.postId === post.post_id)?._count.commentId || 0,
+            }
+        })
+        return {
+            meta: {
+                totalCount: totalCount,
+                currentPage: pagingNumber,
+                type: type,
+                chunkSize: chunkSize,
+            },
+            result: postData,
+        }
+    }
+    if (type === "likes"){
+        const voteCount = await prisma.fctPostVoteHistory.groupBy({
+            by: ["postId"],
+            _count: { voteUserIpHash: true },
+            where: {
+                voteTypeInt: { in: [1] },
+                voteDateGmt: {
+                    gte: new Date(new Date().getTime() - likeFromHour * 60 * 60 * 1000),
+                    lte: new Date(new Date().getTime() - likeToHour * 60 * 60 * 1000)
+                }
+            },
+            orderBy: { _count: { voteUserIpHash: "desc" } },
+            take: chunkSize,
+            skip: offset,
+        })
+        const totalCountRaw = await prisma.fctPostVoteHistory.groupBy({
+            by: ["postId"],
+            _count: { voteUserIpHash: true },
+            where: {
+                voteTypeInt: { in: [1] },
+                voteDateGmt: {
+                    gte: new Date(new Date().getTime() - likeFromHour * 60 * 60 * 1000),
+                    lte: new Date(new Date().getTime() - likeToHour * 60 * 60 * 1000)
+                }
+            }
+        })
+        const totalCount = totalCountRaw.length;
+        const postIds = voteCount.map((vote) => vote.postId)
+        const posts = await prisma.dimPosts.findMany({
+            where: { postId: { in: postIds } },
+            select: {
+                postId: true,
+                postTitle: true,
+                postDateGmt: true,
+                countLikes: true,
+                countDislikes: true,
+                ogpImageUrl: true,
+                rel_post_tags: {
+                    select: {
+                        dimTag: {
+                            select: {
+                                tagId: true,
+                                tagName: true,
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        const countComments = await prisma.dimComments.groupBy({
+            by: ["postId"],
+            _count: { commentId: true },
+            where: { postId: { in: posts.map((post) => post.postId) } },
+        })
+        const postData = posts.map((post) => {
+            return {
+                ...post,
+                countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
+                tags: post.rel_post_tags.map((tag) => tag.dimTag),
+            }
+        })
+        return {
+            meta: {
+                totalCount: totalCount,
+                currentPage: pagingNumber,
+                type: type,
+                likeFromHour: likeFromHour,
+                likeToHour: likeToHour,
+                chunkSize: chunkSize,
+            },
+            result: postData,
+        }
+    }
+    return {
+        meta: {
+            totalCount: 0,
+            currentPage: 0,
+            type: type,
+            chunkSize: chunkSize,
+        },
+        result: [],
+    }
+}
+
+export async function getOldestPostIdsForTest(chunkSize: number){
+    const posts = await prisma.dimPosts.findMany({
+        orderBy: { postDateGmt: "asc" },
+        take: chunkSize * 2,
+    })
+    return posts.map((post) => post.postId);
+}
+
+export async function getNewestPostIdsForTest(chunkSize: number){
+    const posts = await prisma.dimPosts.findMany({
+        orderBy: { postDateGmt: "desc" },
+        take: chunkSize * 2,
+    })
+    return posts.map((post) => post.postId);
+}
+
+export async function getUnboundedLikesPostIdsForTest(chunkSize: number){
+    const posts = await prisma.$queryRaw`
+    select post_id
+    from dim_posts
+    order by count_likes desc, post_date_gmt desc
+    limit ${chunkSize * 2}
+    ` as { post_id: number }[]
+    return posts.map((post) => post.post_id);
 }
 
