@@ -806,6 +806,7 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
             orderBy: { _count: { commentVoteId: "desc" } },
             take: chunkSize,
             skip: offset,
+            where: { voteType: { in: [1] } },
         })
         const comments = await prisma.dimComments.findMany({
             select: { 
@@ -821,15 +822,22 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
                 }
             },
             where: { commentId: { in: commentIds.map((comment) => comment.commentId) } },
-            orderBy: { commentDateJst: "desc" },
+        }).then((comments) => {
+            // commentIdsと同じ順番で並び替える
+            return comments.sort((a, b) => commentIds.findIndex((c) => c.commentId === a.commentId) - commentIds.findIndex((c) => c.commentId === b.commentId));
+        })
+        const voteCount = await prisma.fctCommentVoteHistory.groupBy({
+            by: ["commentId", "voteType"],
+            _count: { commentVoteId: true },
+            where: { commentId: { in: comments.map((comment) => comment.commentId) } },
         })
 
         const commentData = comments.map((comment) => {
             return {
                 ...comment,
                 postTitle: comment.dimPosts.postTitle,
-                countLikes: commentIds.find((c) => c.commentId === comment.commentId)?._count.commentVoteId || 0,
-                countDislikes: commentIds.find((c) => c.commentId === comment.commentId)?._count.commentVoteId || 0,
+                countLikes: voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0,
+                countDislikes: voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count.commentVoteId || 0,
             }
         })
         return {
