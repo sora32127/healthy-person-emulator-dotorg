@@ -893,12 +893,19 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
         }).then((comments) => {
             return comments.sort((a, b) => commentIds.findIndex((c) => c.commentId === a.commentId) - commentIds.findIndex((c) => c.commentId === b.commentId));
         })
+
+        const voteCount = await prisma.fctCommentVoteHistory.groupBy({
+            by: ["commentId", "voteType"],
+            _count: { commentVoteId: true },
+            where: { commentId: { in: comments.map((comment) => comment.commentId) } },
+        })
+
         const commentData = comments.map((comment) => {
             return {
                 ...comment,
                 postTitle: comment.dimPosts.postTitle,
-                countLikes: commentIds.find((c) => c.commentId === comment.commentId)?._count.commentVoteId || 0,
-                countDislikes: commentIds.find((c) => c.commentId === comment.commentId)?._count.commentVoteId || 0,
+                countLikes: voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0,
+                countDislikes: voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count.commentVoteId || 0,
             }
         })
         return {
