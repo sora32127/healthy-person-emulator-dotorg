@@ -525,10 +525,10 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
     return randomPosts;
 }
 
-export async function getRandomComments(){
+export async function getRandomComments(chunkSize = 12): Promise<CommentShowCardData[]>{
     const commentCount = await prisma.dimComments.count();
     const randomCommentOffset = Math.max(
-        Math.floor(Math.random() * commentCount) - 12,
+        Math.floor(Math.random() * commentCount) - chunkSize,
         0
     );
 
@@ -542,10 +542,25 @@ export async function getRandomComments(){
             dimPosts: { select: { postTitle: true } },
         },
         orderBy: { uuid: "asc" },
+        take: chunkSize,
         skip: randomCommentOffset,
-        take: 12,
     })
-    return randomComments;
+    const voteCount = await prisma.fctCommentVoteHistory.groupBy({
+        by: ["commentId", "voteType"],
+        _count: { commentVoteId: true },
+        where: { commentId: { in: randomComments.map((comment) => comment.commentId) } },
+    })
+    const randomCommentsWithVoteCount = randomComments.map((comment) => {
+        const likesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0;
+        const dislikesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count.commentVoteId || 0;
+        return {
+            ...comment,
+            countLikes: likesCount,
+            countDislikes: dislikesCount,
+            postTitle: comment.dimPosts.postTitle,
+        }
+    })
+    return randomCommentsWithVoteCount;
 }
 
 type FeedPostType = "unboundedLikes" | "likes" | "timeDesc" | "timeAsc"
