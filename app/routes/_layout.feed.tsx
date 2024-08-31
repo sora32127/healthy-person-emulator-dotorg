@@ -1,345 +1,174 @@
-import { Form, useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
-import { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction, json, redirect } from "@remix-run/node";
-import { prisma } from "~/modules/db.server";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction} from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
+import { getFeedPosts } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const pagingNumber = parseInt(url.searchParams.get("p") || "1");
-  const likeFromHour = url.searchParams.get("likeFrom");
-  const likeToHour = url.searchParams.get("likeTo");
-  const type = url.searchParams.get("type");
-  let postData: { tagNames: string[]; postId: number; postDateGmt: Date; postTitle: string; countLikes: number; countDislikes: number; rel_post_tags: { dimTag: { tagName: string; }; }[]; }[] = [];
-  let totalCount = 0;
-
-  if (type === "unboundedLikes") {
-    const postData = await prisma.dimPosts.findMany({
-      orderBy: { countLikes: "desc" },
-      skip: (pagingNumber - 1) * 10,
-      take: 10,
-      select: {
-        postId: true,
-        postTitle: true,
-        postDateGmt: true,
-        countLikes: true,
-        countDislikes: true,
-        rel_post_tags: {
-          select: {
-            dimTag: {
-              select: {
-                tagName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    totalCount = await prisma.dimPosts.count();
-    const postDataWithTags = postData.map((post) => { 
-      const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
-      return { ...post, tagNames };
-    })
-
-    return json({ 
-      posts: postDataWithTags, 
-      currentPage: pagingNumber,
-      totalCount,
-      likeFromHour,
-      type,
-    });
-  }
-
-
-  if (type === "like") {
-    const likeFromHourInt = parseInt(likeFromHour || "0");
-    const likeToHourInt = parseInt(likeToHour || "0");
-    const now = new Date();
-    const gteDate = new Date(now.getTime() - likeFromHourInt * 60 * 60 * 1000);
-    const lteDate = new Date(now.getTime() - likeToHourInt * 60 * 60 * 1000);
-
-    const recentVotedPostsAgg = await prisma.fctPostVoteHistory.groupBy({
-        by: ["postId"],
-        where: {
-            voteDateGmt: {
-            gte: gteDate,
-            lte: lteDate,
-            },
-            voteTypeInt: { in: [1] },
-        },
-        _count: { voteUserIpHash: true },
-        orderBy: { _count: { voteUserIpHash: "desc" } },
-        take: 10,
-        skip: (pagingNumber - 1) * 10,
-    });
-
-    const recentVotedPostsRaw = await prisma.dimPosts.findMany({
-        where: { postId: { in: recentVotedPostsAgg.map((post) => post.postId) } },
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            rel_post_tags: {
-            select: {
-                dimTag: {
-                  select: {
-                      tagName: true,
-                  },
-                },
-              },
-            },
-        },
-    });
-
-    postData = recentVotedPostsRaw.map((post) => {
-        const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
-        return { ...post, tagNames };
-    });
-
-    const voteData = await prisma.fctPostVoteHistory.findMany({
-        where: {
-            voteDateGmt: {
-            gte: gteDate,
-            lte: lteDate,
-            },
-            voteTypeInt: { in: [1] },
-        },
-        select: {
-            postId: true,
-        },
-    });
-
-    totalCount = new Set(voteData.map((post) => post.postId)).size;
-  }
-  else if (type === "timeDesc"){
-    const mostRecentPosts = await prisma.dimPosts.findMany({
-        orderBy: { postDateGmt: "desc" },
-        skip: (pagingNumber - 1) * 10,
-        take: 10,
-        select: {
-          postId: true,
-          postTitle: true,
-          postDateGmt: true,
-          countLikes: true,
-          countDislikes: true,
-          rel_post_tags: {
-            select: {
-              dimTag: {
-                select: {
-                  tagName: true,
-                },
-              },
-            },
-          },
-          }
-      });
-
-      postData = mostRecentPosts.map((post) => {
-          const tagNames = post.rel_post_tags.map((rel) => rel.dimTag.tagName);
-          return { ...post, tagNames };
-      })
-
-      totalCount = await prisma.dimPosts.count();
-  }
-  
+  const pagingNumber = Number.parseInt(url.searchParams.get("p") || "1");
+  const likeFromHour = Number.parseInt(url.searchParams.get("likeFrom") || "48");
+  const likeToHour = Number.parseInt(url.searchParams.get("likeTo") || "0");
+  const type = url.searchParams.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
+  const chunkSize = 12;
+  const postData = await getFeedPosts(pagingNumber, type, chunkSize, likeFromHour, likeToHour);
   return json({ 
-    posts: postData, 
-    currentPage: pagingNumber,
-    totalCount,
-    likeFromHour,
-    type,
+    postData
   });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
-  const currentPage = parseInt(formData.get("currentPage") as string);
+
+  // フィードページ内部でのアクションはタイプ変更かページネーションのみ
+
+  if (action === "feedTypeChange") {
+    const type = formData.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
+    const pagingNumber = 1;
+    return redirect(`/feed?p=${pagingNumber}&type=${type}`);
+  }
   const url = new URL(request.url);
-  const likeFrom = url.searchParams.get("likeFrom");
-  const likeTo = url.searchParams.get("likeTo");
-  const type = url.searchParams.get("type");
+  const currentPage = Number.parseInt(formData.get("currentPage") as string || "1");
+  const likeFrom = url.searchParams.get("likeFrom") || "";
+  const likeTo = url.searchParams.get("likeTo") || "";
+  const type = url.searchParams.get("type") || "";
 
-  if (action === "sortByNew") {
-    return redirect(`/feed?p=1&type=timeDesc`);
-  } else if (action === "sortByLikes") {
-    return redirect(`/feed?p=1&likeFrom=24&likeTo=0&type=like`);
-  } else if (action === "unbounedLikes") {
-    return redirect(`/feed?p=1&type=unboundedLikes`);
+  if (action === "firstPage"){
+    return redirect(`/feed?p=1&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
   }
 
-  if (type === "unboundedLikes" && action === "firstPage") {
-    return redirect(`/feed?p=1&type=unboundedLikes`);
-  } else if (type === "unboundedLikes" && action === "prevPage") {
-    return redirect(`/feed?p=${currentPage - 1}&type=unboundedLikes`);
-  } else if (type === "unboundedLikes" && action === "nextPage") {
-    return redirect(`/feed?p=${currentPage + 1}&type=unboundedLikes`);
-  } else if (type === "unboundedLikes" && action === "lastPage") {
-    return redirect(`/feed?p=${formData.get("totalPages")}&type=unboundedLikes`);
-  } else if (type === "timeDesc" && !likeFrom && action === "firstPage") {
-    return redirect(`/feed?p=1&type=timeDesc`);
-  } else if (type === "timeDesc" && !likeFrom && action === "prevPage") {
-    return redirect(`/feed?p=${currentPage - 1}&type=timeDesc`);
-  } else if (type === "timeDesc" && !likeFrom && action === "nextPage") {
-    return redirect(`/feed?p=${currentPage + 1}&type=timeDesc`);
-  } else if (type === "timeDesc" && !likeFrom && action === "lastPage") {
-    return redirect(`/feed?p=${formData.get("totalPages")}&type=timeDesc`);
-  } else if (type === "like" && likeFrom && action === "firstPage") {
-    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=1&type=like`);
-  } else if (type === "like" && likeFrom && action === "prevPage") {
-    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage - 1}&type=like`);
-  } else if (type === "like" && likeFrom && action === "nextPage") {
-    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${currentPage + 1}&type=like`);
-  } else if (type === "like" && likeFrom && action === "lastPage") {
-    return redirect(`/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${formData.get("totalPages")}&type=like`);
+  if (action === "prevPage"){
+    return redirect(`/feed?p=${currentPage - 1}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
+  }
+  
+  if (action === "nextPage"){
+    return redirect(`/feed?p=${currentPage + 1}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
   }
 
+  if (action === "lastPage"){
+    const totalCount = Number.parseInt(formData.get("totalCount") as string);
+    const chunkSize = Number.parseInt(formData.get("chunkSize") as string);
+    const lastPageNumber = Math.ceil(totalCount / chunkSize);
+    return redirect(`/feed?p=${lastPageNumber}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
+  }
   return null;
 }
 
 export default function Feed() {
-  const { posts, currentPage, totalCount, likeFromHour, type } = useLoaderData<typeof loader>();
-  const totalPages = Math.ceil(totalCount / 10);
+  const { postData } = useLoaderData<typeof loader>();
+  const chunkSize = postData.meta.chunkSize;
+  const totalPages = Math.ceil(postData.meta.totalCount / chunkSize);
+  const type = postData.meta.type;
+  const submit = useSubmit();
+  const currentPage = postData.meta.currentPage;
+
+  const handleFeedTypeChange = (orderby: string) => {
+    const formData = new FormData();
+    formData.append("action", "feedTypeChange");
+    formData.append("type", orderby);
+    submit(formData, { method: "post" });
+  }
+
+  const handlePageChange = (action: string) => {
+    const formData = new FormData();
+    formData.append("action", action);
+    formData.append("currentPage", currentPage.toString());
+    formData.append("totalCount", postData.meta.totalCount.toString());
+    formData.append("chunkSize", chunkSize.toString());
+    formData.append("type", type);
+    submit(formData, { method: "post" });
+  }
+
 
   return (
     <div>
       <H1>フィード</H1>
       <div className="feed-type-select">
-        <Form method="post" className="mb-4">
-          <div className="flex items-center">
-          <button
-              type="submit"
-              name="action"
-              value="sortByNew"
-              className={`btn mx-2 ${
-                !likeFromHour && type != "unboundedLikes" ? "border-info border-4" : ""
-              }`}
-            >
-              新着順
-            </button>
-            <button
-              type="submit"
-              name="action"
-              value="sortByLikes"
-              className={`btn mx-2 ${
-                likeFromHour ? " border-info border-4" : ""
-              }`}
-            >
-              いいね順
-            </button>
-            <button
-              type="submit"
-              name="action"
-              value="unbounedLikes"
-              className= {`btn mx-2 ${
-                type == "unboundedLikes" ? "border-info border-4" : ""
-              }`}
-            >
-              無期限いいね順
-            </button>
-          </div>
-        </Form>
+        <select onChange={(e) => handleFeedTypeChange(e.target.value)} className="select select-bordered select-sm">
+          <option value="unboundedLikes" className="select-option" selected={type === "unboundedLikes"}>無期限いいね順</option>
+          <option value="timeDesc" className="select-option" selected={type === "timeDesc"}>新着順</option>
+          <option value="likes" className="select-option" selected={type === "likes"}>いいね順</option>
+          <option value="timeAsc" className="select-option" selected={type === "timeAsc"}>古い順</option>
+        </select>
       </div>
       <div className="feed-posts">
-      {posts.map((post) => (
+      {postData.result.map((post) => (
         <PostCard
           key={post.postId}
           postId={post.postId}
           postTitle={post.postTitle}
           postDateGmt={post.postDateGmt}
-          tagNames={post.tagNames}
+          tagNames={post.tags.map((tag) => tag.tagName)}
           countLikes={post.countLikes}
           countDislikes={post.countDislikes}
+          countComments={post.countComments}
         />
       ))}
       </div>
-      <div className="flex justify-center mt-8 feed-navigation">
-        <Form method="post" className="flex items-center">
-          <input type="hidden" name="currentPage" value={currentPage} />
-          <input type="hidden" name="totalPages" value={totalPages} />
-          <button
-            type="submit"
-            name="action"
-            value="firstPage"
+      <div className="search-navigation flex justify-center my-4">
+        {totalPages >= 1 && (
+          <div className="join">
+            <button
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("firstPage")}
             disabled={currentPage === 1}
-            className={`px-2 py-2 mx-1 ${
-              currentPage === 1
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "btn-secondary"
-            } rounded feed-goto-first-page`}
+            type="submit"
           >
-            最初
+            «
           </button>
           <button
-            type="submit"
-            name="action"
-            value="prevPage"
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("prevPage")}
             disabled={currentPage === 1}
-            className={`px-2 py-2 mx-1 ${
-              currentPage === 1
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "btn-secondary"
-            } rounded feed-goto-back-page`}
+            type="submit"
           >
-            前へ
+            ‹
           </button>
-          <span className="px-2 py-2 mx-1 rounded">
+          <div className="join-item bg-base-200 font-bold text-lg flex items-center justify-center min-w-[100px]">
             {currentPage} / {totalPages}
-          </span>
+          </div>
           <button
-            type="submit"
-            name="action"
-            value="nextPage"
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("nextPage")}
             disabled={currentPage === totalPages}
-            className={`px-2 py-2 mx-1 ${
-              currentPage === totalPages
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "btn-secondary"
-            } rounded feed-goto-next-page`}
+            type="submit"
           >
-            次へ
+            ›
           </button>
           <button
-            type="submit"
-            name="action"
-            value="lastPage"
+            className="join-item btn btn-lg"
+            onClick={() => handlePageChange("lastPage")}
             disabled={currentPage === totalPages}
-            className={`px-2 py-2 mx-1 ${
-              currentPage === totalPages
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "btn-secondary"
-            } rounded feed-goto-last-page`}
+            type="submit"
           >
-            最後
+            »
           </button>
-        </Form>
+        </div>
+      )}
       </div>
+
     </div>
   );
 }
 
-export const meta: MetaFunction = ({ location }) => {
-  if (!location){
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data){
     return [{ title: "Loading..." }];
   }
+  const { postData } = data;
+  const type = postData.meta.type;
+  const currentPage = postData.meta.currentPage;
+  const likeFrom = postData.meta.likeFromHour;
+  const likeTo = postData.meta.likeToHour;
 
-  const searchQuery = new URLSearchParams(location.search);
-  const pageNumber = searchQuery.get("p") || "";
-  const likeFrom = searchQuery.get("likeFrom") || "";
-  const likeTo = searchQuery.get("likeTo") || "";
-  const type = searchQuery.get("type") || "";
-  
-  let title
-  
-  if (type === "unboundedLikes"){
-    title = `無期限いいね順 - ページ${pageNumber}`;
-  } else if (type === "timeDesc"){
-    title = pageNumber ? `フィード - ページ${pageNumber}` : "フィード"
-  } else if (type === "like") {
-    title = `いいね順 - ${likeFrom}時間前～${likeTo}時間前`
-  }
+  const title = `フィード : ${
+    type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
+    type === "timeDesc" ? `新着順 ページ：${currentPage}` : 
+    type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
+    `古い順 ${currentPage} ページ`
+  }`
 
   const description = "フィード"
 
@@ -348,12 +177,7 @@ export const meta: MetaFunction = ({ location }) => {
   const ogType = "article";
   const ogTitle = title;
   const ogDescription = description;
-  let ogUrl
-  if (likeFrom){
-    ogUrl = `https://healthy-person-emulator.org/feed?likeFrom=${likeFrom}&likeTo=${likeTo}&p=${pageNumber}`;
-  } else {
-    ogUrl = `https://healthy-person-emulator.org/feed?p=${pageNumber}`;
-  }
+  const ogUrl = `https://healthy-person-emulator.org/feed?p=${currentPage}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`;
 
   const twitterCard = "summary"
   const twitterSite = "@helthypersonemu"

@@ -534,6 +534,7 @@ const PostFeedDataSchema = z.object({
         type: z.enum(["unboundedLikes", "likes", "timeDesc", "timeAsc"]),
         likeFromHour: z.optional(z.number()),
         likeToHour: z.optional(z.number()),
+        chunkSize: z.number(),
     }),
     result: z.array(PostCardDataSchema),
 })
@@ -541,7 +542,7 @@ type PostFeedData = z.infer<typeof PostFeedDataSchema>;
 
 export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chunkSize = 12, likeFromHour = 24, likeToHour = 0,): Promise<PostFeedData>{
     const offset = (pagingNumber - 1) * chunkSize;
-    if (["unboundedLikes", "likes", "timeDesc", "timeAsc"].includes(type)){
+    if (["unboundedLikes", "timeDesc", "timeAsc"].includes(type)){
         const posts = await prisma.$queryRaw`
         select post_id, post_title, post_date_gmt, count_likes, count_dislikes, ogp_image_url
         from dim_posts
@@ -586,6 +587,7 @@ export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chu
                 totalCount: totalCount,
                 currentPage: pagingNumber,
                 type: type,
+                chunkSize: chunkSize,
             },
             result: postData,
         }
@@ -658,6 +660,7 @@ export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chu
                 type: type,
                 likeFromHour: likeFromHour,
                 likeToHour: likeToHour,
+                chunkSize: chunkSize,
             },
             result: postData,
         }
@@ -667,6 +670,7 @@ export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chu
             totalCount: 0,
             currentPage: 0,
             type: type,
+            chunkSize: chunkSize,
         },
         result: [],
     }
