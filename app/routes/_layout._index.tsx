@@ -6,6 +6,7 @@ import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
 import ReloadButton from "~/components/ReloadButton";
+import { useEffect, useState } from "react";
 
 type Post = {
     postId: number;
@@ -72,14 +73,30 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Feed() {
     const { tab, mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments, randomPosts, randomComments } = useLoaderData<typeof loader>();
     const [searchParams, setSearchParams] = useSearchParams();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     
     const handleTabChange = (newTab: string) => {
         setSearchParams({ tab: newTab });
     };
 
+    useEffect(() => {
+        /*
+        - _layout.tsxに定義されているスマートフォンメニュー用のドロワーが開かれている場合、ページ上部にあるタブリストのstickyを解除するための処理である
+        - ドロワーでもstickyが利用されているため、この処理がないとドロワーを開いた際にタブリストがドロワーの上に来てしまう
+        */
+        const drawerToggle = document.getElementById("drawer-toggle") as HTMLInputElement;
+        const handleDrawerToggle = () => {
+            setIsDrawerOpen(drawerToggle.checked);
+        }
+        drawerToggle.addEventListener("change", handleDrawerToggle);
+        return () => {
+            drawerToggle.removeEventListener("change", handleDrawerToggle);
+        }
+    }, []);
+
     return (
         <div>
-            <div role="tablist" className="min-w-max tabs tabs-bordered mt-16 md:mt-0 sticky top-0 bg-base-100 z-40 min-h-[4rem]">
+            <div role="tablist" className={`min-w-max tabs tabs-bordered mt-16 md:mt-0 bg-base-100 z-40 min-h-[4rem] ${isDrawerOpen ? "" : "sticky top-0"}`}>
                 <input 
                     type="radio" 
                     name="top-tab" 
