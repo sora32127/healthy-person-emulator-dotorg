@@ -2,46 +2,11 @@ import { json } from "@remix-run/node";
 import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
-import type { CommentShowCardData } from "~/modules/db.server";
-import PostCard from "~/components/PostCard";
-import { H2 } from "~/components/Headings";
-import CommentShowCard from "~/components/CommentShowCard";
 import ReloadButton from "~/components/ReloadButton";
 import { useEffect, useState } from "react";
+import PostSection from "~/components/PostSection";
+import CommentSection from "~/components/CommentSection";
 
-type Post = {
-    postId: number;
-    postTitle: string;
-    postDateGmt: string;
-    tags: { tagName: string }[];
-    countLikes: number;
-    countDislikes: number;
-    countComments: number;
-};
-  
-type Comment = {
-    commentId: number;
-    commentContent: string;
-    commentDateGmt: string;
-    commentAuthor: string;
-    postId: number;
-    postTitle: string;
-    countLikes: number;
-    countDislikes: number;
-};
-
-type PostSectionProps = {
-    title: string;
-    posts: Post[];
-    identifier: string;
-    children?: React.ReactNode;
-};
-
-type CommentSectionProps = {
-    title: string;
-    comments: CommentShowCardData[];
-    children?: React.ReactNode;
-};
 
 export const meta: MetaFunction = () => {
     return [
@@ -182,50 +147,3 @@ export default function Feed() {
     );
 }
 
-function PostSection({ title, posts, identifier, children }: PostSectionProps) {
-    return (
-        <section className={`${identifier}-posts`}>
-            <H2>{title}</H2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {posts.map((post) => (
-                    <PostCard
-                        key={`${identifier}-${post.postId}`}
-                        postId={post.postId}
-                        postTitle={post.postTitle}
-                        postDateGmt={post.postDateGmt}
-                        tagNames={post.tags.map((tag) => tag.tagName)}
-                        countLikes={post.countLikes}
-                        countDislikes={post.countDislikes}
-                        countComments={post.countComments}
-                        identifier={identifier}
-                    />
-                ))}
-            </div>
-            {children}
-        </section>
-    );
-}
-
-function CommentSection({ title, comments, children }: CommentSectionProps) {
-    return (
-        <section className="recent-comments">
-            <H2>{title}</H2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {comments.map((comment) => (
-                    <CommentShowCard
-                        key={comment.commentId}
-                        commentId={comment.commentId}
-                        commentContent={comment.commentContent}
-                        commentDateGmt={comment.commentDateGmt}
-                        commentAuthor={comment.commentAuthor}
-                        postId={comment.postId}
-                        postTitle={comment.postTitle}
-                        countLikes={comment.countLikes}
-                        countDislikes={comment.countDislikes}
-                    />
-                ))}
-            </div>
-            {children}
-        </section>
-    );
-}
