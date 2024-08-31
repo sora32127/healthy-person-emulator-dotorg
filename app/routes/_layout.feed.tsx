@@ -166,6 +166,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const title = `フィード : ${
     type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
     type === "timeDesc" ? `新着順 ページ：${currentPage}` : 
+    type === "timeAsc" ? `古い順 ページ：${currentPage}` :
     type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
     `古い順 ${currentPage} ページ`
   }`

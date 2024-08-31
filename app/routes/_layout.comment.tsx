@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import CommentShowCard from "~/components/CommentShowCard";
@@ -145,4 +145,55 @@ export async function action({ request }: ActionFunctionArgs) {
         return redirect(`/comment?type=${type}&p=${lastPage}`);
     }
 }
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+    if (!data){
+        return [{ title: "Loading..." }];
+      }
+      const { commentFeedData } = data;
+      const type = commentFeedData.meta.type;
+      const currentPage = commentFeedData.meta.currentPage;
+      const likeFrom = commentFeedData.meta.likeFromHour;
+      const likeTo = commentFeedData.meta.likeToHour;
     
+      const title = `コメント : ${
+        type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
+        type === "timeDesc" ? `新着順 ページ：${currentPage}` :
+        type === "timeAsc" ? `古い順 ページ：${currentPage}` :
+        type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
+        `古い順 ${currentPage} ページ`
+      }`
+    
+      const description = "コメント"
+    
+      const ogLocale = "ja_JP";
+      const ogSiteName = "健常者エミュレータ事例集";
+      const ogType = "article";
+      const ogTitle = title;
+      const ogDescription = description;
+      const ogUrl = `https://healthy-person-emulator.org/comment?p=${currentPage}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`;
+    
+      const twitterCard = "summary"
+      const twitterSite = "@helthypersonemu"
+      const twitterTitle = title
+      const twitterDescription = description
+      const twitterCreator = "@helthypersonemu"
+      const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+    
+      return [
+        { title },
+        { description },
+        { property: "og:title", content: ogTitle },
+        { property: "og:description", content: ogDescription },
+        { property: "og:locale", content: ogLocale },
+        { property: "og:site_name", content: ogSiteName },
+        { property: "og:type", content: ogType },
+        { property: "og:url", content: ogUrl },
+        { name: "twitter:card", content: twitterCard },
+        { name: "twitter:site", content: twitterSite },
+        { name: "twitter:title", content: twitterTitle },
+        { name: "twitter:description", content: twitterDescription },
+        { name: "twitter:creator", content: twitterCreator },
+        { name: "twitter:image", content: twitterImage },
+      ];
+}
