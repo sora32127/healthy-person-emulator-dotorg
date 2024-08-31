@@ -11,7 +11,6 @@ import type { CommentShowCardData } from "~/modules/db.server";
 export default function CommentShowCard({
   commentContent,
   commentDateGmt,
-  commentAuthor,
   postId,
   postTitle,
   countLikes,
@@ -26,7 +25,16 @@ export default function CommentShowCard({
                 </div>
                 <RelativeDate timestamp={commentDateGmt.toString()} />
             </div>
-            <span className="text-lg font-bold text-base-content comment-author">{commentAuthor}</span>
+            <div className="flex justify-between items-center gap-x-2">
+                <div className="flex gap-x-1">
+                    <ThumbsUpIcon />
+                    <span>{countLikes}</span>
+                </div>
+                <div className="flex gap-x-1">
+                    <ThumbsDownIcon />
+                    <span>{countDislikes}</span>
+                </div>
+            </div>
         </div>
         <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
             <div className="w-6 h-6">
@@ -40,16 +48,7 @@ export default function CommentShowCard({
             </div>
             <NavLink to={`/archives/${postId}`} className="text-xl font-bold post-title hover:underline hover:underline-offset-4">{postTitle}</NavLink>
         </div>
-        <div className="flex justify-between items-center">
-            <div className="flex">
-                <ThumbsUpIcon />
-                <span>{countLikes}</span>
-            </div>
-            <div className="flex">
-                <ThumbsDownIcon />
-                <span>{countDislikes}</span>
-            </div>
-        </div>
+
       </div>
   );
 }
