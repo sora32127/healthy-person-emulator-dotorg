@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { redirect, json } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import CommentShowCard from "~/components/CommentShowCard";
+import CommentSection from "~/components/CommentSection";
 import { H1 } from "~/components/Headings";
 import { getFeedComments, type FeedPostType } from "~/modules/db.server";
 
@@ -57,19 +57,7 @@ export default function Comment(){
                 </select>
             </div>
             <div className="comment-feed">
-                {commentFeedData.result.map((comment) => (
-                    <CommentShowCard
-                        key={comment.commentId}
-                        postId={comment.postId}
-                        postTitle={comment.postTitle}
-                        countLikes={comment.countLikes}
-                        countDislikes={comment.countDislikes}
-                        commentId={comment.commentId}
-                        commentContent={comment.commentContent}
-                        commentAuthor={comment.commentAuthor}
-                        commentDateGmt={new Date(comment.commentDateGmt)}
-                    />
-                ))}
+                <CommentSection comments={commentFeedData.result} />
             </div>
             <div className="search-navigation flex justify-center my-4">
                 {totalPages >= 1 && (
