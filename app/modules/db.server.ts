@@ -539,7 +539,7 @@ const PostFeedDataSchema = z.object({
 })
 type PostFeedData = z.infer<typeof PostFeedDataSchema>;
 
-export async function getFeedPosts(pagingNumber: number, likeFromHour: number, likeToHour: number, type: FeedPostType, chunkSize: 12): Promise<PostFeedData>{
+export async function getFeedPosts(pagingNumber: number, type: FeedPostType, chunkSize = 12, likeFromHour = 24, likeToHour = 0,): Promise<PostFeedData>{
     const offset = (pagingNumber - 1) * chunkSize;
     if (["unboundedLikes", "likes", "timeDesc", "timeAsc"].includes(type)){
         const posts = await prisma.$queryRaw`

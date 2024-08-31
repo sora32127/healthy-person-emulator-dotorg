@@ -30,7 +30,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const oldestPostIds = await getOldestPostIdsForTest(chunkSize);
             const pagingNumber = 1;
             const type = "timeAsc";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.meta.totalCount).toBeGreaterThan(9000);
             expect(feedPosts.result).toHaveLength(chunkSize);
             for (let i = 0; i < chunkSize; i++) {
@@ -42,7 +42,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const oldestPostIds = await getOldestPostIdsForTest(chunkSize);
             const pagingNumber = 2;
             const type = "timeAsc";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.result).toHaveLength(chunkSize);
             for (let i = 0; i < chunkSize; i++) {
                 const post = PostCardDataSchema.parse(feedPosts.result[i]);
@@ -56,7 +56,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const newestPostIds = await getNewestPostIdsForTest(chunkSize);
             const pagingNumber = 1;
             const type = "timeDesc";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.result).toHaveLength(chunkSize);
             for (let i = 0; i < chunkSize; i++) {
                 const post = PostCardDataSchema.parse(feedPosts.result[i]);
@@ -67,7 +67,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const newestPostIds = await getNewestPostIdsForTest(chunkSize);
             const pagingNumber = 2;
             const type = "timeDesc";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.result).toHaveLength(chunkSize);
             for (let i = 0; i < chunkSize; i++) {
                 const post = PostCardDataSchema.parse(feedPosts.result[i]);
@@ -79,7 +79,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
         test("いいね順, 1ページ目", async () => {
             const pagingNumber = 1;
             const type = "likes";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.result.length).toBeGreaterThan(0);
             // 時間によって違うのでテストが難しい
         })
@@ -89,9 +89,9 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const unboundedLikesPostIds = await getUnboundedLikesPostIdsForTest(chunkSize);
             const pagingNumber = 1;
             const type = "unboundedLikes";
-        const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
-        expect(feedPosts.result).toHaveLength(chunkSize);
-        for (let i = 0; i < chunkSize; i++) {
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
+            expect(feedPosts.result).toHaveLength(chunkSize);
+            for (let i = 0; i < chunkSize; i++) {
                 const post = PostCardDataSchema.parse(feedPosts.result[i]);
                 expect(post.postId).toBe(unboundedLikesPostIds[i]);
             }   
@@ -100,7 +100,7 @@ describe("getFeedPostsが正しいデータを返すこと", async () =>  {
             const unboundedLikesPostIds = await getUnboundedLikesPostIdsForTest(chunkSize);
             const pagingNumber = 2;
             const type = "unboundedLikes";
-            const feedPosts = await getFeedPosts(pagingNumber, likeFromHour, likeToHour, type, chunkSize);
+            const feedPosts = await getFeedPosts(pagingNumber, type, chunkSize);
             expect(feedPosts.result).toHaveLength(chunkSize);
             for (let i = 0; i < chunkSize; i++) {
                 const post = PostCardDataSchema.parse(feedPosts.result[i]);
