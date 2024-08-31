@@ -80,7 +80,7 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSear
         </h1>
       </div>
       <div className="flex flex-row">
-        <div className="tooltip tooltip-bottom" data-tip="検索する">
+        <div className="tooltip tooltip-left" data-tip="検索する">
           <button className="btn btn-ghost" onClick={() => {handleSearchModalOpen(true)}} type="button">
             <SearchIcon />
           </button>
