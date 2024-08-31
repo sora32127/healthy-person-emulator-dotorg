@@ -15,11 +15,12 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 
 import ThemeSwitcher from "~/components/ThemeSwitcher";
+import HomeIcon from "~/components/icons/HomeIcon";
 
 
 function getNavItems(isSignedIn: boolean){
   const items = [
-    { to: "/random", icon: RandomIcon, text: "ランダム" },
+    { to: "/?referrer=fromMenu", icon: HomeIcon, text: "トップ" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
     { to: "/support", text: "サポートする", icon: DonationIcon },
     { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
@@ -39,7 +40,7 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
     <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
       <div className="flex-none">
         <h1 className="text-lg font-bold">
-          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
         </h1>
       </div>
       <div className="flex-1 flex justify-center items-center">
@@ -72,14 +73,14 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
 
 function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
   return (
-    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between">
+    <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
         <h1 className="text-xl font-bold">
-          <NavLink to="/">健常者エミュレータ事例集</NavLink>
+          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
         </h1>
       </div>
       <div className="flex flex-row">
-        <div className="tooltip tooltip-bottom" data-tip="検索する">
+        <div className="tooltip tooltip-left" data-tip="検索する">
           <button className="btn btn-ghost" onClick={() => {handleSearchModalOpen(true)}} type="button">
             <SearchIcon />
           </button>
@@ -230,7 +231,7 @@ export default function Component() {
         }}>閉じる</button>
       </form>
     </dialog>
-      <main className="p-4 xl:mx-10 2xl:mx-96 overflow-x-hidden">
+      <main className="p-4 xl:mx-10 2xl:mx-96">
         <div>
           <Outlet />
         </div>

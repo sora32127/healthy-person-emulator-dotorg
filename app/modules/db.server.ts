@@ -271,7 +271,7 @@ export type PostCardData = z.infer<typeof PostCardDataSchema>;
 export async function getRecentPosts(): Promise<PostCardData[]>{
     const recentPosts = await prisma.dimPosts.findMany({
         orderBy: { postDateGmt: "desc" },
-        take: 10,
+        take: 12,
         select: {
             postId: true,
             postTitle: true,
@@ -328,7 +328,7 @@ export async function getRecentVotedPosts(): Promise<PostCardData[]>{
         },
         _count: { voteUserIpHash: true },
         orderBy: { _count: { voteUserIpHash: "desc" } },
-        take: 10,
+        take: 12,
     }).then((votes) => {
         return votes.map((vote) => vote.postId)
     })
@@ -429,7 +429,7 @@ export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData
 export async function getRecentComments(){
     const recentComments = await prisma.dimComments.findMany({
         orderBy: { commentDateJst: "desc" },
-        take: 10,
+        take: 12,
         select: {
             commentId: true,
             postId: true,
@@ -453,3 +453,76 @@ export async function getRecentComments(){
 
     return recentComments;
 }
+
+export async function getRandomPosts(): Promise<PostCardData[]> {
+    /*
+    prisma.dimPosts.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
+    */
+    const postCount = await prisma.dimPosts.count();
+    const randomPostOffset = Math.max(
+        Math.floor(Math.random() * postCount) - 12,
+        0
+    );
+
+    const randomPostsRaw = await prisma.dimPosts.findMany({
+        select: {
+            postId: true,
+            postTitle: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            ogpImageUrl: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                            tagId: true,
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: { uuid : "asc"},
+        skip: randomPostOffset,
+        take: 12,
+    })
+    const commentCount = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: randomPostsRaw.map((post) => post.postId) } },
+    })
+    const randomPosts = randomPostsRaw.map((post) => {
+        const count = commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
+        return {
+            ...post,
+            countComments: count,
+            tags: post.rel_post_tags.map((tag) => tag.dimTag),
+        }
+    })
+    return randomPosts;
+}
+
+export async function getRandomComments(){
+    const commentCount = await prisma.dimComments.count();
+    const randomCommentOffset = Math.max(
+        Math.floor(Math.random() * commentCount) - 12,
+        0
+    );
+
+    const randomComments = await prisma.dimComments.findMany({
+        select: {
+            commentId: true,
+            commentContent: true,
+            commentDateGmt: true,
+            commentAuthor: true,
+            postId: true,
+            dimPosts: { select: { postTitle: true } },
+        },
+        orderBy: { uuid: "asc" },
+        skip: randomCommentOffset,
+        take: 12,
+    })
+    return randomComments;
+}
+
