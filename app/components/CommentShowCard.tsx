@@ -5,16 +5,8 @@ import RelativeDate from "./RelativeDate";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
+import type { CommentShowCardData } from "~/modules/db.server";
 
-interface CommentShowCardProps {
-  commentContent: string;
-  commentDateGmt: string;
-  commentAuthor: string;
-  postId: number;
-  postTitle: string;
-  countLikes?: number;
-  countDislikes?: number;
-}
 
 export default function CommentShowCard({
   commentContent,
@@ -24,7 +16,7 @@ export default function CommentShowCard({
   postTitle,
   countLikes,
   countDislikes,
-}: CommentShowCardProps) {
+}: CommentShowCardData) {
   return (
       <div className="bg-base-100 border-b border-neutral p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
@@ -32,7 +24,7 @@ export default function CommentShowCard({
                 <div className="pr-2">
                     <ClockIcon/>
                 </div>
-                <RelativeDate timestamp={commentDateGmt} />
+                <RelativeDate timestamp={commentDateGmt.toString()} />
             </div>
             <span className="text-lg font-bold text-base-content comment-author">{commentAuthor}</span>
         </div>

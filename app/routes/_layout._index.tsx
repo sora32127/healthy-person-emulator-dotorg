@@ -2,6 +2,7 @@ import { json } from "@remix-run/node";
 import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
+import type { CommentShowCardData } from "~/modules/db.server";
 import PostCard from "~/components/PostCard";
 import { H2 } from "~/components/Headings";
 import CommentShowCard from "~/components/CommentShowCard";
@@ -38,7 +39,7 @@ type PostSectionProps = {
 
 type CommentSectionProps = {
     title: string;
-    comments: Comment[];
+    comments: CommentShowCardData[];
     children?: React.ReactNode;
 };
 
@@ -207,6 +208,7 @@ function CommentSection({ title, comments, children }: CommentSectionProps) {
                 {comments.map((comment) => (
                     <CommentShowCard
                         key={comment.commentId}
+                        commentId={comment.commentId}
                         commentContent={comment.commentContent}
                         commentDateGmt={comment.commentDateGmt}
                         commentAuthor={comment.commentAuthor}

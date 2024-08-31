@@ -1,5 +1,4 @@
 import { Prisma, PrismaClient } from "@prisma/client"
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { z } from "zod"
 
 declare global {
@@ -426,7 +425,20 @@ export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData
     return recentPostsWithCountComments;
 }
 
-export async function getRecentComments(chunkSize = 12, pageNumber = 1){
+const CommentShowCardDataSchema = z.object({
+    commentId: z.number(),
+    postId: z.number(),
+    commentContent: z.string(),
+    commentDateGmt: z.date(),
+    commentAuthor: z.string(),
+    postTitle: z.string(),
+    countLikes: z.number(),
+    countDislikes: z.number(),
+})
+
+export type CommentShowCardData = z.infer<typeof CommentShowCardDataSchema>;
+
+export async function getRecentComments(chunkSize = 12, pageNumber = 1): Promise<CommentShowCardData[]>{
     const offset = (pageNumber - 1) * chunkSize;
     const recentComments = await prisma.dimComments.findMany({
         orderBy: { commentDateJst: "desc" },
