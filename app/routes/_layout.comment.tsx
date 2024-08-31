@@ -48,7 +48,7 @@ export default function Comment(){
             <div className="feed-meta">
                 <p>コメント数: {commentFeedData.meta.totalCount}件</p>
             </div>
-            <div>
+            <div className="my-2">
                 <select onChange={(e) => handleFeedTypeChange(e.target.value)} className="select select-bordered select-sm">
                     <option value="timeDesc" className="select-option" selected={commentFeedData.meta.type === "timeDesc"}>新着順</option>
                     <option value="timeAsc" className="select-option" selected={commentFeedData.meta.type === "timeAsc"}>古い順</option>
