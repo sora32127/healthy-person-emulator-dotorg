@@ -426,10 +426,11 @@ export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData
     return recentPostsWithCountComments;
 }
 
-export async function getRecentComments(){
+export async function getRecentComments(chunkSize = 12, pageNumber = 1){
+    const offset = (pageNumber - 1) * chunkSize;
     const recentComments = await prisma.dimComments.findMany({
         orderBy: { commentDateJst: "desc" },
-        take: 12,
+        take: chunkSize,
         select: {
             commentId: true,
             postId: true,
@@ -442,16 +443,25 @@ export async function getRecentComments(){
                 },
             },
         },
-    }).then((comments) => {
-        return comments.map((comment) => {
-            return {
-                ...comment,
-                postTitle: comment.dimPosts.postTitle,
-            }
-        })
+        skip: offset,
+    })
+    const voteCount = await prisma.fctCommentVoteHistory.groupBy({
+        by: ["commentId", "voteType"],
+        _count: { commentVoteId: true },
+        where: { commentId: { in: recentComments.map((comment) => comment.commentId) } },
+    })
+    const recentCommentsWithVoteCount = recentComments.map((comment) => {
+        const likesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count.commentVoteId || 0;
+        const dislikesCount = voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count.commentVoteId || 0;
+        return {
+            ...comment,
+            postTitle: comment.dimPosts.postTitle,
+            countLikes: likesCount,
+            countDislikes: dislikesCount,
+        }
     })
 
-    return recentComments;
+    return recentCommentsWithVoteCount;
 }
 
 export async function getRandomPosts(): Promise<PostCardData[]> {

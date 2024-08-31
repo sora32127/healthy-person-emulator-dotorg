@@ -24,7 +24,9 @@ type Comment = {
     commentDateGmt: string;
     commentAuthor: string;
     postId: number;
-    dimPosts: boolean;
+    postTitle: string;
+    countLikes: number;
+    countDislikes: number;
 };
 
 type PostSectionProps = {
@@ -57,7 +59,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     const mostRecentComments = await getRecentComments();
     const randomPosts = await getRandomPosts();
     const randomComments = await getRandomComments();
-
     return json({
         tab,
         mostRecentPosts,
@@ -210,7 +211,9 @@ function CommentSection({ title, comments, children }: CommentSectionProps) {
                         commentDateGmt={comment.commentDateGmt}
                         commentAuthor={comment.commentAuthor}
                         postId={comment.postId}
-                        dimPosts={comment.dimPosts}
+                        postTitle={comment.postTitle}
+                        countLikes={comment.countLikes}
+                        countDislikes={comment.countDislikes}
                     />
                 ))}
             </div>
