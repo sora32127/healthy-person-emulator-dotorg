@@ -799,7 +799,17 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
         }
     }
     if (type === "unboundedLikes"){
-        const totalCount = await prisma.dimComments.count();
+        const totalCountRaw = await prisma.$queryRaw`
+        with raw as (
+        select post_id, count(post_id) from fct_comment_vote_history
+        where vote_type = 1
+        group by post_id
+        having count(post_id) >= 1
+        )
+        select count(*) from raw;
+        ` as { count: bigint }[]
+        const totalCount = Number(totalCountRaw[0].count);
+
         const commentIds = await prisma.fctCommentVoteHistory.groupBy({
             by: ["commentId"],
             _count: { commentVoteId: true },
