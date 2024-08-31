@@ -752,7 +752,7 @@ const CommentFeedDataSchema = z.object({
 })
 type CommentFeedData = z.infer<typeof CommentFeedDataSchema>;
 
-export async function getFeedComments(pagingNumber: number, type: FeedPostType, chunkSize = 12, likeFromHour = 24, likeToHour = 0,): Promise<CommentFeedData>{
+export async function getFeedComments(pagingNumber: number, type: FeedPostType, chunkSize = 12, likeFromHour = 48, likeToHour = 0,): Promise<CommentFeedData>{
     const offset = (pagingNumber - 1) * chunkSize;
     if (["timeDesc", "timeAsc"].includes(type)){
         const totalCount = await prisma.dimComments.count();
@@ -852,17 +852,28 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
     }
 
     if (type === "likes"){
-        const totalCount = await prisma.dimComments.count();
+        const totalCountRaw = await prisma.fctCommentVoteHistory.groupBy({
+            by: ["commentId"],
+            _count: { commentVoteId: true },
+            where: { voteType: { in: [1] }, comment_vote_date_utc: {
+                gte: new Date(new Date().getTime() - likeFromHour * 60 * 60 * 1000),
+                lte: new Date(new Date().getTime() - likeToHour * 60 * 60 * 1000)
+            } }
+        })
+        const totalCount = totalCountRaw.length;
         const commentIds = await prisma.fctCommentVoteHistory.groupBy({
             by: ["commentId"],
             _count: { commentVoteId: true },
             orderBy: { _count: { commentVoteId: "desc" } },
             take: chunkSize,
             skip: offset,
-            where: { voteType: { in: [1] }, comment_vote_date_utc: {
-                gte: new Date(new Date().getTime() - likeFromHour * 60 * 60 * 1000),
-                lte: new Date(new Date().getTime() - likeToHour * 60 * 60 * 1000)
-            } }
+            where: { 
+                voteType: { in: [1] },
+                comment_vote_date_utc: {
+                    gte: new Date(new Date().getTime() - likeFromHour * 60 * 60 * 1000),
+                    lte: new Date(new Date().getTime() - likeToHour * 60 * 60 * 1000)
+                }
+            }
         })
         const comments = await prisma.dimComments.findMany({
             select: { 
@@ -879,6 +890,8 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
             },
             where: { commentId: { in: commentIds.map((comment) => comment.commentId) } },
             orderBy: { commentDateJst: "desc" },
+        }).then((comments) => {
+            return comments.sort((a, b) => commentIds.findIndex((c) => c.commentId === a.commentId) - commentIds.findIndex((c) => c.commentId === b.commentId));
         })
         const commentData = comments.map((comment) => {
             return {
@@ -894,6 +907,8 @@ export async function getFeedComments(pagingNumber: number, type: FeedPostType, 
                 currentPage: pagingNumber,
                 type: type,
                 chunkSize: chunkSize,
+                likeFromHour: likeFromHour,
+                likeToHour: likeToHour,
             },
             result: commentData,
         }

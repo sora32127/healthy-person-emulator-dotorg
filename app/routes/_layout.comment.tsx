@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const type = url.searchParams.get("type") || "timeDesc";
     const pagingNumber = url.searchParams.get("p") || 1;
     const chunkSize = url.searchParams.get("chunkSize") || 12;
-    const likeFromHour = url.searchParams.get("likeFromHour") || 0;
+    const likeFromHour = url.searchParams.get("likeFromHour") || 48;
     const likeToHour = url.searchParams.get("likeToHour") || 0;
 
     const commentFeedData = await getFeedComments(Number(pagingNumber), type, Number(chunkSize), Number(likeFromHour), Number(likeToHour));
