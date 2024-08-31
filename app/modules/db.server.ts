@@ -321,7 +321,7 @@ export async function getRecentVotedPosts(): Promise<PostCardData[]>{
         by: ["postId"],
         where: { 
             voteDateGmt : { 
-                gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+                gte: new Date(new Date().getTime() - 48 * 60 * 60 * 1000),
                 lte: new Date(),
             },
             voteTypeInt : { in : [1]}
