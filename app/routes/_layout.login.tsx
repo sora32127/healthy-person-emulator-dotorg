@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import { SignIn } from "@clerk/remix";
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export default function login() {
     return (
@@ -12,7 +13,11 @@ export default function login() {
   }
   
 export const meta : MetaFunction = () => {
-    return [
-        { title: 'ログイン'}
-    ]
+    const commonMeta = commonMetaFunction({
+        title: "ログイン",
+        description: "ログインして編集しよう",
+        url: "https://healthy-person-emulator.org/login",
+        image: null
+    });
+    return commonMeta;
 }

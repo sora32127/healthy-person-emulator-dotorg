@@ -19,7 +19,7 @@ import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
-
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -479,35 +479,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [{ title: "Loading..." }];
   }
   const title = data.data.postTitle;
-  const description = data.data.tags.map((tag) => tag.tagName).join(", ") || "";
-  const ogLocale = "ja_JP";
-  const ogSiteName = "健常者エミュレータ事例集";
-  const ogType = "article";
-  const ogTitle = title;
-  const ogDescription = description;
-  const ogUrl = `https://healthy-person-emulator.org/archives/${data.postContent?.postId}`;
-  const twitterCard = "summary_large_image"
-  const twitterSite = "@helthypersonemu"
-  const twitterTitle = title
-  const twitterDescription = description
-  const twitterCreator = "@helthypersonemu"
-  const twitterImage = data.data.ogpImageUrl || "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
+  const description = data.data.tags.map((tag) => tag.tagName).join(", ");
+  const url = `https://healthy-person-emulator.org/archives/${data.data.postId}`;
+  const image = data.data.ogpImageUrl;
 
-  return [
-    { title },
-    { description },
-    { property: "og:title", content: ogTitle },
-    { property: "og:description", content: ogDescription },
-    { property: "og:locale", content: ogLocale },
-    { property: "og:site_name", content: ogSiteName },
-    { property: "og:type", content: ogType },
-    { property: "og:url", content: ogUrl },
-    { property: "og:image", content: twitterImage},
-    { name: "twitter:card", content: twitterCard },
-    { name: "twitter:site", content: twitterSite },
-    { name: "twitter:title", content: twitterTitle },
-    { name: "twitter:description", content: twitterDescription },
-    { name: "twitter:creator", content: twitterCreator },
-    { name: "twitter:image", content: twitterImage },
-  ];
+  const commonMeta = commonMetaFunction({
+    title,
+    description,
+    url,
+    image
+  });
+
+  return commonMeta;
 };

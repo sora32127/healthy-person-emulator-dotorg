@@ -8,6 +8,7 @@ import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getSearchResults, type SearchResults, type OrderBy } from "~/modules/search.server";
 import type { PostCardData } from "~/modules/db.server";
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -283,37 +284,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
   if ((q === "") && (tags.length === 0)) pageTitle = "検索する";
 
-  const description = "検索";
+  const commonMeta = commonMetaFunction({
+    title: pageTitle,
+    description: "検索",
+    url: data.url,
+    image: null
+  });
 
-  const ogLocale = "ja_JP";
-  const ogSiteName = "健常者エミュレータ事例集";
-  const ogType = "article";
-  const ogTitle = pageTitle;
-  const ogDescription = description;
-  const ogUrl = data.url;
-
-  const twitterCard = "summary";
-  const twitterSite = "@helthypersonemu";
-  const twitterTitle = pageTitle;
-  const twitterDescription = description;
-  const twitterCreator = "@helthypersonemu";
-  const twitterImage =
-  "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png";
-
-  return [
-  { title: pageTitle },
-  { name: "description", content: description },
-  { property: "og:title", content: ogTitle },
-  { property: "og:description", content: ogDescription },
-  { property: "og:locale", content: ogLocale },
-  { property: "og:site_name", content: ogSiteName },
-  { property: "og:type", content: ogType },
-  { property: "og:url", content: ogUrl },
-  { name: "twitter:card", content: twitterCard },
-  { name: "twitter:site", content: twitterSite },
-  { name: "twitter:title", content: twitterTitle },
-  { name: "twitter:description", content: twitterDescription },
-  { name: "twitter:creator", content: twitterCreator },
-  { name: "twitter:image", content: twitterImage },
-  ];
+  return commonMeta;
 };

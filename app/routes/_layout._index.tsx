@@ -6,13 +6,16 @@ import ReloadButton from "~/components/ReloadButton";
 import { useEffect, useState } from "react";
 import PostSection from "~/components/PostSection";
 import CommentSection from "~/components/CommentSection";
-
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export const meta: MetaFunction = () => {
-    return [
-      { title: "トップページ" },
-      { name: "description", content: "現実世界のために" },
-    ];
+    const commonMeta = commonMetaFunction({
+        title: "トップページ",
+        description: "現実世界のために",
+        url: "https://healthy-person-emulator.org",
+        image: null
+    });
+    return commonMeta;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {

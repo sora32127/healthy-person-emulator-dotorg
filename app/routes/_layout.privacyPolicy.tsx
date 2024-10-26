@@ -1,5 +1,6 @@
-import { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import { H1, H2 } from "~/components/Headings";
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export default function PrivacyPolicy(){
     return (
@@ -48,36 +49,12 @@ export default function PrivacyPolicy(){
 
 
 export const meta: MetaFunction = () => {
-    const title = "プライバシーポリシー";
-    const description = "プライバシーポリシーについて";
-    const ogLocale = "ja_JP";
-    const ogSiteName = "健常者エミュレータ事例集";
-    const ogType = "article";
-    const ogTitle = title;
-    const ogDescription = description;
-    const ogUrl = `https://healthy-person-emulator.org/privacyPolicy`;
-    const twitterCard = "summary"
-    const twitterSite = "@helthypersonemu"
-    const twitterTitle = title
-    const twitterDescription = description
-    const twitterCreator = "@helthypersonemu"
-    const twitterImage = "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
-  
-    return [
-      { title },
-      { description },
-      { property: "og:title", content: ogTitle },
-      { property: "og:description", content: ogDescription },
-      { property: "og:locale", content: ogLocale },
-      { property: "og:site_name", content: ogSiteName },
-      { property: "og:type", content: ogType },
-      { property: "og:url", content: ogUrl },
-      { name: "twitter:card", content: twitterCard },
-      { name: "twitter:site", content: twitterSite },
-      { name: "twitter:title", content: twitterTitle },
-      { name: "twitter:description", content: twitterDescription },
-      { name: "twitter:creator", content: twitterCreator },
-      { name: "twitter:image", content: twitterImage },
-    ];
-  };
+    const commonMeta = commonMetaFunction({
+        title : "プライバシーポリシー",
+        description : "プライバシーポリシーについて",
+        url: "https://healthy-person-emulator.org/privacyPolicy",
+        image: null
+    }); 
+    return commonMeta;
+};
   
