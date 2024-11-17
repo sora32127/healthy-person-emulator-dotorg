@@ -21,6 +21,7 @@ import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { getRecommendPosts } from "~/modules/recommend.server";
+import { RecommendedPosts } from "~/components/RecommendedPosts";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -54,7 +55,7 @@ async function addSiteViewDataToCookie(request: Request, postId: number){
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendPosts } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -312,6 +313,7 @@ export default function Component() {
             />
         </div>
         <br/>
+        <RecommendedPosts recommendResult={recommendPosts} />
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox

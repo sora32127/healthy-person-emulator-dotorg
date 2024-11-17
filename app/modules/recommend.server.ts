@@ -56,7 +56,7 @@ const RecommendResultSchema = z.array(z.object({
     postDateGmt: z.date(),
     countLikes: z.number(),
 }))
-type RecommendResult = z.infer<typeof RecommendResultSchema>;
+export type RecommendResult = z.infer<typeof RecommendResultSchema>;
 
 export async function getRecommendPosts(input: RecommendInput, parameters: RecommendParameters): Promise<RecommendResult> {
     const validatedInput = RecommendInputSchema.parse({
