@@ -90,7 +90,12 @@ export const searchResultsSchema = z.object({
 })
 
 export type SearchResults = z.infer<typeof searchResultsSchema>;
-export type OrderBy = "like" | "timeDesc" | "timeAsc"
+export type OrderBy = "like" | "timeDesc" | "timeAsc";
+
+function escapeString(keyword: string): string {
+    return keyword.replace(/'/g, '"');
+}
+
 
 
 export async function getSearchResults(q: string, tags: string[], p: number, orderby: OrderBy): Promise<SearchResults>{
@@ -149,7 +154,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         - そのため、演算子によってサブクエリを分けている
         */
 
-        const contentQuery = `'${separatedQuery.map((query) => `${query}`).join(" ")}'`
+        const contentQuery = `'${separatedQuery.map((query) => `${escapeString(query)}`).join(" ")}'`
 
         const postIdsQuery = Prisma.sql`
         with post_id_contentmatch as (
@@ -159,7 +164,7 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         ), post_id_titlematch as (
             select post_id, count_likes, post_date_gmt
             from dim_posts
-            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%${query}%'`).join(" AND "))}
+            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%\\${escapeString(query)}%'`).join(" AND "))}
         ), post_id_union as (
             select post_id, count_likes, post_date_gmt from post_id_contentmatch
             union
@@ -483,12 +488,12 @@ export async function getSearchResults(q: string, tags: string[], p: number, ord
         with keyward_titlematch as (
             select post_id, post_date_gmt, count_likes
             from dim_posts
-            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%${query}%'`).join(" AND "))}
+            where ${Prisma.raw(separatedQuery.map((query) => `post_title like '%\\${escapeString(query)}%'`).join(" AND "))}
         ),
         keyward_contentmatch as (
             select post_id, post_date_gmt, count_likes
             from dim_posts
-            where post_content &@~ '${Prisma.raw(separatedQuery.map((query) => `${query}`).join(" "))}'
+            where post_content &@~ '${Prisma.raw(separatedQuery.map((query) => `${escapeString(query)}`).join(" "))}'
         ),
         keyward_intersection as (
             select * from keyward_titlematch
