@@ -35,6 +35,7 @@ export async function getUserActivityData(request: Request){
     const dislikedPages = session.get("dislikedPages") || [];
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
+    const viewedPosts = session.get("viewedPosts") || [];
 
-    return { likedPages, dislikedPages, likedComments, dislikedComments };
+    return { likedPages, dislikedPages, likedComments, dislikedComments, viewedPosts };
 }

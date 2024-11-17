@@ -20,16 +20,37 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
+import { getRecommendPosts } from "~/modules/recommend.server";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
-    const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
+    const session = await addSiteViewDataToCookie(request, postId);
+    const { likedPages, dislikedPages, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
+    const recommendPosts = await getRecommendPosts({ viewedPosts: viewedPosts, likedPosts: likedPages }, { elipse_weight: 0.5 });
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
+    return json({
+      data,
+      likedPages,
+      dislikedPages,
+      likedComments,
+      dislikedComments,
+      viewedPosts,
+      recommendPosts,
+      CF_TURNSTILE_SITEKEY
+    }, {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    });
+}
 
-    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
+async function addSiteViewDataToCookie(request: Request, postId: number){
+    const session = await getSession(request.headers.get("Cookie"));
+    session.set("viewedPosts", [...(session.get("viewedPosts") || []), { postId, viewedAtGMT: new Date() }]);
+    return session;
 }
 
 export default function Component() {
