@@ -33,13 +33,13 @@ const RecommendInputSchema = z.object({
     likedPosts: z.array(
         z.object({
             postId: z.number(),
-            likedAtGMT: z.date().transform(d => new Date(d.getTime()))
+            likedAtGMT: z.number()
         })
     ),
     viewedPosts: z.array(
         z.object({
             postId: z.number(),
-            viewedAtGMT: z.date().transform(d => new Date(d.getTime()))
+            viewedAtGMT: z.number()
         })
     )
 })
@@ -62,16 +62,16 @@ export async function getRecommendPosts(input: RecommendInput, parameters: Recom
     const validatedInput = RecommendInputSchema.parse({
         likedPosts: input.likedPosts.map(post => ({
             ...post,
-            likedAtGMT: new Date(post.likedAtGMT)
+            likedAtGMT: post.likedAtGMT
         })),
         viewedPosts: input.viewedPosts.map(post => ({
             ...post,
-            viewedAtGMT: new Date(post.viewedAtGMT)
+            viewedAtGMT: post.viewedAtGMT
         }))
     });
 
-    validatedInput.likedPosts.sort((a, b) => b.likedAtGMT.getTime() - a.likedAtGMT.getTime());
-    validatedInput.viewedPosts.sort((a, b) => b.viewedAtGMT.getTime() - a.viewedAtGMT.getTime());
+    validatedInput.likedPosts.sort((a, b) => b.likedAtGMT - a.likedAtGMT);
+    validatedInput.viewedPosts.sort((a, b) => b.viewedAtGMT - a.viewedAtGMT);
 
     const allPosts = [...validatedInput.likedPosts, ...validatedInput.viewedPosts].slice(0, Math.min(validatedInput.likedPosts.length + validatedInput.viewedPosts.length - 1, 100));
 

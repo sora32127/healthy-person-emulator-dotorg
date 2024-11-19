@@ -29,7 +29,12 @@ export async function loader({ request }:LoaderFunctionArgs){
     const data = await ArchiveDataEntry.getData(postId);
     const session = await addSiteViewDataToCookie(request, postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
-    const recommendPosts = await getRecommendPosts({ viewedPosts: viewedPosts, likedPosts: likedPages }, { elipse_weight: 0.5 });
+    const viewedAtGMTUnixtime = new Date().getTime();
+    const updatedViewedPosts = [...viewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }];
+
+    const recommendPosts = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPages }, { elipse_weight: 0.5 });
+
+
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
     return json({
@@ -50,7 +55,10 @@ export async function loader({ request }:LoaderFunctionArgs){
 
 async function addSiteViewDataToCookie(request: Request, postId: number){
     const session = await getSession(request.headers.get("Cookie"));
-    session.set("viewedPosts", [...(session.get("viewedPosts") || []), { postId, viewedAtGMT: new Date() }]);
+    const viewedAtGMTUnixtime = new Date().getTime();
+    const currentViewedPosts = session.get("viewedPosts") || [];
+    const updatedViewedPosts = currentViewedPosts.filter((post: { postId: number }) => post.postId !== postId);
+    session.set("viewedPosts", [...updatedViewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }]);
     return session;
 }
 
