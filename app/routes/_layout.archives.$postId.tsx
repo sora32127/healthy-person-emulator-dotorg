@@ -28,19 +28,19 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const session = await addSiteViewDataToCookie(request, postId);
-    const { likedPages, dislikedPages, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
+    const { likedPosts, dislikedPosts, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
     const viewedAtGMTUnixtime = new Date().getTime();
     const updatedViewedPosts = [...viewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }];
 
-    const recommendPosts = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPages }, { elipse_weight: 0.5 });
+    const recommendPosts = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPosts }, { elipse_weight: 0.5 });
 
 
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
     return json({
       data,
-      likedPages,
-      dislikedPages,
+      likedPosts,
+      dislikedPosts,
       likedComments,
       dislikedComments,
       viewedPosts,
@@ -63,7 +63,7 @@ async function addSiteViewDataToCookie(request: Request, postId: number){
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendPosts } = useLoaderData<typeof loader>();
+  const { data, likedPosts, dislikedPosts, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendPosts } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -76,8 +76,8 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPages.includes(data.postId);
-  const isDisliked = dislikedPages.includes(data.postId);
+  const isLiked = likedPosts.some((post: { postId: number, likedAtGMT: number }) => post.postId === data.postId);
+  const isDisliked = dislikedPosts.some((post: { postId: number, dislikedAtGMT: number }) => post.postId === data.postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -414,10 +414,12 @@ async function handleVotePost(
   });
 
   const session = await getSession(request.headers.get("Cookie"));
+  const votedAtGMTUnixtime = new Date().getTime();
+
   if (voteType === "like") {
-    session.set("likedPages", [...(session.get("likedPages") || []), postId]);
+    session.set("likedPosts", [...(session.get("likedPosts") || []), { postId, likedAtGMT: votedAtGMTUnixtime }]);
   } else if (voteType === "dislike") {
-    session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
+    session.set("dislikedPosts", [...(session.get("dislikedPosts") || []), { postId, dislikedAtGMT: votedAtGMTUnixtime }]);
   }
   return json(
     { success: true },
