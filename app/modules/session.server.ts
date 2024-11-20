@@ -31,10 +31,11 @@ export async function requireUserId(request: Request){
 
 export async function getUserActivityData(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
-    const likedPages = session.get("likedPages") || [];
-    const dislikedPages = session.get("dislikedPages") || [];
+    const likedPosts = session.get("likedPosts") || [];
+    const dislikedPosts = session.get("dislikedPosts") || [];
     const likedComments = session.get("likedComments") || [];
     const dislikedComments = session.get("dislikedComments") || [];
+    const viewedPosts = session.get("viewedPosts") || [];
 
-    return { likedPages, dislikedPages, likedComments, dislikedComments };
+    return { likedPosts, dislikedPosts, likedComments, dislikedComments, viewedPosts };
 }
