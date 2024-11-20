@@ -13,7 +13,10 @@ export function RecommendedPosts({ recommendResult }: { recommendResult: Recomme
             <NavLink 
               key={post.postId} 
               to={`/archives/${post.postId}`}
-              className="flex-shrink-0 w-64 border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+              aria-label={`記事「${post.postTitle}」を読む`}
+              className="flex-shrink-0 w-64 rounded-lg p-4 bg-base-200
+                transition-colors duration-200 ease-in-out
+                hover:bg-base-300 focus:bg-base-300"
             >
               <h3 className="font-medium mb-2 line-clamp-2">{post.postTitle}</h3>
               <div className="text-sm text-gray-600">
