@@ -137,27 +137,14 @@ model FctPostEditHistory {
   @@map("fct_post_edit_history")
 }
 
-model FctAICompletionSuggestionHistory {
-  suggestionId      String   @id @default(dbgenerated("gen_random_uuid()")) @map("suggestion_id") @db.Uuid
-  suggestedUserIPHash  String   @map("suggested_user_ip_hash")
-  suggestionAtUtc   DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("suggest_at_utc") @db.Timestamptz(6)
-  suggestionAtJst   DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("suggest_at_jst") @db.Timestamptz(6)
-  usedTokens         Int      @map("used_token")
-  promptText        String   @map("prompt_text")
-  contextText       String   @map("context_text")
-  text              String   @map("text")
-  suggestionResult String[] @map("suggestion_result")
 
-  @@map("fct_aicompletion_suggestion_history")
-}
-
-model FctAICompletionCommitHistory {
-  commitId          String   @id @default(dbgenerated("gen_random_uuid()")) @map("commit_id") @db.Uuid
-  commitAtUtc      DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("commit_at_utc") @db.Timestamptz(6)
-  commitAtJst      DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("commit_at_jst") @db.Timestamptz(6)
-  commitUserIPHash  String   @map("commit_user_ip_hash")
-  suggestionResult String[] @map("suggestion_result")
-  commitText       String   @map("commit_text")
-
-  @@map("fct_aicompletion_commit_history")
+model FctRecommendHistory {
+  recommendId          Int                    @id @unique @default(autoincrement()) @map("recommend_id")
+  recommendAtUtc      DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("recommend_at_utc") @db.Timestamptz(6)
+  recommendAtJst      DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("recommend_at_jst") @db.Timestamptz(6)
+  modelIdentifier    String   @map("model_identifier")
+  recommendPostIds     String[] @map("recommend_post_ids")
+  performanceTimeMs    Int      @map("performance_time_ms")
+  isLocalTest         Boolean  @map("is_local_test")
+  @@map("fct_recommend_history")
 }
