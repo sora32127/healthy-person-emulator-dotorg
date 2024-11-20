@@ -94,13 +94,13 @@ export async function getRecommendPosts(input: RecommendInput, parameters: Recom
     const recommendedPosts = await getRecommendedPostsFromDB(weightsArray);
 
     const recommendEndTime = performance.now();
-    const isLocalTest = process.env.NODE_ENV === "development";
+    const isLocalTest = isTestEnvironment();
     const recommendId =  await prisma.fctRecommendHistory.create({
         data: {
             modelIdentifier: "elipe_0.5",
             recommendPostIds: recommendedPosts.map(post => post.postId.toString()),
             performanceTimeMs: recommendEndTime - recommendStartTime,
-            isLocalTest: isLocalTest,
+            isTestEnvironment: isLocalTest,
         }
     }).then(result => result.recommendId);
 
@@ -123,6 +123,14 @@ async function getRecommendedPostsFromDB(weightsArray: { postId: number, weight:
         postDateGmt: result.post_date_gmt,
         countLikes: result.count_likes
     }));
+}
+
+function isTestEnvironment(): boolean {
+    const nodeEnv = process.env.NODE_ENV;
+    const vercelEnv = process.env.VERCEL_ENV;
+    if (nodeEnv === "development") return true;
+    if (vercelEnv === "preview" || vercelEnv === "development") return true;
+    return false;
 }
 
 /*

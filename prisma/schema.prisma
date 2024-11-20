@@ -145,7 +145,7 @@ model FctRecommendHistory {
   modelIdentifier    String   @map("model_identifier")
   recommendPostIds     String[] @map("recommend_post_ids")
   performanceTimeMs    Int      @map("performance_time_ms")
-  isLocalTest         Boolean  @map("is_local_test")
+  isTestEnvironment   Boolean  @map("is_test_environment")
   recommendViewHistories FctRecommendViewHistory[]
   @@map("fct_recommend_history")
 }
