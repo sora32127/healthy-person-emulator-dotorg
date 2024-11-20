@@ -57,6 +57,13 @@ async function addSiteViewDataToCookie(request: Request, postId: number){
     const session = await getSession(request.headers.get("Cookie"));
     const viewedAtGMTUnixtime = new Date().getTime();
     const currentViewedPosts = session.get("viewedPosts") || [];
+    // 15記事以上ある場合は、古いものから削除する
+    // Cookieの容量を抑えるための措置
+    if (currentViewedPosts.length >= 15){
+      currentViewedPosts.shift();
+    }
+
+
     const updatedViewedPosts = currentViewedPosts.filter((post: { postId: number }) => post.postId !== postId);
     session.set("viewedPosts", [...updatedViewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }]);
     return session;
@@ -417,10 +424,21 @@ async function handleVotePost(
   const votedAtGMTUnixtime = new Date().getTime();
 
   if (voteType === "like") {
-    session.set("likedPosts", [...(session.get("likedPosts") || []), { postId, likedAtGMT: votedAtGMTUnixtime }]);
+    const currentLikedPosts = session.get("likedPosts") || [];
+    const updatedLikedPosts = currentLikedPosts.filter((post: { postId: number }) => post.postId !== postId);
+    if (updatedLikedPosts.length >= 15){
+      updatedLikedPosts.shift();
+    }
+    session.set("likedPosts", [...updatedLikedPosts, { postId, likedAtGMT: votedAtGMTUnixtime }]);
   } else if (voteType === "dislike") {
-    session.set("dislikedPosts", [...(session.get("dislikedPosts") || []), { postId, dislikedAtGMT: votedAtGMTUnixtime }]);
+    const currentDislikedPosts = session.get("dislikedPosts") || [];
+    const updatedDislikedPosts = currentDislikedPosts.filter((post: { postId: number }) => post.postId !== postId);
+    if (updatedDislikedPosts.length >= 15){
+      updatedDislikedPosts.shift();
+    }
+    session.set("dislikedPosts", [...updatedDislikedPosts, { postId, dislikedAtGMT: votedAtGMTUnixtime }]);
   }
+  
   return json(
     { success: true },
     {
