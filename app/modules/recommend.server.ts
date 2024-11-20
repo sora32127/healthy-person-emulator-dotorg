@@ -58,7 +58,13 @@ const RecommendResultSchema = z.array(z.object({
 }))
 export type RecommendResult = z.infer<typeof RecommendResultSchema>;
 
-export async function getRecommendPosts(input: RecommendInput, parameters: RecommendParameters): Promise<RecommendResult> {
+const RecommendResultWithIdSchema = z.object({
+    recommendedPosts: RecommendResultSchema,
+    recommendId: z.number()
+})
+type RecommendResultWithId = z.infer<typeof RecommendResultWithIdSchema>;
+
+export async function getRecommendPosts(input: RecommendInput, parameters: RecommendParameters): Promise<RecommendResultWithId> {
     const recommendStartTime = performance.now();
 
     const validatedInput = RecommendInputSchema.parse({
@@ -89,16 +95,17 @@ export async function getRecommendPosts(input: RecommendInput, parameters: Recom
 
     const recommendEndTime = performance.now();
     const isLocalTest = process.env.NODE_ENV === "development";
-    await prisma.fctRecommendHistory.create({
+    const recommendId =  await prisma.fctRecommendHistory.create({
         data: {
             modelIdentifier: "elipe_0.5",
             recommendPostIds: recommendedPosts.map(post => post.postId.toString()),
             performanceTimeMs: recommendEndTime - recommendStartTime,
             isLocalTest: isLocalTest,
         }
-    });
+    }).then(result => result.recommendId);
 
-    return recommendedPosts;
+
+    return { recommendedPosts, recommendId };
 }
 
 async function getRecommendedPostsFromDB(weightsArray: { postId: number, weight: number }[]): Promise<RecommendResult> {

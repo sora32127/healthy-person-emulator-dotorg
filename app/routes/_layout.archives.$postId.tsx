@@ -26,13 +26,26 @@ import { RecommendedPosts } from "~/components/RecommendedPosts";
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
     const postId = Number(url.pathname.split("/")[2]);
+    const paramRecommendId = Number(url.searchParams.get("recommendId"));
+    const paramPosition = Number(url.searchParams.get("position"));
+
+    if (paramRecommendId !== 0 && !Number.isNaN(paramPosition)){
+      await prisma.fctRecommendViewHistory.create({
+        data: {
+          recommendId: paramRecommendId,
+          position: paramPosition,
+          postId: postId,
+        }
+      })
+    }
+
     const data = await ArchiveDataEntry.getData(postId);
     const session = await addSiteViewDataToCookie(request, postId);
     const { likedPosts, dislikedPosts, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
     const viewedAtGMTUnixtime = new Date().getTime();
     const updatedViewedPosts = [...viewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }];
 
-    const recommendPosts = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPosts }, { elipse_weight: 0.5 });
+    const { recommendedPosts, recommendId } = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPosts }, { elipse_weight: 0.5 });
 
 
 
@@ -44,7 +57,8 @@ export async function loader({ request }:LoaderFunctionArgs){
       likedComments,
       dislikedComments,
       viewedPosts,
-      recommendPosts,
+      recommendedPosts,
+      recommendId,
       CF_TURNSTILE_SITEKEY
     }, {
       headers: {
@@ -70,7 +84,7 @@ async function addSiteViewDataToCookie(request: Request, postId: number){
 }
 
 export default function Component() {
-  const { data, likedPosts, dislikedPosts, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendPosts } = useLoaderData<typeof loader>();
+  const { data, likedPosts, dislikedPosts, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendedPosts, recommendId } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -328,7 +342,7 @@ export default function Component() {
             />
         </div>
         <br/>
-        <RecommendedPosts recommendResult={recommendPosts} />
+        <RecommendedPosts recommendResult={recommendedPosts} recommendId={recommendId} />
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox
@@ -438,7 +452,7 @@ async function handleVotePost(
     }
     session.set("dislikedPosts", [...updatedDislikedPosts, { postId, dislikedAtGMT: votedAtGMTUnixtime }]);
   }
-  
+
   return json(
     { success: true },
     {

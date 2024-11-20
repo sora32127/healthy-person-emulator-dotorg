@@ -2,17 +2,17 @@ import type { RecommendResult } from "~/modules/recommend.server";
 
 import { NavLink } from "@remix-run/react";
 
-export function RecommendedPosts({ recommendResult }: { recommendResult: RecommendResult }) {
+export function RecommendedPosts({ recommendResult, recommendId }: { recommendResult: RecommendResult, recommendId: number }) {
   return (
     <div className="mt-8">
       <h2 className="text-xl font-bold mb-4">あなたにおすすめ</h2>
       
       <div className="overflow-x-auto">
         <div className="flex space-x-4 pb-4">
-          {recommendResult.map((post) => (
+          {recommendResult.map((post, index) => (
             <NavLink 
               key={post.postId} 
-              to={`/archives/${post.postId}`}
+              to={`/archives/${post.postId}?recommendId=${recommendId}&position=${index}`}
               aria-label={`記事「${post.postTitle}」を読む`}
               className="flex-shrink-0 w-64 rounded-lg p-4 bg-base-200
                 transition-colors duration-200 ease-in-out
