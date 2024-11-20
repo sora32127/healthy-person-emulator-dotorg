@@ -53,7 +53,7 @@ type RecommendParameters = z.infer<typeof RecommendParametersSchema>;
 const RecommendResultSchema = z.array(z.object({
     postId: z.number(),
     postTitle: z.string(),
-    postDateGmt: z.date(),
+    postDateGmt: z.string(),
     countLikes: z.number(),
 }))
 export type RecommendResult = z.infer<typeof RecommendResultSchema>;
@@ -92,7 +92,7 @@ async function getRecommendedPostsFromDB(weightsArray: { postId: number, weight:
     const results = await prisma.$queryRaw<Array<{
         post_id: number,
         post_title: string,
-        post_date_gmt: Date,
+        post_date_gmt: string,
         count_likes: number
     }>>`SELECT * FROM get_recommended_posts(${weightsArray}::jsonb[])`;
 
