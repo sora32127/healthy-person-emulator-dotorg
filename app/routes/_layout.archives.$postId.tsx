@@ -20,71 +20,20 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
-import { getRecommendPosts } from "~/modules/recommend.server";
-import { RecommendedPosts } from "~/components/RecommendedPosts";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
     const postId = Number(url.pathname.split("/")[2]);
-    const paramRecommendId = Number(url.searchParams.get("recommendId"));
-    const paramPosition = Number(url.searchParams.get("position"));
-
-    if (paramRecommendId !== 0 && !Number.isNaN(paramPosition)){
-      await prisma.fctRecommendViewHistory.create({
-        data: {
-          recommendId: paramRecommendId,
-          position: paramPosition,
-          postId: postId,
-        }
-      })
-    }
-
     const data = await ArchiveDataEntry.getData(postId);
-    const session = await addSiteViewDataToCookie(request, postId);
-    const { likedPosts, dislikedPosts, likedComments, dislikedComments, viewedPosts } = await getUserActivityData(request);
-    const viewedAtGMTUnixtime = new Date().getTime();
-    const updatedViewedPosts = [...viewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }];
-
-    const { recommendedPosts, recommendId } = await getRecommendPosts({ viewedPosts: updatedViewedPosts, likedPosts: likedPosts }, { elipse_weight: 0.5 });
-
-
+    const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
     const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
-    return json({
-      data,
-      likedPosts,
-      dislikedPosts,
-      likedComments,
-      dislikedComments,
-      viewedPosts,
-      recommendedPosts,
-      recommendId,
-      CF_TURNSTILE_SITEKEY
-    }, {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    });
-}
 
-async function addSiteViewDataToCookie(request: Request, postId: number){
-    const session = await getSession(request.headers.get("Cookie"));
-    const viewedAtGMTUnixtime = new Date().getTime();
-    const currentViewedPosts = session.get("viewedPosts") || [];
-    // 15記事以上ある場合は、古いものから削除する
-    // Cookieの容量を抑えるための措置
-    if (currentViewedPosts.length >= 15){
-      currentViewedPosts.shift();
-    }
-
-
-    const updatedViewedPosts = currentViewedPosts.filter((post: { postId: number }) => post.postId !== postId);
-    session.set("viewedPosts", [...updatedViewedPosts, { postId, viewedAtGMT: viewedAtGMTUnixtime }]);
-    return session;
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { data, likedPosts, dislikedPosts, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, recommendedPosts, recommendId } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [commentAuthor, setCommentAuthor] = useState("Anonymous");
   const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
@@ -97,8 +46,8 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPosts.some((post: { postId: number, likedAtGMT: number }) => post.postId === data.postId);
-  const isDisliked = dislikedPosts.some((post: { postId: number, dislikedAtGMT: number }) => post.postId === data.postId);
+  const isLiked = likedPages.includes(data.postId);
+  const isDisliked = dislikedPages.includes(data.postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -342,7 +291,6 @@ export default function Component() {
             />
         </div>
         <br/>
-        <RecommendedPosts recommendResult={recommendedPosts} recommendId={recommendId} />
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox
@@ -435,24 +383,11 @@ async function handleVotePost(
   });
 
   const session = await getSession(request.headers.get("Cookie"));
-  const votedAtGMTUnixtime = new Date().getTime();
-
   if (voteType === "like") {
-    const currentLikedPosts = session.get("likedPosts") || [];
-    const updatedLikedPosts = currentLikedPosts.filter((post: { postId: number }) => post.postId !== postId);
-    if (updatedLikedPosts.length >= 15){
-      updatedLikedPosts.shift();
-    }
-    session.set("likedPosts", [...updatedLikedPosts, { postId, likedAtGMT: votedAtGMTUnixtime }]);
+    session.set("likedPages", [...(session.get("likedPages") || []), postId]);
   } else if (voteType === "dislike") {
-    const currentDislikedPosts = session.get("dislikedPosts") || [];
-    const updatedDislikedPosts = currentDislikedPosts.filter((post: { postId: number }) => post.postId !== postId);
-    if (updatedDislikedPosts.length >= 15){
-      updatedDislikedPosts.shift();
-    }
-    session.set("dislikedPosts", [...updatedDislikedPosts, { postId, dislikedAtGMT: votedAtGMTUnixtime }]);
+    session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
   }
-
   return json(
     { success: true },
     {
