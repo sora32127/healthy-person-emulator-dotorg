@@ -83,6 +83,8 @@ export default function App() {
 
   const clearInputs = () => {
     methods.reset();
+    window.localStorage.removeItem(formId);
+    window.location.reload();
   }
 
   useEffect(() => {
