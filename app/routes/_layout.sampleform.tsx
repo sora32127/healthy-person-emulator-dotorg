@@ -1,4 +1,4 @@
-import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray } from "react-hook-form"
+import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray, useFormState, FieldErrors } from "react-hook-form"
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,22 +14,22 @@ import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
     situations: z.object({
-        who: z.string(),
-        what: z.string(),
-        when: z.string(),
-        where: z.string(),
-        why: z.string(),
-        how: z.string(),
+        who: z.string().min(3, { message: "5W1H+Then状況説明>「誰が」は必須です" }),
+        what: z.string().min(3, { message: "5W1H+Then状況説明>「何を」は必須です" }),
+        when: z.string().min(3, { message: "5W1H+Then状況説明>「いつ」は必須です" }),
+        where: z.string().min(3, { message: "5W1H+Then状況説明>「どこで」は必須です" }),
+        why: z.string().min(3, { message: "5W1H+Then状況説明>「なぜ」は必須です" }),
+        how: z.string().min(3, { message: "5W1H+Then状況説明>「どうやって」は必須です" }),
         // biome-ignore lint/suspicious/noThenProperty: <explanation>
-        then: z.string(),
+        then: z.string().min(1, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
         assumption: z.array(z.string()).optional(),
     }),
-    reflection: z.array(z.string()).optional(),
-    counterReflection: z.array(z.string()).optional(),
-    note: z.string().optional(),
+    reflection: z.array(z.string()).min(1, { message: "「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください" }),
+    counterReflection: z.array(z.string()).min(1, { message: "「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください" }),
+    note: z.array(z.string()).optional(),
     selectedTags: z.array(z.string()).optional(),
     createdTags: z.array(z.string()).optional(),
-    title: z.string().min(1, { message: "タイトルは必須です" }),
+    title: z.array(z.string()).min(3, { message: "タイトルは必須です" }),
 });
 
 type Inputs = z.infer<typeof postFormSchema>;
@@ -93,8 +93,7 @@ export default function App() {
     }, 5000);
   }, [methods.getValues]);
 
-  const postCategory = methods.watch("postCategory");
-
+  const postCategory = methods.watch("postCategory");;
 
   return (
     <>
@@ -342,7 +341,6 @@ function DynamicTextInput({ description, registerKey = "situations.assumption" }
 
 function StaticTextInput({ rowNumber, title, placeholders, description, registerKey }: { rowNumber: number, title: string, placeholders: string[], description: string, registerKey: string }){
     const { register } = useFormContext();
-    console.log(registerKey);
     const renderTextInputs = () => {
         const inputs = [];
         for (let i = 0; i < rowNumber; i++) {
