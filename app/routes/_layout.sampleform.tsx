@@ -10,28 +10,42 @@ import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getTagsCounts } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
+import { Modal } from "~/components/Modal";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
     situations: z.object({
-        who: z.string().min(3, { message: "5W1H+Then状況説明>「誰が」は必須です" }),
-        what: z.string().min(3, { message: "5W1H+Then状況説明>「何を」は必須です" }),
-        when: z.string().min(3, { message: "5W1H+Then状況説明>「いつ」は必須です" }),
-        where: z.string().min(3, { message: "5W1H+Then状況説明>「どこで」は必須です" }),
-        why: z.string().min(3, { message: "5W1H+Then状況説明>「なぜ」は必須です" }),
-        how: z.string().min(3, { message: "5W1H+Then状況説明>「どうやって」は必須です" }),
+        who: z.string().min(10, { message: "5W1H+Then状況説明>「誰が」は必須です" }),
+        what: z.string().min(9, { message: "5W1H+Then状況説明>「何を」は必須です" }),
+        when: z.string().min(8, { message: "5W1H+Then状況説明>「いつ」は必須です" }),
+        where: z.string().min(7, { message: "5W1H+Then状況説明>「どこで」は必須です" }),
+        why: z.string().min(6, { message: "5W1H+Then状況説明>「なぜ」は必須です" }),
+        how: z.string().min(5, { message: "5W1H+Then状況説明>「どうやって」は必須です" }),
         // biome-ignore lint/suspicious/noThenProperty: <explanation>
-        then: z.string().min(1, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
+        then: z.string().min(4, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
         assumption: z.array(z.string()).optional(),
     }),
-    reflection: z.array(z.string()).min(1, { message: "「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください" }),
-    counterReflection: z.array(z.string()).min(1, { message: "「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください" }),
+    reflection: z.array(z.string()).min(0, { message: "「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください" }),
+    counterReflection: z.array(z.string()).min(0, { message: "「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください" }),
     note: z.array(z.string()).optional(),
     selectedTags: z.array(z.string()).optional(),
     createdTags: z.array(z.string()).optional(),
     title: z.array(z.string())
-    .min(3, { message: "タイトルは必須です" })
-    .refine((value) => !value.includes('#'), { message: "タイトルに「#」（ハッシュタグ）を含めることはできません。" }),
+    .superRefine((value, ctx) => {
+      if (value.some((v) => v.includes('#'))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'タイトルに「#」（ハッシュタグ）を含めることはできません。',
+        })
+      }
+
+      if (value.every((v) => v.length < 10)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'タイトルは必須です',
+        })
+      }
+    })
 });
 
 type Inputs = z.infer<typeof postFormSchema>;
@@ -71,7 +85,7 @@ export default function App() {
   
   const formId = "post-form";
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+
   const getStoredValues = (): Inputs => {
     if (typeof window === "undefined") return { title: "", postCategory: "misDeed" };
     const stored = window.localStorage.getItem(formId);
@@ -88,6 +102,7 @@ export default function App() {
     window.localStorage.removeItem(formId);
     window.location.reload();
   }
+  const onSubmit: SubmitHandler<Inputs> = (data) => methods.trigger();  
 
   useEffect(() => {
     setInterval(() => {
@@ -97,7 +112,7 @@ export default function App() {
     }, 5000);
   }, [methods.getValues]);
 
-  const postCategory = methods.watch("postCategory");;
+  const postCategory = methods.watch("postCategory");
 
   return (
     <>
@@ -131,7 +146,7 @@ export default function App() {
                 rowNumber={3}
                 title="どうすればよかったか"
                 placeholders={["冗談に対してただ笑うべきだった","詠ませた後もその句を大げさに褒めるなどして微妙な空気にさせないべきだった"]}
-                description="5W1H状況説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
+                description="5W1H状��説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
                 registerKey="counterReflection"
             />
             </>
@@ -147,7 +162,7 @@ export default function App() {
             <StaticTextInput
                 rowNumber={3}
                 title='やらなかったらどうなっていたか'
-                placeholders={["相手がかけた手間に対して敬意を払わないことは相手を無下に扱っていることと等しい。", "関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない"]}
+                placeholders={["相手がかけた手間に対して敬意を��わないことは相手を無下に扱っていることと等しい。", "関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない"]}
                 description='仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構わない。'
                 registerKey="counterReflection"
             />
@@ -174,6 +189,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
+        <PostButton />
       </Form>
       </FormProvider>
     </div>
@@ -202,8 +218,7 @@ function TextTypeSwitcher(){
 
 
 function SituationInput(){
-    const { register } = useFormContext();
-    const { control } = useFormContext();
+    const { control, register, formState: { errors } } = useFormContext();
     const postCategory = useWatch({ control, name: "postCategory" });
 
     const placeholder = postCategory === "misDeed" ? [
@@ -297,6 +312,7 @@ function SituationInput(){
           },
         ];
 
+
     return (
         <div className="mb-8">
             <H3>5W1H+Then状況説明</H3>
@@ -316,6 +332,9 @@ function SituationInput(){
                             className="w-full px-3 py-2 text-base-content border rounded-lg focus:outline-none placeholder-slate-500"
                             {...register(`situations.${data.key}`)}
                         />
+                        <div>
+                        {errors.situations?.[data.key] && <ErrorMessageContainer errormessage={errors.situations?.[data.key]?.message as string} />}
+                        </div>
                     </div>
                 )
             })}
@@ -346,17 +365,22 @@ function DynamicTextInput({ description, registerKey = "situations.assumption" }
 }
 
 function StaticTextInput({ rowNumber, title, placeholders, description, registerKey }: { rowNumber: number, title: string, placeholders: string[], description: string, registerKey: string }){
-    const { register } = useFormContext();
+    const { register, formState: { errors }
+   } = useFormContext();
+   console.log(errors[registerKey])
     const renderTextInputs = () => {
         const inputs = [];
         for (let i = 0; i < rowNumber; i++) {
             inputs.push(
+              <div className="w-full">
                 <textarea
                     key={`${title}-input-${i}`}
                     className="flex-grow px-3 py-2 border rounded-lg focus:outline-none w-full my-2 placeholder-slate-500"
                     placeholder={placeholders[i]}
                     {...register(`${registerKey}.${i}`)}
                 />
+                {errors[registerKey] && <ErrorMessageContainer errormessage={errors[registerKey]?.root?.message as string} />}
+              </div>
             )
         }
         return inputs;
@@ -370,4 +394,37 @@ function StaticTextInput({ rowNumber, title, placeholders, description, register
             </div>
         </div>
     )
+}
+
+function ErrorMessageContainer({errormessage}: {errormessage: string}){
+  return (
+    <div>
+      <p className="text-error">
+        [!] {errormessage}
+      </p>
+    </div>
+  )
+}
+
+function PostButton(){
+  const [showModal, setShowModal] = useState(false);
+  const { formState: { errors }, control, trigger } = useFormContext();
+  const handleModalOpen = async (isOpen: boolean) => {
+    const isValid = await trigger();
+    setShowModal(isOpen);
+  }
+
+
+  return (
+    <>
+    <button type="button" className="btn btn-primary" onClick={() => handleModalOpen(true)}>投稿する</button>
+    <Modal isOpen={showModal} onClose={() => handleModalOpen(false)} title="投稿する" showCloseButton={false}>
+      <div className="flex flex-col gap-4"> 
+        <div className="flex flex-col">
+          <p>内容</p>
+        </div>
+      </div>
+    </Modal>
+    </>
+  )
 }
