@@ -29,7 +29,9 @@ const postFormSchema = z.object({
     note: z.array(z.string()).optional(),
     selectedTags: z.array(z.string()).optional(),
     createdTags: z.array(z.string()).optional(),
-    title: z.array(z.string()).min(3, { message: "タイトルは必須です" }),
+    title: z.array(z.string())
+    .min(3, { message: "タイトルは必須です" })
+    .refine((value) => !value.includes('#'), { message: "タイトルに「#」（ハッシュタグ）を含めることはできません。" }),
 });
 
 type Inputs = z.infer<typeof postFormSchema>;
