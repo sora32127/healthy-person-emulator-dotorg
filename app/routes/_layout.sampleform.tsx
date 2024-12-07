@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, json, NavLink, useLoaderData } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
-import ClearLocalStorageButton from "~/components/SubmitFormComponents/ClearLocalStorageButton";
+import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getTagsCounts } from "~/modules/db.server";
@@ -108,7 +108,9 @@ export default function App() {
             className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
             to="/freeStylePost"
         >自由投稿フォームに移動</NavLink>
-        <ClearLocalStorageButton clearInputs={clearInputs}/>
+        <div className="flex justify-start mt-6">
+          <ClearFormButton clearInputs={clearInputs}/>
+        </div>
         <br/>
         <TextTypeSwitcher />
         <SituationInput />

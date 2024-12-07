@@ -14,7 +14,7 @@ import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ValidationCheckBox from '~/components/SubmitFormComponents/ValidationCheckBox';
 import TextTypeSwitcher from '~/components/SubmitFormComponents/TextTypeSwitcher';
-import ClearLocalStorageButton from '~/components/SubmitFormComponents/ClearLocalStorageButton';
+import ClearFormButton from '~/components/SubmitFormComponents/ClearFormButton';
 import { Modal } from '~/components/Modal';
 
 import { prisma } from '~/modules/db.server';

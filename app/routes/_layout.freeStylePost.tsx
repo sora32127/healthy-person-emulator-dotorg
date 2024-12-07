@@ -9,7 +9,7 @@ import { prisma } from "~/modules/db.server";
 import { marked } from 'marked';
 import { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { createEmbedding } from "~/modules/embedding.server";
-import ClearLocalStorageButton from "~/components/SubmitFormComponents/ClearLocalStorageButton";
+import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 interface Tag {
