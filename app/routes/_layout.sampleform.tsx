@@ -11,6 +11,8 @@ import { getTagsCounts } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
+import type { ActionFunctionArgs } from "@remix-run/node";
+import { useSubmit } from "@remix-run/react";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -102,7 +104,18 @@ export default function App() {
     window.localStorage.removeItem(formId);
     window.location.reload();
   }
-  const onSubmit: SubmitHandler<Inputs> = (data) => methods.trigger();  
+  const submit = useSubmit();
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    const formData = new FormData();
+    formData.append("_action", "firstSubmit");
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, JSON.stringify(value));
+    }
+        submit(formData, {
+      method: "post",
+      action: "/sampleform",
+    });
+  };  
 
   useEffect(() => {
     setInterval(() => {
@@ -146,7 +159,7 @@ export default function App() {
                 rowNumber={3}
                 title="どうすればよかったか"
                 placeholders={["冗談に対してただ笑うべきだった","詠ませた後もその句を大げさに褒めるなどして微妙な空気にさせないべきだった"]}
-                description="5W1H状��説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
+                description="5W1H状説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
                 registerKey="counterReflection"
             />
             </>
@@ -162,7 +175,7 @@ export default function App() {
             <StaticTextInput
                 rowNumber={3}
                 title='やらなかったらどうなっていたか'
-                placeholders={["相手がかけた手間に対して敬意を��わないことは相手を無下に扱っていることと等しい。", "関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない"]}
+                placeholders={["相手がかけた手間に対して敬意をわないことは相手を無下に扱っていることと等しい。", "関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない"]}
                 description='仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構わない。'
                 registerKey="counterReflection"
             />
@@ -189,7 +202,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PostButton />
+        <input type="submit" className="btn btn-primary" />
       </Form>
       </FormProvider>
     </div>
@@ -367,7 +380,6 @@ function DynamicTextInput({ description, registerKey = "situations.assumption" }
 function StaticTextInput({ rowNumber, title, placeholders, description, registerKey }: { rowNumber: number, title: string, placeholders: string[], description: string, registerKey: string }){
     const { register, formState: { errors }
    } = useFormContext();
-   console.log(errors[registerKey])
     const renderTextInputs = () => {
         const inputs = [];
         for (let i = 0; i < rowNumber; i++) {
@@ -406,25 +418,90 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
   )
 }
 
-function PostButton(){
-  const [showModal, setShowModal] = useState(false);
-  const { formState: { errors }, control, trigger } = useFormContext();
-  const handleModalOpen = async (isOpen: boolean) => {
-    const isValid = await trigger();
-    setShowModal(isOpen);
+
+
+export async function action({ request }:ActionFunctionArgs){
+  const formData = await request.formData();
+  const actionType = formData.get("_action");
+  const postData = Object.fromEntries(formData);
+  const parsedData = {
+    ...postData,
+    postCategory: JSON.parse(postData.postCategory as string),
+    situations: JSON.parse(postData.situations as string),
+    reflection: JSON.parse(postData.reflection as string),
+    counterReflection: JSON.parse(postData.counterReflection as string),
+    note: JSON.parse(postData.note as string),
+    selectedTags: JSON.parse(postData.selectedTags as string),
+    title: JSON.parse(postData.title as string),
+  } as unknown as Inputs;
+
+  if (actionType === "firstSubmit"){
+    try{  
+      const html = await Wikify(parsedData);
+      const data = await html.json();
+      return json({
+        success: "success",
+        data: data.data,
+        error: undefined,
+      });
+    } catch (error) {
+      return json({
+        success: "failed",
+        data: undefined,
+        error: "Wikify failed",
+      });
+    }
+  }
+}
+
+async function Wikify(postData: Inputs){
+  // バリデーションを実施
+  const validationResult = postFormSchema.safeParse(postData);
+  if (!validationResult.success) {
+    return json({
+      success: false,
+      error: validationResult.error.errors,
+      data: undefined,
+    });
   }
 
+  const { who, when, where, why, what, how, then, assumption } = validationResult.data.situations;
+  const { reflection, counterReflection } = validationResult.data;
+  const { title, note, selectedTags, createdTags, postCategory } = validationResult.data;
 
-  return (
-    <>
-    <button type="button" className="btn btn-primary" onClick={() => handleModalOpen(true)}>投稿する</button>
-    <Modal isOpen={showModal} onClose={() => handleModalOpen(false)} title="投稿する" showCloseButton={false}>
-      <div className="flex flex-col gap-4"> 
-        <div className="flex flex-col">
-          <p>内容</p>
-        </div>
-      </div>
-    </Modal>
-    </>
-  )
+  const result = `
+    <h3>5W1H+Then状況説明</h3>
+    <table><tbody>
+      <tr><td>Who(誰が)</td><td>${who}</td></tr>
+      <tr><td>When(いつ)</td><td>${when}</td></tr>
+      <tr><td>Where(どこで)</td><td>${where}</td></tr>
+      <tr><td>Why(なぜ)</td><td>${why}</td></tr>
+      <tr><td>What(何を)</td><td>${what}</td></tr>
+      <tr><td>How(どのように)</td><td>${how}</td></tr>
+      <tr><td>Then(どうした)</td><td>${then}</td></tr>
+    </tbody></table>
+    ${assumption && assumption.length > 0 ? `
+      <h3>前提条件</h3>
+      <ul>
+        ${assumption?.map((assumption) => `<li>${assumption}</li>`).join('')}
+      </ul>
+      ` : ''}
+    <h3>
+      ${postCategory === "misDeed" ? "健常行動ブレイクポイント" : postCategory === "goodDeed" ? "なぜやってよかったのか" : ""}
+    </h3>
+    <ul>
+      ${reflection?.map((reflection) => `<li>${reflection}</li>`).join('')}
+    </ul>
+    <h3>
+      ${postCategory === "misDeed" ? "どうすればよかったか" : postCategory === "goodDeed" ? "やらなかったらどうなっていたか" : ""}
+    </h3>
+    <ul>
+      ${counterReflection?.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
+    </ul>
+    ${note && note.length > 0 ? `
+      <h3>備考</h3>
+      <p>${note}</p>
+    ` : ''}
+  `
+  return json({ success: true, error: undefined, data: result });
 }
