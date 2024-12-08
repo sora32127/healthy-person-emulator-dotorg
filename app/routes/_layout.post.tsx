@@ -430,33 +430,27 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
   const { getValues, formState: { errors, isValid }, trigger } = useFormContext();
   const submit = useSubmit();
 
-  function MakeToastMessage(errors: FieldErrors<FieldValues>): string {
+  function MakeToastMessage(errors: z.ZodIssue[]): string {
     let errorMessage = "";
-    if (errors.situations){
-      for (const [key, value] of Object.entries(errors.situations)){
-        errorMessage += `- ${value?.message}\n`;
-      }
-    }
-
-    for (const [key, value] of Object.entries(errors)){
-      if (key !== "situations" && key !== undefined){
-        errorMessage += `- ${value?.root?.message}\n`;
-      }
+    if (errors.length > 0){
+      errorMessage = errors.map((error) => `- ${error.message}`).join("\n");
     }
     return errorMessage;
   }
 
   const toastNotify = (errorMessage: string) => toast.error(errorMessage);
 
-  const handleFirstSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFirstSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const isValid = await trigger();
-    if (!isValid) {
-      const errorMessage = MakeToastMessage(errors);
+    await trigger();
+    const inputData = getValues();
+    const zodErrors = postFormSchema.safeParse(inputData);
+    if (!zodErrors.success){
+      const errorMessage = MakeToastMessage(zodErrors.error.issues);
       toastNotify(errorMessage);
       return;
     }
-
+  
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "firstSubmit");
