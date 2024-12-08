@@ -7,12 +7,14 @@ import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { getTagsCounts } from "~/modules/db.server";
+import { getTagsCounts, prisma } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
+import { getClientIPAddress } from "remix-utils/get-client-ip-address";
+import { createEmbedding } from "~/modules/embedding.server";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -461,10 +463,8 @@ function PreviewButton({ wikifyResult }: { wikifyResult: string }){
 
 
 export async function action({ request }:ActionFunctionArgs){
-  console.log("action invoked");
   const formData = await request.formData();
   const actionType = formData.get("_action");
-  console.log("actionType: ", actionType);
   const postData = Object.fromEntries(formData);
   const parsedData = {
     ...postData,
@@ -496,10 +496,73 @@ export async function action({ request }:ActionFunctionArgs){
   }
 
   if (actionType === "secondSubmit"){
-    console.log("secondSubmit");
-    console.log(parsedData);
-    return json({ success: true, error: undefined, data: undefined });
+    const html = await Wikify(parsedData);
+    const data = await html.json();
+    const isSuccess = data.success;
+    const wikifyResult = data.data;
+    const postTitle = parsedData.title[0];
+    const createdTags = parsedData.createdTags;
+    const selectedTags = parsedData.selectedTags;
+    if (!wikifyResult) {
+      return json({ success: false, error: "Wikify failed", data: undefined });
+    }
+
+    if (isSuccess){
+      const hashedUserIpAddress = await getHashedUserIPAddress(request);
+      if (data.data === undefined){
+        return json({ success: false, error: "Wikify failed", data: undefined });
+      }
+      const newPost = await prisma.$transaction(async (prisma) => {
+        const newPost = await prisma.dimPosts.create({
+          data: {
+            postAuthorIPHash: hashedUserIpAddress,
+            postContent: wikifyResult,
+            postTitle: postTitle,
+            countLikes: 0,
+            countDislikes: 0,
+            commentStatus: "open",
+        },
+        });
+        const uniqueTags = [...new Set([...selectedTags || [], ...createdTags || []])];
+        const existingTags = await prisma.dimTags.findMany({
+            where: {
+                tagName: {
+                    in: uniqueTags,
+                },
+            },
+        });
+        const existingTagNames = existingTags.map((tag) => tag.tagName);
+        const newTagNames = uniqueTags.filter((tag) => !existingTagNames.includes(tag));
+        const newTags = await Promise.all(newTagNames.map(async (tagName) => {
+          return await prisma.dimTags.create({ data: { tagName } });
+        }));
+        const allTags = [...existingTags, ...newTags];
+        await Promise.all(allTags.map(async (tag) => {
+          return await prisma.relPostTags.create({ data: { postId: newPost.postId, tagId: tag.tagId } });
+        }));
+        return newPost;
+      });
+
+      await createEmbedding({
+        postId: Number(newPost.postId),
+        postContent: newPost.postContent,
+        postTitle: newPost.postTitle,
+      });
+      return json({ success: true, error: undefined, data: newPost });
+    }
+    return json({ success: false, error: data.error, data: undefined });
   }
+}
+
+async function getHashedUserIPAddress(request: Request){
+  const ipAddress = getClientIPAddress(request) || "";
+  const postUserIpHash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(ipAddress)
+  );
+  const hashArray = Array.from(new Uint8Array(postUserIpHash));
+  const postUserIpHashString = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return postUserIpHashString;
 }
 
 async function Wikify(postData: Inputs){
@@ -535,25 +598,38 @@ async function Wikify(postData: Inputs){
     ${assumption && assumption.length > 0 ? `
       <h3>前提条件</h3>
       <ul>
-        ${removeEmptyString(assumption)?.map((assumption) => `<li>${assumption}</li>`).join('')}
+        ${removeEmptyString(assumption)?.map((assumption) => `<li>${assumption}</li>`).join('\n')}
       </ul>
       ` : ''}
     <h3>
       ${postCategory === "misDeed" ? "健常行動ブレイクポイント" : postCategory === "goodDeed" ? "なぜやってよかったのか" : ""}
     </h3>
     <ul>
-      ${removeEmptyString(reflection)?.map((reflection) => `<li>${reflection}</li>`).join('')}
+      ${removeEmptyString(reflection)?.map((reflection) => `<li>${reflection}</li>`).join('\n')}
     </ul>
     <h3>
       ${postCategory === "misDeed" ? "どうすればよかったか" : postCategory === "goodDeed" ? "やらなかったらどうなっていたか" : ""}
     </h3>
     <ul>
-      ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
+      ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('\n')}
     </ul>
     ${note && note.length > 0 ? `
       <h3>備考</h3>
-      ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('')}
+      ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('\n')}
     ` : ''}
   `
   return json({ success: true, error: undefined, data: result });
 }
+
+
+/*
+export const meta: MetaFunction = () => {
+  const commonMeta = commonMetaFunction({
+      title : "投稿する",
+      description : "テンプレートに沿って投稿する",
+      url: "https://healthy-person-emulator.org/post",
+      image: null
+  });
+  return commonMeta;
+};
+*/
