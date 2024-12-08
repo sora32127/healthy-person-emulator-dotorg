@@ -422,6 +422,19 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
 
 function PreviewButton({ wikifyResult }: { wikifyResult: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const { getValues } = useFormContext();
+  const submit = useSubmit();
+
+  const handleSubmit = () => {
+    const data = getValues() as Inputs;
+    const formData = new FormData();
+    formData.append("_action", "secondSubmit");
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, JSON.stringify(value));
+    }
+    submit(formData, { method: "post", action: "/sampleform" });
+  }
+
 
   return (
     <div className="flex justify-end">
@@ -438,7 +451,7 @@ function PreviewButton({ wikifyResult }: { wikifyResult: string }){
         </div>
         <div className="flex justify-between mt-6">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
-          <button type="submit" className="btn btn-primary">投稿する</button>
+          <button type="button" onClick={handleSubmit} className="btn btn-primary">投稿する</button>
         </div>
       </Modal>
     </div>
@@ -448,8 +461,10 @@ function PreviewButton({ wikifyResult }: { wikifyResult: string }){
 
 
 export async function action({ request }:ActionFunctionArgs){
+  console.log("action invoked");
   const formData = await request.formData();
   const actionType = formData.get("_action");
+  console.log("actionType: ", actionType);
   const postData = Object.fromEntries(formData);
   const parsedData = {
     ...postData,
@@ -478,6 +493,12 @@ export async function action({ request }:ActionFunctionArgs){
         error: "Wikify failed",
       });
     }
+  }
+
+  if (actionType === "secondSubmit"){
+    console.log("secondSubmit");
+    console.log(parsedData);
+    return json({ success: true, error: undefined, data: undefined });
   }
 }
 
