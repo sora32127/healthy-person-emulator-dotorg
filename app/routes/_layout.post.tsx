@@ -33,8 +33,24 @@ const postFormSchema = z.object({
         then: z.string().min(1, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
         assumption: z.array(z.string()).optional(),
     }),
-    reflection: z.array(z.string()).min(0, { message: "「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください" }),
-    counterReflection: z.array(z.string()).min(0, { message: "「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください" }),
+    reflection: z.array(z.string())
+    .superRefine((value, ctx) => {
+      if (value.every((v) => v.length < 1)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください',
+        })
+      }
+    }),
+    counterReflection: z.array(z.string())
+    .superRefine((value, ctx) => {
+      if (value.every((v) => v.length < 1)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください',
+        })
+      }
+    }),
     note: z.array(z.string()).optional(),
     selectedTags: z.array(z.string()).optional(),
     createdTags: z.array(z.string()).optional(),
