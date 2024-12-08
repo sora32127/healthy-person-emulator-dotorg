@@ -1,4 +1,4 @@
-import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray, useFormState, FieldErrors } from "react-hook-form"
+import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray, useFormState, FieldErrors, FieldValues } from "react-hook-form"
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,7 @@ import { createEmbedding } from "~/modules/embedding.server";
 import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
+import { toast, Toaster } from "react-hot-toast";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -426,10 +427,32 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
 
 function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResult: string } }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, formState: { errors, isValid } } = useFormContext();
+  const { getValues, formState: { errors, isValid }, trigger } = useFormContext();
   const submit = useSubmit();
 
-  const handleFirstSubmit = () => {
+  function MakeToastMessage(errors: FieldErrors<FieldValues>): string {
+    let errorMessage = "";
+    if (errors.situations){
+      for (const [key, value] of Object.entries(errors.situations)){
+        errorMessage += `- ${value?.message}\n`;
+      }
+    }
+
+    for (const [key, value] of Object.entries(errors)){
+      if (key !== "situations" && key !== undefined){
+        errorMessage += `- ${value?.root?.message}\n`;
+      }
+    }
+    return errorMessage;
+  }
+
+  const toastNotify = (errorMessage: string) => toast.error(errorMessage);
+
+  const handleFirstSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    trigger();
+    event.preventDefault();
+    const errorMessage = MakeToastMessage(errors);
+    toastNotify(errorMessage);
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "firstSubmit");
@@ -457,10 +480,10 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
     }
   }
 
-
   return (
     <div className="flex justify-end">
       <button type="submit" onClick={handleFirstSubmit} className="btn btn-primary">投稿する</button>
+      <Toaster />
       <Modal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
