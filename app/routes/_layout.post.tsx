@@ -515,7 +515,8 @@ export async function action({ request }:ActionFunctionArgs){
     reflection: JSON.parse(postData.reflection as string),
     counterReflection: JSON.parse(postData.counterReflection as string),
     note: JSON.parse(postData.note as string),
-    selectedTags: JSON.parse(postData.selectedTags as string),
+    selectedTags: JSON.parse(postData.selectedTags as string || "[]"),
+    createdTags: JSON.parse(postData.createdTags as string || "[]"),
     title: JSON.parse(postData.title as string),
   } as unknown as Inputs;
 
