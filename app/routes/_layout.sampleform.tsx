@@ -496,6 +496,10 @@ async function Wikify(postData: Inputs){
   const { reflection, counterReflection } = validationResult.data;
   const { title, note, selectedTags, createdTags, postCategory } = validationResult.data;
 
+  function removeEmptyString(array: string[]): string[] {
+    return array.filter((value) => !/^\s*$/.test(value));
+  }
+
   const result = `
     <h3>5W1H+Then状況説明</h3>
     <table><tbody>
@@ -510,24 +514,24 @@ async function Wikify(postData: Inputs){
     ${assumption && assumption.length > 0 ? `
       <h3>前提条件</h3>
       <ul>
-        ${assumption?.map((assumption) => `<li>${assumption}</li>`).join('')}
+        ${removeEmptyString(assumption)?.map((assumption) => `<li>${assumption}</li>`).join('')}
       </ul>
       ` : ''}
     <h3>
       ${postCategory === "misDeed" ? "健常行動ブレイクポイント" : postCategory === "goodDeed" ? "なぜやってよかったのか" : ""}
     </h3>
     <ul>
-      ${reflection?.map((reflection) => `<li>${reflection}</li>`).join('')}
+      ${removeEmptyString(reflection)?.map((reflection) => `<li>${reflection}</li>`).join('')}
     </ul>
     <h3>
       ${postCategory === "misDeed" ? "どうすればよかったか" : postCategory === "goodDeed" ? "やらなかったらどうなっていたか" : ""}
     </h3>
     <ul>
-      ${counterReflection?.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
+      ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('')}
     </ul>
     ${note && note.length > 0 ? `
       <h3>備考</h3>
-      <p>${note}</p>
+      ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('')}
     ` : ''}
   `
   return json({ success: true, error: undefined, data: result });
