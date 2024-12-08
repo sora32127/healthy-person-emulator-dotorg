@@ -23,14 +23,14 @@ import { toast, Toaster } from "react-hot-toast";
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
     situations: z.object({
-        who: z.string().min(10, { message: "5W1H+Then状況説明>「誰が」は必須です" }),
-        what: z.string().min(9, { message: "5W1H+Then状況説明>「何を」は必須です" }),
-        when: z.string().min(8, { message: "5W1H+Then状況説明>「いつ」は必須です" }),
-        where: z.string().min(7, { message: "5W1H+Then状況説明>「どこで」は必須です" }),
-        why: z.string().min(6, { message: "5W1H+Then状況説明>「なぜ」は必須です" }),
-        how: z.string().min(5, { message: "5W1H+Then状況説明>「どうやって」は必須です" }),
+        who: z.string().min(1, { message: "5W1H+Then状況説明>「誰が」は必須です" }),
+        what: z.string().min(1, { message: "5W1H+Then状況説明>「何を」は必須です" }),
+        when: z.string().min(1, { message: "5W1H+Then状況説明>「いつ」は必須です" }),
+        where: z.string().min(1, { message: "5W1H+Then状況説明>「どこで」は必須です" }),
+        why: z.string().min(1, { message: "5W1H+Then状況説明>「なぜ」は必須です" }),
+        how: z.string().min(1, { message: "5W1H+Then状況説明>「どうやって」は必須です" }),
         // biome-ignore lint/suspicious/noThenProperty: <explanation>
-        then: z.string().min(4, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
+        then: z.string().min(1, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }),
         assumption: z.array(z.string()).optional(),
     }),
     reflection: z.array(z.string()).min(0, { message: "「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください" }),
@@ -47,7 +47,7 @@ const postFormSchema = z.object({
         })
       }
 
-      if (value.every((v) => v.length < 3)) {
+      if (value.every((v) => v.length < 1)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'タイトルは必須です',
@@ -448,11 +448,15 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
 
   const toastNotify = (errorMessage: string) => toast.error(errorMessage);
 
-  const handleFirstSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    trigger();
+  const handleFirstSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const errorMessage = MakeToastMessage(errors);
-    toastNotify(errorMessage);
+    const isValid = await trigger();
+    if (!isValid) {
+      const errorMessage = MakeToastMessage(errors);
+      toastNotify(errorMessage);
+      return;
+    }
+
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "firstSubmit");
@@ -460,9 +464,9 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
       formData.append(key, JSON.stringify(value));
     }
     submit(formData, { method: "post", action: "/post" });
-    if (!isValid) return;
     setShowPreviewModal(true);
   }
+
 
   const handleSecondSubmit = () => {
     const data = getValues() as Inputs;
