@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, us
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, json, NavLink, useLoaderData } from "@remix-run/react";
+import { Form, json, NavLink, useActionData, useLoaderData } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
@@ -126,6 +126,7 @@ export default function App() {
   }, [methods.getValues]);
 
   const postCategory = methods.watch("postCategory");
+  const actionData = useActionData<typeof action>();
 
   return (
     <>
@@ -202,7 +203,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <input type="submit" className="btn btn-primary" />
+        <PreviewButton wikifyResult={actionData?.data} />
       </Form>
       </FormProvider>
     </div>
@@ -414,6 +415,32 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
       <p className="text-error">
         [!] {errormessage}
       </p>
+    </div>
+  )
+}
+
+
+function PreviewButton({ wikifyResult }: { wikifyResult: string }){
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  return (
+    <div className="flex justify-end">
+      <button type="submit" onClick={() => setShowPreviewModal(true)} className="btn btn-primary">投稿する</button>
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="投稿内容を確認してください"
+        showCloseButton={false}
+      >
+        <div className="postContent">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
+          <div dangerouslySetInnerHTML={{ __html: wikifyResult }} />
+        </div>
+        <div className="flex justify-between mt-6">
+          <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
+          <button type="submit" className="btn btn-primary">投稿する</button>
+        </div>
+      </Modal>
     </div>
   )
 }
