@@ -15,6 +15,8 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { createEmbedding } from "~/modules/embedding.server";
+import { FaCopy } from "react-icons/fa";
+import { NodeHtmlMarkdown } from "node-html-markdown";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -205,7 +207,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PreviewButton wikifyResult={actionData?.data} />
+        <PreviewButton data={actionData?.data} />
       </Form>
       </FormProvider>
     </div>
@@ -236,7 +238,6 @@ function TextTypeSwitcher(){
 function SituationInput(){
     const { control, register, formState: { errors } } = useFormContext();
     const postCategory = useWatch({ control, name: "postCategory" });
-
     const placeholder = postCategory === "misDeed" ? [
         {
             key: "who",
@@ -422,7 +423,7 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
 }
 
 
-function PreviewButton({ wikifyResult }: { wikifyResult: string }){
+function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResult: string } }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { getValues } = useFormContext();
   const submit = useSubmit();
@@ -437,6 +438,12 @@ function PreviewButton({ wikifyResult }: { wikifyResult: string }){
     submit(formData, { method: "post", action: "/sampleform" });
   }
 
+  const handleCopy = async () => {
+    if (data?.MarkdownResult){
+      navigator.clipboard.writeText(data.MarkdownResult);
+    }
+  }
+
 
   return (
     <div className="flex justify-end">
@@ -449,10 +456,11 @@ function PreviewButton({ wikifyResult }: { wikifyResult: string }){
       >
         <div className="postContent">
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
-          <div dangerouslySetInnerHTML={{ __html: wikifyResult }} />
+          <div dangerouslySetInnerHTML={{ __html: data?.WikifiedResult ?? "" }} />
         </div>
         <div className="flex justify-between mt-6">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
+          <button type="button" onClick={handleCopy} className="btn btn-secondary"><FaCopy /></button>
           <button type="button" onClick={handleSubmit} className="btn btn-primary">投稿する</button>
         </div>
       </Modal>
@@ -499,7 +507,7 @@ export async function action({ request }:ActionFunctionArgs){
     const html = await Wikify(parsedData);
     const data = await html.json();
     const isSuccess = data.success;
-    const wikifyResult = data.data;
+    const wikifyResult = data.data?.WikifiedResult;
     const postTitle = parsedData.title[0];
     const createdTags = parsedData.createdTags;
     const selectedTags = parsedData.selectedTags;
@@ -618,9 +626,9 @@ async function Wikify(postData: Inputs){
       ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('\n')}
     ` : ''}
   `
-  return json({ success: true, error: undefined, data: result });
+  const markdownContent = NodeHtmlMarkdown.translate(result);
+  return json({ success: true, error: undefined, data: { WikifiedResult : result, MarkdownResult : markdownContent } });
 }
-
 
 /*
 export const meta: MetaFunction = () => {
