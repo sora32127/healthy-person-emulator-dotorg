@@ -242,11 +242,17 @@ function TextTypeSwitcher(){
         <div className="mb-4">
             <H3>投稿タイプを選択</H3>
             <p>投稿したい経験知の種類を選択してください。</p>
-            <div className="flex mt-4">
-                <input type="radio" id="misDeed" value="misDeed" {...register("postCategory")} />
-                <label htmlFor="misDeed">結果悪</label>
-                <input type="radio" id="goodDeed" value="goodDeed" {...register("postCategory")} />
-                <label htmlFor="goodDeed">結果善</label>
+            <div className="flex mt-4 rounded-lg border w-full p-4 flex-col gap-y-2">
+                <div className="flex items-center gap-y-2 gap-x-2">
+                    <input type="radio" id="misDeed" value="misDeed" {...register("postCategory")} className="radio radio-primary" />
+                    <label htmlFor="misDeed">結果悪：</label>
+                    <span className="text-sm">やってはいけないこと</span>
+                </div>
+                <div className="flex items-center gap-y-2 gap-x-2">
+                    <input type="radio" id="goodDeed" value="goodDeed" {...register("postCategory")} className="radio radio-primary"/>
+                    <label htmlFor="goodDeed">結果善：</label>
+                    <span className="text-sm">やってよかったこと</span>
+                </div>
             </div>
         </div>
     )
