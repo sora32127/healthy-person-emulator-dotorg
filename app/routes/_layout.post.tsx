@@ -46,7 +46,7 @@ const postFormSchema = z.object({
         })
       }
 
-      if (value.every((v) => v.length < 10)) {
+      if (value.every((v) => v.length < 3)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'タイトルは必須です',
@@ -426,10 +426,22 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
 
 function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResult: string } }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues } = useFormContext();
+  const { getValues, formState: { errors, isValid } } = useFormContext();
   const submit = useSubmit();
 
-  const handleSubmit = () => {
+  const handleFirstSubmit = () => {
+    const data = getValues() as Inputs;
+    const formData = new FormData();
+    formData.append("_action", "firstSubmit");
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, JSON.stringify(value));
+    }
+    submit(formData, { method: "post", action: "/post" });
+    if (!isValid) return;
+    setShowPreviewModal(true);
+  }
+
+  const handleSecondSubmit = () => {
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "secondSubmit");
@@ -448,7 +460,7 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
 
   return (
     <div className="flex justify-end">
-      <button type="submit" onClick={() => setShowPreviewModal(true)} className="btn btn-primary">投稿する</button>
+      <button type="submit" onClick={handleFirstSubmit} className="btn btn-primary">投稿する</button>
       <Modal
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
@@ -462,7 +474,7 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
         <div className="flex justify-between mt-6">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
           <button type="button" onClick={handleCopy} className="btn btn-secondary"><FaCopy /></button>
-          <button type="button" onClick={handleSubmit} className="btn btn-primary">投稿する</button>
+          <button type="button" onClick={handleSecondSubmit} className="btn btn-primary">投稿する</button>
         </div>
       </Modal>
     </div>
