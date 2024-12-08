@@ -475,6 +475,7 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
   const handleCopy = async () => {
     if (data?.MarkdownResult){
       navigator.clipboard.writeText(data.MarkdownResult);
+      toast.success("クリップボードにコピーしました");
     }
   }
 
@@ -492,9 +493,9 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
           <div dangerouslySetInnerHTML={{ __html: data?.WikifiedResult ?? "" }} />
         </div>
-        <div className="flex justify-between mt-6">
+        <div className="flex justify-between mt-6 border-t pt-8 border-gray-200">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
-          <button type="button" onClick={handleCopy} className="btn btn-secondary"><FaCopy /></button>
+          <button type="button" onClick={handleCopy} className="btn btn-circle"><FaCopy /></button>
           <button type="button" onClick={handleSecondSubmit} className="btn btn-primary">投稿する</button>
         </div>
       </Modal>
