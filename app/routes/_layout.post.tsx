@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, us
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, json, NavLink, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, json, NavLink, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
@@ -19,6 +19,7 @@ import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
+import { redirect } from "@remix-run/node";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -447,9 +448,9 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
 }
 
 
-function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResult: string } }){
+function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownResult?: string, postId?: number } }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, formState: { errors, isValid }, trigger } = useFormContext();
+  const { getValues, formState: { errors, isValid, isSubmitSuccessful, isSubmitting }, trigger } = useFormContext();
   const submit = useSubmit();
 
   function MakeToastMessage(errors: z.ZodIssue[]): string {
@@ -483,8 +484,7 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
     setShowPreviewModal(true);
   }
 
-
-  const handleSecondSubmit = () => {
+  const handleSecondSubmit = async () => {
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "secondSubmit");
@@ -493,6 +493,8 @@ function PreviewButton({ data }: { data?: { WikifiedResult: string, MarkdownResu
     }
     submit(formData, { method: "post", action: "/post" });
   }
+
+
 
   const handleCopy = async () => {
     if (data?.MarkdownResult){
@@ -614,7 +616,7 @@ export async function action({ request }:ActionFunctionArgs){
         postContent: newPost.postContent,
         postTitle: newPost.postTitle,
       });
-      return json({ success: true, error: undefined, data: newPost });
+      return redirect(`/archives/${newPost.postId}`);
     }
     return json({ success: false, error: data.error, data: undefined });
   }

@@ -105,7 +105,7 @@ export default function FreeStylePost() {
             <H1>自由記述投稿</H1>
             <p>テンプレートを利用しない、自由形式の記事投稿が可能です。</p>
             <Form method="post">
-            <ClearLocalStorageButton clearInputs={handleConfirmClear} />
+            <ClearFormButton clearInputs={handleConfirmClear} />
             <H2>記事タイトル</H2>
             <input
                 type="text"
