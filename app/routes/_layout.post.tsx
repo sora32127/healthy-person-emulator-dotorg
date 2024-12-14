@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, us
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, json, NavLink, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, json, NavLink, useActionData, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
@@ -19,7 +19,6 @@ import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
-import { redirect } from "@remix-run/node";
 
 const postFormSchema = z.object({
     postCategory: z.enum(["misDeed", "goodDeed"]),
@@ -122,11 +121,6 @@ export default function App() {
     resolver: zodResolver(postFormSchema),
   });
 
-  const clearInputs = () => {
-    methods.reset();
-    window.localStorage.removeItem(formId);
-    window.location.reload();
-  }
   const submit = useSubmit();
   const onSubmit: SubmitHandler<Inputs> = (data) => {
     const formData = new FormData();
@@ -141,15 +135,17 @@ export default function App() {
   };  
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(formId, JSON.stringify(methods.getValues()));
       }
     }, 5000);
+    return () => clearInterval(interval);
   }, [methods.getValues]);
 
   const postCategory = methods.watch("postCategory");
   const actionData = useActionData<typeof action>();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -163,7 +159,7 @@ export default function App() {
             to="/freeStylePost"
         >自由投稿フォームに移動</NavLink>
         <div className="flex justify-start mt-6">
-          <ClearFormButton clearInputs={clearInputs}/>
+          <ClearFormButton clearInputs={() => clearForm(methods.reset)}/>
         </div>
         <br/>
         <TextTypeSwitcher />
@@ -226,7 +222,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PreviewButton data={actionData?.data} />
+        <PreviewButton actionData={actionData} />
       </Form>
       </FormProvider>
     </div>
@@ -447,10 +443,15 @@ function ErrorMessageContainer({errormessage}: {errormessage: string}){
   )
 }
 
+function clearForm(formClear: () => void){
+  formClear();
+  window.localStorage.clear();
+}
 
-function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownResult?: string, postId?: number } }){
+// useActionDataを丸ごと使う
+function PreviewButton({ actionData }: { actionData: typeof action }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, formState: { errors, isValid, isSubmitSuccessful, isSubmitting }, trigger } = useFormContext();
+  const { getValues, formState: { errors, isValid, isSubmitSuccessful, isSubmitting }, trigger, reset } = useFormContext();
   const submit = useSubmit();
 
   function MakeToastMessage(errors: z.ZodIssue[]): string {
@@ -484,6 +485,8 @@ function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownRes
     setShowPreviewModal(true);
   }
 
+  const navigate = useNavigate();
+
   const handleSecondSubmit = async () => {
     const data = getValues() as Inputs;
     const formData = new FormData();
@@ -494,11 +497,20 @@ function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownRes
     submit(formData, { method: "post", action: "/post" });
   }
 
+  useEffect(() => {
+    if (actionData?.success && actionData?.data?.postId){
+      toast.success("投稿が完了しました。リダイレクトします...");
+      setTimeout(() => {
+        navigate(`/archives/${actionData.data.postId}`);
+        clearForm(reset);
+      }, 2000);
+    }
+  }, [actionData, navigate, reset])
 
 
   const handleCopy = async () => {
-    if (data?.MarkdownResult){
-      navigator.clipboard.writeText(data.MarkdownResult);
+    if (actionData?.data?.MarkdownResult){
+      navigator.clipboard.writeText(actionData.data.MarkdownResult);
       toast.success("クリップボードにコピーしました");
     }
   }
@@ -515,7 +527,7 @@ function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownRes
       >
         <div className="postContent">
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
-          <div dangerouslySetInnerHTML={{ __html: data?.WikifiedResult ?? "" }} />
+          <div dangerouslySetInnerHTML={{ __html: actionData?.data?.WikifiedResult ?? "" }} />
         </div>
         <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
@@ -559,13 +571,13 @@ export async function action({ request }:ActionFunctionArgs){
       const html = await Wikify(parsedData);
       const data = await html.json();
       return json({
-        success: "success",
+        success: true,
         data: data.data,
         error: undefined,
       });
     } catch (error) {
       return json({
-        success: "failed",
+        success: false,
         data: undefined,
         error: "Wikify failed",
       });
@@ -625,7 +637,7 @@ export async function action({ request }:ActionFunctionArgs){
         postContent: newPost.postContent,
         postTitle: newPost.postTitle,
       });
-      return redirect(`/archives/${newPost.postId}`);
+      return json({ success: true, error: undefined, data: { postId: newPost.postId } });
     }
     return json({ success: false, error: data.error, data: undefined });
   }
