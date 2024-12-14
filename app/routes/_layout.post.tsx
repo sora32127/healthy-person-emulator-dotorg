@@ -517,9 +517,18 @@ function PreviewButton({ data }: { data?: { WikifiedResult?: string, MarkdownRes
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
           <div dangerouslySetInnerHTML={{ __html: data?.WikifiedResult ?? "" }} />
         </div>
-        <div className="flex justify-between mt-6 border-t pt-8 border-gray-200">
+        <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
           <button type="button" onClick={() => setShowPreviewModal(false)} className="btn btn-secondary">修正する</button>
-          <button type="button" onClick={handleCopy} className="btn btn-circle"><FaCopy /></button>
+          <div className="flex flex-row items-center gap-1 p-2">
+            <button 
+              type="button" 
+              onClick={handleCopy} 
+              className="btn btn-circle"
+            >
+              <FaCopy />
+            </button>
+            <span className="text-xs text-base-content">マークダウン形式でコピー</span>
+          </div>
           <button type="button" onClick={handleSecondSubmit} className="btn btn-primary">投稿する</button>
         </div>
       </Modal>
