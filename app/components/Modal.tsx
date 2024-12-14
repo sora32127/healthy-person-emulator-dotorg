@@ -16,12 +16,12 @@ export function Modal({ isOpen, onClose, title, children, showCloseButton = true
           <div className="py-4">{children}</div>
           {showCloseButton && (
             <div className="modal-action">
-              <button className="btn" onClick={onClose}>閉じる</button>
+              <button className="btn" type="button" onClick={onClose}>閉じる</button>
             </div>
           )}
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={onClose}>close</button>
+          <button type="button" onClick={onClose}>close</button>
         </form>
       </dialog>
     );

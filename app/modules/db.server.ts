@@ -991,3 +991,30 @@ export async function getLikedCommentsForTest(chunkSize=12, likeFromHour=48, lik
     })
     return comments.map((comment) => comment.commentId);
 }
+
+const tagCountSchema = z.object({
+    tagName: z.string(),
+    count: z.number(),
+})
+type TagCount = z.infer<typeof tagCountSchema>;
+
+export async function getTagsCounts () : Promise<TagCount[]> {
+    const tags = await prisma.dimTags.findMany({
+        select: {
+          tagName: true,
+          _count: {
+            select: { relPostTags: true },
+          },
+        },
+        orderBy: {
+          relPostTags: {
+            _count: "desc",
+          },
+        },
+      });
+    const allTagsOnlyForSearch: TagCount[] = tags.map((tag) => {
+        return { tagName: tag.tagName, count: tag._count.relPostTags };
+    });
+
+    return allTagsOnlyForSearch;
+}

@@ -17,6 +17,7 @@
   "dependencies": {
     "@clerk/localizations": "^3.6.4",
     "@clerk/remix": "^4.2.52",
+    "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.0.2",
     "@prisma/client": "^5.22.0",
     "@remix-run/node": "^2.14.0",
@@ -36,10 +37,13 @@
     "openai": "^4.72.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.2",
+    "react-hot-toast": "^2.4.1",
     "react-icons": "^5.3.0",
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",
     "remix-utils": "^7.7.0",
+    "use-debounce": "^10.0.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
