@@ -541,7 +541,6 @@ function PreviewButton({ actionData }: { actionData: typeof action }){
             >
               <FaCopy />
             </button>
-            <span className="text-xs text-base-content">マークダウン形式でコピー</span>
           </div>
           <button type="button" onClick={handleSecondSubmit} className="btn btn-primary">投稿する</button>
         </div>
