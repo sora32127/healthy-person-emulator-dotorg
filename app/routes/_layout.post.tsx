@@ -111,9 +111,11 @@ export default function App() {
 
 
   const getStoredValues = (): Inputs => {
-    if (typeof window === "undefined") return { title: "", postCategory: "misDeed" };
+    // biome-ignore lint/suspicious/noThenProperty: <explanation>
+    if (typeof window === "undefined") return { title: [], postCategory: "misDeed", situations: { who: "", what: "", when: "", where: "", why: "", how: "", then: "" }, reflection: [], counterReflection: [], note: [], selectedTags: [], createdTags: [] };
     const stored = window.localStorage.getItem(formId);
-    return stored ? JSON.parse(stored) : { title: "", postCategory: "misDeed" };
+    // biome-ignore lint/suspicious/noThenProperty: <explanation>
+    return stored ? JSON.parse(stored) : { title: [], postCategory: "misDeed", situations: { who: "", what: "", when: "", where: "", why: "", how: "", then: "" }, reflection: [], counterReflection: [], note: [], selectedTags: [], createdTags: [] };
   }
 
   const methods = useForm({
@@ -451,7 +453,7 @@ function clearForm(formClear: () => void){
 // useActionDataを丸ごと使う
 function PreviewButton({ actionData }: { actionData: typeof action }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, formState: { errors, isValid, isSubmitSuccessful, isSubmitting }, trigger, reset } = useFormContext();
+  const { getValues, trigger, reset } = useFormContext();
   const submit = useSubmit();
 
   function MakeToastMessage(errors: z.ZodIssue[]): string {
