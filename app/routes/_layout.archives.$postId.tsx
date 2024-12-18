@@ -297,11 +297,10 @@ export default function Component() {
         <CommentInputBox
           commentAuthor={commentAuthor}
           commentContent={commentContent}
-          onCommentAuthorChange={setCommentAuthor}
-          onCommentContentChange={setCommentContent}
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
+          CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>

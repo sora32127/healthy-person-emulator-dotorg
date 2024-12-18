@@ -1,85 +1,103 @@
-import { Form } from "@remix-run/react";
 import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useForm } from "react-hook-form";
+
+const commentFormSchema = z.object({
+  commentAuthor: z.string().min(1, { message: "名前は必須です" }),
+  commentContent: z.string().min(1, { message: "コメントを入力してください" }),
+  turnstileToken: z.string().refine((value) => value.length > 0, { message: "時間をおいて再度投稿してください" }),
+  commentParentId: z.number().optional()
+});
+
+type CommentFormInputs = z.infer<typeof commentFormSchema>;
 
 interface CommentInputBoxProps {
   commentAuthor: string;
   commentContent: string;
-  onCommentAuthorChange: (value: string) => void;
-  onCommentContentChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (data: CommentFormInputs) => void;
   isCommentOpen: boolean;
   commentParentId: number;
+  CF_TURNSTILE_SITE_KEY: string;
 }
 
 export default function CommentInputBox({
-  commentAuthor,
-  commentContent,
-  onCommentAuthorChange,
-  onCommentContentChange,
   onSubmit,
   isCommentOpen,
   commentParentId,
+  CF_TURNSTILE_SITE_KEY
 }: CommentInputBoxProps) {
-  const [showError, setShowError] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (commentContent.trim() === "") {
-      setShowError(true);
-    } else {
-      onSubmit(e);
-      setShowError(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue
+  } = useForm<CommentFormInputs>({
+    resolver: zodResolver(commentFormSchema),
+    defaultValues: {
+      commentAuthor: "Anonymous",
+      commentContent: "",
+      commentParentId: 0
     }
+  });
+
+  const handleCommentSubmit = async (data: CommentFormInputs) => {
+    setValue("commentParentId", commentParentId)
+    await onSubmit(data);
+    reset();
   };
 
-  const handleCommentChange = (value: string) => {
-    onCommentContentChange(value);
-    setShowError(false);
-  };
+  if (!isCommentOpen) {
+    return <p>この記事に対するコメントは現在停止中です</p>;
+  }
+
+  const [isValidUser, setIsValidUser] = useState(false);
+
+  const handleTurnStileSuccess = (token: string) => {
+    setValue("turnstileToken", token);
+    setIsValidUser(true);
+  }
 
   return (
-    <Form onSubmit={handleSubmit} preventScrollReset>
-      <div className="mb-4">
-        <label htmlFor="commentAuthor" className="block mb-2">
-          名前
-        </label>
+    <form onSubmit={handleSubmit(handleCommentSubmit)} className="space-y-4">
+      <div>
         <input
-          type="text"
-          id="commentAuthor"
-          value={commentAuthor}
-          onChange={(e) => onCommentAuthorChange(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {...register("commentAuthor")}
+          placeholder="名前"
+          className="input input-bordered w-full"
+          defaultValue="Anonymous"
         />
-      </div>
-      <div className="mb-4">
-        <label htmlFor="commentContent" className="block mb-2">
-          {"コメント"}
-        </label>
-        <textarea
-          id="commentContent"
-          value={commentContent}
-          onChange={(e) => handleCommentChange(e.target.value)}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            showError ? "border-error text-error" : "border-gray-300 focus:ring-blue-500"
-          }`}
-          rows={4}
-        ></textarea>
-        {showError && (
-          <p className="mt-1 text-sm text-error">コメントを一文字以上入力してください</p>
+        {errors.commentAuthor && (
+          <p className="text-red-500 text-sm">{errors.commentAuthor.message}</p>
         )}
       </div>
-      <button
-        type="submit"
-        className={`px-4 py-2 mx-1 w-full ${
-          isCommentOpen
-            ? "btn-primary"
-            : "bg-gray-200 text-gray-500 cursor-not-allowed"
-        } rounded`}
-        disabled={!isCommentOpen}
-      >
-        {"コメント"}
-        <input type="hidden" name="commentParentId" value={commentParentId} />
+
+      <div>
+        <textarea
+          {...register("commentContent")}
+          placeholder="コメントを入力"
+          className="textarea textarea-bordered w-full"
+          rows={4}
+        />
+        {errors.commentContent && (
+          <p className="text-red-500 text-sm">{errors.commentContent.message}</p>
+        )}
+      </div>
+
+      <Turnstile
+        siteKey={CF_TURNSTILE_SITE_KEY}
+        onSuccess={handleTurnStileSuccess}
+      />
+
+      <button type="submit" className={
+        `btn ${!isValidUser ? "animate-pulse btn-disabled" : ""}
+        ${isValidUser ? "btn-primary" : ""}
+        `
+        }>
+        コメントを投稿
       </button>
-    </Form>
+    </form>
   );
 }
