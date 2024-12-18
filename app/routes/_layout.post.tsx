@@ -20,6 +20,7 @@ import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 
 export async function loader () {
@@ -55,8 +56,6 @@ export default function App() {
     methods.setValue("createdTags", createdTags.filter((t) => t !== tag));
   }
 
-  
-  
   const formId = "post-form";
   type Inputs = z.infer<typeof postFormSchema>;
 
@@ -173,7 +172,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PreviewButton actionData={actionData} postFormSchema={postFormSchema} />
+        <PreviewButton actionData={actionData} postFormSchema={postFormSchema} TurnStileSiteKey={CFTurnstileSiteKey} />
       </Form>
       </FormProvider>
     </div>
@@ -398,9 +397,9 @@ function clearForm(formClear: () => void){
 }
 
 // useActionDataを丸ごと使う
-function PreviewButton({ actionData, postFormSchema }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema> }){
+function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, trigger, reset } = useFormContext();
+  const { getValues, trigger, reset, control, setValue } = useFormContext();
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
 
@@ -465,9 +464,32 @@ function PreviewButton({ actionData, postFormSchema }: { actionData: typeof acti
     }
   }
 
+  const [isValidUser, setIsValidUser] = useState(false);
+
+  const handleTurnStileSuccess = (token: string) => {
+    setValue("turnstileToken", token);
+    setIsValidUser(true);
+  }
+
   return (
     <div className="flex justify-end">
-      <button type="submit" onClick={handleFirstSubmit} className="btn btn-primary">投稿する</button>
+      <Turnstile
+        siteKey={TurnStileSiteKey}
+        onSuccess={handleTurnStileSuccess}
+      />
+      <button
+        type="submit"
+        onClick={handleFirstSubmit}
+        className={
+          `btn
+            ${!isValidUser ? "animate-pulse bg-base-300" : ""}
+            ${isValidUser ? "btn-primary" : ""}
+          `
+        }
+        disabled={!isValidUser}
+      >
+        投稿する
+      </button>
       <Toaster />
       <Modal
         isOpen={showPreviewModal}
