@@ -20,6 +20,7 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
+import { validateRequest } from "~/modules/security.server";
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -455,24 +456,6 @@ async function handleSubmitComment(formData: FormData, postId: number) {
   }
 }
 
-async function validateRequest(token: string, origin: string) {
-  const formData = new FormData();
-  formData.append('cf-turnstile-response', token);
-
-  const res = await fetch(`${origin}/api/verify`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  try {
-    const data = await res.json();
-    return data.success;
-  } catch (error) {
-    console.error('Error verifying Turnstile response:', error)
-    console.log(res)
-    return false;
-  }
-}
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){

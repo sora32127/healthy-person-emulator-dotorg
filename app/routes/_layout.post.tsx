@@ -21,6 +21,7 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { validateRequest } from "~/modules/security.server";
 
 
 export async function loader () {
@@ -540,7 +541,21 @@ export async function action({ request }:ActionFunctionArgs){
     selectedTags: JSON.parse(postData.selectedTags as string || "[]"),
     createdTags: JSON.parse(postData.createdTags as string || "[]"),
     title: JSON.parse(postData.title as string),
+    turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
+
+  const url = new URL(request.url);
+  const origin = url.origin;
+
+  const isValidRequest = await validateRequest(parsedData.turnstileToken, origin);
+
+  if (!isValidRequest){
+    return json({
+      success: false,
+      error: "Invalid Request. Request-validation has failed. Please try again.",
+      data: undefined
+    });
+  }
 
   if (actionType === "firstSubmit"){
     try{  
