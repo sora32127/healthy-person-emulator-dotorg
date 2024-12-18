@@ -1018,3 +1018,11 @@ export async function getTagsCounts () : Promise<TagCount[]> {
 
     return allTagsOnlyForSearch;
 }
+
+export async function getStopWords() : Promise<string[]> {
+    const stopWords = await prisma.dimStopWords.findMany({
+        select: { stopWord: true },
+    })
+    // ユニーク化
+    return [...new Set(stopWords.map((stopWord) => stopWord.stopWord))];
+}

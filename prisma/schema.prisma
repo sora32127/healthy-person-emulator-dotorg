@@ -161,3 +161,13 @@ model FctAICompletionCommitHistory {
 
   @@map("fct_aicompletion_commit_history")
 }
+
+model DimStopWords {
+  stopWordId Int @id @default(autoincrement()) @map("stop_word_id")
+  stopWord String @map("stop_word")
+  createdAtGMT DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at_gmt") @db.Timestamptz(6)
+  createdAtJST DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("created_at_jst") @db.Timestamptz(6)
+  memo String @map("memo")
+
+  @@map("dim_stop_words")
+}
