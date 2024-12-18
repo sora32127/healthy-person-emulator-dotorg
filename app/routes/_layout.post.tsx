@@ -20,7 +20,7 @@ import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 
-const stopWords = ["発達障害嫁"]
+const stopWords = ["発達障害嫁", "発達障害女", "ガイジ"]
 const checkStopWords = (value: string) => {
   return !stopWords.some((word) => value.includes(word));
 }
