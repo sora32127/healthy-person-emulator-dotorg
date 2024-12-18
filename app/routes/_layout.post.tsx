@@ -1,4 +1,4 @@
-import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray, useFormState, FieldErrors, FieldValues } from "react-hook-form"
+import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, useFieldArray } from "react-hook-form"
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { getTagsCounts, prisma } from "~/modules/db.server";
+import { getStopWords, getTagsCounts, prisma } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
@@ -19,99 +19,23 @@ import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
+import { createPostFormSchema } from "~/schemas/post.schema";
 
-const stopWords = ["発達障害嫁", "発達障害女", "ガイジ"]
-const checkStopWords = (value: string) => {
-  return !stopWords.some((word) => value.includes(word));
-}
-
-const postFormSchema = z.object({
-    postCategory: z.enum(["misDeed", "goodDeed"]),
-    situations: z.object({
-        who: z.string().min(1, { message: "5W1H+Then状況説明>「誰が」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        what: z.string().min(1, { message: "5W1H+Then状況説明>「何を」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        when: z.string().min(1, { message: "5W1H+Then状況説明>「いつ」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        where: z.string().min(1, { message: "5W1H+Then状況説明>「どこで」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }) ,
-        why: z.string().min(1, { message: "5W1H+Then状況説明>「なぜ」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        how: z.string().min(1, { message: "5W1H+Then状況説明>「どうやって」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        // biome-ignore lint/suspicious/noThenProperty: <explanation>
-        then: z.string().min(1, { message: "5W1H+Then状況説明>「どうなったか」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
-        assumption: z.array(z.string()).optional().refine(
-          (value) => value?.every((v) => checkStopWords(v)), { message: "利用できない単語が含まれています" }),
-    }),
-    reflection: z.array(z.string())
-    .superRefine((value, ctx) => {
-      if (value.every((v) => v.length < 1)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください',
-        })
-      }
-      if (value.some((v) => !checkStopWords(v))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '利用できない単語が含まれています',
-        })
-      }
-    }),
-
-    counterReflection: z.array(z.string())
-    .superRefine((value, ctx) => {
-      if (value.every((v) => v.length < 1)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください',
-        })
-      }
-      if (value.some((v) => !checkStopWords(v))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '利用できない単語が含まれています',
-        })
-      }
-    }),
-    note: z.array(z.string()).optional().superRefine((value, ctx) => {
-      if (value?.some((v) => !checkStopWords(v))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '利用できない単語が含まれています',
-        })
-      }
-    }),
-    selectedTags: z.array(z.string()).optional(),
-    createdTags: z.array(z.string()).optional(),
-    title: z.array(z.string())
-    .superRefine((value, ctx) => {
-      if (value.some((v) => v.includes('#'))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'タイトルに「#」（ハッシュタグ）を含めることはできません。',
-        })
-      }
-
-      if (value.every((v) => v.length < 1)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'タイトルは必須です',
-        })
-      }
-    })
-});
-
-type Inputs = z.infer<typeof postFormSchema>;
 
 export async function loader () {
   const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
   const tags = await getTagsCounts();
-
-  return json({ CFTurnstileSiteKey,  tags });
+  const stopWords = await getStopWords();
+  return json({ CFTurnstileSiteKey,  tags, stopWords });
 }
 
 export default function App() {
-  const { CFTurnstileSiteKey, tags } = useLoaderData<typeof loader>();
+  const { CFTurnstileSiteKey, tags, stopWords } = useLoaderData<typeof loader>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
+
+  const postFormSchema = createPostFormSchema(stopWords);
 
   const handleTagSelection = (tags: string[]) => {
     setSelectedTags(tags);
@@ -134,9 +58,9 @@ export default function App() {
   
   
   const formId = "post-form";
+  type Inputs = z.infer<typeof postFormSchema>;
 
-
-  const getStoredValues = (): Inputs => {
+  const getStoredValues = () : Inputs => {
     // biome-ignore lint/suspicious/noThenProperty: <explanation>
     if (typeof window === "undefined") return { title: [], postCategory: "misDeed", situations: { who: "", what: "", when: "", where: "", why: "", how: "", then: "" }, reflection: [], counterReflection: [], note: [], selectedTags: [], createdTags: [] };
     const stored = window.localStorage.getItem(formId);
@@ -173,7 +97,6 @@ export default function App() {
 
   const postCategory = methods.watch("postCategory");
   const actionData = useActionData<typeof action>();
-  const navigate = useNavigate();
 
   return (
     <>
@@ -250,15 +173,13 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PreviewButton actionData={actionData} />
+        <PreviewButton actionData={actionData} postFormSchema={postFormSchema} />
       </Form>
       </FormProvider>
     </div>
     </>
   )
 }
-
-
 
 
 function TextTypeSwitcher(){
@@ -477,10 +398,11 @@ function clearForm(formClear: () => void){
 }
 
 // useActionDataを丸ごと使う
-function PreviewButton({ actionData }: { actionData: typeof action }){
+function PreviewButton({ actionData, postFormSchema }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema> }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { getValues, trigger, reset } = useFormContext();
   const submit = useSubmit();
+  type Inputs = z.infer<typeof postFormSchema>;
 
   function MakeToastMessage(errors: z.ZodIssue[]): string {
     let errorMessage = "";
@@ -581,6 +503,11 @@ export async function action({ request }:ActionFunctionArgs){
   const formData = await request.formData();
   const actionType = formData.get("_action");
   const postData = Object.fromEntries(formData);
+  const stopWords = await getStopWords();
+  const postFormSchema = createPostFormSchema(stopWords);
+  type Inputs = z.infer<typeof postFormSchema>;
+
+
   const parsedData = {
     ...postData,
     postCategory: JSON.parse(postData.postCategory as string),
@@ -595,7 +522,7 @@ export async function action({ request }:ActionFunctionArgs){
 
   if (actionType === "firstSubmit"){
     try{  
-      const html = await Wikify(parsedData);
+      const html = await Wikify(parsedData, postFormSchema);
       const data = await html.json();
       return json({
         success: true,
@@ -612,7 +539,7 @@ export async function action({ request }:ActionFunctionArgs){
   }
 
   if (actionType === "secondSubmit"){
-    const html = await Wikify(parsedData);
+    const html = await Wikify(parsedData, postFormSchema);
     const data = await html.json();
     const isSuccess = data.success;
     const wikifyResult = data.data?.WikifiedResult;
@@ -681,7 +608,7 @@ async function getHashedUserIPAddress(request: Request){
   return postUserIpHashString;
 }
 
-async function Wikify(postData: Inputs){
+async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>, postFormSchema: ReturnType<typeof createPostFormSchema>){
   // バリデーションを実施
   const validationResult = postFormSchema.safeParse(postData);
   if (!validationResult.success) {
@@ -694,7 +621,7 @@ async function Wikify(postData: Inputs){
 
   const { who, when, where, why, what, how, then, assumption } = validationResult.data.situations;
   const { reflection, counterReflection } = validationResult.data;
-  const { title, note, selectedTags, createdTags, postCategory } = validationResult.data;
+  const { note, postCategory } = validationResult.data;
 
   function removeEmptyString(array: string[]): string[] {
     return array.filter((value) => !/^\s*$/.test(value));
