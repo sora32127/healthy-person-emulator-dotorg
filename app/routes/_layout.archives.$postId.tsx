@@ -21,6 +21,16 @@ import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { validateRequest } from "~/modules/security.server";
+import { z } from "zod";
+
+export const commentVoteSchema = z.object({
+  commentId: z.number(),
+  voteType: z.enum(["like", "dislike"]),
+  turnstileToken: z.string(),
+});
+
+export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -107,16 +117,20 @@ export default function Component() {
     });
   };
   
-  const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
+  const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
-    formData.append("postId", data.postId.toString() || "");
-    formData.append("commentId", commentId.toString());
-    formData.append("voteType", voteType);
+    formData.append("postId", postId.toString() || "");
     formData.append("action", "voteComment");
+    console.log("handleCommentVote has evoked");
+    
+    for (const [key, value] of Object.entries(data)) {
+      console.log("key", key, "value", value);
+      formData.append(key, String(value));
+    }
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${data.postId}`,
+        action: `/archives/${postId}`,
     });
   };
 
@@ -140,6 +154,7 @@ export default function Component() {
             likesCount={comment.likesCount}
             dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
+            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -316,6 +331,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const postId = Number(formData.get("postId"));
   const token = formData.get("cf-turnstile-response") as string;
 
+  console.log("action", action);
+
   const url = new URL(request.url);
   const origin = url.origin;
 
@@ -404,6 +421,15 @@ async function handleVoteComment(
   request: Request
 ) {
   const voteType = formData.get("voteType")?.toString();
+  console.log("handleVoteComment has evoked");
+  const url = new URL(request.url);
+  const origin = url.origin;
+  const token = formData.get("turnstileToken")?.toString() || "";
+  console.log("token", token);
+  const isValidRequest = await validateRequest(token, origin);
+  if (!isValidRequest) {
+    return json({ success: false, message : "Invalid Request" });
+  }
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
     await prisma.fctCommentVoteHistory.create({
