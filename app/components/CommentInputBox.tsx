@@ -8,14 +8,13 @@ const commentFormSchema = z.object({
   commentAuthor: z.string().min(1, { message: "名前は必須です" }),
   commentContent: z.string().min(1, { message: "コメントを入力してください" }),
   turnstileToken: z.string().refine((value) => value.length > 0, { message: "時間をおいて再度投稿してください" }),
-  commentParentId: z.number().optional()
+  commentParentId: z.number().optional(),
+  postId: z.number().optional()
 });
 
-type CommentFormInputs = z.infer<typeof commentFormSchema>;
+export type CommentFormInputs = z.infer<typeof commentFormSchema>;
 
 interface CommentInputBoxProps {
-  commentAuthor: string;
-  commentContent: string;
   onSubmit: (data: CommentFormInputs) => void;
   isCommentOpen: boolean;
   commentParentId: number;
@@ -26,7 +25,7 @@ export default function CommentInputBox({
   onSubmit,
   isCommentOpen,
   commentParentId,
-  CF_TURNSTILE_SITE_KEY
+  CF_TURNSTILE_SITE_KEY,
 }: CommentInputBoxProps) {
   const {
     register,
@@ -73,7 +72,6 @@ export default function CommentInputBox({
           <p className="text-red-500 text-sm">{errors.commentAuthor.message}</p>
         )}
       </div>
-
       <div>
         <textarea
           {...register("commentContent")}

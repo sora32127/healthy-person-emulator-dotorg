@@ -10,7 +10,7 @@ import TagCard from "~/components/TagCard";
 import { useState } from "react";
 import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
-import CommentInputBox from "~/components/CommentInputBox";
+import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
 import ArrowBackIcon from "~/components/icons/ArrowBackIcon";
 import ClockIcon from "~/components/icons/ClockIcon";
@@ -47,8 +47,10 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPages.includes(data.postId);
-  const isDisliked = dislikedPages.includes(data.postId);
+  const postId = data.postId;
+
+  const isLiked = likedPages.includes(postId);
+  const isDisliked = dislikedPages.includes(postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -88,22 +90,21 @@ export default function Component() {
   };
 
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleCommentSubmit = async (data: CommentFormInputs) => {
     const formData = new FormData();
-    formData.append("postId", data.postId.toString() || "");
-    formData.append("commentAuthor", commentAuthor);
-    formData.append("commentContent", commentContent);
-    formData.append("action", "submitComment")
+    if (postId === undefined) {
+      throw new Error("postId is required");
+    }
+    formData.append("action", "submitComment");
+    formData.append("postId", postId.toString());
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, String(value));
+    }
 
     await submit(formData, {
       method: "post",
-      action: `/archives/${data.postId}`,
+      action: `/archives/${postId}`,
     });
-
-    setCommentAuthor("Anonymous");
-    setCommentContent("");
   };
   
   const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
@@ -295,8 +296,6 @@ export default function Component() {
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox
-          commentAuthor={commentAuthor}
-          commentContent={commentContent}
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
@@ -335,7 +334,7 @@ export async function action({ request }: ActionFunctionArgs) {
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
-      return handleSubmitComment(formData, postId);
+      return handleSubmitComment(formData, postId, request);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -433,9 +432,16 @@ async function handleVoteComment(
   );
 }
 
-async function handleSubmitComment(formData: FormData, postId: number) {
+async function handleSubmitComment(formData: FormData, postId: number, request: Request) {
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
+  const turnstileToken = formData.get("turnstileToken")?.toString() || "";
+  const url = new URL(request.url);
+  const origin = url.origin;
+  const isValidRequest = await validateRequest(turnstileToken, origin);
+  if (!isValidRequest) {
+    return json({ success: false, message : "Invalid Request" });
+  }
   const commentParent = Number(formData.get("commentParentId")) || 0;
 
   try {
