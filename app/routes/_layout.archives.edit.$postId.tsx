@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
+import { Form, NavLink, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { useState } from "react";
 import { getAuth } from "@clerk/remix/ssr.server";
@@ -18,14 +18,15 @@ import { setVisitorCookieData } from "~/modules/visitor.server";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { validateRequest } from "~/modules/security.server";
 
 const postEditSchema = z.object({
-  postTitle: z.string().min(1),
-  postContent: z.string().min(1),
-  tags: z.array(z.string()).min(1),
-  userId: z.string().min(1),
-  turnstileToken: z.string().min(1),
+  postTitle: z.string().min(1, "タイトルが必要です"),
+  postContent: z.string().min(10, "本文が短すぎます。"),
+  tags: z.array(z.string()).min(1, "タグが必要です"),
+  userId: z.string().min(1, "無効なリクエスト：ユーザーIDが必要です"),
+  turnstileToken: z.string().min(1, "認証に失敗しました。時間をおいて再度試してください。"),
 });
 
 export type PostEditSchema = z.infer<typeof postEditSchema>;
@@ -179,7 +180,7 @@ export default function EditPost() {
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
   const [isValidUser, setIsValidUser] = useState(false);
 
-  const { setValue, getValues, register } = useForm<PostEditSchema>({
+  const { setValue, getValues, register, handleSubmit, formState: { errors } } = useForm<PostEditSchema>({
     resolver: zodResolver(postEditSchema),
     defaultValues: {
       postTitle: postData.postTitle,
@@ -219,10 +220,22 @@ export default function EditPost() {
     setIsValidUser(true);
   }
 
+  const submit = useSubmit();
+  const onSubmit: SubmitHandler<PostEditSchema> = (data) => {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, value.toString());
+    }
+    submit(formData, {
+      method: "post",
+      action: `/archives/edit/${postId}`,
+    });
+  }
+
   return (
         <div className="max-w-2xl mx-auto">
           <H1>投稿を編集する</H1>
-          <Form method="post">
+          <form method="post" onSubmit={handleSubmit(onSubmit)}>
             <H2>タイトルを編集する</H2>
             <p>変更前：{postData.postTitle}</p>
             <p className="my-4">変更後：</p>
@@ -234,6 +247,7 @@ export default function EditPost() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 edit-post-title"
                 {...register("postTitle")}
               />
+              {errors.postTitle && <p className="text-error">{errors.postTitle.message}</p>}
             </div>
             <div className="mb-4">
               <H2>タグを編集する</H2>
@@ -254,6 +268,7 @@ export default function EditPost() {
                 parentComponentStateValues={selectedTags || []}
                 allTagsOnlyForSearch={allTagsForSearch}
               />
+              {errors.tags && <p className="text-error">{errors.tags.message}</p>}
               <div className="mt-2">
                 <p className="my-4">変更後：</p>
                 <div className="flex flex-wrap">
@@ -277,6 +292,7 @@ export default function EditPost() {
                 name="postContent"
               />
             </div>
+            {errors.postContent && <p className="text-error">{errors.postContent.message}</p>}
             <input type="hidden" name="userId" value={userId} />
             <Turnstile
               siteKey={CF_TURNSTILE_SITEKEY}
@@ -292,7 +308,9 @@ export default function EditPost() {
             >
               変更を保存する
             </button>
-          </Form>
+            
+            {errors.turnstileToken && <p className="text-error">{errors.turnstileToken.message}</p>}
+          </form>
           <div className="mb-4">
             <H2>編集履歴</H2>
             <table className="table-auto w-full">
@@ -353,10 +371,30 @@ export default function EditPost() {
 
 export const action: ActionFunction = async (args) => {
   const formData = await args.request.formData();
-  const postTitle = formData.get("postTitle")?.toString() || "";
-  const postContent = formData.get("postContent")?.toString() || "";
-  const tags = formData.getAll("tags") as string[];
-  const userId = formData.get("userId")?.toString() || "";
+  const editData = Object.fromEntries(formData);
+  const url = new URL(args.request.url);
+  const origin = url.origin;
+  const isValidRequest = await validateRequest(editData.turnstileToken as string, origin);
+  if (!isValidRequest){
+    return json({ error: "認証に失敗しました。時間をおいて再度試してください。" }, { status: 400 });
+  }
+
+
+  const parsedData = {
+    postTitle: editData.postTitle.toString(),
+    postContent: editData.postContent.toString(),
+    tags: typeof editData.tags === 'string' 
+    ? editData.tags.split(',').map(tag => tag.trim())
+    : [],
+    userId: editData.userId.toString(),
+    turnstileToken: editData.turnstileToken.toString(),
+  } as unknown as PostEditSchema;
+
+  const parseResult = postEditSchema.safeParse(parsedData);
+  if (!parseResult.success){
+    return json({ error: "バリデーションエラーが発生しました。" }, { status: 400 });
+  }
+
   const postId = Number(args.params.postId);
 
   const latestPost = await prisma.dimPosts.findUnique({
@@ -399,14 +437,14 @@ export const action: ActionFunction = async (args) => {
     const updatedPost = await prisma.dimPosts.update({
       where: { postId },
       data: {
-        postTitle,
-        postContent: await marked(postContent as string),
+        postTitle: parsedData.postTitle,
+        postContent: await marked(parsedData.postContent as string),
       }
     })
     
     await prisma.relPostTags.deleteMany({ where: { postId } });
   
-    for (const tag of tags) {
+    for (const tag of parsedData.tags) {
       const existingTag = await prisma.dimTags.findFirst({
         where: { tagName: tag },
         orderBy: { tagId: 'desc' },
@@ -425,11 +463,11 @@ export const action: ActionFunction = async (args) => {
       data: {
         postId,
         postRevisionNumber: newRevisionNumber,
-        editorUserId: userId,
+        editorUserId: parsedData.userId,
         postTitleBeforeEdit: latestPost.postTitle,
-        postTitleAfterEdit: postTitle,
+        postTitleAfterEdit: parsedData.postTitle,
         postContentBeforeEdit: latestPost.postContent,
-        postContentAfterEdit: await marked(postContent as string),
+        postContentAfterEdit: await marked(parsedData.postContent as string),
       },
     });
   

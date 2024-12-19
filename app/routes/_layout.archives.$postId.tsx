@@ -331,8 +331,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const postId = Number(formData.get("postId"));
   const token = formData.get("cf-turnstile-response") as string;
 
-  console.log("action", action);
-
   const url = new URL(request.url);
   const origin = url.origin;
 
