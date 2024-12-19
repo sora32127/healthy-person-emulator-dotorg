@@ -121,10 +121,8 @@ export default function Component() {
     const formData = new FormData();
     formData.append("postId", postId.toString() || "");
     formData.append("action", "voteComment");
-    console.log("handleCommentVote has evoked");
     
     for (const [key, value] of Object.entries(data)) {
-      console.log("key", key, "value", value);
       formData.append(key, String(value));
     }
 
