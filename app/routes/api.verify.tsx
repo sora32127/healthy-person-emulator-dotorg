@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, json } from "@remix-run/node"
+import { type ActionFunctionArgs, json } from "@remix-run/node"
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY
@@ -31,14 +31,13 @@ export async function action({ request }: ActionFunctionArgs){
           message: 'Turnstile verification successful.',
           status: 200,
         })
-      } else {
-        console.log('Turnstile verification failed.', data)
-        return json({
-          success: false,
-          message: 'Turnstile verification failed.',
-          status: 401,
-        })
       }
+      console.log('Turnstile verification failed.', data)
+      return json({
+        success: false,
+          message: 'Turnstile verification failed.',
+        status: 401,
+      })
     } catch (error) {
       console.error('Error verifying Turnstile response:', error)
       return json({

@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CommentInputBox from "./CommentInputBox";
 import { useSubmit } from "@remix-run/react";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import RelativeDate from "./RelativeDate";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { CommentFormInputs } from "./CommentInputBox";
+
+const commentVoteSchema = z.object({
+  commentId: z.number(),
+  voteType: z.enum(["like", "dislike"]),
+  turnstileToken: z.string(),
+});
+
+export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+
 
 interface CommentCardProps {
   commentId: number;
@@ -12,13 +26,14 @@ interface CommentCardProps {
   commentAuthor: string;
   commentContent: string;
   level: number;
-  onCommentVote: (commentId: number, voteType: "like" | "dislike") => void;
+  onCommentVote: (data: CommentVoteSchema) => void;
   likedComments: number[];
   dislikedComments: number[];
   likesCount: number;
   dislikesCount: number;
   postId: number;
   isCommentOpen: boolean;
+  CF_TURNSTILE_SITEKEY: string;
 }
 
 export default function CommentCard({
@@ -34,6 +49,7 @@ export default function CommentCard({
   dislikesCount,
   postId,
   isCommentOpen,
+  CF_TURNSTILE_SITEKEY,
 }: CommentCardProps) {
 
   const marginLeft = `${level * 2}rem`;
@@ -41,44 +57,52 @@ export default function CommentCard({
   const isDisliked = dislikedComments.includes(commentId);
 
   const [isReplyBoxShown, setIsReplyBoxShown] = useState(false);
-  const [replyAuthor, setReplyAuthor] = useState("Anonymous");
-  const [replyContent, setReplyContent] = useState("");
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
 
   const submit = useSubmit();
 
-  const handleReplyCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
 
     const formData = new FormData();
     formData.append("postId", postId.toString());
-    formData.append("commentAuthor", replyAuthor);
-    formData.append("commentContent", replyContent);
     formData.append("commentParentId", commentId.toString());
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, value.toString());
+    }
     formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
       action: `/archives/${postId}`,
     });
-
-    setReplyAuthor("");
-    setReplyContent("");
     setIsReplyBoxShown(false);
   };
+  
+  const { setValue, getValues } = useForm<CommentVoteSchema>({
+    resolver: zodResolver(commentVoteSchema),
+  });
 
-  const handleCommentDelete = async () => {
-    const formData = new FormData();
-    formData.append("commentId", commentId.toString());
-    formData.append("postId", postId.toString());
-    formData.append("action", "deleteComment");
-    await submit(formData, {
-      method: "post",
-      action: `/archives/${postId}`,
-    });
+  const [isValidUser, setIsValidUser] = useState(false);
+
+
+  const handleTurnstileSuccess = (token: string) => {
+    setValue("turnstileToken", token);
+    setIsValidUser(true);
   }
+
+  const handleVote = async (voteType: "like" | "dislike") => {
+    setValue("voteType", voteType);
+    setValue("commentId", commentId);
+    
+    if (voteType === "like") {
+      setIsCommentLikeButtonPushed(true);
+    } else {
+      setIsCommentDislikeButtonPushed(true);
+    }
+    onCommentVote(getValues());
+  };
 
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
@@ -90,17 +114,16 @@ export default function CommentCard({
         <RelativeDate timestamp={commentDateGmt} />
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
-      <div className="flex items-center mt-4">
+      <div className="flex items-center mt-4">　　　　　　
         <div className="tooltip" data-tip="このコメントを高評価する">
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
-            } comment-like-button`}
+            } comment-like-button ${!isValidUser ? "animate-pulse btn-disabled" : ""}`}
             onClick={() => {
-              onCommentVote(commentId, "like");
-              setIsCommentLikeButtonPushed(true);
+              handleVote("like");
             }}
-            disabled={isCommentLikeButtonPushed || isLiked}
+            disabled={isCommentLikeButtonPushed || isLiked || !isValidUser}
             type="button"
           >
             <ThumbsUpIcon />
@@ -112,13 +135,13 @@ export default function CommentCard({
         <div className="tooltip" data-tip="このコメントを低評価する">
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isDisliked ? "text-red-500 font-bold" : ""
-            } comment-dislike-button`}
+              isDisliked ? "text-red-500 font-bold" : ""}
+              ${!isValidUser ? "btn-disabled" : ""}
+              comment-dislike-button`}
             onClick={() => {
-              onCommentVote(commentId, "dislike");
-              setIsCommentDislikeButtonPushed(true);
+              handleVote("dislike");
             }}
-            disabled={isCommentDislikeButtonPushed || isDisliked}
+            disabled={isCommentDislikeButtonPushed || isDisliked || !isValidUser}
             type="button"
           >
             <ThumbsDownIcon />
@@ -127,6 +150,12 @@ export default function CommentCard({
             </p>
           </button>
         </div>
+          <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={handleTurnstileSuccess}
+          options={{ size: "invisible" }}
+        />
+
       </div>
     <button
         className="mt-2 text-blue-500"
@@ -138,10 +167,7 @@ export default function CommentCard({
         <div className="ml-2">
         {isReplyBoxShown && (
             <CommentInputBox
-                commentAuthor={replyAuthor}
-                commentContent={replyContent}
-                onCommentAuthorChange={setReplyAuthor}
-                onCommentContentChange={setReplyContent}
+                CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
                 onSubmit={handleReplyCommentSubmit}
                 isCommentOpen={isCommentOpen}
                 commentParentId={commentId}

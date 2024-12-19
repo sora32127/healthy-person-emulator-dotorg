@@ -1,5 +1,5 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, NavLink, useLoaderData, useNavigation } from "@remix-run/react";
+import { Form, NavLink, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { useState } from "react";
 import { getAuth } from "@clerk/remix/ssr.server";
@@ -15,6 +15,22 @@ import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { setVisitorCookieData } from "~/modules/visitor.server";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { validateRequest } from "~/modules/security.server";
+
+const postEditSchema = z.object({
+  postTitle: z.string().min(1, "タイトルが必要です"),
+  postContent: z.string().min(10, "本文が短すぎます。"),
+  tags: z.array(z.string()).min(1, "タグが必要です"),
+  userId: z.string().min(1, "無効なリクエスト：ユーザーIDが必要です"),
+  turnstileToken: z.string().min(1, "認証に失敗しました。時間をおいて再度試してください。"),
+});
+
+export type PostEditSchema = z.infer<typeof postEditSchema>;
+
 
 async function requireUserId(args: LoaderFunctionArgs) {
   const { userId } = await getAuth(args);
@@ -143,6 +159,7 @@ export const loader:LoaderFunction = async(args) => {
     where : { postId: Number(postId) },
     orderBy : { postRevisionNumber: 'desc' },
   });
+  const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
 
   return json({
     postData,
@@ -150,6 +167,7 @@ export const loader:LoaderFunction = async(args) => {
     postMarkdown,
     allTagsForSearch,
     userId,
+    CF_TURNSTILE_SITEKEY,
     isEditing:false,
     postId,
     editHistory,
@@ -157,10 +175,20 @@ export const loader:LoaderFunction = async(args) => {
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
-  const [markdownContent, setMarkdownContent] = useState<string>(postMarkdown || "");
-  const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
+  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
+  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
+  const [isValidUser, setIsValidUser] = useState(false);
+
+  const { setValue, getValues, register, handleSubmit, formState: { errors } } = useForm<PostEditSchema>({
+    resolver: zodResolver(postEditSchema),
+    defaultValues: {
+      postTitle: postData.postTitle,
+      postContent: postMarkdown,
+      tags: tagNames,
+      userId: userId,
+    },
+  });
 
   if (isEditing){
     return (
@@ -181,24 +209,33 @@ export default function EditPost() {
   const { postTitle } = postData;
   const oldTags = tagNames
 
-  const handleTagRemove = (tagName: string) => {
-    if (selectedTags) {
-      setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
-    }
-  };
-
   const handleTagsSelected = (tags: string[]) => {
+    setValue('tags', tags);
     setSelectedTags(tags);
   };
 
-  const handleMarkdownChange = (value: string | undefined) => {
-    setMarkdownContent(value || "");
-  };
+
+  function handleTurnstileSuccess(token: string): void {
+    setValue('turnstileToken', token);
+    setIsValidUser(true);
+  }
+
+  const submit = useSubmit();
+  const onSubmit: SubmitHandler<PostEditSchema> = (data) => {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, value.toString());
+    }
+    submit(formData, {
+      method: "post",
+      action: `/archives/edit/${postId}`,
+    });
+  }
 
   return (
         <div className="max-w-2xl mx-auto">
           <H1>投稿を編集する</H1>
-          <Form method="post">
+          <form method="post" onSubmit={handleSubmit(onSubmit)}>
             <H2>タイトルを編集する</H2>
             <p>変更前：{postData.postTitle}</p>
             <p className="my-4">変更後：</p>
@@ -206,10 +243,11 @@ export default function EditPost() {
               <input
                 type="text"
                 id="postTitle"
-                name="postTitle"
                 defaultValue={postTitle}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 edit-post-title"
+                {...register("postTitle")}
               />
+              {errors.postTitle && <p className="text-error">{errors.postTitle.message}</p>}
             </div>
             <div className="mb-4">
               <H2>タグを編集する</H2>
@@ -230,6 +268,7 @@ export default function EditPost() {
                 parentComponentStateValues={selectedTags || []}
                 allTagsOnlyForSearch={allTagsForSearch}
               />
+              {errors.tags && <p className="text-error">{errors.tags.message}</p>}
               <div className="mt-2">
                 <p className="my-4">変更後：</p>
                 <div className="flex flex-wrap">
@@ -238,15 +277,7 @@ export default function EditPost() {
                       key={tag}
                       className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
                     >
-                      <input type="hidden" name="tags" value={tag} />
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleTagRemove(tag)}
-                        className="ml-2 edit-tag-remove-button"
-                      >
-                        x
-                      </button>
                     </span>
                   ))}
                 </div>
@@ -255,20 +286,32 @@ export default function EditPost() {
             <div className="mb-4">
               <H2>本文を編集する</H2>
               <MarkdownEditor
-                value={markdownContent || ""}
-                onChange={handleMarkdownChange}
+                value={getValues("postContent")}
+                onChange={(value) => setValue("postContent", value)}
+                register={register}
+                name="postContent"
               />
             </div>
-            <input type="hidden" name="postContent" value={markdownContent} />
+            {errors.postContent && <p className="text-error">{errors.postContent.message}</p>}
             <input type="hidden" name="userId" value={userId} />
+            <Turnstile
+              siteKey={CF_TURNSTILE_SITEKEY}
+              onSuccess={handleTurnstileSuccess}
+              options={{ size: "invisible" }}
+            />
             <button
               type="submit"
-              className="rounded-md block w-full px-4 py-2 text-center btn-primary edit-post-submit-button"
-              disabled={navigation.state === "submitting"}
+              className={`btn 
+                ${!isValidUser ? "btn-disabled animate-pulse" : ""}
+                ${isValidUser ? "btn-primary" : ""}
+              `}
+              disabled={navigation.state === "submitting" || !isValidUser}
             >
               変更を保存する
             </button>
-          </Form>
+            
+            {errors.turnstileToken && <p className="text-error">{errors.turnstileToken.message}</p>}
+          </form>
           <div className="mb-4">
             <H2>編集履歴</H2>
             <table className="table-auto w-full">
@@ -329,10 +372,30 @@ export default function EditPost() {
 
 export const action: ActionFunction = async (args) => {
   const formData = await args.request.formData();
-  const postTitle = formData.get("postTitle")?.toString() || "";
-  const postContent = formData.get("postContent")?.toString() || "";
-  const tags = formData.getAll("tags") as string[];
-  const userId = formData.get("userId")?.toString() || "";
+  const editData = Object.fromEntries(formData);
+  const url = new URL(args.request.url);
+  const origin = url.origin;
+  const isValidRequest = await validateRequest(editData.turnstileToken as string, origin);
+  if (!isValidRequest){
+    return json({ error: "認証に失敗しました。時間をおいて再度試してください。" }, { status: 400 });
+  }
+
+
+  const parsedData = {
+    postTitle: editData.postTitle.toString(),
+    postContent: editData.postContent.toString(),
+    tags: typeof editData.tags === 'string' 
+    ? editData.tags.split(',').map(tag => tag.trim())
+    : [],
+    userId: editData.userId.toString(),
+    turnstileToken: editData.turnstileToken.toString(),
+  } as unknown as PostEditSchema;
+
+  const parseResult = postEditSchema.safeParse(parsedData);
+  if (!parseResult.success){
+    return json({ error: "バリデーションエラーが発生しました。" }, { status: 400 });
+  }
+
   const postId = Number(args.params.postId);
 
   const latestPost = await prisma.dimPosts.findUnique({
@@ -375,14 +438,14 @@ export const action: ActionFunction = async (args) => {
     const updatedPost = await prisma.dimPosts.update({
       where: { postId },
       data: {
-        postTitle,
-        postContent: await marked(postContent as string),
+        postTitle: parsedData.postTitle,
+        postContent: await marked(parsedData.postContent as string),
       }
     })
     
     await prisma.relPostTags.deleteMany({ where: { postId } });
   
-    for (const tag of tags) {
+    for (const tag of parsedData.tags) {
       const existingTag = await prisma.dimTags.findFirst({
         where: { tagName: tag },
         orderBy: { tagId: 'desc' },
@@ -401,11 +464,11 @@ export const action: ActionFunction = async (args) => {
       data: {
         postId,
         postRevisionNumber: newRevisionNumber,
-        editorUserId: userId,
+        editorUserId: parsedData.userId,
         postTitleBeforeEdit: latestPost.postTitle,
-        postTitleAfterEdit: postTitle,
+        postTitleAfterEdit: parsedData.postTitle,
         postContentBeforeEdit: latestPost.postContent,
-        postContentAfterEdit: await marked(postContent as string),
+        postContentAfterEdit: await marked(parsedData.postContent as string),
       },
     });
   

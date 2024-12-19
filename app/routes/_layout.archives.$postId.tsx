@@ -10,7 +10,7 @@ import TagCard from "~/components/TagCard";
 import { useState } from "react";
 import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
-import CommentInputBox from "~/components/CommentInputBox";
+import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
 import ArrowBackIcon from "~/components/icons/ArrowBackIcon";
 import ClockIcon from "~/components/icons/ClockIcon";
@@ -20,6 +20,17 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
+import { validateRequest } from "~/modules/security.server";
+import { z } from "zod";
+
+export const commentVoteSchema = z.object({
+  commentId: z.number(),
+  voteType: z.enum(["like", "dislike"]),
+  turnstileToken: z.string(),
+});
+
+export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+
 
 export async function loader({ request }:LoaderFunctionArgs){
     const url = new URL(request.url);
@@ -46,8 +57,10 @@ export default function Component() {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  const isLiked = likedPages.includes(data.postId);
-  const isDisliked = dislikedPages.includes(data.postId);
+  const postId = data.postId;
+
+  const isLiked = likedPages.includes(postId);
+  const isDisliked = dislikedPages.includes(postId);
 
   if (!CF_TURNSTILE_SITEKEY){
     return navigate("/")
@@ -87,34 +100,35 @@ export default function Component() {
   };
 
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleCommentSubmit = async (data: CommentFormInputs) => {
     const formData = new FormData();
-    formData.append("postId", data.postId.toString() || "");
-    formData.append("commentAuthor", commentAuthor);
-    formData.append("commentContent", commentContent);
-    formData.append("action", "submitComment")
+    if (postId === undefined) {
+      throw new Error("postId is required");
+    }
+    formData.append("action", "submitComment");
+    formData.append("postId", postId.toString());
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, String(value));
+    }
 
     await submit(formData, {
       method: "post",
-      action: `/archives/${data.postId}`,
+      action: `/archives/${postId}`,
     });
-
-    setCommentAuthor("Anonymous");
-    setCommentContent("");
   };
   
-  const handleCommentVote = async (commentId: number, voteType: "like" | "dislike") => {
+  const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
-    formData.append("postId", data.postId.toString() || "");
-    formData.append("commentId", commentId.toString());
-    formData.append("voteType", voteType);
+    formData.append("postId", postId.toString() || "");
     formData.append("action", "voteComment");
+    
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, String(value));
+    }
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${data.postId}`,
+        action: `/archives/${postId}`,
     });
   };
 
@@ -138,6 +152,7 @@ export default function Component() {
             likesCount={comment.likesCount}
             dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
+            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -294,13 +309,10 @@ export default function Component() {
         <div className="mb-8">
         <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
         <CommentInputBox
-          commentAuthor={commentAuthor}
-          commentContent={commentContent}
-          onCommentAuthorChange={setCommentAuthor}
-          onCommentContentChange={setCommentContent}
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
+          CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>
@@ -335,7 +347,7 @@ export async function action({ request }: ActionFunctionArgs) {
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
-      return handleSubmitComment(formData, postId);
+      return handleSubmitComment(formData, postId, request);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -405,6 +417,15 @@ async function handleVoteComment(
   request: Request
 ) {
   const voteType = formData.get("voteType")?.toString();
+  console.log("handleVoteComment has evoked");
+  const url = new URL(request.url);
+  const origin = url.origin;
+  const token = formData.get("turnstileToken")?.toString() || "";
+  console.log("token", token);
+  const isValidRequest = await validateRequest(token, origin);
+  if (!isValidRequest) {
+    return json({ success: false, message : "Invalid Request" });
+  }
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
     await prisma.fctCommentVoteHistory.create({
@@ -433,9 +454,16 @@ async function handleVoteComment(
   );
 }
 
-async function handleSubmitComment(formData: FormData, postId: number) {
+async function handleSubmitComment(formData: FormData, postId: number, request: Request) {
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
+  const turnstileToken = formData.get("turnstileToken")?.toString() || "";
+  const url = new URL(request.url);
+  const origin = url.origin;
+  const isValidRequest = await validateRequest(turnstileToken, origin);
+  if (!isValidRequest) {
+    return json({ success: false, message : "Invalid Request" });
+  }
   const commentParent = Number(formData.get("commentParentId")) || 0;
 
   try {
@@ -455,24 +483,6 @@ async function handleSubmitComment(formData: FormData, postId: number) {
   }
 }
 
-async function validateRequest(token: string, origin: string) {
-  const formData = new FormData();
-  formData.append('cf-turnstile-response', token);
-
-  const res = await fetch(`${origin}/api/verify`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  try {
-    const data = await res.json();
-    return data.success;
-  } catch (error) {
-    console.error('Error verifying Turnstile response:', error)
-    console.log(res)
-    return false;
-  }
-}
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){

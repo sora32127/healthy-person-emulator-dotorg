@@ -76,8 +76,9 @@ export const createPostFormSchema = (stopWords: string[]) => {
               message: 'タイトルは必須です',
             })
           }
-        })
-
+        }),
+        turnstileToken: z.string().refine(
+          (value) => value.length > 0, { message: "時間をおいて再度投稿してください" }),
     })
 }
 

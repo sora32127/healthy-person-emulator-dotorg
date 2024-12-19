@@ -20,6 +20,8 @@ import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { validateRequest } from "~/modules/security.server";
 
 
 export async function loader () {
@@ -55,8 +57,6 @@ export default function App() {
     methods.setValue("createdTags", createdTags.filter((t) => t !== tag));
   }
 
-  
-  
   const formId = "post-form";
   type Inputs = z.infer<typeof postFormSchema>;
 
@@ -105,10 +105,6 @@ export default function App() {
       <Form method="post" onSubmit={methods.handleSubmit(onSubmit)}>
         <UserExplanation />
         <br/>
-        <NavLink
-            className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
-            to="/freeStylePost"
-        >自由投稿フォームに移動</NavLink>
         <div className="flex justify-start mt-6">
           <ClearFormButton clearInputs={() => clearForm(methods.reset)}/>
         </div>
@@ -173,7 +169,7 @@ export default function App() {
             placeholders={["タイトル"]}
             registerKey="title"
         />
-        <PreviewButton actionData={actionData} postFormSchema={postFormSchema} />
+        <PreviewButton actionData={actionData} postFormSchema={postFormSchema} TurnStileSiteKey={CFTurnstileSiteKey} />
       </Form>
       </FormProvider>
     </div>
@@ -398,9 +394,11 @@ function clearForm(formClear: () => void){
 }
 
 // useActionDataを丸ごと使う
-function PreviewButton({ actionData, postFormSchema }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema> }){
+function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, trigger, reset } = useFormContext();
+  const { getValues, trigger, reset, setValue } = useFormContext();
+  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(false);
+
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
 
@@ -416,6 +414,10 @@ function PreviewButton({ actionData, postFormSchema }: { actionData: typeof acti
 
   const handleFirstSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    setIsSubmitButtonDisabled(true);
+    setTimeout(() => {
+      setIsSubmitButtonDisabled(false);
+    }, 3000);
     await trigger();
     const inputData = getValues();
     const zodErrors = postFormSchema.safeParse(inputData);
@@ -433,6 +435,7 @@ function PreviewButton({ actionData, postFormSchema }: { actionData: typeof acti
     }
     submit(formData, { method: "post", action: "/post" });
     setShowPreviewModal(true);
+
   }
 
   const navigate = useNavigate();
@@ -465,9 +468,32 @@ function PreviewButton({ actionData, postFormSchema }: { actionData: typeof acti
     }
   }
 
+
+  const handleTurnStileSuccess = (token: string) => {
+    setValue("turnstileToken", token);
+    setIsSubmitButtonDisabled(false);
+  }
+
   return (
     <div className="flex justify-end">
-      <button type="submit" onClick={handleFirstSubmit} className="btn btn-primary">投稿する</button>
+      <Turnstile
+        siteKey={TurnStileSiteKey}
+        onSuccess={handleTurnStileSuccess}
+        options={{"size":"invisible"}}
+      />
+      <button
+        type="submit"
+        onClick={handleFirstSubmit}
+        className={
+          `btn
+            ${isSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
+            ${!isSubmitButtonDisabled ? "btn-primary" : ""}
+          `
+        }
+        disabled={isSubmitButtonDisabled}
+      >
+        投稿する
+      </button>
       <Toaster />
       <Modal
         isOpen={showPreviewModal}
@@ -518,7 +544,21 @@ export async function action({ request }:ActionFunctionArgs){
     selectedTags: JSON.parse(postData.selectedTags as string || "[]"),
     createdTags: JSON.parse(postData.createdTags as string || "[]"),
     title: JSON.parse(postData.title as string),
+    turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
+
+  const url = new URL(request.url);
+  const origin = url.origin;
+
+  const isValidRequest = await validateRequest(parsedData.turnstileToken, origin);
+
+  if (!isValidRequest){
+    return json({
+      success: false,
+      error: "Invalid Request. Request-validation has failed. Please try again.",
+      data: undefined
+    });
+  }
 
   if (actionType === "firstSubmit"){
     try{  
