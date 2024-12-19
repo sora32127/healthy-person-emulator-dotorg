@@ -105,10 +105,6 @@ export default function App() {
       <Form method="post" onSubmit={methods.handleSubmit(onSubmit)}>
         <UserExplanation />
         <br/>
-        <NavLink
-            className="inline-block align-baseline font-bold text-sm text-info underline underline-offset-4"
-            to="/freeStylePost"
-        >自由投稿フォームに移動</NavLink>
         <div className="flex justify-start mt-6">
           <ClearFormButton clearInputs={() => clearForm(methods.reset)}/>
         </div>

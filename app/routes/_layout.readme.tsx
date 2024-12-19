@@ -37,7 +37,6 @@ export default function Component() {
                 </ul>
                 </li>
                 <li>テンプレートに沿って投稿を行う場合、<NavLink to="/post">投稿フォーム</NavLink>を利用してください</li>
-                <li>テンプレートに沿わず投稿を行う場合、<NavLink to="freeStylePost">自由投稿フォーム</NavLink>を利用して下さい</li>
             </ul>
             <H3>コメントの投稿について</H3>
             <ul>
