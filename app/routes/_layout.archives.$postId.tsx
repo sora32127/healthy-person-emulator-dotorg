@@ -327,27 +327,27 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
   const postId = Number(formData.get("postId"));
-  const token = formData.get("cf-turnstile-response") as string;
-
+  const token = formData.get("cf-turnstile-response")?.toString() || formData.get("turnstileToken")?.toString() || "";
   const url = new URL(request.url);
   const origin = url.origin;
+
+  const isValidRequest = await validateRequest(token, origin);
+  if (!isValidRequest) {
+    console.error(`Invalid Request in action token: ${token}, origin: ${origin}`);
+    return json({ success: false, message : "Invalid Request" });
+  }
+
 
   const ip = getClientIPAddress(request) || "";
   const userIpHashString = await getUserIpHashString(ip);
 
   switch (action) {
     case "votePost":
-      {
-        const isValidRequest = await validateRequest(token, origin);
-        if (!isValidRequest) {
-        return json({ success: false, message : "Invalid Request" });
-      }
       return handleVotePost(formData, postId, userIpHashString, request);
-    }
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
-      return handleSubmitComment(formData, postId, request);
+      return handleSubmitComment(formData, postId);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -417,15 +417,7 @@ async function handleVoteComment(
   request: Request
 ) {
   const voteType = formData.get("voteType")?.toString();
-  console.log("handleVoteComment has evoked");
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const token = formData.get("turnstileToken")?.toString() || "";
-  console.log("token", token);
-  const isValidRequest = await validateRequest(token, origin);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" });
-  }
+
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
     await prisma.fctCommentVoteHistory.create({
@@ -454,16 +446,9 @@ async function handleVoteComment(
   );
 }
 
-async function handleSubmitComment(formData: FormData, postId: number, request: Request) {
+async function handleSubmitComment(formData: FormData, postId: number) {
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
-  const turnstileToken = formData.get("turnstileToken")?.toString() || "";
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const isValidRequest = await validateRequest(turnstileToken, origin);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" });
-  }
   const commentParent = Number(formData.get("commentParentId")) || 0;
 
   try {
