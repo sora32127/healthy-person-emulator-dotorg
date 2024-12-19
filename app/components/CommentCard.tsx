@@ -9,6 +9,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { CommentFormInputs } from "./CommentInputBox";
 
 const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -56,31 +57,26 @@ export default function CommentCard({
   const isDisliked = dislikedComments.includes(commentId);
 
   const [isReplyBoxShown, setIsReplyBoxShown] = useState(false);
-  const [replyAuthor, setReplyAuthor] = useState("Anonymous");
-  const [replyContent, setReplyContent] = useState("");
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
 
   const submit = useSubmit();
 
-  const handleReplyCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
 
     const formData = new FormData();
     formData.append("postId", postId.toString());
-    formData.append("commentAuthor", replyAuthor);
-    formData.append("commentContent", replyContent);
     formData.append("commentParentId", commentId.toString());
+    for (const [key, value] of Object.entries(data)) {
+      formData.append(key, value.toString());
+    }
     formData.append("action", "submitComment")
 
     await submit(formData, {
       method: "post",
       action: `/archives/${postId}`,
     });
-
-    setReplyAuthor("");
-    setReplyContent("");
     setIsReplyBoxShown(false);
   };
   
@@ -170,10 +166,7 @@ export default function CommentCard({
         <div className="ml-2">
         {isReplyBoxShown && (
             <CommentInputBox
-                commentAuthor={replyAuthor}
-                commentContent={replyContent}
-                onCommentAuthorChange={setReplyAuthor}
-                onCommentContentChange={setReplyContent}
+                CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
                 onSubmit={handleReplyCommentSubmit}
                 isCommentOpen={isCommentOpen}
                 commentParentId={commentId}
