@@ -19,9 +19,9 @@ export async function validateRequest(token: string, origin: string) {
 
 
 export async function getTurnStileSiteKey() {
-  const key = process.env.CF_TURNSTILE_SITE_KEY;
+  const key = process.env.CF_TURNSTILE_SITEKEY;
   if (!key) {
-    throw new Error("CF_TURNSTILE_SITE_KEY is not set");
+    throw new Error("CF_TURNSTILE_SITEKEY is not set");
   }
   return key;
 }
