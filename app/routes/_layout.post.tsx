@@ -397,7 +397,7 @@ function clearForm(formClear: () => void){
 function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { getValues, trigger, reset, setValue } = useFormContext();
-  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(false);
+  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
 
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
@@ -479,14 +479,16 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
       <Turnstile
         siteKey={TurnStileSiteKey}
         onSuccess={handleTurnStileSuccess}
-        options={{"size":"invisible"}}
+        options={{
+          size: "invisible",
+        }}
       />
       <button
         type="submit"
         onClick={handleFirstSubmit}
         className={
           `btn
-            ${isSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
+            ${isSubmitButtonDisabled ? "animate-pulse btn-disabled" : ""}
             ${!isSubmitButtonDisabled ? "btn-primary" : ""}
           `
         }
