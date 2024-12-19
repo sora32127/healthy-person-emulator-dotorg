@@ -396,7 +396,9 @@ function clearForm(formClear: () => void){
 // useActionDataを丸ごと使う
 function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, trigger, reset, control, setValue } = useFormContext();
+  const { getValues, trigger, reset, setValue } = useFormContext();
+  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(false);
+
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
 
@@ -412,6 +414,10 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
 
   const handleFirstSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    setIsSubmitButtonDisabled(true);
+    setTimeout(() => {
+      setIsSubmitButtonDisabled(false);
+    }, 3000);
     await trigger();
     const inputData = getValues();
     const zodErrors = postFormSchema.safeParse(inputData);
@@ -429,6 +435,7 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
     }
     submit(formData, { method: "post", action: "/post" });
     setShowPreviewModal(true);
+
   }
 
   const navigate = useNavigate();
@@ -461,11 +468,10 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
     }
   }
 
-  const [isValidUser, setIsValidUser] = useState(false);
 
   const handleTurnStileSuccess = (token: string) => {
     setValue("turnstileToken", token);
-    setIsValidUser(true);
+    setIsSubmitButtonDisabled(false);
   }
 
   return (
@@ -473,17 +479,18 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
       <Turnstile
         siteKey={TurnStileSiteKey}
         onSuccess={handleTurnStileSuccess}
+        options={{"size":"invisible"}}
       />
       <button
         type="submit"
         onClick={handleFirstSubmit}
         className={
           `btn
-            ${!isValidUser ? "animate-pulse bg-base-300" : ""}
-            ${isValidUser ? "btn-primary" : ""}
+            ${isSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
+            ${!isSubmitButtonDisabled ? "btn-primary" : ""}
           `
         }
-        disabled={!isValidUser}
+        disabled={isSubmitButtonDisabled}
       >
         投稿する
       </button>
