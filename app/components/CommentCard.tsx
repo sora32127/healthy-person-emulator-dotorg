@@ -102,7 +102,6 @@ export default function CommentCard({
       setIsCommentDislikeButtonPushed(true);
     }
     onCommentVote(getValues());
-    setIsValidUser(false);
   };
 
   return (
@@ -120,7 +119,7 @@ export default function CommentCard({
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
-            } comment-like-button`}
+            } comment-like-button ${!isValidUser ? "animate-pulse btn-disabled" : ""}`}
             onClick={() => {
               handleVote("like");
             }}
@@ -136,8 +135,9 @@ export default function CommentCard({
         <div className="tooltip" data-tip="このコメントを低評価する">
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isDisliked ? "text-red-500 font-bold" : ""
-            } comment-dislike-button`}
+              isDisliked ? "text-red-500 font-bold" : ""}
+              ${!isValidUser ? "btn-disabled" : ""}
+              comment-dislike-button`}
             onClick={() => {
               handleVote("dislike");
             }}
@@ -153,6 +153,7 @@ export default function CommentCard({
           <Turnstile
           siteKey={CF_TURNSTILE_SITEKEY}
           onSuccess={handleTurnstileSuccess}
+          options={{ size: "invisible" }}
         />
 
       </div>

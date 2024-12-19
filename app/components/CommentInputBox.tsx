@@ -87,10 +87,11 @@ export default function CommentInputBox({
       <Turnstile
         siteKey={CF_TURNSTILE_SITE_KEY}
         onSuccess={handleTurnStileSuccess}
+        options={{ size: "invisible" }}
       />
 
       <button type="submit" className={
-        `btn ${!isValidUser ? "animate-pulse btn-disabled" : ""}
+        `btn w-full ${!isValidUser ? "animate-pulse btn-disabled" : ""}
         ${isValidUser ? "btn-primary" : ""}
         `
         }>
