@@ -15,7 +15,7 @@ import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { setVisitorCookieData } from "~/modules/visitor.server";
-import Turnstile from "@marsidev/react-turnstile";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -177,6 +177,7 @@ export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
+  const [isValidUser, setIsValidUser] = useState(false);
 
   const { setValue, getValues, register } = useForm<PostEditSchema>({
     resolver: zodResolver(postEditSchema),
@@ -212,6 +213,11 @@ export default function EditPost() {
     setSelectedTags(tags);
   };
 
+
+  function handleTurnstileSuccess(token: string): void {
+    setValue('turnstileToken', token);
+    setIsValidUser(true);
+  }
 
   return (
         <div className="max-w-2xl mx-auto">
@@ -272,10 +278,17 @@ export default function EditPost() {
               />
             </div>
             <input type="hidden" name="userId" value={userId} />
+            <Turnstile
+              siteKey={CF_TURNSTILE_SITEKEY}
+              onSuccess={handleTurnstileSuccess}
+            />
             <button
               type="submit"
-              className="rounded-md block w-full px-4 py-2 text-center btn-primary edit-post-submit-button"
-              disabled={navigation.state === "submitting"}
+              className={`btn 
+                ${!isValidUser ? "btn-disabled animate-pulse" : ""}
+                ${isValidUser ? "btn-primary" : ""}
+              `}
+              disabled={navigation.state === "submitting" || !isValidUser}
             >
               変更を保存する
             </button>
