@@ -548,8 +548,9 @@ export async function action({ request }:ActionFunctionArgs){
 
   const url = new URL(request.url);
   const origin = url.origin;
+  const token = formData.get('turnstileToken')?.toString() || "";
 
-  const isValidRequest = await validateRequest(parsedData.turnstileToken, origin);
+  const isValidRequest = await validateRequest(token, origin);
 
   if (!isValidRequest){
     return json({
