@@ -331,6 +331,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const url = new URL(request.url);
   const origin = url.origin;
+  const isValidRequest = await validateRequest(token, origin);
+  if (!isValidRequest) {
+    return json({ success: false, message : "Invalid Request" });
+  }
 
   const ip = getClientIPAddress(request) || "";
   const userIpHashString = await getUserIpHashString(ip);
@@ -417,15 +421,6 @@ async function handleVoteComment(
   request: Request
 ) {
   const voteType = formData.get("voteType")?.toString();
-  console.log("handleVoteComment has evoked");
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const token = formData.get("turnstileToken")?.toString() || "";
-  console.log("token", token);
-  const isValidRequest = await validateRequest(token, origin);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" });
-  }
   const commentId = Number(formData.get("commentId"));
   await prisma.$transaction(async (prisma) => {
     await prisma.fctCommentVoteHistory.create({
@@ -457,13 +452,6 @@ async function handleVoteComment(
 async function handleSubmitComment(formData: FormData, postId: number, request: Request) {
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
-  const turnstileToken = formData.get("turnstileToken")?.toString() || "";
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const isValidRequest = await validateRequest(turnstileToken, origin);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" });
-  }
   const commentParent = Number(formData.get("commentParentId")) || 0;
 
   try {
