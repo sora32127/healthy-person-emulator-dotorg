@@ -19,7 +19,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { validateRequest } from "~/modules/security.server";
+import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -159,7 +159,7 @@ export const loader:LoaderFunction = async(args) => {
     where : { postId: Number(postId) },
     orderBy : { postRevisionNumber: 'desc' },
   });
-  const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
+  const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
   return json({
     postData,

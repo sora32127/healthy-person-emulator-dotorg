@@ -21,11 +21,11 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { validateRequest } from "~/modules/security.server";
+import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 
 export async function loader () {
-  const CFTurnstileSiteKey = process.env.CF_TURNSTILE_SITEKEY || "";
+  const CFTurnstileSiteKey = await getTurnStileSiteKey();
   const tags = await getTagsCounts();
   const stopWords = await getStopWords();
   return json({ CFTurnstileSiteKey,  tags, stopWords });
@@ -549,7 +549,6 @@ export async function action({ request }:ActionFunctionArgs){
   const url = new URL(request.url);
   const origin = url.origin;
   const token = formData.get('turnstileToken')?.toString() || "";
-
   const isValidRequest = await validateRequest(token, origin);
 
   if (!isValidRequest){

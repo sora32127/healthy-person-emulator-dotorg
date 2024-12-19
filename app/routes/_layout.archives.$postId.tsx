@@ -20,7 +20,7 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
-import { validateRequest } from "~/modules/security.server";
+import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import { z } from "zod";
 
 export const commentVoteSchema = z.object({
@@ -38,7 +38,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
-    const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY
+    const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
     return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
@@ -333,8 +333,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const isValidRequest = await validateRequest(token, origin);
   if (!isValidRequest) {
-    console.error(`Invalid Request in action token: ${token}, origin: ${origin}`);
-    return json({ success: false, message : "Invalid Request" });
+    return json({ success: false, message : "Invalid Request" }, { status: 400 });
   }
 
 
