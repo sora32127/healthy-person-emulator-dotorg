@@ -476,23 +476,25 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
 
   return (
     <div className="flex justify-end">
-      <Turnstile
-        siteKey={TurnStileSiteKey}
-        onSuccess={handleTurnStileSuccess}
-      />
-      <button
-        type="submit"
-        onClick={handleFirstSubmit}
-        className={
-          `btn
-            ${isSubmitButtonDisabled ? "animate-pulse btn-disabled" : ""}
-            ${!isSubmitButtonDisabled ? "btn-primary" : ""}
-          `
-        }
-        disabled={isSubmitButtonDisabled}
-      >
-        投稿する
-      </button>
+      <div className="flex flex-row items-center gap-1 p-2">
+          <Turnstile
+            siteKey={TurnStileSiteKey}
+            onSuccess={handleTurnStileSuccess}
+          />
+          <button
+            type="submit"
+            onClick={handleFirstSubmit}
+            className={
+              `btn
+                ${isSubmitButtonDisabled ? "animate-pulse btn-disabled" : ""}
+                ${!isSubmitButtonDisabled ? "btn-primary" : ""}
+              `
+            }
+            disabled={isSubmitButtonDisabled}
+          >
+            投稿する
+          </button>
+        </div>
       <Toaster />
       <Modal
         isOpen={showPreviewModal}
