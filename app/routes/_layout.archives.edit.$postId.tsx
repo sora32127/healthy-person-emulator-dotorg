@@ -15,6 +15,21 @@ import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { setVisitorCookieData } from "~/modules/visitor.server";
+import Turnstile from "@marsidev/react-turnstile";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+
+const postEditSchema = z.object({
+  postTitle: z.string().min(1),
+  postContent: z.string().min(1),
+  tags: z.array(z.string()).min(1),
+  userId: z.string().min(1),
+  turnstileToken: z.string().min(1),
+});
+
+export type PostEditSchema = z.infer<typeof postEditSchema>;
+
 
 async function requireUserId(args: LoaderFunctionArgs) {
   const { userId } = await getAuth(args);
@@ -143,6 +158,7 @@ export const loader:LoaderFunction = async(args) => {
     where : { postId: Number(postId) },
     orderBy : { postRevisionNumber: 'desc' },
   });
+  const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
 
   return json({
     postData,
@@ -150,6 +166,7 @@ export const loader:LoaderFunction = async(args) => {
     postMarkdown,
     allTagsForSearch,
     userId,
+    CF_TURNSTILE_SITEKEY,
     isEditing:false,
     postId,
     editHistory,
@@ -157,10 +174,19 @@ export const loader:LoaderFunction = async(args) => {
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory } = useLoaderData<typeof loader>();
-  const [markdownContent, setMarkdownContent] = useState<string>(postMarkdown || "");
-  const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
+  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
+  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
+
+  const { setValue, getValues, register } = useForm<PostEditSchema>({
+    resolver: zodResolver(postEditSchema),
+    defaultValues: {
+      postTitle: postData.postTitle,
+      postContent: postMarkdown,
+      tags: tagNames,
+      userId: userId,
+    },
+  });
 
   if (isEditing){
     return (
@@ -181,19 +207,11 @@ export default function EditPost() {
   const { postTitle } = postData;
   const oldTags = tagNames
 
-  const handleTagRemove = (tagName: string) => {
-    if (selectedTags) {
-      setSelectedTags(selectedTags.filter((tag) => tag !== tagName));
-    }
-  };
-
   const handleTagsSelected = (tags: string[]) => {
+    setValue('tags', tags);
     setSelectedTags(tags);
   };
 
-  const handleMarkdownChange = (value: string | undefined) => {
-    setMarkdownContent(value || "");
-  };
 
   return (
         <div className="max-w-2xl mx-auto">
@@ -206,9 +224,9 @@ export default function EditPost() {
               <input
                 type="text"
                 id="postTitle"
-                name="postTitle"
                 defaultValue={postTitle}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 edit-post-title"
+                {...register("postTitle")}
               />
             </div>
             <div className="mb-4">
@@ -238,15 +256,7 @@ export default function EditPost() {
                       key={tag}
                       className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
                     >
-                      <input type="hidden" name="tags" value={tag} />
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleTagRemove(tag)}
-                        className="ml-2 edit-tag-remove-button"
-                      >
-                        x
-                      </button>
                     </span>
                   ))}
                 </div>
@@ -255,11 +265,12 @@ export default function EditPost() {
             <div className="mb-4">
               <H2>本文を編集する</H2>
               <MarkdownEditor
-                value={markdownContent || ""}
-                onChange={handleMarkdownChange}
+                value={getValues("postContent")}
+                onChange={(value) => setValue("postContent", value)}
+                register={register}
+                name="postContent"
               />
             </div>
-            <input type="hidden" name="postContent" value={markdownContent} />
             <input type="hidden" name="userId" value={userId} />
             <button
               type="submit"

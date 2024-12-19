@@ -1,12 +1,16 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { IconType } from 'react-icons';
+import { type IconType } from 'react-icons';
 import { FaHeading, FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaEye, FaEdit, FaQuestionCircle, FaStrikethrough } from 'react-icons/fa';
+import { type UseFormRegister } from 'react-hook-form';
 
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  register?: UseFormRegister<any>;
+  name?: string;
 }
 
 interface ToolbarItem {
@@ -15,11 +19,11 @@ interface ToolbarItem {
   action: () => void;
 }
 
-export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, register, name = "postContent" }: MarkdownEditorProps) {
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
   const [showGuide, setShowGuide] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const htmlElement = document.documentElement;
@@ -123,9 +127,12 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
         <div className="w-full">
           {mode === 'edit' ? (
             <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
+              {...(register && name ? register(name, {
+                onChange: (e) => onChange(e.target.value)
+              }) : {
+                value,
+                onChange: (e) => onChange(e.target.value)
+              })}
               className="textarea textarea-bordered w-full min-h-[32rem]"
             />
           ) : (
