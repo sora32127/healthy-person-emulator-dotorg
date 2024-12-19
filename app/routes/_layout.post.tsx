@@ -397,7 +397,7 @@ function clearForm(formClear: () => void){
 function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { getValues, trigger, reset, setValue } = useFormContext();
-  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(false);
+  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
 
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
@@ -476,9 +476,10 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
 
   return (
     <div className="flex justify-end">
-      <Turnstile
-        siteKey={TurnStileSiteKey}
-        onSuccess={handleTurnStileSuccess}
+      <div className="flex flex-col items-center gap-1 p-2">
+        <Turnstile
+          siteKey={TurnStileSiteKey}
+          onSuccess={handleTurnStileSuccess}
       />
       <button
         type="submit"
@@ -489,10 +490,11 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
             ${!isSubmitButtonDisabled ? "btn-primary" : ""}
           `
         }
-        disabled={isSubmitButtonDisabled}
-      >
-        投稿する
-      </button>
+          disabled={isSubmitButtonDisabled}
+        >
+          投稿する
+        </button>
+      </div>
       <Toaster />
       <Modal
         isOpen={showPreviewModal}
