@@ -297,7 +297,6 @@ export default function EditPost() {
             <Turnstile
               siteKey={CF_TURNSTILE_SITEKEY}
               onSuccess={handleTurnstileSuccess}
-              options={{ size: "invisible" }}
             />
             <button
               type="submit"
