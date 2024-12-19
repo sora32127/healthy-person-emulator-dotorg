@@ -479,7 +479,6 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
       <Turnstile
         siteKey={TurnStileSiteKey}
         onSuccess={handleTurnStileSuccess}
-        options={{"size":"invisible"}}
       />
       <button
         type="submit"
