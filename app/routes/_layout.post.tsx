@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, us
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, json, NavLink, useActionData, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { Form, json, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
@@ -490,6 +490,7 @@ function PreviewButton(
     setIsFirstSubmitButtonDisabled(false);
   }
 
+
   return (
     <div className="flex justify-end">
       <div className="flex flex-col items-center gap-1 p-2">
@@ -683,7 +684,8 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
   const { reflection, counterReflection } = validationResult.data;
   const { note, postCategory } = validationResult.data;
 
-  function removeEmptyString(array: string[]): string[] {
+  function removeEmptyString(array: string[] | undefined): string[] {
+    if (!array) return [];
     return array.filter((value) => !/^\s*$/.test(value));
   }
 
@@ -698,7 +700,7 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
       <tr><td>How(どのように)</td><td>${how}</td></tr>
       <tr><td>Then(どうした)</td><td>${then}</td></tr>
     </tbody></table>
-    ${assumption && assumption.length > 0 ? `
+    ${removeEmptyString(assumption)?.length > 0 ? `
       <h3>前提条件</h3>
       <ul>
         ${removeEmptyString(assumption)?.map((assumption) => `<li>${assumption}</li>`).join('\n')}
@@ -716,7 +718,7 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
     <ul>
       ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('\n')}
     </ul>
-    ${note && note.length > 0 ? `
+    ${removeEmptyString(note)?.length > 0 ? `
       <h3>備考</h3>
       ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('\n')}
     ` : ''}
