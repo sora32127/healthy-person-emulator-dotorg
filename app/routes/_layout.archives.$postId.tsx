@@ -2,7 +2,6 @@ import { json } from "@remix-run/node";
 import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import parser from "html-react-parser";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
