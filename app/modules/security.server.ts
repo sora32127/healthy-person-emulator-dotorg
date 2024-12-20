@@ -1,4 +1,4 @@
-import { data } from "@remix-run/node";
+import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 
 export async function validateRequest(token: string, origin: string) {
 
@@ -27,4 +27,10 @@ export async function getTurnStileSiteKey() {
     throw new Error("CF_TURNSTILE_SITEKEY is not set");
   }
   return key;
+}
+
+
+export async function getHashedUserIPAddress(request: Request){
+  const ipAddress = getClientIPAddress(request) || "";
+  return ipAddress;
 }
