@@ -21,7 +21,7 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
+import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 
 export async function loader () {
@@ -638,10 +638,7 @@ export async function action({ request }:ActionFunctionArgs){
   }
 }
 
-async function getHashedUserIPAddress(request: Request){
-  const ipAddress = getClientIPAddress(request) || "";
-  return ipAddress;
-}
+
 
 async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>, postFormSchema: ReturnType<typeof createPostFormSchema>){
   // バリデーションを実施

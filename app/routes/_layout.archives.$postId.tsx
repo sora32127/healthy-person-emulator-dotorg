@@ -20,7 +20,7 @@ import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
-import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
+import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import { z } from "zod";
 
 export const commentVoteSchema = z.object({
@@ -336,9 +336,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ success: false, message : "Invalid Request" }, { status: 400 });
   }
 
-
-  const ip = getClientIPAddress(request) || "";
-  const userIpHashString = await getUserIpHashString(ip);
+  const userIpHashString = await getHashedUserIPAddress(request);
 
   switch (action) {
     case "votePost":
@@ -350,15 +348,6 @@ export async function action({ request }: ActionFunctionArgs) {
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
-}
-
-async function getUserIpHashString(ip: string) {
-  const userIpHash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(ip)
-  );
-  const hashArray = Array.from(new Uint8Array(userIpHash));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function handleVotePost(
@@ -374,8 +363,6 @@ async function handleVotePost(
     return json({ error: "Invalid vote type" }, { status: 400 });
   }
   
-
-
   await prisma.$transaction(async (prisma) => {
     await prisma.fctPostVoteHistory.create({
       data: {
