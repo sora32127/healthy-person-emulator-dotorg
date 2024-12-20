@@ -344,7 +344,7 @@ export async function action({ request }: ActionFunctionArgs) {
     case "voteComment":
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
-      return handleSubmitComment(formData, postId);
+      return handleSubmitComment(formData, postId, userIpHashString);
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
@@ -432,7 +432,7 @@ async function handleVoteComment(
   );
 }
 
-async function handleSubmitComment(formData: FormData, postId: number) {
+async function handleSubmitComment(formData: FormData, postId: number, userIpHashString: string) {
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
   const commentParent = Number(formData.get("commentParentId")) || 0;
@@ -443,7 +443,8 @@ async function handleSubmitComment(formData: FormData, postId: number) {
         postId: Number(postId),
         commentAuthor,
         commentContent,
-        commentParent
+        commentParent,
+        commentAuthorIpHash: userIpHashString
       },
     });
     return json({ success: true });
