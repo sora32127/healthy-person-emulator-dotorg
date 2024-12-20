@@ -640,13 +640,7 @@ export async function action({ request }:ActionFunctionArgs){
 
 async function getHashedUserIPAddress(request: Request){
   const ipAddress = getClientIPAddress(request) || "";
-  const postUserIpHash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(ipAddress)
-  );
-  const hashArray = Array.from(new Uint8Array(postUserIpHash));
-  const postUserIpHashString = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  return postUserIpHashString;
+  return ipAddress;
 }
 
 async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>, postFormSchema: ReturnType<typeof createPostFormSchema>){
