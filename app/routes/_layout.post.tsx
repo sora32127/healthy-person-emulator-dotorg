@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler, FormProvider, useFormContext, useWatch, us
 import { useEffect, useState } from "react"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, json, NavLink, useActionData, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { Form, json, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
