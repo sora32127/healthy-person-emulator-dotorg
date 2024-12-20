@@ -18,7 +18,7 @@ import { setVisitorCookieData } from "~/modules/visitor.server";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 const postEditSchema = z.object({

@@ -53,7 +53,7 @@ test.describe('投稿フォームのテスト', () => {
 
   test('最大限の要素を入力して投稿 * 結果善', async ({ page }) => {
     // 投稿タイプの選択
-    await page.getByRole('radio', { name: '結果善：' }).click();
+    await page.getByLabel('結果善：').check();
 
     // 5W1H+Thenの入力
     await page.getByLabel(/その状況の「主役」は誰ですか？/).fill('テストユーザーが');

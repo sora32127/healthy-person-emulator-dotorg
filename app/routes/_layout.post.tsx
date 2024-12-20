@@ -394,10 +394,14 @@ function clearForm(formClear: () => void){
 }
 
 // useActionDataを丸ごと使う
-function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }){
+function PreviewButton(
+  { actionData, postFormSchema, TurnStileSiteKey } : 
+  { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }
+){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, trigger, reset, setValue } = useFormContext();
-  const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
+  const { getValues, trigger, reset, setValue, formState: { isSubmitSuccessful, isSubmitting } } = useFormContext();
+  const [isFirstSubmitButtonDisabled, setIsFirstSubmitButtonDisabled] = useState(true);
+  const [isSecondSubmitButtonDisabled, setIsSecondSubmitButtonDisabled] = useState(false);
 
   const submit = useSubmit();
   type Inputs = z.infer<typeof postFormSchema>;
@@ -412,11 +416,20 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
 
   const toastNotify = (errorMessage: string) => toast.error(errorMessage);
 
+  useEffect(() => {
+    if (isSubmitSuccessful){
+      setIsFirstSubmitButtonDisabled(false);
+    }
+    if (isSubmitting){
+      setIsFirstSubmitButtonDisabled(true);
+    }
+  }, [isSubmitSuccessful, isSubmitting])
+
   const handleFirstSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    setIsSubmitButtonDisabled(true);
+    setIsFirstSubmitButtonDisabled(true);
     setTimeout(() => {
-      setIsSubmitButtonDisabled(false);
+      setIsFirstSubmitButtonDisabled(false);
     }, 3000);
     await trigger();
     const inputData = getValues();
@@ -441,6 +454,10 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
   const navigate = useNavigate();
 
   const handleSecondSubmit = async () => {
+    setIsSecondSubmitButtonDisabled(true);
+    setTimeout(() => {
+      setIsSecondSubmitButtonDisabled(false);
+    }, 3000);
     const data = getValues() as Inputs;
     const formData = new FormData();
     formData.append("_action", "secondSubmit");
@@ -471,7 +488,7 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
 
   const handleTurnStileSuccess = (token: string) => {
     setValue("turnstileToken", token);
-    setIsSubmitButtonDisabled(false);
+    setIsFirstSubmitButtonDisabled(false);
   }
 
   return (
@@ -486,11 +503,11 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
         onClick={handleFirstSubmit}
         className={
           `btn
-            ${isSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
-            ${!isSubmitButtonDisabled ? "btn-primary" : ""}
+            ${isFirstSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
+            ${!isFirstSubmitButtonDisabled ? "btn-primary" : ""}
           `
         }
-          disabled={isSubmitButtonDisabled}
+          disabled={isFirstSubmitButtonDisabled}
         >
           投稿する
         </button>
@@ -517,7 +534,19 @@ function PreviewButton({ actionData, postFormSchema, TurnStileSiteKey }: { actio
               <FaCopy />
             </button>
           </div>
-          <button type="button" onClick={handleSecondSubmit} className="btn btn-primary">投稿する</button>
+          <button
+            type="button"
+            onClick={handleSecondSubmit}
+            className={
+              `btn
+                ${isSecondSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
+                ${!isSecondSubmitButtonDisabled ? "btn-primary" : ""}
+              `
+            }
+            disabled={isSecondSubmitButtonDisabled}
+          >
+            {isSubmitting ? "投稿中..." : "投稿する"}
+          </button>
         </div>
       </Modal>
     </div>
