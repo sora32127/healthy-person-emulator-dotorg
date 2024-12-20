@@ -4,6 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "build": "prisma generate && remix vite:build",
     "dev": "remix vite:dev --host 0.0.0.0 --port 3000",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
