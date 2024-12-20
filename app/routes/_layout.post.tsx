@@ -13,7 +13,6 @@ import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import { createEmbedding } from "~/modules/embedding.server";
 import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
