@@ -1,5 +1,3 @@
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
-
 export async function validateRequest(token: string, origin: string) {
 
   const formData = new FormData();
@@ -31,6 +29,10 @@ export async function getTurnStileSiteKey() {
 
 
 export async function getHashedUserIPAddress(request: Request){
-  const ipAddress = getClientIPAddress(request) || "";
+  const headers = request.headers;
+  console.log("headers", headers);
+  const ipAddressFromXForwardedFor = headers.get("X-Forwarded-For");
+  const ipAddressFromCFConnectingIp = headers.get("CF-Connecting-IP");
+  const ipAddress = ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || "";
   return ipAddress;
 }
