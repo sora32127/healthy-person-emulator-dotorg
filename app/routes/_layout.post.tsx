@@ -399,7 +399,7 @@ function PreviewButton(
   { actionData: typeof action, postFormSchema: ReturnType<typeof createPostFormSchema>, TurnStileSiteKey: string }
 ){
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { getValues, trigger, reset, setValue } = useFormContext();
+  const { getValues, trigger, reset, setValue, formState: { isSubmitSuccessful, isSubmitting } } = useFormContext();
   const [isFirstSubmitButtonDisabled, setIsFirstSubmitButtonDisabled] = useState(true);
   const [isSecondSubmitButtonDisabled, setIsSecondSubmitButtonDisabled] = useState(false);
 
@@ -415,19 +415,15 @@ function PreviewButton(
   }
 
   const toastNotify = (errorMessage: string) => toast.error(errorMessage);
-  const navigation = useNavigation();
 
   useEffect(() => {
-    if (navigation.state === "submitting"){
-      setIsSecondSubmitButtonDisabled(true);
+    if (isSubmitSuccessful){
+      setIsFirstSubmitButtonDisabled(false);
     }
-    if (navigation.state === "idle"){
-      setIsSecondSubmitButtonDisabled(false);
-    }
-    if (navigation.state === "loading"){
+    if (isSubmitting){
       setIsFirstSubmitButtonDisabled(true);
     }
-  }, [navigation.state])
+  }, [isSubmitSuccessful, isSubmitting])
 
   const handleFirstSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -549,7 +545,7 @@ function PreviewButton(
             }
             disabled={isSecondSubmitButtonDisabled}
           >
-            投稿する
+            {isSubmitting ? "投稿中..." : "投稿する"}
           </button>
         </div>
       </Modal>
