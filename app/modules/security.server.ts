@@ -52,12 +52,12 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
             description: "歓迎されない投稿かどうか",
             type: SchemaType.BOOLEAN,
         },
-        reason: {
-            description: "歓迎されない投稿である理由(60文字以内)",
+        explanation: {
+            description: "簡潔なユーザー向けの説明(60文字以内)。警告表示で利用する。",
             type: SchemaType.STRING,
         },
     },
-    required: ["isUnwelcomed", "reason"],
+    required: ["isUnwelcomed", "explanation"],
   }
 
 
@@ -74,7 +74,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
   # 指示
   - あなたはHTMLで表現されたテキストを分析して、そのテキストが「歓迎されない投稿」に該当するかどうかを判断してください。
   - 歓迎されない条件に該当する場合は「歓迎されない投稿」と判断し、条件に該当していても例外に該当する場合は「歓迎される投稿」と判断してください。
-  - 理由は60文字以内で表現し、ユーザーに対して判断した理由を簡潔に伝えてください。
+  - 理由は60文字以内で表現し、この記事がどのような要素を含んでいるかを簡潔に表現してください。
 
   # 歓迎されない投稿の条件
   - 自らが経験した知識ではない知識について記述された投稿
@@ -97,5 +97,5 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
 
   const result = await model.generateContent(prompt);
   const parsedResult = JSON.parse(result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') || {};
-  return {isUnwelcomed: parsedResult.isUnwelcomed, reason: parsedResult.reason};
+  return {isUnwelcomed: parsedResult.isUnwelcomed, explanation: parsedResult.explanation};
 }

@@ -59,7 +59,7 @@ export const PostDataSchema = z.object({
     })),
     postURL: z.string(),
     isWelcomed: z.boolean().nullable(),
-    isWelcomedReason: z.string().nullable(),
+    isWelcomedExplanation: z.string().nullable(),
 })
 type PostData = z.infer<typeof PostDataSchema>;
 
@@ -76,7 +76,7 @@ async function getPostByPostId(postId: number): Promise<PostData> {
             commentStatus: true,
             ogpImageUrl: true,
             isWelcomed: true,
-            isWelcomedReason: true,
+            isWelcomedExplanation: true,
             rel_post_tags: {
                 select: {
                     dimTag: {
@@ -223,7 +223,7 @@ export class ArchiveDataEntry {
     previousPost: PreviousOrNextPostData;
     nextPost: PreviousOrNextPostData;
     isWelcomed: boolean | null;
-    isWelcomedReason: string | null;
+    isWelcomedExplanation: string | null;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
@@ -245,7 +245,7 @@ export class ArchiveDataEntry {
         this.previousPost = previousPost;
         this.nextPost = nextPost;
         this.isWelcomed = postData.isWelcomed;
-        this.isWelcomedReason = postData.isWelcomedReason;
+        this.isWelcomedExplanation = postData.isWelcomedExplanation;
     }
     
     static async getData(postId: number){
@@ -1035,9 +1035,9 @@ export async function getStopWords() : Promise<string[]> {
     return [...new Set(stopWords.map((stopWord) => stopWord.stopWord))];
 }
 
-export async function updatePostWelcomed(postId: number, isWelcomed: boolean, reason: string){
+export async function updatePostWelcomed(postId: number, isWelcomed: boolean, explanation: string){
     await prisma.dimPosts.update({
         where: { postId },
-        data: { isWelcomed, isWelcomedReason: reason },
+        data: { isWelcomed, isWelcomedExplanation: explanation },
     })
 }

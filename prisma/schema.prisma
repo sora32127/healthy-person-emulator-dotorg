@@ -115,7 +115,7 @@ model DimPosts {
   blueskyPostUriOfFirstPost String?            @map("bluesky_post_uri_of_first_post")
   misskeyNoteIdOfFirstNote String?             @map("misskey_note_id_of_first_note")
   isWelcomed            Boolean?               @default(false) @map("is_welcomed")
-  isWelcomedReason      String?                @map("is_welcomed_reason")
+  isWelcomedExplanation String?                @map("is_welcomed_explanation")
   dimComments           DimComments[]
   fct_post_edit_history FctPostEditHistory[]
   fct_post_vote_history FctPostVoteHistory[]

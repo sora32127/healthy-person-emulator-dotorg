@@ -661,9 +661,9 @@ export async function action({ request }:ActionFunctionArgs){
         postContent: newPost.postContent,
         postTitle: newPost.postTitle,
       });
-      
-      const { isUnwelcomed, reason } = await getJudgeWelcomedByGenerativeAI(wikifyResult, postTitle);
-      await updatePostWelcomed(Number(newPost.postId), isUnwelcomed, reason);
+
+      const { isUnwelcomed, explanation } = await getJudgeWelcomedByGenerativeAI(wikifyResult, postTitle);
+      await updatePostWelcomed(Number(newPost.postId), isUnwelcomed, explanation);
 
       return json({ success: true, error: undefined, data: { postId: newPost.postId } });
     }
