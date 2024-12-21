@@ -45,11 +45,11 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
   }
 
   const schema = {
-    description: "歓迎されない投稿かどうかを判断した結果",
+    description: "歓迎される投稿かどうかを判断した結果",
     type: SchemaType.OBJECT,
     properties: {
-        isUnwelcomed: {
-            description: "歓迎されない投稿かどうか",
+        isWelcomed: {
+            description: "歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse",
             type: SchemaType.BOOLEAN,
         },
         explanation: {
@@ -57,7 +57,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
             type: SchemaType.STRING,
         },
     },
-    required: ["isUnwelcomed", "explanation"],
+    required: ["isWelcomed", "explanation"],
   }
 
 
@@ -97,5 +97,5 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
 
   const result = await model.generateContent(prompt);
   const parsedResult = JSON.parse(result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') || {};
-  return {isUnwelcomed: parsedResult.isUnwelcomed, explanation: parsedResult.explanation};
+  return {isWelcomed: parsedResult.isWelcomed, explanation: parsedResult.explanation};
 }

@@ -1038,6 +1038,6 @@ export async function getStopWords() : Promise<string[]> {
 export async function updatePostWelcomed(postId: number, isWelcomed: boolean, explanation: string){
     await prisma.dimPosts.update({
         where: { postId },
-        data: { isWelcomed, isWelcomedExplanation: explanation },
+        data: { isWelcomed: isWelcomed, isWelcomedExplanation: explanation },
     })
 }
