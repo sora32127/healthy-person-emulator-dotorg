@@ -202,7 +202,7 @@ export default function Component() {
     <>
       <div>
         <div className="px-4">
-          <UserWarningMessage isWelcomed={data.isWelcomed || true} isWelcomedExplanation={data.isWelcomedExplanation || ''} />
+          <UserWarningMessage isWelcomed={data.isWelcomed ?? true} isWelcomedExplanation={data.isWelcomedExplanation ?? ''} />
         </div>
         <div>
           <H1>{data.postTitle}</H1>
