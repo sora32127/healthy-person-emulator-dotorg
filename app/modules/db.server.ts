@@ -58,6 +58,8 @@ export const PostDataSchema = z.object({
         tagId: z.number(),
     })),
     postURL: z.string(),
+    isWelcomed: z.boolean().nullable(),
+    isWelcomedReason: z.string().nullable(),
 })
 type PostData = z.infer<typeof PostDataSchema>;
 
@@ -73,6 +75,8 @@ async function getPostByPostId(postId: number): Promise<PostData> {
             countDislikes: true,
             commentStatus: true,
             ogpImageUrl: true,
+            isWelcomed: true,
+            isWelcomedReason: true,
             rel_post_tags: {
                 select: {
                     dimTag: {
@@ -218,6 +222,8 @@ export class ArchiveDataEntry {
     similarPosts: SimilarPostsData[];
     previousPost: PreviousOrNextPostData;
     nextPost: PreviousOrNextPostData;
+    isWelcomed: boolean | null;
+    isWelcomedReason: string | null;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
@@ -238,6 +244,8 @@ export class ArchiveDataEntry {
         this.similarPosts = similarPosts;
         this.previousPost = previousPost;
         this.nextPost = nextPost;
+        this.isWelcomed = postData.isWelcomed;
+        this.isWelcomedReason = postData.isWelcomedReason;
     }
     
     static async getData(postId: number){
