@@ -44,8 +44,6 @@ export async function loader({ request }:LoaderFunctionArgs){
 
 export default function Component() {
   const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
-  const [commentAuthor, setCommentAuthor] = useState("Anonymous");
-  const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
