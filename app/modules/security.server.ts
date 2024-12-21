@@ -30,7 +30,6 @@ export async function getTurnStileSiteKey() {
 
 export async function getHashedUserIPAddress(request: Request){
   const headers = request.headers;
-  console.log("headers", headers);
   const ipAddressFromXForwardedFor = headers.get("X-Forwarded-For");
   const ipAddressFromCFConnectingIp = headers.get("CF-Connecting-IP");
   const ipAddress = ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || "";
