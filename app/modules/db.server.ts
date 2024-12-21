@@ -58,6 +58,8 @@ export const PostDataSchema = z.object({
         tagId: z.number(),
     })),
     postURL: z.string(),
+    isWelcomed: z.boolean().nullable(),
+    isWelcomedExplanation: z.string().nullable(),
 })
 type PostData = z.infer<typeof PostDataSchema>;
 
@@ -73,6 +75,8 @@ async function getPostByPostId(postId: number): Promise<PostData> {
             countDislikes: true,
             commentStatus: true,
             ogpImageUrl: true,
+            isWelcomed: true,
+            isWelcomedExplanation: true,
             rel_post_tags: {
                 select: {
                     dimTag: {
@@ -218,6 +222,8 @@ export class ArchiveDataEntry {
     similarPosts: SimilarPostsData[];
     previousPost: PreviousOrNextPostData;
     nextPost: PreviousOrNextPostData;
+    isWelcomed: boolean | null;
+    isWelcomedExplanation: string | null;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
@@ -238,6 +244,8 @@ export class ArchiveDataEntry {
         this.similarPosts = similarPosts;
         this.previousPost = previousPost;
         this.nextPost = nextPost;
+        this.isWelcomed = postData.isWelcomed;
+        this.isWelcomedExplanation = postData.isWelcomedExplanation;
     }
     
     static async getData(postId: number){
@@ -1025,4 +1033,11 @@ export async function getStopWords() : Promise<string[]> {
     })
     // ユニーク化
     return [...new Set(stopWords.map((stopWord) => stopWord.stopWord))];
+}
+
+export async function updatePostWelcomed(postId: number, isWelcomed: boolean, explanation: string){
+    await prisma.dimPosts.update({
+        where: { postId },
+        data: { isWelcomed: isWelcomed, isWelcomedExplanation: explanation },
+    })
 }

@@ -21,6 +21,7 @@ import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import { z } from "zod";
+import { UserWarningMessage } from "~/components/UserWarningMessage";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -44,8 +45,6 @@ export async function loader({ request }:LoaderFunctionArgs){
 
 export default function Component() {
   const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
-  const [commentAuthor, setCommentAuthor] = useState("Anonymous");
-  const [commentContent, setCommentContent] = useState("");
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
@@ -202,7 +201,12 @@ export default function Component() {
   return (
     <>
       <div>
-        <H1>{data.postTitle}</H1>
+        <div className="px-4">
+          <UserWarningMessage isWelcomed={data.isWelcomed ?? true} isWelcomedExplanation={data.isWelcomedExplanation ?? ''} />
+        </div>
+        <div>
+          <H1>{data.postTitle}</H1>
+        </div>
         <div>
           <div className="flex items-start gap-2 my-1">
             <div className="w-6 h-6"><ClockIcon /></div>

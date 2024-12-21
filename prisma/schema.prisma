@@ -111,6 +111,11 @@ model DimPosts {
   uuid                  String                 @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
   content_embedding     Unsupported("vector")?
   ogpImageUrl           String?                @map("ogp_image_url")
+  tweetIdOfFirstTweet   String?                @map("tweet_id_of_first_tweet")
+  blueskyPostUriOfFirstPost String?            @map("bluesky_post_uri_of_first_post")
+  misskeyNoteIdOfFirstNote String?             @map("misskey_note_id_of_first_note")
+  isWelcomed            Boolean?               @default(false) @map("is_welcomed")
+  isWelcomedExplanation String?                @map("is_welcomed_explanation")
   dimComments           DimComments[]
   fct_post_edit_history FctPostEditHistory[]
   fct_post_vote_history FctPostVoteHistory[]

@@ -1,11 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
-import dotenv from 'dotenv';
-dotenv.config();
 
-const testURL = process.env.TEST_URL;
-if (!testURL) {
-  throw new Error("TEST_URLが環境変数に設定されていません");
-}
+const testURL = process.env.TEST_URL || 'http://localhost:3000';
 
 const nowDateTime = new Date().toISOString();
 test.describe.configure({ retries: 2 });
