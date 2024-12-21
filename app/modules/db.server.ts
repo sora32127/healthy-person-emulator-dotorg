@@ -1026,3 +1026,10 @@ export async function getStopWords() : Promise<string[]> {
     // ユニーク化
     return [...new Set(stopWords.map((stopWord) => stopWord.stopWord))];
 }
+
+export async function updatePostWelcomed(postId: number, isWelcomed: boolean, reason: string){
+    await prisma.dimPosts.update({
+        where: { postId },
+        data: { isWelcomed, isWelcomedReason: reason },
+    })
+}

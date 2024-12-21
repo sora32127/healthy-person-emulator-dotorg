@@ -7,7 +7,7 @@ import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H3 } from "~/components/Headings";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { getStopWords, getTagsCounts, prisma } from "~/modules/db.server";
+import { getStopWords, getTagsCounts, prisma, updatePostWelcomed } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
@@ -20,7 +20,7 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
+import { getHashedUserIPAddress, getJudgeWelcomedByGenerativeAI, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 
 export async function loader () {
@@ -661,8 +661,14 @@ export async function action({ request }:ActionFunctionArgs){
         postContent: newPost.postContent,
         postTitle: newPost.postTitle,
       });
+      
+      const { isUnwelcomed, reason } = await getJudgeWelcomedByGenerativeAI(wikifyResult, postTitle);
+      await updatePostWelcomed(Number(newPost.postId), isUnwelcomed, reason);
+
       return json({ success: true, error: undefined, data: { postId: newPost.postId } });
     }
+
+    
     return json({ success: false, error: data.error, data: undefined });
   }
 }
