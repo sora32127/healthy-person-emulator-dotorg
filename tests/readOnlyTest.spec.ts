@@ -1,11 +1,6 @@
 import { test, expect, Page, Locator } from '@playwright/test';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const testURL = process.env.TEST_URL;
-if (!testURL) {
-  throw new Error("TEST_URLが環境変数に設定されていません");
-}
 
 // トップページのテスト
 test.describe('トップページ', () => {
