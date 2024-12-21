@@ -14,6 +14,9 @@ importers:
       '@clerk/remix':
         specifier: ^4.4.5
         version: 4.4.5(@remix-run/react@2.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.1(typescript@5.7.2))(react-dom@18.3.1(react@18.3.1))(react-router@6.28.0(react@18.3.1))(react@18.3.1)
+      '@google/generative-ai':
+        specifier: ^0.21.0
+        version: 0.21.0
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.54.1(react@18.3.1))
@@ -819,6 +822,10 @@ packages:
   '@eslint/plugin-kit@0.2.4':
     resolution: {integrity: sha512-zSkKow6H5Kdm0ZUQUB2kV5JIXqoG0+uH5YADhaEHswm664N9Db8dXSi0nMJpacpMf+MyyglF1vnZohpEg5yUtg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@google/generative-ai@0.21.0':
+    resolution: {integrity: sha512-7XhUbtnlkSEZK15kN3t+tzIMxsbKm/dSkKBFalj+20NvPKe1kBY7mR2P7vuijEn+f06z5+A8bVGKO0v39cr6Wg==}
+    engines: {node: '>=18.0.0'}
 
   '@hookform/resolvers@3.9.1':
     resolution: {integrity: sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==}
@@ -4978,6 +4985,8 @@ snapshots:
   '@eslint/plugin-kit@0.2.4':
     dependencies:
       levn: 0.4.1
+
+  '@google/generative-ai@0.21.0': {}
 
   '@hookform/resolvers@3.9.1(react-hook-form@7.54.1(react@18.3.1))':
     dependencies:

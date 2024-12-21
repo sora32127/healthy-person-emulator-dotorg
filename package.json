@@ -18,6 +18,7 @@
   "dependencies": {
     "@clerk/localizations": "^3.9.4",
     "@clerk/remix": "^4.4.5",
+    "@google/generative-ai": "^0.21.0",
     "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.1.0",
     "@prisma/client": "^5.22.0",
