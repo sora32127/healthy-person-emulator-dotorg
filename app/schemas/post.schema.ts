@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-const stopWords = ["発達障害嫁"]
 
 export const createPostFormSchema = (stopWords: string[]) => {
     const checkStopWords = (value: string) => {
