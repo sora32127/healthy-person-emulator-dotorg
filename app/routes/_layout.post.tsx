@@ -129,7 +129,8 @@ export default function App() {
                 registerKey="counterReflection"
             />
             </>
-        ) : (
+        )
+        : postCategory === "goodDeed" ? (
             <>
             <StaticTextInput
                 rowNumber={3}
@@ -146,7 +147,26 @@ export default function App() {
                 registerKey="counterReflection"
             />
             </>
-        )}
+        )
+        : postCategory === "wanted" ? (
+            <>
+            <StaticTextInput
+                rowNumber={3}
+                title='試行錯誤'
+                placeholders={["天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした", "趣味の話をしようかと思ったが、筆者の趣味はかなりマイナー趣味であり、おそらく話が合わないと見込んでいる"]}
+                description='考えたり実行したり、試してみたことを説明します。できる範囲で記述して下さい。'
+                registerKey="reflection"
+            />
+            <StaticTextInput
+                rowNumber={3}
+                title='仮想解決案'
+                placeholders={["全く分からない"]}
+                description='「おそらくこのやり方なら解決できるのではないか」という仮説を記述してください。できる範囲で記述してください。ない場合は「わからない」と明記してください。'
+                registerKey="counterReflection"
+            />
+            </>
+        )
+        : null}
         <StaticTextInput
             rowNumber={3}
             title='備考'
@@ -193,6 +213,11 @@ function TextTypeSwitcher(){
                     <input type="radio" id="goodDeed" value="goodDeed" {...register("postCategory")} className="radio radio-primary"/>
                     <label htmlFor="goodDeed">結果善：</label>
                     <span className="text-sm">やってよかったこと</span>
+                </div>
+                <div className="flex items-center gap-y-2 gap-x-2">
+                    <input type="radio" id="wanted" value="wanted" {...register("postCategory")} className="radio radio-primary"/>
+                    <label htmlFor="wanted">知識募集：</label>
+                    <span className="text-sm">知りたいこと</span>
                 </div>
             </div>
         </div>
@@ -248,7 +273,7 @@ function SituationInput(){
             rows: 3,
           },
         ]
-      : [
+      : postCategory === "goodDeed" ? [
           {
             key: "who",
             description: "その状況の「主役」は誰ですか？(Who)",
@@ -292,7 +317,52 @@ function SituationInput(){
               "相手の料理の腕が上がり、どんどん料理がおいしくなり、関係も改善された",
             rows: 3,
           },
-        ];
+        ]
+        : postCategory === "wanted" ? [
+          {
+            key: "who",
+            description: "その状況の「主役」は誰ですか？(Who)",
+            placeholder: "筆者が",
+            rows: 1,
+          },
+          {
+            key: "when",
+            description: "いつ起こったことですか？(When)",
+            placeholder: "社会人なりたての現在、初対面の人にあいさつするとき",
+            rows: 1,
+          },
+          {
+            key: "where",
+            description: "どこで起こったことですか？(Where)",
+            placeholder: "職場で",
+            rows: 1,
+          },
+          {
+            key: "why",
+            description: "なぜそのような行動をしたのですか？(Why)",
+            placeholder: "何を話せば良いのかわからないため",
+            rows: 1,
+          },
+          {
+            key: "what",
+            description: "その主役は、何に対してはたらきかけましたか？(What)",
+            placeholder: "相手に対して",
+            rows: 1,
+          },
+          {
+            key: "how",
+            description: "その主役は、対象をどうしましたか？(How)",
+            placeholder: "いつもそっけなく、名前と所属だけ話している",
+            rows: 1,
+          },
+          {
+            key: "then",
+            description: "行動の結果としてどうなりましたか？(Then)",
+            placeholder: "職場の人と仲良くなるきっかけがつかめず、孤独をもたらす一因となった",
+            rows: 3,
+          }
+        ]
+        : [];
 
 
     return (
@@ -713,13 +783,19 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
       </ul>
       ` : ''}
     <h3>
-      ${postCategory === "misDeed" ? "健常行動ブレイクポイント" : postCategory === "goodDeed" ? "なぜやってよかったのか" : ""}
+      ${
+        postCategory === "misDeed" ? "健常行動ブレイクポイント"
+        : postCategory === "goodDeed" ? "なぜやってよかったのか"
+        : postCategory === "wanted" ? "試行錯誤" : ""}
     </h3>
     <ul>
       ${removeEmptyString(reflection)?.map((reflection) => `<li>${reflection}</li>`).join('\n')}
     </ul>
     <h3>
-      ${postCategory === "misDeed" ? "どうすればよかったか" : postCategory === "goodDeed" ? "やらなかったらどうなっていたか" : ""}
+      ${
+        postCategory === "misDeed" ? "どうすればよかったか"
+        : postCategory === "goodDeed" ? "やらなかったらどうなっていたか"
+        : postCategory === "wanted" ? "仮想解決案" : ""}
     </h3>
     <ul>
       ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('\n')}
