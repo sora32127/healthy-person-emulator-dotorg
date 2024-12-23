@@ -207,17 +207,17 @@ function TextTypeSwitcher(){
                 <div className="flex items-center gap-y-2 gap-x-2">
                     <input type="radio" id="misDeed" value="misDeed" {...register("postCategory")} className="radio radio-primary" />
                     <label htmlFor="misDeed">結果悪：</label>
-                    <span className="text-sm">やってはいけないこと</span>
+                    <span className="text-sm">経験知のうち、やってはいけないこと</span>
                 </div>
                 <div className="flex items-center gap-y-2 gap-x-2">
                     <input type="radio" id="goodDeed" value="goodDeed" {...register("postCategory")} className="radio radio-primary"/>
                     <label htmlFor="goodDeed">結果善：</label>
-                    <span className="text-sm">やってよかったこと</span>
+                    <span className="text-sm">経験知のうち、やってよかったこと</span>
                 </div>
                 <div className="flex items-center gap-y-2 gap-x-2">
                     <input type="radio" id="wanted" value="wanted" {...register("postCategory")} className="radio radio-primary"/>
                     <label htmlFor="wanted">知識募集：</label>
-                    <span className="text-sm">知りたいこと</span>
+                    <span className="text-sm">知りたいこと、わからないこと、悩んでいること</span>
                 </div>
             </div>
         </div>
