@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, json, useActionData, useLoaderData, useNavigate } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
-import { H3 } from "~/components/Headings";
+import { H1, H3 } from "~/components/Headings";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { getStopWords, getTagsCounts, prisma, updatePostWelcomed } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
@@ -560,7 +560,7 @@ function PreviewButton(
     setIsFirstSubmitButtonDisabled(false);
   }
 
-
+  const postTitle = getValues("title")[0];
   return (
     <div className="flex justify-end">
       <div className="flex flex-col items-center gap-1 p-2">
@@ -590,6 +590,9 @@ function PreviewButton(
         showCloseButton={false}
       >
         <div className="postContent">
+          <H1>
+            {postTitle}
+          </H1>
           {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
           <div dangerouslySetInnerHTML={{ __html: actionData?.data?.WikifiedResult ?? "" }} />
         </div>
