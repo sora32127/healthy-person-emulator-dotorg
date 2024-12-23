@@ -3,7 +3,6 @@ import { test, expect, Page } from '@playwright/test';
 const testURL = process.env.TEST_URL || 'http://localhost:3000';
 
 const nowDateTime = new Date().toISOString();
-test.describe.configure({ retries: 2 });
 
 test.describe('投稿フォームのテスト', () => {
   test.setTimeout(30000);
