@@ -152,15 +152,15 @@ export default function App() {
             <>
             <StaticTextInput
                 rowNumber={3}
-                title='試行錯誤'
-                placeholders={["天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした", "趣味の話をしようかと思ったが、筆者の趣味はかなりマイナー趣味であり、おそらく話が合わないと見込んでいる"]}
+                title='試したこと'
+                placeholders={["趣味の話をしたことがあるが、筆者の趣味はかなりマイナー趣味であり、反応が何もなかった"]}
                 description='考えたり実行したり、試してみたことを説明します。できる範囲で記述して下さい。'
                 registerKey="reflection"
             />
             <StaticTextInput
                 rowNumber={3}
-                title='仮想解決案'
-                placeholders={["全く分からない"]}
+                title='まだやってないこと'
+                placeholders={["天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした"]}
                 description='「おそらくこのやり方なら解決できるのではないか」という仮説を記述してください。できる範囲で記述してください。ない場合は「わからない」と明記してください。'
                 registerKey="counterReflection"
             />
@@ -786,7 +786,7 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
       ${
         postCategory === "misDeed" ? "健常行動ブレイクポイント"
         : postCategory === "goodDeed" ? "なぜやってよかったのか"
-        : postCategory === "wanted" ? "試行錯誤" : ""}
+        : postCategory === "wanted" ? "試したこと" : ""}
     </h3>
     <ul>
       ${removeEmptyString(reflection)?.map((reflection) => `<li>${reflection}</li>`).join('\n')}
@@ -795,7 +795,7 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
       ${
         postCategory === "misDeed" ? "どうすればよかったか"
         : postCategory === "goodDeed" ? "やらなかったらどうなっていたか"
-        : postCategory === "wanted" ? "仮想解決案" : ""}
+        : postCategory === "wanted" ? "まだやってないこと" : ""}
     </h3>
     <ul>
       ${removeEmptyString(counterReflection)?.map((counterReflection) => `<li>${counterReflection}</li>`).join('\n')}
