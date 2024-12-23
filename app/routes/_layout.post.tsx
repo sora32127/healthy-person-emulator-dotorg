@@ -161,7 +161,7 @@ export default function App() {
                 rowNumber={3}
                 title='まだやってないこと'
                 placeholders={["天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした"]}
-                description='「おそらくこのやり方なら解決できるのではないか」という仮説を記述してください。できる範囲で記述してください。ない場合は「わからない」と明記してください。'
+                description='解決策として考えたが、まだ実行していない考えを記述してください。ない場合は「ない」と明記してください。'
                 registerKey="counterReflection"
             />
             </>
