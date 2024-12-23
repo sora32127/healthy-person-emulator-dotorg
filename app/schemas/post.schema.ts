@@ -1,13 +1,12 @@
 import { z } from "zod";
 
-const stopWords = ["発達障害嫁"]
 
 export const createPostFormSchema = (stopWords: string[]) => {
     const checkStopWords = (value: string) => {
         return !stopWords.some((word) => value.includes(word));
       };
     return z.object({
-        postCategory: z.enum(["misDeed", "goodDeed"]),
+        postCategory: z.enum(["misDeed", "goodDeed", "wanted"]),
         situations: z.object({
             who: z.string().min(1, { message: "5W1H+Then状況説明>「誰が」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
             what: z.string().min(1, { message: "5W1H+Then状況説明>「何を」は必須です" }).refine(checkStopWords, { message: "利用できない単語が含まれています" }),
@@ -25,7 +24,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
           if (value.every((v) => v.length < 1)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」は最低一つ入力してください',
+              message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」もしくは「試行錯誤」は最低一つ入力してください',
             })
           }
           if (value.some((v) => !checkStopWords(v))) {
@@ -41,7 +40,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
           if (value.every((v) => v.length < 1)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」は最低一つ入力してください',
+              message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」もしくは「仮想解決案」は最低一つ入力してください',
             })
           }
           if (value.some((v) => !checkStopWords(v))) {
