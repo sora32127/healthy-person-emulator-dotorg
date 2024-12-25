@@ -805,7 +805,9 @@ async function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>
     </ul>
     ${removeEmptyString(note)?.length > 0 ? `
       <h3>備考</h3>
-      ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('\n')}
+      <ul>
+        ${removeEmptyString(note)?.map((note) => `<li>${note}</li>`).join('\n')}
+      </ul>
     ` : ''}
   `
   const markdownContent = NodeHtmlMarkdown.translate(result);
