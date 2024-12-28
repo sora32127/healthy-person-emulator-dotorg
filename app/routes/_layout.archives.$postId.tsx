@@ -56,6 +56,9 @@ export default function Component() {
   const isLiked = likedPages.includes(postId);
   const isDisliked = dislikedPages.includes(postId);
 
+  // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
+  // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
+
   const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     const button = event.currentTarget;
@@ -101,7 +104,7 @@ export default function Component() {
       formData.append(key, String(value));
     }
 
-    await submit(formData, {
+    fetcher.submit(formData, {
       method: "post",
       action: `/archives/${postId}`,
     });
