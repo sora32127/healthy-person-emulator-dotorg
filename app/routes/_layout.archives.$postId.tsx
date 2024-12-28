@@ -52,13 +52,11 @@ export default function Component() {
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
 
-  const submit = useSubmit();
+  const POSTID = data.postId;
   const fetcher = useFetcher();
 
-  const postId = data.postId;
-
-  const isLiked = likedPages.includes(postId);
-  const isDisliked = dislikedPages.includes(postId);
+  const isLiked = likedPages.includes(POSTID);
+  const isDisliked = dislikedPages.includes(POSTID);
 
   // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
@@ -81,37 +79,37 @@ export default function Component() {
       }, 1000);
     }
 
-    formData.append("postId", postId.toString() || "");
+    formData.append("postId", POSTID.toString() || "");
     formData.append("action", "votePost");
     formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${postId}`,
+      action: `/archives/${POSTID}`,
     });
   };
 
 
   const handleCommentSubmit = async (data: CommentFormInputs) => {
     const formData = new FormData();
-    if (postId === undefined) {
+    if (POSTID === undefined) {
       throw new Error("postId is required");
     }
     formData.append("action", "submitComment");
-    formData.append("postId", postId.toString());
+    formData.append("postId", POSTID.toString());
     for (const [key, value] of Object.entries(data)) {
       formData.append(key, String(value));
     }
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${postId}`,
+      action: `/archives/${POSTID}`,
     });
   };
   
   const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
-    formData.append("postId", postId.toString() || "");
+    formData.append("postId", POSTID.toString() || "");
     formData.append("action", "voteComment");
     
     for (const [key, value] of Object.entries(data)) {
@@ -120,7 +118,7 @@ export default function Component() {
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${postId}`,
+        action: `/archives/${POSTID}`,
     });
   };
 
@@ -133,7 +131,7 @@ export default function Component() {
         <div key={comment.commentId}>
           <CommentCard
             commentId={comment.commentId}
-            postId={data.postId}
+            postId={POSTID}
             commentContent={comment.commentContent}
             commentDateGmt={comment.commentDateGmt}
             commentAuthor={comment.commentAuthor}
@@ -213,8 +211,6 @@ export default function Component() {
         </div>
         <div className="flex justify">
         <Form method="post" className="flex items-center p-2 rounded">
-          <input type="hidden" name="postId" value={data.postId.toString() || ""} />
-          <input type="hidden" name="action" value="votePost" />
           <VoteButton
             type="like"
             count={data.countLikes}
@@ -238,7 +234,7 @@ export default function Component() {
         </div>
         <div className="my-6">
           <NavLink
-            to={`/archives/edit/${data.postId}`}
+            to={`/archives/edit/${POSTID}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
