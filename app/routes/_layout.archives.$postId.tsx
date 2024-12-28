@@ -50,7 +50,6 @@ export default function Component() {
 
   const submit = useSubmit();
   const fetcher = useFetcher();
-  const navigate = useNavigate();
 
   const postId = data.postId;
 
