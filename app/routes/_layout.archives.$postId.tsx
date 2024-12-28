@@ -331,8 +331,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const action = formData.get("action");
   const postId = Number(formData.get("postId"));
   const token = formData.get("cf-turnstile-response")?.toString() || formData.get("turnstileToken")?.toString() || "";
-  const url = new URL(request.url);
-  const origin = url.origin;
   const ipAddress = await getHashedUserIPAddress(request);
 
   const isValidRequest = await validateRequest(token, ipAddress);
