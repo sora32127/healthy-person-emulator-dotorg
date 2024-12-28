@@ -209,29 +209,29 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="flex justify">
-        <Form method="post" className="flex items-center p-2 rounded">
-          <VoteButton
-            type="like"
-            count={data.countLikes}
-            isAnimating={isLikeAnimating}
-            isVoted={isLiked}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
-            onClick={() => handlePostVote({ voteType: "like" })}
-          />
-          <VoteButton
-            type="dislike"
-            count={data.countDislikes}
-            isAnimating={isDislikeAnimating}
-            isVoted={isDisliked}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
-            onClick={() => handlePostVote({ voteType: "dislike" })}
-          />
-        </Form>
-      </div>
         <div className="postContent">
             {parser(data.postContent)}
         </div>
+        <div className="flex justify">
+          <div className="flex items-center p-2 rounded">
+            <VoteButton
+              type="like"
+              count={data.countLikes}
+              isAnimating={isLikeAnimating}
+              isVoted={isLiked}
+              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+              onClick={() => handlePostVote({ voteType: "like" })}
+            />
+            <VoteButton
+              type="dislike"
+              count={data.countDislikes}
+              isAnimating={isDislikeAnimating}
+              isVoted={isDisliked}
+              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+              onClick={() => handlePostVote({ voteType: "dislike" })}
+            />
+          </div>
+      </div>
         <div className="my-6">
           <NavLink
             to={`/archives/edit/${POSTID}`}
