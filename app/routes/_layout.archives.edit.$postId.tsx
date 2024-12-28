@@ -19,7 +19,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import { getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
+import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -372,9 +372,8 @@ export default function EditPost() {
 export const action: ActionFunction = async (args) => {
   const formData = await args.request.formData();
   const editData = Object.fromEntries(formData);
-  const url = new URL(args.request.url);
-  const origin = url.origin;
-  const isValidRequest = await validateRequest(editData.turnstileToken as string, origin);
+  const ipAddress = await getHashedUserIPAddress(args.request);
+  const isValidRequest = await validateRequest(editData.turnstileToken as string, ipAddress);
   if (!isValidRequest){
     return json({ error: "認証に失敗しました。時間をおいて再度試してください。" }, { status: 400 });
   }

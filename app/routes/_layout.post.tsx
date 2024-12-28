@@ -650,10 +650,8 @@ export async function action({ request }:ActionFunctionArgs){
     turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
 
-  const url = new URL(request.url);
-  const origin = url.origin;
-  const token = formData.get('turnstileToken')?.toString() || "";
-  const isValidRequest = await validateRequest(token, origin);
+  const ipAddress = await getHashedUserIPAddress(request);
+  const isValidRequest = await validateRequest(postData.turnstileToken as string, ipAddress);
 
   if (!isValidRequest){
     return json({

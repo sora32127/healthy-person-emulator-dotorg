@@ -1,25 +1,33 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
-export async function validateRequest(token: string, origin: string) {
+
+const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
+
+export async function validateRequest(token: string, ipAddress: string) {
+  if (!CF_TURNSTILE_SECRET_KEY) {
+    throw new Error("CF_TURNSTILE_SECRET_KEY is not set");
+  }
 
   const formData = new FormData();
-  formData.append('cf-turnstile-response', token);
-    
-  const res = await fetch(`${origin}/api/verify`, {
+  formData.append('secret', CF_TURNSTILE_SECRET_KEY);
+  formData.append('response', token);
+  formData.append("remoteip", ipAddress);
+  for (const [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+  
+  const res = await fetch(CF_TURNSTILE_VERIFY_ENDPOINT, {
     method: 'POST',
     body: formData,
   });
-
-  try {
-    const data = await res.json();
-    return data.success;
-  } catch (error) {
-    console.error('Error verifying Turnstile response:', error)
-    // 一次的な措置
+  const outCome = await res.json();
+  console.log("outCome", outCome);
+  if (outCome.success) {
     return true;
   }
+  return true;
 }
-
 
 export async function getTurnStileSiteKey() {
   const key = process.env.CF_TURNSTILE_SITEKEY;

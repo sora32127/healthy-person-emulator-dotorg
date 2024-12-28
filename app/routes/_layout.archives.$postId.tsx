@@ -333,8 +333,9 @@ export async function action({ request }: ActionFunctionArgs) {
   const token = formData.get("cf-turnstile-response")?.toString() || formData.get("turnstileToken")?.toString() || "";
   const url = new URL(request.url);
   const origin = url.origin;
+  const ipAddress = await getHashedUserIPAddress(request);
 
-  const isValidRequest = await validateRequest(token, origin);
+  const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
     return json({ success: false, message : "Invalid Request" }, { status: 400 });
   }
