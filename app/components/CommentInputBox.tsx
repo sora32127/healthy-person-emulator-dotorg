@@ -1,13 +1,10 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Turnstile } from "@marsidev/react-turnstile";
 import { useForm } from "react-hook-form";
 
 const commentFormSchema = z.object({
   commentAuthor: z.string().min(1, { message: "名前は必須です" }),
   commentContent: z.string().min(1, { message: "コメントを入力してください" }),
-  turnstileToken: z.string().refine((value) => value.length > 0, { message: "時間をおいて再度投稿してください" }),
   commentParentId: z.number().optional(),
   postId: z.number().optional()
 });
@@ -18,14 +15,12 @@ interface CommentInputBoxProps {
   onSubmit: (data: CommentFormInputs) => void;
   isCommentOpen: boolean;
   commentParentId: number;
-  CF_TURNSTILE_SITE_KEY: string;
 }
 
 export default function CommentInputBox({
   onSubmit,
   isCommentOpen,
   commentParentId,
-  CF_TURNSTILE_SITE_KEY,
 }: CommentInputBoxProps) {
   const {
     register,
@@ -52,13 +47,6 @@ export default function CommentInputBox({
     return <p>この記事に対するコメントは現在停止中です</p>;
   }
 
-  const [isValidUser, setIsValidUser] = useState(false);
-
-  const handleTurnStileSuccess = (token: string) => {
-    setValue("turnstileToken", token);
-    setIsValidUser(true);
-  }
-
   return (
     <form onSubmit={handleSubmit(handleCommentSubmit)} className="space-y-4">
       <div>
@@ -83,17 +71,7 @@ export default function CommentInputBox({
           <p className="text-red-500 text-sm">{errors.commentContent.message}</p>
         )}
       </div>
-
-      <Turnstile
-        siteKey={CF_TURNSTILE_SITE_KEY}
-        onSuccess={handleTurnStileSuccess}
-      />
-
-      <button type="submit" className={
-        `btn w-full ${!isValidUser ? "animate-pulse btn-disabled" : ""}
-        ${isValidUser ? "btn-primary" : ""}
-        `
-        }>
+      <button type="submit" className="btn w-full btn-primary">
         コメントを投稿
       </button>
     </form>

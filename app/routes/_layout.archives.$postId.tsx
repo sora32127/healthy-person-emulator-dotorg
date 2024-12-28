@@ -26,7 +26,6 @@ import { UserWarningMessage } from "~/components/UserWarningMessage";
 export const commentVoteSchema = z.object({
   commentId: z.number(),
   voteType: z.enum(["like", "dislike"]),
-  turnstileToken: z.string(),
 });
 
 export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
@@ -38,18 +37,16 @@ export async function loader({ request }:LoaderFunctionArgs){
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
 
-    const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments });
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
-  const [isValidUser, setIsValidUser] = useState(false);
 
   const submit = useSubmit();
   const fetcher = useFetcher();
@@ -59,10 +56,6 @@ export default function Component() {
 
   const isLiked = likedPages.includes(postId);
   const isDisliked = dislikedPages.includes(postId);
-
-  if (!CF_TURNSTILE_SITEKEY){
-    return navigate("/")
-  }
 
   const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -150,7 +143,6 @@ export default function Component() {
             likesCount={comment.likesCount}
             dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
-            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
@@ -174,9 +166,7 @@ export default function Component() {
         name="voteType"
         value={type}
         className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
-          !isValidUser
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
-            : isAnimating
+          isAnimating
             ? 'animate-voteSpin bg-base-300'
             : isVoted
             ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
@@ -185,11 +175,6 @@ export default function Component() {
         disabled={disabled}
         onClick={onClick}
       >
-        {!isValidUser && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"/>
-          </div>
-        )}
         {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
         <p className="ml-2">
           {count}
@@ -229,17 +214,12 @@ export default function Component() {
         <Form method="post" className="flex items-center p-2 rounded">
           <input type="hidden" name="postId" value={data.postId.toString() || ""} />
           <input type="hidden" name="action" value="votePost" />
-          <Turnstile
-            siteKey={CF_TURNSTILE_SITEKEY}
-            options={{"size":"invisible"}}
-            onSuccess={() => setIsValidUser(true)}
-          />
           <VoteButton
             type="like"
             count={data.countLikes}
             isAnimating={isLikeAnimating}
             isVoted={isLiked}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
+            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
             onClick={handleVoteSubmit}
           />
           <VoteButton
@@ -247,7 +227,7 @@ export default function Component() {
             count={data.countDislikes}
             isAnimating={isDislikeAnimating}
             isVoted={isDisliked}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
+            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
             onClick={handleVoteSubmit}
           />
         </Form>
@@ -315,7 +295,6 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
-          CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>

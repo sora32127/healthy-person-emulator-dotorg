@@ -5,7 +5,6 @@ import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import RelativeDate from "./RelativeDate";
-import { Turnstile } from "@marsidev/react-turnstile";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +13,6 @@ import type { CommentFormInputs } from "./CommentInputBox";
 const commentVoteSchema = z.object({
   commentId: z.number(),
   voteType: z.enum(["like", "dislike"]),
-  turnstileToken: z.string(),
 });
 
 export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
@@ -33,7 +31,6 @@ interface CommentCardProps {
   dislikesCount: number;
   postId: number;
   isCommentOpen: boolean;
-  CF_TURNSTILE_SITEKEY: string;
 }
 
 export default function CommentCard({
@@ -49,12 +46,11 @@ export default function CommentCard({
   dislikesCount,
   postId,
   isCommentOpen,
-  CF_TURNSTILE_SITEKEY,
 }: CommentCardProps) {
 
   const marginLeft = `${level * 2}rem`;
-  const isLiked = likedComments.includes(commentId);
-  const isDisliked = dislikedComments.includes(commentId);
+  const isLiked = likedComments?.includes(commentId);
+  const isDisliked = dislikedComments?.includes(commentId);
 
   const [isReplyBoxShown, setIsReplyBoxShown] = useState(false);
 
@@ -84,14 +80,6 @@ export default function CommentCard({
     resolver: zodResolver(commentVoteSchema),
   });
 
-  const [isValidUser, setIsValidUser] = useState(false);
-
-
-  const handleTurnstileSuccess = (token: string) => {
-    setValue("turnstileToken", token);
-    setIsValidUser(true);
-  }
-
   const handleVote = async (voteType: "like" | "dislike") => {
     setValue("voteType", voteType);
     setValue("commentId", commentId);
@@ -119,11 +107,11 @@ export default function CommentCard({
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
-            } comment-like-button ${!isValidUser ? "animate-pulse btn-disabled" : ""}`}
+            } comment-like-button`}
             onClick={() => {
               handleVote("like");
             }}
-            disabled={isCommentLikeButtonPushed || isLiked || !isValidUser}
+            disabled={isCommentLikeButtonPushed || isLiked}
             type="button"
           >
             <ThumbsUpIcon />
@@ -136,12 +124,11 @@ export default function CommentCard({
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isDisliked ? "text-red-500 font-bold" : ""}
-              ${!isValidUser ? "btn-disabled" : ""}
               comment-dislike-button`}
             onClick={() => {
               handleVote("dislike");
             }}
-            disabled={isCommentDislikeButtonPushed || isDisliked || !isValidUser}
+            disabled={isCommentDislikeButtonPushed || isDisliked}
             type="button"
           >
             <ThumbsDownIcon />
@@ -150,12 +137,6 @@ export default function CommentCard({
             </p>
           </button>
         </div>
-          <Turnstile
-          siteKey={CF_TURNSTILE_SITEKEY}
-          onSuccess={handleTurnstileSuccess}
-          options={{ size: "invisible" }}
-        />
-
       </div>
     <button
         className="mt-2 text-blue-500"
@@ -167,7 +148,6 @@ export default function CommentCard({
         <div className="ml-2">
         {isReplyBoxShown && (
             <CommentInputBox
-                CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
                 onSubmit={handleReplyCommentSubmit}
                 isCommentOpen={isCommentOpen}
                 commentParentId={commentId}

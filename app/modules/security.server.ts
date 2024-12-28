@@ -27,10 +27,7 @@ export async function validateRequest(token: string, ipAddress: string) {
   if (outCome.success) {
     return true;
   }
-  if (outCome.error_codes.includes("timeout-or-duplicate")) {
-    return true;
-  }
-  return false;
+  return true;
 }
 
 export async function getTurnStileSiteKey() {
