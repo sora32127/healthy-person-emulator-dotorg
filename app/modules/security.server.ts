@@ -8,11 +8,12 @@ export async function validateRequest(token: string, ipAddress: string) {
   if (!CF_TURNSTILE_SECRET_KEY) {
     throw new Error("CF_TURNSTILE_SECRET_KEY is not set");
   }
-
   const formData = new FormData();
+  const idempotencyKey = crypto.randomUUID();
   formData.append('secret', CF_TURNSTILE_SECRET_KEY);
   formData.append('response', token);
   formData.append("remoteip", ipAddress);
+  formData.append("idempotency_key", idempotencyKey);
   for (const [key, value] of formData.entries()) {
     console.log(key, value);
   }
