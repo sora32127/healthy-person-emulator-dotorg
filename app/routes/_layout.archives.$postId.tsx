@@ -6,7 +6,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { commitSession, getSession, getUserActivityData, isUserValid, setUserValid } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
@@ -22,6 +22,7 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
+import { TurnstileModal } from "~/components/TurnstileModal";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -40,7 +41,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
-    const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
+    const CF_TURNSTILE_SITEKEY = "2x00000000000000000000AB";
 
 
     return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
@@ -88,6 +89,10 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
+    setIsPageLikeButtonPushed(false);
+    setIsPageDislikeButtonPushed(false);
+    setPendingAction(formData);
+
   };
 
 
@@ -183,20 +188,47 @@ export default function Component() {
     </div>
   );
 
-  const handleTurnstileSuccess = (token: string) => {
+  const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    fetcher.submit(formData, {
+    await fetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
+    if ( pendingAction ) {
+      await fetcher.submit(pendingAction, {
+        method: "post",
+        action: `/archives/${POSTID}`,
+      });
+    }
   }
+
+
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<FormData | null>(null);
+  useEffect(() => {
+    console.log("fetcher.data is : ", fetcher.data);
+    if ((fetcher.data as { error: string })?.error === "INVALID_USER") {
+      setShowTurnstileModal(true);
+    }
+  }, [fetcher.data]);
+
 
   return (
     <>
       <div>
-        <Turnstile siteKey={CF_TURNSTILE_SITEKEY} onSuccess={handleTurnstileSuccess} />
+        <TurnstileModal
+          isOpen={showTurnstileModal}
+          onClose={() => setShowTurnstileModal(false)}
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={handleTurnstileSuccess}
+        />
+        <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={handleTurnstileSuccess}
+          options={{ size: "invisible" }}
+        />
         <div className="px-4">
           <UserWarningMessage isWelcomed={data.isWelcomed ?? true} isWelcomedExplanation={data.isWelcomedExplanation ?? ''} />
         </div>
@@ -321,6 +353,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const ipAddress = await getHashedUserIPAddress(request);
   const userIpHashString = await getHashedUserIPAddress(request);
   const isValidUser = await isUserValid(request);
+  console.log("isValidUser is : ", isValidUser);
   if (!isValidUser && action !== "setTurnstileToken") {
     console.log("Invalid User has been detected");
     console.log("Request is : ", request);
