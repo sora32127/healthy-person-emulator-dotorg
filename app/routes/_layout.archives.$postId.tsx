@@ -27,8 +27,12 @@ export const commentVoteSchema = z.object({
   commentId: z.number(),
   voteType: z.enum(["like", "dislike"]),
 });
-
 export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+
+export const postVoteSchema = z.object({
+  voteType: z.enum(["like", "dislike"]),
+});
+export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -59,13 +63,9 @@ export default function Component() {
   // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
 
-  const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    const button = event.currentTarget;
-    const voteType = button.value as "like" | "dislike";
-    const form = button.closest('form') as HTMLFormElement;
-    const formData = new FormData(form);
-    const cfTurnstileResponse = formData.get("cf-turnstile-response") as string;
+  const handlePostVote = async (data: PostVoteSchema) => {
+    const voteType = data.voteType;
+    const formData = new FormData();
 
     if (voteType === "like") {
       setIsLikeAnimating(true);
@@ -81,14 +81,13 @@ export default function Component() {
       }, 1000);
     }
 
-    formData.append("postId", data.postId.toString() || "");
+    formData.append("postId", postId.toString() || "");
     formData.append("action", "votePost");
-    formData.append("cf-turnstile-response", cfTurnstileResponse);
     formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${data.postId}`,
+      action: `/archives/${postId}`,
     });
   };
 
@@ -222,7 +221,7 @@ export default function Component() {
             isAnimating={isLikeAnimating}
             isVoted={isLiked}
             disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
-            onClick={handleVoteSubmit}
+            onClick={() => handlePostVote({ voteType: "like" })}
           />
           <VoteButton
             type="dislike"
@@ -230,7 +229,7 @@ export default function Component() {
             isAnimating={isDislikeAnimating}
             isVoted={isDisliked}
             disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
-            onClick={handleVoteSubmit}
+            onClick={() => handlePostVote({ voteType: "dislike" })}
           />
         </Form>
       </div>
