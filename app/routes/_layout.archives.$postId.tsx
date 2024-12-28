@@ -7,7 +7,7 @@ import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useState } from "react";
-import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
+import { commitSession, getSession, getUserActivityData, isUserValid, setUserValid } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
@@ -40,13 +40,14 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
+    const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
 
-    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments });
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
@@ -182,9 +183,20 @@ export default function Component() {
     </div>
   );
 
+  const handleTurnstileSuccess = (token: string) => {
+    const formData = new FormData();
+    formData.append("token", token);
+    formData.append("action", "setTurnstileToken");
+    fetcher.submit(formData, {
+      method: "post",
+      action: `/archives/${POSTID}`,
+    });
+  }
+
   return (
     <>
       <div>
+        <Turnstile siteKey={CF_TURNSTILE_SITEKEY} onSuccess={handleTurnstileSuccess} />
         <div className="px-4">
           <UserWarningMessage isWelcomed={data.isWelcomed ?? true} isWelcomedExplanation={data.isWelcomedExplanation ?? ''} />
         </div>
@@ -306,17 +318,26 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
   const postId = Number(formData.get("postId"));
-  const token = formData.get("cf-turnstile-response")?.toString() || formData.get("turnstileToken")?.toString() || "";
   const ipAddress = await getHashedUserIPAddress(request);
-
-  const isValidRequest = await validateRequest(token, ipAddress);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" }, { status: 400 });
-  }
-
   const userIpHashString = await getHashedUserIPAddress(request);
+  const isValidUser = await isUserValid(request);
+  if (!isValidUser && action !== "setTurnstileToken") {
+    console.log("Invalid User has been detected");
+    console.log("Request is : ", request);
+    console.log("Action is : ", action);
 
+    return json(
+      { 
+        error: "INVALID_USER",
+        message: "ユーザー認証が必要です",
+        requiresUserValidation: true 
+      },
+      { status: 401 }
+    );
+  }
   switch (action) {
+    case "setTurnstileToken":
+      return handleSetTurnstileToken(formData, request, ipAddress);
     case "votePost":
       return handleVotePost(formData, postId, userIpHashString, request);
     case "voteComment":
@@ -326,6 +347,15 @@ export async function action({ request }: ActionFunctionArgs) {
     default:
       return json({ error: "Invalid action" }, { status: 400 });
   }
+}
+
+async function handleSetTurnstileToken(formData: FormData, request: Request, ipAddress: string) {
+  const token = formData.get("token")?.toString() || "";
+  const isValidRequest = await validateRequest(token, ipAddress);
+  if (!isValidRequest) {
+    return json({ error: "Invalid request" }, { status: 400 });
+  }
+  return setUserValid(request);
 }
 
 async function handleVotePost(

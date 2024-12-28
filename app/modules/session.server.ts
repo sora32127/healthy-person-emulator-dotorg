@@ -38,3 +38,22 @@ export async function getUserActivityData(request: Request){
 
     return { likedPages, dislikedPages, likedComments, dislikedComments };
 }
+
+export async function setUserValid(request: Request){
+    const session = await getSession(request.headers.get("Cookie"));
+    session.set("isValidUser", true);
+    return {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    };
+}
+
+export async function isUserValid(request: Request){
+    const session = await getSession(request.headers.get('Cookie'));
+    const isValid = session.get("isValidUser") || false;
+    if (isValid === true) {
+        return true;
+    }
+    return false;
+}
