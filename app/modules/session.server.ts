@@ -42,8 +42,8 @@ export async function getUserActivityData(request: Request){
 
 export async function isUserValid(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
-    const isValid = session.get("isValidUser") || false;
-    if (isValid === true) {
+    const isValidUser = await session.get("isValidUser") ?? false;
+    if (isValidUser) {
         return true;
     }
     return false;

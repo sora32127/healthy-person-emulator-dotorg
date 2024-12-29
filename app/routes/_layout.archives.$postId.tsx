@@ -348,11 +348,9 @@ export async function action({ request }: ActionFunctionArgs) {
   const userIpHashString = await getHashedUserIPAddress(request);
   const isValidUser = await isUserValid(request);
   console.log("isValidUser is : ", isValidUser);
+  console.log("action is : ", action);
   if (!isValidUser && action !== "setTurnstileToken") {
-    console.log("Invalid User has been detected");
-    console.log("Request is : ", request);
-    console.log("Action is : ", action);
-
+    console.log("Invalid User has been detected, action is : ", action);
     return json(
       { 
         error: "INVALID_USER",
@@ -386,11 +384,14 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   const session = await getSession(request.headers.get("Cookie"));
   session.set("isValidUser", true);
   console.log("User validation succeeded");
-  return {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  };
+  return json(
+    { success: true },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
 }
 
 

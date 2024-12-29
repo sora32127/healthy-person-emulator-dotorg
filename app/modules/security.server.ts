@@ -2,7 +2,8 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
+const CF_TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA";
+const CF_TURNSTILE_SITEKEY = "1x00000000000000000000AA";
 
 export async function validateRequest(token: string, ipAddress: string) {
   if (!CF_TURNSTILE_SECRET_KEY) {
@@ -31,11 +32,10 @@ export async function validateRequest(token: string, ipAddress: string) {
 }
 
 export async function getTurnStileSiteKey() {
-  const key = process.env.CF_TURNSTILE_SITEKEY;
-  if (!key) {
+  if (!CF_TURNSTILE_SITEKEY) {
     throw new Error("CF_TURNSTILE_SITEKEY is not set");
   }
-  return key;
+  return CF_TURNSTILE_SITEKEY; 
 }
 
 
