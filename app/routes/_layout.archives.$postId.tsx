@@ -184,19 +184,12 @@ export default function Component() {
 
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
-    const turnstileFetcher = useFetcher();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    await turnstileFetcher.submit(formData, {
+    await fetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
-    if ( pendingAction && (turnstileFetcher.data as { success: boolean }).success ) {
-      await fetcher.submit(pendingAction, {
-        method: "post",
-        action: `/archives/${POSTID}`,
-      });
-    }
   }
 
 
@@ -209,6 +202,22 @@ export default function Component() {
       setIsValificationFailed(true);
     }
   }, [fetcher.data, isValificationFailed]);
+
+
+  useEffect(() => {
+    if (pendingAction && (fetcher.data && (fetcher.data as { success: boolean }).success)) {
+      console.log("fetcher.data is : ", fetcher.data);
+      console.log("pendingAction is : ", pendingAction);
+      for (const [key, value] of pendingAction.entries()) {
+        console.log("key is : ", key);
+        console.log("value is : ", value);
+      }
+      fetcher.submit(pendingAction, {
+        method: "post",
+        action: `/archives/${POSTID}`,
+      });
+    }
+  }, [pendingAction, fetcher.data, POSTID, fetcher.submit]);
 
 
   return (
