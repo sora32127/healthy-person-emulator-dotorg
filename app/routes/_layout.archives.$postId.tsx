@@ -90,9 +90,9 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
+    
     setIsPageLikeButtonPushed(false);
     setIsPageDislikeButtonPushed(false);
-    setPendingAction(formData);
 
   };
 
@@ -113,7 +113,6 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
-    setPendingAction(formData);
   };
   
   const handleCommentVote = async (data: CommentVoteSchema) => {
@@ -129,7 +128,6 @@ export default function Component() {
         method: "post",
         action: `/archives/${POSTID}`,
     });
-    setPendingAction(formData);
   };
 
   const isCommentOpen = data.commentStatus === "open";
@@ -184,24 +182,15 @@ export default function Component() {
 
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
-    const turnstileFetcher = useFetcher();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    await turnstileFetcher.submit(formData, {
+    await fetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
-    if ( pendingAction && (turnstileFetcher.data as { success: boolean }).success ) {
-      await fetcher.submit(pendingAction, {
-        method: "post",
-        action: `/archives/${POSTID}`,
-      });
-    }
   }
 
-
   const [showTurnstileModal, setShowTurnstileModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState<FormData | null>(null);
   const [isValificationFailed, setIsValificationFailed] = useState(false);
   useEffect(() => {
     if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
