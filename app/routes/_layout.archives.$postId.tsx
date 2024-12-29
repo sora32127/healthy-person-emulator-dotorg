@@ -379,8 +379,15 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   if (!isValidRequest) {
     return json({ error: "Invalid request" }, { status: 400 });
   }
-  return setUserValid(request);
+  const session = await getSession(request.headers.get("Cookie"));
+  session.set("isValidUser", true);
+  return {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    },
+  };
 }
+
 
 async function handleVotePost(
   formData: FormData,

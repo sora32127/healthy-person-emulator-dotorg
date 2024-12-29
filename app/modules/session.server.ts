@@ -39,15 +39,6 @@ export async function getUserActivityData(request: Request){
     return { likedPages, dislikedPages, likedComments, dislikedComments };
 }
 
-export async function setUserValid(request: Request){
-    const session = await getSession(request.headers.get("Cookie"));
-    session.set("isValidUser", true);
-    return {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    };
-}
 
 export async function isUserValid(request: Request){
     const session = await getSession(request.headers.get('Cookie'));
