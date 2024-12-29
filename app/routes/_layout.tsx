@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Form, Outlet, NavLink } from "@remix-run/react";
+import { Form, Outlet, NavLink, useLocation } from "@remix-run/react";
 import { useUser, SignOutButton } from "@clerk/remix";
 
 import RandomIcon from "~/components/icons/RandomIcon";
@@ -16,6 +16,7 @@ import MenuIcon from "~/components/icons/MenuIcon";
 
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import HomeIcon from "~/components/icons/HomeIcon";
+import { Footer } from "~/components/Footer";
 
 
 function getNavItems(isSignedIn: boolean){
@@ -188,6 +189,9 @@ export default function Component() {
     return () => window.removeEventListener('keydown', handleKeyDownForSearch);
   }, [handleSearchModalOpen]);
 
+  const location = useLocation();
+  const isInPostPage = location.pathname === "/post";
+
 
   return (
     <div className="grid grid-cols-1 min-h-screen">
@@ -238,25 +242,12 @@ export default function Component() {
       </main>
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
         <NavLink to="/post">
-          <button className="btn btn-primary btn-circle btn-lg" type="button">
+          <button className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? "hidden inert" : ""}`} type="button">
             <PostIcon />
           </button>
         </NavLink>
       </div>
-      <footer className="bg-base-100 py-8 md:py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center">
-            <TopIcon />
-            <div className="flex flex-col space-y-2 ml-2">
-              <NavLink to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088" className="text-base-content">管理人に連絡</NavLink>
-              <NavLink to="/readme" className="text-base-content">サイト説明</NavLink>
-              <NavLink to="/privacyPolicy" className="text-base-content">プライバシー・ポリシー/免責事項</NavLink>
-              <NavLink to="/support" className="text-base-content">寄付する</NavLink>
-            </div>
-          </div>
-          <p className="text-base-content text-center mt-4 pb-16 md:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
