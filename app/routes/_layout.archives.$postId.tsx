@@ -1,13 +1,13 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
+import { useLoaderData, NavLink,useFetcher } from "@remix-run/react";
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
-import { useState } from "react";
-import { commitSession, getSession, getUserActivityData } from "~/modules/session.server";
+import { useEffect, useState } from "react";
+import { commitSession, getSession, getUserActivityData, isUserValid } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
@@ -22,14 +22,19 @@ import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
+import { TurnstileModal } from "~/components/TurnstileModal";
+import { Toaster } from "react-hot-toast";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
   voteType: z.enum(["like", "dislike"]),
-  turnstileToken: z.string(),
 });
-
 export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+
+export const postVoteSchema = z.object({
+  voteType: z.enum(["like", "dislike"]),
+});
+export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
 
 export async function loader({ request }:LoaderFunctionArgs){
@@ -37,7 +42,6 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
-
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
     return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
@@ -49,28 +53,20 @@ export default function Component() {
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
-  const [isValidUser, setIsValidUser] = useState(false);
 
-  const submit = useSubmit();
+  const POSTID = data.postId;
   const fetcher = useFetcher();
-  const navigate = useNavigate();
 
-  const postId = data.postId;
+  const isLiked = likedPages.includes(POSTID);
+  const isDisliked = dislikedPages.includes(POSTID);
 
-  const isLiked = likedPages.includes(postId);
-  const isDisliked = dislikedPages.includes(postId);
+  // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
+  // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
 
-  if (!CF_TURNSTILE_SITEKEY){
-    return navigate("/")
-  }
-
-  const handleVoteSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    const button = event.currentTarget;
-    const voteType = button.value as "like" | "dislike";
-    const form = button.closest('form') as HTMLFormElement;
-    const formData = new FormData(form);
-    const cfTurnstileResponse = formData.get("cf-turnstile-response") as string;
+  const handlePostVote = async (data: PostVoteSchema) => {
+    setIsValificationFailed(false);
+    const voteType = data.voteType;
+    const formData = new FormData();
 
     if (voteType === "like") {
       setIsLikeAnimating(true);
@@ -86,38 +82,43 @@ export default function Component() {
       }, 1000);
     }
 
-    formData.append("postId", data.postId.toString() || "");
+    formData.append("postId", POSTID.toString() || "");
     formData.append("action", "votePost");
-    formData.append("cf-turnstile-response", cfTurnstileResponse);
     formData.append("voteType", voteType);
 
     fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${data.postId}`,
+      action: `/archives/${POSTID}`,
     });
+    setIsPageLikeButtonPushed(false);
+    setIsPageDislikeButtonPushed(false);
+    setPendingAction(formData);
+
   };
 
 
   const handleCommentSubmit = async (data: CommentFormInputs) => {
+    setIsValificationFailed(false);
     const formData = new FormData();
-    if (postId === undefined) {
+    if (POSTID === undefined) {
       throw new Error("postId is required");
     }
     formData.append("action", "submitComment");
-    formData.append("postId", postId.toString());
+    formData.append("postId", POSTID.toString());
     for (const [key, value] of Object.entries(data)) {
       formData.append(key, String(value));
     }
 
-    await submit(formData, {
+    fetcher.submit(formData, {
       method: "post",
-      action: `/archives/${postId}`,
+      action: `/archives/${POSTID}`,
     });
+    setPendingAction(formData);
   };
   
   const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
-    formData.append("postId", postId.toString() || "");
+    formData.append("postId", POSTID.toString() || "");
     formData.append("action", "voteComment");
     
     for (const [key, value] of Object.entries(data)) {
@@ -126,8 +127,9 @@ export default function Component() {
 
     fetcher.submit(formData, {
         method: "post",
-        action: `/archives/${postId}`,
+        action: `/archives/${POSTID}`,
     });
+    setPendingAction(formData);
   };
 
   const isCommentOpen = data.commentStatus === "open";
@@ -139,7 +141,7 @@ export default function Component() {
         <div key={comment.commentId}>
           <CommentCard
             commentId={comment.commentId}
-            postId={data.postId}
+            postId={POSTID}
             commentContent={comment.commentContent}
             commentDateGmt={comment.commentDateGmt}
             commentAuthor={comment.commentAuthor}
@@ -150,22 +152,11 @@ export default function Component() {
             likesCount={comment.likesCount}
             dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
-            CF_TURNSTILE_SITEKEY={CF_TURNSTILE_SITEKEY}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
       ));
   };
-
-  const sortedTagNames = data.tags.sort((a, b) => {
-    if (a.tagName > b.tagName) {
-      return 1;
-    }
-    if (a.tagName < b.tagName) {
-      return -1;
-    }
-    return 0;
-  })
 
   const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
     <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
@@ -174,9 +165,7 @@ export default function Component() {
         name="voteType"
         value={type}
         className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
-          !isValidUser
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed relative'
-            : isAnimating
+          isAnimating
             ? 'animate-voteSpin bg-base-300'
             : isVoted
             ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
@@ -185,11 +174,6 @@ export default function Component() {
         disabled={disabled}
         onClick={onClick}
       >
-        {!isValidUser && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"/>
-          </div>
-        )}
         {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
         <p className="ml-2">
           {count}
@@ -198,9 +182,49 @@ export default function Component() {
     </div>
   );
 
+  const handleTurnstileSuccess = async (token: string) => {
+    const formData = new FormData();
+    formData.append("token", token);
+    formData.append("action", "setTurnstileToken");
+    await fetcher.submit(formData, {
+      method: "post",
+      action: `/archives/${POSTID}`,
+    });
+    if ( pendingAction ) {
+      await fetcher.submit(pendingAction, {
+        method: "post",
+        action: `/archives/${POSTID}`,
+      });
+    }
+  }
+
+
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<FormData | null>(null);
+  const [isValificationFailed, setIsValificationFailed] = useState(false);
+  useEffect(() => {
+    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
+      setShowTurnstileModal(true);
+      setIsValificationFailed(true);
+    }
+  }, [fetcher.data, isValificationFailed]);
+
+
   return (
     <>
       <div>
+        <Toaster />
+        <TurnstileModal
+          isOpen={showTurnstileModal}
+          onClose={() => setShowTurnstileModal(false)}
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={handleTurnstileSuccess}
+        />
+        <Turnstile
+          siteKey={CF_TURNSTILE_SITEKEY}
+          onSuccess={handleTurnstileSuccess}
+          options={{ size: "invisible" }}
+        />
         <div className="px-4">
           <UserWarningMessage isWelcomed={data.isWelcomed ?? true} isWelcomedExplanation={data.isWelcomedExplanation ?? ''} />
         </div>
@@ -217,7 +241,7 @@ export default function Component() {
               <TagIcon />
             </div>
             <div className="flex flex-wrap gap-y-3 my-2">
-              {sortedTagNames?.map((tag) => (
+              {data.tags?.map((tag) => (
                 <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                   <TagCard tagName={tag.tagName} />
                 </span>
@@ -225,39 +249,32 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="flex justify">
-        <Form method="post" className="flex items-center p-2 rounded">
-          <input type="hidden" name="postId" value={data.postId.toString() || ""} />
-          <input type="hidden" name="action" value="votePost" />
-          <Turnstile
-            siteKey={CF_TURNSTILE_SITEKEY}
-            options={{"size":"invisible"}}
-            onSuccess={() => setIsValidUser(true)}
-          />
-          <VoteButton
-            type="like"
-            count={data.countLikes}
-            isAnimating={isLikeAnimating}
-            isVoted={isLiked}
-            disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || !isValidUser}
-            onClick={handleVoteSubmit}
-          />
-          <VoteButton
-            type="dislike"
-            count={data.countDislikes}
-            isAnimating={isDislikeAnimating}
-            isVoted={isDisliked}
-            disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || !isValidUser}
-            onClick={handleVoteSubmit}
-          />
-        </Form>
-      </div>
         <div className="postContent">
             {parser(data.postContent)}
         </div>
+        <div className="flex justify">
+          <div className="flex items-center p-2 rounded">
+            <VoteButton
+              type="like"
+              count={data.countLikes}
+              isAnimating={isLikeAnimating}
+              isVoted={isLiked}
+              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+              onClick={() => handlePostVote({ voteType: "like" })}
+            />
+            <VoteButton
+              type="dislike"
+              count={data.countDislikes}
+              isAnimating={isDislikeAnimating}
+              isVoted={isDisliked}
+              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+              onClick={() => handlePostVote({ voteType: "dislike" })}
+            />
+          </div>
+      </div>
         <div className="my-6">
           <NavLink
-            to={`/archives/edit/${data.postId}`}
+            to={`/archives/edit/${POSTID}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
           >
             編集する
@@ -315,7 +332,6 @@ export default function Component() {
           onSubmit={handleCommentSubmit}
           isCommentOpen={isCommentOpen}
           commentParentId={0}
-          CF_TURNSTILE_SITE_KEY={CF_TURNSTILE_SITEKEY}
         />
       </div>
       <div>
@@ -330,19 +346,25 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
   const postId = Number(formData.get("postId"));
-  const token = formData.get("cf-turnstile-response")?.toString() || formData.get("turnstileToken")?.toString() || "";
-  const url = new URL(request.url);
-  const origin = url.origin;
   const ipAddress = await getHashedUserIPAddress(request);
-
-  const isValidRequest = await validateRequest(token, ipAddress);
-  if (!isValidRequest) {
-    return json({ success: false, message : "Invalid Request" }, { status: 400 });
-  }
-
   const userIpHashString = await getHashedUserIPAddress(request);
-
+  const isValidUser = await isUserValid(request);
+  console.log("isValidUser is : ", isValidUser);
+  console.log("action is : ", action);
+  if (!isValidUser && action !== "setTurnstileToken") {
+    console.log("Invalid User has been detected, action is : ", action);
+    return json(
+      { 
+        error: "INVALID_USER",
+        message: "ユーザー認証が必要です",
+        requiresUserValidation: true 
+      },
+      { status: 401 }
+    );
+  }
   switch (action) {
+    case "setTurnstileToken":
+      return handleSetTurnstileToken(formData, request, ipAddress);
     case "votePost":
       return handleVotePost(formData, postId, userIpHashString, request);
     case "voteComment":
@@ -353,6 +375,27 @@ export async function action({ request }: ActionFunctionArgs) {
       return json({ error: "Invalid action" }, { status: 400 });
   }
 }
+
+async function handleSetTurnstileToken(formData: FormData, request: Request, ipAddress: string) {
+  const token = formData.get("token")?.toString() || "";
+  const isValidRequest = await validateRequest(token, ipAddress);
+  if (!isValidRequest) {
+    console.log("User validation failed");
+    return json({ error: "Invalid request" }, { status: 400 });
+  }
+  const session = await getSession(request.headers.get("Cookie"));
+  session.set("isValidUser", true);
+  console.log("User validation succeeded");
+  return json(
+    { success: true },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
+}
+
 
 async function handleVotePost(
   formData: FormData,
