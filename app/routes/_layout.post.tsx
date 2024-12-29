@@ -845,7 +845,6 @@ export async function action({ request }: ActionFunctionArgs) {
     selectedTags: JSON.parse((postData.selectedTags as string) || "[]"),
     createdTags: JSON.parse((postData.createdTags as string) || "[]"),
     title: JSON.parse(postData.title as string),
-    turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
   const isValidUser = await isUserValid(request); 
   if (!isValidUser) {
