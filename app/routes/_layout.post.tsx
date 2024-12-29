@@ -43,7 +43,7 @@ import {
   getTurnStileSiteKey,
   validateRequest,
 } from "~/modules/security.server";
-import { isUserValid } from "~/modules/session.server";
+import { commitSession, getSession, isUserValid } from "~/modules/session.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
@@ -831,20 +831,33 @@ export async function action({ request }: ActionFunctionArgs) {
     title: JSON.parse(postData.title as string),
     turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
+  const isValidUser = await isUserValid(request); 
 
-  const ipAddress = await getHashedUserIPAddress(request);
-  const isValidRequest = await validateRequest(
-    postData.turnstileToken as string,
-    ipAddress
-  );
+  if (!isValidUser) {
+    return json({ success: false, error: "Needed for user validation" }, { status: 400 });
+  }
 
-  if (!isValidRequest) {
-    return json({
-      success: false,
-      error:
-        "Invalid Request. Request-validation has failed. Please try again.",
-      data: undefined,
-    });
+  if (actionType === "validateTurnstile") {
+    const ipAddress = await getHashedUserIPAddress(request);
+    const isValidatedByTurnstile = await validateRequest(
+      postData.turnstileToken as string,
+      ipAddress
+    );
+    if (!isValidatedByTurnstile) {
+      return json({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
+    }
+    const session = await getSession(request.headers.get("Cookie"));
+    session.set("isValidUser", true);
+    return json(
+      {
+        success: true,
+      },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
   }
 
   if (actionType === "firstSubmit") {
