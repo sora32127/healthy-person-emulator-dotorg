@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Form, Outlet, NavLink } from "@remix-run/react";
+import { Form, Outlet, NavLink, useLocation } from "@remix-run/react";
 import { useUser, SignOutButton } from "@clerk/remix";
 
 import RandomIcon from "~/components/icons/RandomIcon";
@@ -189,6 +189,9 @@ export default function Component() {
     return () => window.removeEventListener('keydown', handleKeyDownForSearch);
   }, [handleSearchModalOpen]);
 
+  const location = useLocation();
+  const isInPostPage = location.pathname === "/post";
+
 
   return (
     <div className="grid grid-cols-1 min-h-screen">
@@ -239,7 +242,7 @@ export default function Component() {
       </main>
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
         <NavLink to="/post">
-          <button className="btn btn-primary btn-circle btn-lg" type="button">
+          <button className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? "hidden inert" : ""}`} type="button">
             <PostIcon />
           </button>
         </NavLink>
