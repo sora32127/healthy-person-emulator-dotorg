@@ -16,6 +16,7 @@ import MenuIcon from "~/components/icons/MenuIcon";
 
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import HomeIcon from "~/components/icons/HomeIcon";
+import { Footer } from "~/components/Footer";
 
 
 function getNavItems(isSignedIn: boolean){
@@ -243,20 +244,7 @@ export default function Component() {
           </button>
         </NavLink>
       </div>
-      <footer className="bg-base-100 py-8 md:py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center">
-            <TopIcon />
-            <div className="flex flex-col space-y-2 ml-2">
-              <NavLink to="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088" className="text-base-content">管理人に連絡</NavLink>
-              <NavLink to="/readme" className="text-base-content">サイト説明</NavLink>
-              <NavLink to="/privacyPolicy" className="text-base-content">プライバシー・ポリシー/免責事項</NavLink>
-              <NavLink to="/support" className="text-base-content">寄付する</NavLink>
-            </div>
-          </div>
-          <p className="text-base-content text-center mt-4 pb-16 md:pb-0">&copy; {new Date().getFullYear()} All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
