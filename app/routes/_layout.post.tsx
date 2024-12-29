@@ -13,6 +13,7 @@ import {
   Form,
   json,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigate,
 } from "@remix-run/react";
@@ -44,16 +45,18 @@ import {
   validateRequest,
 } from "~/modules/security.server";
 import { commitSession, getSession, isUserValid } from "~/modules/session.server";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
   const stopWords = await getStopWords();
   const isValid = await isUserValid(request);
-  return json({ tags, stopWords, isValid });
+  const turnStileSiteKey = await getTurnStileSiteKey();
+  return json({ tags, stopWords, isValid, turnStileSiteKey });
 }
 
 export default function App() {
-  const { tags, stopWords, isValid } = useLoaderData<typeof loader>();
+  const { tags, stopWords, isValid, turnStileSiteKey } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
@@ -166,6 +169,14 @@ export default function App() {
 
   const postCategory = methods.watch("postCategory");
   const actionData = useActionData<typeof action>();
+
+  const fetcher = useFetcher();
+  const handleTurnStileSuccess = (token: string) => {
+    const formData = new FormData();
+    formData.append("token", token);
+    formData.append("action", "validateTurnstile");
+    fetcher.submit(formData, { method: "post", action: "/post" });
+  };
 
   return (
     <>
@@ -292,6 +303,8 @@ export default function App() {
             <PreviewButton
               actionData={actionData}
               postFormSchema={postFormSchema}
+              turnStileSiteKey={turnStileSiteKey}
+              handleTurnStileSuccess={handleTurnStileSuccess}
             />
           </Form>
         </FormProvider>
@@ -637,9 +650,13 @@ function clearForm(formClear: () => void) {
 function PreviewButton({
   actionData,
   postFormSchema,
+  turnStileSiteKey,
+  handleTurnStileSuccess,
 }: {
   actionData: typeof action;
   postFormSchema: ReturnType<typeof createPostFormSchema>;
+  turnStileSiteKey: string;
+  handleTurnStileSuccess: (token: string) => void;
 }) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const {
@@ -736,15 +753,14 @@ function PreviewButton({
     }
   };
 
-  const handleTurnStileSuccess = (token: string) => {
-    setValue("turnstileToken", token);
-    setIsFirstSubmitButtonDisabled(false);
-  };
-
   const postTitle = getValues("title")[0];
   return (
     <div className="flex justify-end">
       <div className="flex flex-col items-center gap-1 p-2">
+        <Turnstile
+          siteKey={turnStileSiteKey}
+          onSuccess={handleTurnStileSuccess}
+        />
         <button
           type="submit"
           onClick={handleFirstSubmit}
@@ -832,13 +848,14 @@ export async function action({ request }: ActionFunctionArgs) {
     turnstileToken: postData.turnstileToken as string,
   } as unknown as Inputs;
   const isValidUser = await isUserValid(request); 
-
   if (!isValidUser) {
     return json({ success: false, error: "Needed for user validation" }, { status: 400 });
   }
 
   if (actionType === "validateTurnstile") {
     const ipAddress = await getHashedUserIPAddress(request);
+    console.log("ipAddress", ipAddress);
+    console.log("postData.turnstileToken", postData.turnstileToken);
     const isValidatedByTurnstile = await validateRequest(
       postData.turnstileToken as string,
       ipAddress
