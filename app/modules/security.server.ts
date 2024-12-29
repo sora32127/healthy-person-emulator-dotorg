@@ -11,7 +11,7 @@ export async function validateRequest(token: string, ipAddress: string) {
   }
   const formData = new FormData();
   const idempotencyKey = crypto.randomUUID();
-  formData.append('secret', CF_TURNSTILE_SECRET_KEY);
+  formData.append('secret', process.env.NODE_ENV === "development" ? "1x0000000000000000000000000000000AA" : CF_TURNSTILE_SECRET_KEY);
   formData.append('response', token);
   formData.append("remoteip", ipAddress);
   formData.append("idempotency_key", idempotencyKey);
@@ -34,6 +34,9 @@ export async function validateRequest(token: string, ipAddress: string) {
 export async function getTurnStileSiteKey() {
   if (!CF_TURNSTILE_SITEKEY) {
     throw new Error("CF_TURNSTILE_SITEKEY is not set");
+  }
+  if (process.env.NODE_ENV === "development") {
+    return "1x00000000000000000000AA";  // Always return true
   }
   return CF_TURNSTILE_SITEKEY; 
 }
