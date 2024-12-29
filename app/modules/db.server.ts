@@ -85,6 +85,11 @@ async function getPostByPostId(postId: number): Promise<PostData> {
                             tagId: true,
                         }
                     }
+                },
+                orderBy: {
+                    dimTag: {
+                        tagName: "asc",
+                    }
                 }
             }
         }

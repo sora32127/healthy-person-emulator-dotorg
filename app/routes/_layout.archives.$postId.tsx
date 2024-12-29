@@ -44,7 +44,6 @@ export async function loader({ request }:LoaderFunctionArgs){
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-
     return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
 }
 
@@ -155,16 +154,6 @@ export default function Component() {
       ));
   };
 
-  const sortedTagNames = data.tags.sort((a, b) => {
-    if (a.tagName > b.tagName) {
-      return 1;
-    }
-    if (a.tagName < b.tagName) {
-      return -1;
-    }
-    return 0;
-  })
-
   const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
     <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
       <button
@@ -247,7 +236,7 @@ export default function Component() {
               <TagIcon />
             </div>
             <div className="flex flex-wrap gap-y-3 my-2">
-              {sortedTagNames?.map((tag) => (
+              {data.tags?.map((tag) => (
                 <span key={tag.tagName} className="inline-block text-sm font-semibold text-gray-500 mr-1">
                   <TagCard tagName={tag.tagName} />
                 </span>
