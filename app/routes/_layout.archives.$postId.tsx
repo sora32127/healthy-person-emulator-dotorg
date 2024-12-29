@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { useLoaderData, NavLink, useSubmit, useFetcher, useNavigate, Form } from "@remix-run/react";
+import { useLoaderData, NavLink,useFetcher } from "@remix-run/react";
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -7,7 +7,7 @@ import { prisma, ArchiveDataEntry } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useEffect, useState } from "react";
-import { commitSession, getSession, getUserActivityData, isUserValid, setUserValid } from "~/modules/session.server";
+import { commitSession, getSession, getUserActivityData, isUserValid } from "~/modules/session.server";
 import { H1, H2 } from "~/components/Headings";
 import CommentInputBox, { type CommentFormInputs } from "~/components/CommentInputBox";
 import ShareButtons from "~/components/ShareButtons";
