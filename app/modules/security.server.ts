@@ -12,7 +12,7 @@ export async function validateRequest(token: string, ipAddress: string) {
   const formData = new FormData();
   const idempotencyKey = crypto.randomUUID();
   formData.append('secret', process.env.NODE_ENV === "development" ? "1x0000000000000000000000000000000AA" : CF_TURNSTILE_SECRET_KEY);
-  formData.append('response', token);
+  formData.append('response', token || "");
   formData.append("remoteip", ipAddress);
   formData.append("idempotency_key", idempotencyKey);
   for (const [key, value] of formData.entries()) {
