@@ -50,6 +50,7 @@ export async function loader({ request }:LoaderFunctionArgs){
 
 export default function Component() {
   const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isValid } = useLoaderData<typeof loader>();
+  console.log("isValid is : ", isValid);
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);

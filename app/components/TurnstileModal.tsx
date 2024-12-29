@@ -20,6 +20,7 @@ export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: Turnstil
           toast.success("再度アクションを実行してください。");
           onSuccess(token);
           onClose();
+          window.location.reload();
         }}
         onError={() => {
           toast.error("時間をおいて再度お試しください。");
