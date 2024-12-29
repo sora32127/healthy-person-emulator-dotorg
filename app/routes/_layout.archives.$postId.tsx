@@ -98,6 +98,7 @@ export default function Component() {
 
 
   const handleCommentSubmit = async (data: CommentFormInputs) => {
+    setIsValificationFailed(false);
     const formData = new FormData();
     if (POSTID === undefined) {
       throw new Error("postId is required");
@@ -112,6 +113,7 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
+    setPendingAction(formData);
   };
   
   const handleCommentVote = async (data: CommentVoteSchema) => {
@@ -127,6 +129,7 @@ export default function Component() {
         method: "post",
         action: `/archives/${POSTID}`,
     });
+    setPendingAction(formData);
   };
 
   const isCommentOpen = data.commentStatus === "open";
@@ -200,7 +203,6 @@ export default function Component() {
   const [pendingAction, setPendingAction] = useState<FormData | null>(null);
   const [isValificationFailed, setIsValificationFailed] = useState(false);
   useEffect(() => {
-    console.log("fetcher.data is : ", fetcher.data);
     if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
       setShowTurnstileModal(true);
       setIsValificationFailed(true);
