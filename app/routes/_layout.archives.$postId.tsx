@@ -380,10 +380,12 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   const token = formData.get("token")?.toString() || "";
   const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
+    console.log("User validation failed");
     return json({ error: "Invalid request" }, { status: 400 });
   }
   const session = await getSession(request.headers.get("Cookie"));
   session.set("isValidUser", true);
+  console.log("User validation succeeded");
   return {
     headers: {
       "Set-Cookie": await commitSession(session),
