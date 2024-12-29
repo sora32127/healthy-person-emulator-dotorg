@@ -199,10 +199,10 @@ export default function Component() {
   const [pendingAction, setPendingAction] = useState<FormData | null>(null);
   useEffect(() => {
     console.log("fetcher.data is : ", fetcher.data);
-    if ((fetcher.data as { error: string })?.error === "INVALID_USER") {
+    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && showTurnstileModal === false) {
       setShowTurnstileModal(true);
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, showTurnstileModal]);
 
 
   return (

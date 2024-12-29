@@ -27,7 +27,7 @@ export async function validateRequest(token: string, ipAddress: string) {
   if (outCome.success) {
     return true;
   }
-  return true;
+  return false;
 }
 
 export async function getTurnStileSiteKey() {
