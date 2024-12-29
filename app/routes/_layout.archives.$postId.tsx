@@ -42,17 +42,19 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
+    const isValid = await isUserValid(request);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
+    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isValid });
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isValid } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
+  const [isValideUser, setIsValideUser] = useState(isValid);
 
   const POSTID = data.postId;
   const fetcher = useFetcher();
@@ -90,9 +92,9 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
+    
     setIsPageLikeButtonPushed(false);
     setIsPageDislikeButtonPushed(false);
-    setPendingAction(formData);
 
   };
 
@@ -113,7 +115,6 @@ export default function Component() {
       method: "post",
       action: `/archives/${POSTID}`,
     });
-    setPendingAction(formData);
   };
   
   const handleCommentVote = async (data: CommentVoteSchema) => {
@@ -129,7 +130,6 @@ export default function Component() {
         method: "post",
         action: `/archives/${POSTID}`,
     });
-    setPendingAction(formData);
   };
 
   const isCommentOpen = data.commentStatus === "open";
@@ -192,9 +192,7 @@ export default function Component() {
     });
   }
 
-
   const [showTurnstileModal, setShowTurnstileModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState<FormData | null>(null);
   const [isValificationFailed, setIsValificationFailed] = useState(false);
   useEffect(() => {
     if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
@@ -202,22 +200,6 @@ export default function Component() {
       setIsValificationFailed(true);
     }
   }, [fetcher.data, isValificationFailed]);
-
-
-  useEffect(() => {
-    if (pendingAction && (fetcher.data && (fetcher.data as { success: boolean }).success)) {
-      console.log("fetcher.data is : ", fetcher.data);
-      console.log("pendingAction is : ", pendingAction);
-      for (const [key, value] of pendingAction.entries()) {
-        console.log("key is : ", key);
-        console.log("value is : ", value);
-      }
-      fetcher.submit(pendingAction, {
-        method: "post",
-        action: `/archives/${POSTID}`,
-      });
-    }
-  }, [pendingAction, fetcher.data, POSTID, fetcher.submit]);
 
 
   return (
