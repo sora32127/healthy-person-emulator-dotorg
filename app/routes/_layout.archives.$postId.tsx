@@ -184,13 +184,14 @@ export default function Component() {
 
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
+    const turnstileFetcher = useFetcher();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    await fetcher.submit(formData, {
+    await turnstileFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
-    if ( pendingAction ) {
+    if ( pendingAction && (turnstileFetcher.data as { success: boolean }).success ) {
       await fetcher.submit(pendingAction, {
         method: "post",
         action: `/archives/${POSTID}`,
