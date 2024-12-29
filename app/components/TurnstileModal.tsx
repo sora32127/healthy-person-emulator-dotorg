@@ -17,6 +17,7 @@ export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: Turnstil
       <Turnstile
         siteKey={siteKey}
         onSuccess={(token) => {
+          toast.success("再度アクションを実行してください。");
           onSuccess(token);
           onClose();
         }}
