@@ -64,6 +64,7 @@ export default function Component() {
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
 
   const handlePostVote = async (data: PostVoteSchema) => {
+    setIsValificationFailed(false);
     const voteType = data.voteType;
     const formData = new FormData();
 
@@ -197,12 +198,14 @@ export default function Component() {
 
   const [showTurnstileModal, setShowTurnstileModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<FormData | null>(null);
+  const [isValificationFailed, setIsValificationFailed] = useState(false);
   useEffect(() => {
     console.log("fetcher.data is : ", fetcher.data);
-    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && showTurnstileModal === false) {
+    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
       setShowTurnstileModal(true);
+      setIsValificationFailed(true);
     }
-  }, [fetcher.data, showTurnstileModal]);
+  }, [fetcher.data, isValificationFailed]);
 
 
   return (
