@@ -37,7 +37,6 @@ import { NodeHtmlMarkdown } from "node-html-markdown";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { toast, Toaster } from "react-hot-toast";
 import { createPostFormSchema } from "~/schemas/post.schema";
-import { Turnstile } from "@marsidev/react-turnstile";
 import {
   getHashedUserIPAddress,
   getJudgeWelcomedByGenerativeAI,
@@ -46,16 +45,13 @@ import {
 } from "~/modules/security.server";
 
 export async function loader() {
-  const CFTurnstileSiteKey = await getTurnStileSiteKey();
   const tags = await getTagsCounts();
   const stopWords = await getStopWords();
-  return json({ CFTurnstileSiteKey, tags, stopWords });
+  return json({ tags, stopWords });
 }
 
 export default function App() {
-  const { CFTurnstileSiteKey, tags, stopWords } =
-    useLoaderData<typeof loader>();
-
+  const { tags, stopWords } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
@@ -294,7 +290,6 @@ export default function App() {
             <PreviewButton
               actionData={actionData}
               postFormSchema={postFormSchema}
-              TurnStileSiteKey={CFTurnstileSiteKey}
             />
           </Form>
         </FormProvider>
@@ -640,11 +635,9 @@ function clearForm(formClear: () => void) {
 function PreviewButton({
   actionData,
   postFormSchema,
-  TurnStileSiteKey,
 }: {
   actionData: typeof action;
   postFormSchema: ReturnType<typeof createPostFormSchema>;
-  TurnStileSiteKey: string;
 }) {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const {
@@ -655,7 +648,7 @@ function PreviewButton({
     formState: { isSubmitSuccessful, isSubmitting },
   } = useFormContext();
   const [isFirstSubmitButtonDisabled, setIsFirstSubmitButtonDisabled] =
-    useState(true);
+    useState(false);
   const [isSecondSubmitButtonDisabled, setIsSecondSubmitButtonDisabled] =
     useState(false);
 
@@ -750,10 +743,6 @@ function PreviewButton({
   return (
     <div className="flex justify-end">
       <div className="flex flex-col items-center gap-1 p-2">
-        <Turnstile
-          siteKey={TurnStileSiteKey}
-          onSuccess={handleTurnStileSuccess}
-        />
         <button
           type="submit"
           onClick={handleFirstSubmit}
