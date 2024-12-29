@@ -2,8 +2,8 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-const CF_TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA";
-const CF_TURNSTILE_SITEKEY = "1x00000000000000000000AA";
+const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
+const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
 
 export async function validateRequest(token: string, ipAddress: string) {
   if (!CF_TURNSTILE_SECRET_KEY) {
