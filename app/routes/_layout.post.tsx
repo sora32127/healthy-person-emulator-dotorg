@@ -29,7 +29,7 @@ import {
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { createEmbedding } from "~/modules/embedding.server";
 import { FaCopy } from "react-icons/fa";
@@ -43,15 +43,17 @@ import {
   getTurnStileSiteKey,
   validateRequest,
 } from "~/modules/security.server";
+import { isUserValid } from "~/modules/session.server";
 
-export async function loader() {
+export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
   const stopWords = await getStopWords();
-  return json({ tags, stopWords });
+  const isValid = await isUserValid(request);
+  return json({ tags, stopWords, isValid });
 }
 
 export default function App() {
-  const { tags, stopWords } = useLoaderData<typeof loader>();
+  const { tags, stopWords, isValid } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
