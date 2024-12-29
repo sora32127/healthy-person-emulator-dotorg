@@ -174,7 +174,7 @@ export default function App() {
   const handleTurnStileSuccess = (token: string) => {
     const formData = new FormData();
     formData.append("token", token);
-    formData.append("action", "validateTurnstile");
+    formData.append("_action", "validateTurnstile");
     fetcher.submit(formData, { method: "post", action: "/post" });
   };
 
@@ -830,6 +830,33 @@ function PreviewButton({
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const actionType = formData.get("_action");
+  const turnstileToken = formData.get("token");
+
+  if (actionType === "validateTurnstile") {
+    const ipAddress = await getHashedUserIPAddress(request);
+    console.log("ipAddress", ipAddress);
+    console.log("turnstileToken", turnstileToken);
+    const isValidatedByTurnstile = await validateRequest(
+      turnstileToken as string,
+      ipAddress
+    );
+    if (!isValidatedByTurnstile) {
+      return json({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
+    }
+    const session = await getSession(request.headers.get("Cookie"));
+    session.set("isValidUser", true);
+    return json(
+      {
+        success: true,
+      },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
+  }
+
   const postData = Object.fromEntries(formData);
   const stopWords = await getStopWords();
   const postFormSchema = createPostFormSchema(stopWords);
@@ -851,30 +878,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ success: false, error: "Needed for user validation" }, { status: 400 });
   }
 
-  if (actionType === "validateTurnstile") {
-    const ipAddress = await getHashedUserIPAddress(request);
-    console.log("ipAddress", ipAddress);
-    console.log("postData.turnstileToken", postData.turnstileToken);
-    const isValidatedByTurnstile = await validateRequest(
-      postData.turnstileToken as string,
-      ipAddress
-    );
-    if (!isValidatedByTurnstile) {
-      return json({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
-    }
-    const session = await getSession(request.headers.get("Cookie"));
-    session.set("isValidUser", true);
-    return json(
-      {
-        success: true,
-      },
-      {
-        headers: {
-          "Set-Cookie": await commitSession(session),
-        },
-      }
-    );
-  }
+
 
   if (actionType === "firstSubmit") {
     try {
