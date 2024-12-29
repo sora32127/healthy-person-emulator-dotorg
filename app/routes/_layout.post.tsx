@@ -833,13 +833,13 @@ export async function action({ request }: ActionFunctionArgs) {
   const turnstileToken = formData.get("token");
 
   if (actionType === "validateTurnstile") {
+    console.log("validateTurnstile has been called"); 
     const ipAddress = await getHashedUserIPAddress(request);
-    console.log("ipAddress", ipAddress);
-    console.log("turnstileToken", turnstileToken);
     const isValidatedByTurnstile = await validateRequest(
       turnstileToken as string,
       ipAddress
     );
+    console.log("isValidatedByTurnstile", isValidatedByTurnstile);
     if (!isValidatedByTurnstile) {
       return json({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
     }
