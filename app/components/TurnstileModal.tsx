@@ -1,5 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { Modal } from "./Modal";
+import { toast } from "react-hot-toast";
 
 interface TurnstileModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: Turnstil
           onClose();
         }}
         onError={() => {
+          toast.error("時間をおいて再度お試しください。");
           onClose();
         }}
       />

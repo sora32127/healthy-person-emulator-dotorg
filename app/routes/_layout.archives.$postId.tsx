@@ -23,6 +23,7 @@ import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/
 import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
 import { TurnstileModal } from "~/components/TurnstileModal";
+import { Toaster } from "react-hot-toast";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -41,7 +42,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
-    const CF_TURNSTILE_SITEKEY = "2x00000000000000000000AB";
+    const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
 
     return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
@@ -218,6 +219,7 @@ export default function Component() {
   return (
     <>
       <div>
+        <Toaster />
         <TurnstileModal
           isOpen={showTurnstileModal}
           onClose={() => setShowTurnstileModal(false)}
