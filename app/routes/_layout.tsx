@@ -17,9 +17,13 @@ import MenuIcon from "~/components/icons/MenuIcon";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import HomeIcon from "~/components/icons/HomeIcon";
 import { Footer } from "~/components/Footer";
+import { useAtom } from "jotai";
+import { authStateAtom } from "~/stores/auth";
 
+function getNavItems(){
+  const [ authState ] = useAtom(authStateAtom);
+  const isSignedIn = authState.isSignedIn;
 
-function getNavItems(isSignedIn: boolean){
   const items = [
     { to: "/?referrer=fromMenu", icon: HomeIcon, text: "トップ" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
@@ -155,10 +159,24 @@ function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSear
 export default function Component() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { isSignedIn } = useUser();
+  const user = useUser();
+  
+  const [ _, setAuthState ] = useAtom(authStateAtom);
+  useEffect(() => {
+    if (user) {
+      setAuthState({
+        isSignedIn: user?.isSignedIn ?? false,
+        userId: user?.user?.id ?? null,
+        email: user?.user?.emailAddresses[0]?.emailAddress ?? null,
+        userName: user?.user?.fullName ?? null,
+      });
+    }
+  }, [user, setAuthState]);
+
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  const navItems = getNavItems(isSignedIn ?? false);
+  const navItems = getNavItems();
   const handleSearchModalOpen = useCallback((status: boolean) => {
     setIsSearchModalOpen(status);
   }, []);
