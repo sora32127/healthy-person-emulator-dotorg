@@ -58,15 +58,6 @@ function renderDesktopHeader(handleSearchModalOpen: (status: boolean) => void){
           </nav>
         </div>
       </div>
-      <header className="fixed top-0 left-64 right-0 h-16 bg-base-100 border-b border-base-200 flex items-center px-4">
-        <div className="flex-1" />
-        <div className="tooltip tooltip-bottom" data-tip="検索する">
-          <button className="btn btn-ghost" onClick={() => handleSearchModalOpen(true)} type="button">
-            {"Ctrl+kで検索"}
-            <SearchIcon />
-          </button>
-        </div>
-      </header>
     </>
   );
 }
