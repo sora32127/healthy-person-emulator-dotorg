@@ -202,7 +202,7 @@ export default function Component() {
 
   return (
     <>
-      <div>
+      <div className="overflow-x-hidden max-w-full">
         <Toaster />
         <TurnstileModal
           isOpen={showTurnstileModal}
