@@ -203,7 +203,7 @@ export default function Component() {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="hidden md:block">
-        {renderDesktopHeader(handleSearchModalOpen)}
+        {renderDesktopHeader()}
       </div>
       <div className="block md:hidden">
         {renderMobileHeader(handleSearchModalOpen)}
