@@ -17,14 +17,15 @@ function renderDesktopHeader(){
   const navItems = getNavItems(isSignedIn);
   const location = useLocation();
   const currentLocation = `${location.pathname}${location.search ? `${location.search}` : ""}`;
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   
   return (
     <>
-      <div className="fixed top-0 left-0 h-screen w-64 bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col">
+      <div className={`fixed top-0 left-0 h-screen bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
+        ${isSidebarExpanded ? 'w-64' : 'w-16'} 
+        2xl:w-64`}
+      >
         <div className="p-4 flex-grow">
-          <h1 className="text-lg font-bold mb-6">
-            <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
-          </h1>
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
@@ -36,7 +37,7 @@ function renderDesktopHeader(){
                       <SignOutButton redirectUrl="/">
                         <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
                           <item.icon className="w-5 h-5 stroke-current fill-none" />
-                          <span>ログアウト</span>
+                          <span className={`${!isSidebarExpanded && 'hidden'} 2xl:inline`}>ログアウト</span>
                         </div>
                       </SignOutButton>
                     ) : (
@@ -45,7 +46,7 @@ function renderDesktopHeader(){
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none" />
-                        <span>{item.text}</span>
+                        <span className={`${!isSidebarExpanded && 'hidden'} 2xl:inline`}>{item.text}</span>
                       </NavLink>
                     )}
                   </li>
@@ -54,8 +55,21 @@ function renderDesktopHeader(){
             </ul>
           </nav>
         </div>
-        <div className="p-4">
-          <ThemeSwitcher />
+        <div className="border-t border-base-300">
+          <button 
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            className="w-full btn btn-ghost 2xl:hidden"
+            type="button"
+          >
+            {isSidebarExpanded ? (
+              <span className="text-xl font-bold">&lt;</span>
+            ) : (
+              <span className="text-xl font-bold">&gt;</span>
+            )}
+          </button>
+          <div className={`p-4 flex items-center ${!isSidebarExpanded ? 'justify-center' : 'justify-start'}`}>
+            <ThemeSwitcher />
+          </div>
         </div>
       </div>
     </>
@@ -148,6 +162,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
 export default function Component() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const user = useUser();
   const [ _, setAuthState ] = useAtom(setAuthStateAtom);
   
@@ -208,7 +223,7 @@ export default function Component() {
       <div className="block md:hidden">
         {renderMobileHeader(handleSearchModalOpen)}
       </div>
-      <main className="p-4 md:ml-64 mt-16 flex-grow">
+      <main className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}>
         <div>
           <Outlet />
         </div>
