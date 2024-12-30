@@ -35,7 +35,7 @@ function renderDesktopHeader(){
                   <li key={item.to}>
                     {item.to === "/logout" ? (
                       <SignOutButton redirectUrl="/">
-                        <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
+                        <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
                           <item.icon className="w-5 h-5 stroke-current fill-none" />
                           <span>ログアウト</span>
                         </div>
@@ -43,7 +43,7 @@ function renderDesktopHeader(){
                     ) : (
                       <NavLink 
                         to={item.to} 
-                        className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}
+                        className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none" />
                         <span>{item.text}</span>
