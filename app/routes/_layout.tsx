@@ -15,39 +15,59 @@ import { getNavItems } from "~/utils/itemMenu";
 function renderDesktopHeader(handleSearchModalOpen: (status: boolean) => void){
   const [ isSignedIn ] = useAtom(isSignedInAtom);
   const navItems = getNavItems(isSignedIn);
+  const location = useLocation();
+  const currentTab = new URLSearchParams(location.search).get("tab") || "trend";
 
   return (
-    <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
-      <div className="flex-none">
-        <h1 className="text-lg font-bold">
-          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
-        </h1>
+    <>
+      <div className="fixed top-0 left-0 h-screen w-64 bg-base-100 border-r border-base-200 overflow-y-auto">
+        <div className="p-4">
+          <h1 className="text-lg font-bold mb-6">
+            <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
+          </h1>
+          <ThemeSwitcher />
+          <nav>
+            <ul className="flex flex-col gap-2">
+              {navItems.map((item) => {
+                const isActive = item.to.includes("tab=") 
+                  ? item.to.includes(`tab=${currentTab}`)
+                  : location.pathname === item.to.split("?")[0];
+
+                return (
+                  <li key={item.to}>
+                    {item.to === "/logout" ? (
+                      <SignOutButton redirectUrl="/">
+                        <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
+                          <item.icon className="w-5 h-5" />
+                          <span>ログアウト</span>
+                        </div>
+                      </SignOutButton>
+                    ) : (
+                      <NavLink 
+                        to={item.to} 
+                        className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.text}</span>
+                      </NavLink>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
       </div>
-      <div className="flex-1 flex justify-center items-center">
-        <ThemeSwitcher />
-        <ul className="flex flex-wrap justify-center gap-x-2 gap-y-1 mx-2">
-          {navItems.map((item) => (
-            <li key={item.to} className="hover:font-bold rounded-lg hover:bg-base-200 py-2">
-              {item.to === "/logout" ? (
-                <SignOutButton redirectUrl="/">ログアウト</SignOutButton>
-              ) : (
-                <NavLink to={item.to} className="px-2 py-1 text-sm">{item.text}</NavLink>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="flex-none">
+      <header className="fixed top-0 left-64 right-0 h-16 bg-base-100 border-b border-base-200 flex items-center px-4">
+        <div className="flex-1" />
         <div className="tooltip tooltip-bottom" data-tip="検索する">
-          <button className="btn btn-ghost" onClick={() => {
-            handleSearchModalOpen(true);
-          }} type="button">
+          <button className="btn btn-ghost" onClick={() => handleSearchModalOpen(true)} type="button">
             {"Ctrl+kで検索"}
             <SearchIcon />
           </button>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
 
@@ -190,48 +210,14 @@ export default function Component() {
 
 
   return (
-    <div className="grid grid-cols-1 min-h-screen">
+    <div className="min-h-screen">
       <div className="hidden md:block">
         {renderDesktopHeader(handleSearchModalOpen)}
       </div>
       <div className="block md:hidden">
         {renderMobileHeader(handleSearchModalOpen)}
       </div>
-      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
-      <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
-        <div className="mt-6">
-          <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
-            handleSearchModalOpen(false);
-          }}>
-            <input
-              type="text"
-              name="query"
-              placeholder="検索する..."
-              className="input input-bordered w-full placeholder-slate-500"
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="btn btn-primary ml-4" onSubmit={() => {
-              handleSearchModalOpen(false);
-              setSearchQuery("");
-            }}>
-              <SearchIcon />
-            </button>
-            <input type="hidden" name="action" value="firstSearch" />
-            <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
-              handleSearchModalOpen(false);
-            }}>✕</button>
-          </Form>
-        </div>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button type="submit" onClick={() => {
-          handleSearchModalOpen(false);
-        }}>閉じる</button>
-      </form>
-    </dialog>
-      <main className="p-4 xl:mx-10 2xl:mx-96">
+      <main className={`p-4 ${window.innerWidth >= 768 ? 'ml-64 mt-16' : ''}`}>
         <div>
           <Outlet />
         </div>
