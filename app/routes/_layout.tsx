@@ -1,43 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Outlet, NavLink, useLocation } from "@remix-run/react";
 import { useUser, SignOutButton } from "@clerk/remix";
-
-import RandomIcon from "~/components/icons/RandomIcon";
 import PostIcon from "~/components/icons/PostIcon";
 import SearchIcon from "~/components/icons/SearchIcon";
-import DonationIcon from "~/components/icons/DonationIcon";
-import GuidelineIcon from "~/components/icons/GuidelineIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
-import SignupIcon from "~/components/icons/SignupIcon";
-import LoginIcon from "~/components/icons/LoginIcon";
-import TopIcon from "~/components/icons/TopIcon";
-import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
-import HomeIcon from "~/components/icons/HomeIcon";
 import { Footer } from "~/components/Footer";
-import { useAtomValue, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
+import { getNavItems } from "~/utils/itemMenu";
 
-function getNavItems(){
-  const isSignedIn = useAtomValue(isSignedInAtom);
-  const items = [
-    { to: "/?referrer=fromMenu", icon: HomeIcon, text: "トップ" },
-    { to: "/search", icon: SearchIcon, text: "検索する" },
-    { to: "/support", text: "サポートする", icon: DonationIcon },
-    { to: "/readme", text: "サイト説明", icon: GuidelineIcon },
-    { to: "/feed?p=1&type=unboundedLikes", text: "無期限いいね順", icon: ThumbsUpIcon },
-    ...(isSignedIn
-      ? [{ to: "/logout", text: "ログアウト", icon: LogoutIcon }]
-      : [
-          { to: "/signup", text: "サインアップ", icon: SignupIcon },
-          { to: "/login", text: "ログイン", icon: LoginIcon },
-        ]),
-  ];
-  return items;
-}
 
-function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
+function renderDesktopHeader(handleSearchModalOpen: (status: boolean) => void){
+  const [ isSignedIn ] = useAtom(isSignedInAtom);
+  const navItems = getNavItems(isSignedIn);
+
   return (
     <header className="navbar z-10 border-b p-4 border-base-200 bg-base-100 flex justify-between items-center">
       <div className="flex-none">
@@ -73,7 +51,10 @@ function renderDesktopHeader(navItems: ReturnType<typeof getNavItems>, handleSea
   );
 }
 
-function renderMobileHeader(navItems: ReturnType<typeof getNavItems>, handleSearchModalOpen: (status: boolean) => void){
+function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
+  const [ isSignedIn ] = useAtom(isSignedInAtom);
+  const navItems = getNavItems(isSignedIn);
+
   return (
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
@@ -158,7 +139,7 @@ export default function Component() {
   const [searchQuery, setSearchQuery] = useState("");
   const user = useUser();
   const [ _, setAuthState ] = useAtom(setAuthStateAtom);
-
+  
   useEffect(() => {
     if (user.isSignedIn) {
       const newAuthState = {
@@ -174,7 +155,6 @@ export default function Component() {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   
-  const navItems = getNavItems();
   const handleSearchModalOpen = useCallback((status: boolean) => {
     setIsSearchModalOpen(status);
   }, []);
@@ -212,10 +192,10 @@ export default function Component() {
   return (
     <div className="grid grid-cols-1 min-h-screen">
       <div className="hidden md:block">
-        {renderDesktopHeader(navItems, handleSearchModalOpen)}
+        {renderDesktopHeader(handleSearchModalOpen)}
       </div>
       <div className="block md:hidden">
-        {renderMobileHeader(navItems, handleSearchModalOpen)}
+        {renderMobileHeader(handleSearchModalOpen)}
       </div>
       <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
       <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
