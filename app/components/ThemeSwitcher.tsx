@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { MdOutlineLightMode, MdOutlineDarkMode } from "react-icons/md";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Sun, Moon, Loader } from "lucide-react";
 
 export default function ThemeSwitcher() {
   const [nowTheme, setNowTheme] = useState<string>();
@@ -26,20 +25,18 @@ export default function ThemeSwitcher() {
   };
 
   return (
-    <div className="tooltip tooltip-bottom" data-tip={nowTheme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}>
-      <button
-        onClick={toggleTheme}
-        type="button"
-        className={`btn btn-circle ml-1 mt-1 ${isChanging ? "animate-spin" : ""}`}
-      >
-        {isChanging ? (
-          <AiOutlineLoading3Quarters className="w-6 h-6 animate-spin" />
-        ) : nowTheme === "dark" ? (
-          <MdOutlineLightMode className="w-6 h-6" />
-        ) : (
-          <MdOutlineDarkMode className="w-6 h-6" />
-        )}
-      </button>
-    </div>
+    <button
+      onClick={toggleTheme}
+      type="button"
+      className="btn btn-ghost h-9 w-9 p-0"
+    >
+      {isChanging ? (
+        <Loader className="w-5 h-5 animate-spin" />
+      ) : nowTheme === "dark" ? (
+        <Sun className="w-5 h-5" />
+      ) : (
+        <Moon className="w-5 h-5" />
+      )}
+    </button>
   );
 }

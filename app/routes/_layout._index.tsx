@@ -1,9 +1,8 @@
 import { json } from "@remix-run/node";
-import { NavLink, useLoaderData, useSearchParams } from "@remix-run/react";
+import { NavLink, useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import ReloadButton from "~/components/ReloadButton";
-import { useEffect, useState } from "react";
 import PostSection from "~/components/PostSection";
 import CommentSection from "~/components/CommentSection";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
@@ -42,69 +41,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function Feed() {
     const { tab, mostRecentPosts, recentVotedPosts, communityPosts, famedPosts, mostRecentComments, randomPosts, randomComments } = useLoaderData<typeof loader>();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    
-    const handleTabChange = (newTab: string) => {
-        setSearchParams({ tab: newTab });
-    };
-
-    useEffect(() => {
-        /*
-        - _layout.tsxに定義されているスマートフォンメニュー用のドロワーが開かれている場合、ページ上部にあるタブリストのstickyを解除するための処理である
-        - ドロワーでもstickyが利用されているため、この処理がないとドロワーを開いた際にタブリストがドロワーの上に来てしまう
-        */
-        const drawerToggle = document.getElementById("drawer-toggle") as HTMLInputElement;
-        const handleDrawerToggle = () => {
-            if (drawerToggle.checked) {
-                // ドロワーが開かれる場合の処理
-                setIsDrawerOpen(drawerToggle.checked);
-            }
-            if (!drawerToggle.checked) {
-                // ドロワーが閉じる場合の処理
-                // ドロワーの閉じるアニメーションと同じタイミングで処理するため、100msの遅延を設けている
-                setTimeout(() => {
-                    setIsDrawerOpen(drawerToggle.checked);
-                }, 100);
-            }
-        }
-        drawerToggle.addEventListener("change", handleDrawerToggle);
-        return () => {
-            drawerToggle.removeEventListener("change", handleDrawerToggle);
-        }
-    }, []);
-
     return (
         <div>
-            <div role="tablist" className={`transition min-w-max tabs tabs-bordered mt-16 md:mt-0 bg-base-100 z-40 min-h-[4rem] ${isDrawerOpen ? "" : "sticky top-0"}`}>
-                <input 
-                    type="radio" 
-                    name="top-tab" 
-                    role="tab" 
-                    className="tab tab-lg" 
-                    aria-label="トレンド" 
-                    checked={tab === "trend"}
-                    onChange={() => handleTabChange("trend")}
-                />
-                <input 
-                    type="radio" 
-                    name="top-tab" 
-                    role="tab" 
-                    className="tab tab-lg" 
-                    aria-label="固定"
-                    checked={tab === "fixed"}
-                    onChange={() => handleTabChange("fixed")}
-                />
-                <input
-                    type="radio"
-                    name="top-tab"
-                    role="tab"
-                    className="tab tab-lg"
-                    aria-label="ランダム"
-                    checked={tab === "random"}
-                    onChange={() => handleTabChange("random")}
-                />
-            </div>
             <div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
                     <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted">
