@@ -20,12 +20,11 @@ function renderDesktopHeader(){
   
   return (
     <>
-      <div className="fixed top-0 left-0 h-screen w-64 bg-base-200 border-r border-base-200 overflow-y-auto">
-        <div className="p-4">
+      <div className="fixed top-0 left-0 h-screen w-64 bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col">
+        <div className="p-4 flex-grow">
           <h1 className="text-lg font-bold mb-6">
             <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
           </h1>
-          <ThemeSwitcher />
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
@@ -54,6 +53,9 @@ function renderDesktopHeader(){
               })}
             </ul>
           </nav>
+        </div>
+        <div className="p-4">
+          <ThemeSwitcher />
         </div>
       </div>
     </>
