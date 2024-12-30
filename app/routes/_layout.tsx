@@ -210,14 +210,14 @@ export default function Component() {
 
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <div className="hidden md:block">
         {renderDesktopHeader(handleSearchModalOpen)}
       </div>
       <div className="block md:hidden">
         {renderMobileHeader(handleSearchModalOpen)}
       </div>
-      <main className={`p-4 ${window.innerWidth >= 768 ? 'ml-64 mt-16' : ''}`}>
+      <main className="p-4 ml-64 mt-16 flex-grow">
         <div>
           <Outlet />
         </div>
