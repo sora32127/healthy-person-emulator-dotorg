@@ -23,23 +23,25 @@ function renderDesktopHeader(){
     <>
       <div 
         className={`fixed top-0 left-0 h-screen bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
-          w-16 hover:w-64 2xl:w-64`}
+          w-16 hover:w-64 2xl:w-64 group`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        <div className="p-4 flex-grow">
+        <div className="p-4 flex-grow overflow-y-auto">
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = item.to === currentLocation;
 
                 return (
-                  <li key={item.to}>
+                  <li key={item.to} className="h-[40px]">
                     {item.to === "/logout" ? (
                       <SignOutButton redirectUrl="/">
                         <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
                           <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
-                          <span className="hidden hover:block 2xl:block whitespace-nowrap">ログアウト</span>
+                          <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
+                            ログアウト
+                          </span>
                         </div>
                       </SignOutButton>
                     ) : (
@@ -48,7 +50,9 @@ function renderDesktopHeader(){
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
-                        <span className="hidden hover:block 2xl:block whitespace-nowrap">{item.text}</span>
+                        <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
+                          {item.text}
+                        </span>
                       </NavLink>
                     )}
                   </li>
@@ -57,8 +61,8 @@ function renderDesktopHeader(){
             </ul>
           </nav>
         </div>
-        <div className="border-t border-base-300">
-          <div className="p-4 flex items-center justify-center">
+        <div className="border-t border-base-300 h-[60px] flex-shrink-0">
+          <div className="p-4 flex items-center justify-center h-full">
             <ThemeSwitcher />
           </div>
         </div>
