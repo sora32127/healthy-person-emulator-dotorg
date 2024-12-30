@@ -120,7 +120,7 @@ export default function CommentCard({
             </p>
           </button>
         </div>
-        <div className="tooltip" data-tip="このコメントを低評価する">
+        <div>
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isDisliked ? "text-red-500 font-bold" : ""}
