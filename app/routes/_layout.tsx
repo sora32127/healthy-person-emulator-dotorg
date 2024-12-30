@@ -97,7 +97,13 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
             </label>
           </div>
           <div className="drawer-side">
-            <label htmlFor="drawer-toggle" className="drawer-overlay"/>
+            <div className="drawer-overlay" onClick={() => {
+              document.getElementById('drawer-toggle')?.click();
+            }} onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                document.getElementById('drawer-toggle')?.click();
+              }
+            }} />
             <div className="bg-base-200">
               <button
                 className="btn btn-ghost absolute right-4 top-2"
