@@ -36,7 +36,7 @@ function renderDesktopHeader(){
                     {item.to === "/logout" ? (
                       <SignOutButton redirectUrl="/">
                         <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
-                          <item.icon className="w-5 h-5" />
+                          <item.icon className="w-5 h-5 stroke-current fill-none" />
                           <span>ログアウト</span>
                         </div>
                       </SignOutButton>
@@ -45,7 +45,7 @@ function renderDesktopHeader(){
                         to={item.to} 
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-200 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                       >
-                        <item.icon className="w-5 h-5" />
+                        <item.icon className="w-5 h-5 stroke-current fill-none" />
                         <span>{item.text}</span>
                       </NavLink>
                     )}
@@ -126,7 +126,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
                       }}
                       className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
                       >
-                        <item.icon />
+                        <item.icon className="w-5 h-5 stroke-current fill-none" />
                         {item.text}
                       </NavLink>
                     )}
