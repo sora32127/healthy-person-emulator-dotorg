@@ -26,7 +26,7 @@ export default function ThemeSwitcher() {
   };
 
   return (
-    <div className="tooltip tooltip-bottom md:tooltip-right" data-tip={nowTheme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}>
+    <div>
       <button
         onClick={toggleTheme}
         type="button"
