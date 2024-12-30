@@ -13,17 +13,14 @@ import LoginIcon from "~/components/icons/LoginIcon";
 import TopIcon from "~/components/icons/TopIcon";
 import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
-
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import HomeIcon from "~/components/icons/HomeIcon";
 import { Footer } from "~/components/Footer";
-import { useAtom } from "jotai";
-import { authStateAtom } from "~/stores/auth";
+import { useAtomValue, useAtom } from "jotai";
+import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
 
 function getNavItems(){
-  const [ authState ] = useAtom(authStateAtom);
-  const isSignedIn = authState.isSignedIn;
-
+  const isSignedIn = useAtomValue(isSignedInAtom);
   const items = [
     { to: "/?referrer=fromMenu", icon: HomeIcon, text: "トップ" },
     { to: "/search", icon: SearchIcon, text: "検索する" },
@@ -160,18 +157,19 @@ export default function Component() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const user = useUser();
-  
-  const [ _, setAuthState ] = useAtom(authStateAtom);
+  const [ _, setAuthState ] = useAtom(setAuthStateAtom);
+
   useEffect(() => {
-    if (user) {
-      setAuthState({
-        isSignedIn: user?.isSignedIn ?? false,
-        userId: user?.user?.id ?? null,
-        email: user?.user?.emailAddresses[0]?.emailAddress ?? null,
-        userName: user?.user?.fullName ?? null,
-      });
+    if (user.isSignedIn) {
+      const newAuthState = {
+        isSignedIn: user.isSignedIn ?? false,
+        userId: user.user?.id ?? null,
+        email: user.user?.emailAddresses[0]?.emailAddress ?? null,
+        userName: user.user?.username ?? null,
+      };
+      setAuthState(newAuthState);
     }
-  }, [user, setAuthState]);
+  }, [user.isSignedIn, setAuthState, user.user?.id, user.user?.emailAddresses, user.user?.username]);
 
 
   const searchInputRef = useRef<HTMLInputElement>(null);

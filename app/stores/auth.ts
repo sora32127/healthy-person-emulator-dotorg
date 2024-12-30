@@ -18,3 +18,9 @@ const initialAuthState: AuthState = {
 };
 
 export const authStateAtom = atom<AuthState>(initialAuthState);
+
+export const isSignedInAtom = atom((get) => get(authStateAtom).isSignedIn);
+
+export const setAuthStateAtom = atom(null, (get, set, authState: AuthState) => {
+  set(authStateAtom, authState);
+});
