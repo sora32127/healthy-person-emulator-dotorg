@@ -157,7 +157,7 @@ export default function Component() {
   };
 
   const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
-    <div className="tooltip" data-tip={`この記事を${type === 'like' ? '高' : '低'}評価する`}>
+    <div>
       <button
         type="submit"
         name="voteType"
