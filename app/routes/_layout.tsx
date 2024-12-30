@@ -12,15 +12,15 @@ import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
 import { getNavItems } from "~/utils/itemMenu";
 
 
-function renderDesktopHeader(handleSearchModalOpen: (status: boolean) => void){
+function renderDesktopHeader(){
   const [ isSignedIn ] = useAtom(isSignedInAtom);
   const navItems = getNavItems(isSignedIn);
   const location = useLocation();
-  const currentTab = new URLSearchParams(location.search).get("tab") || "trend";
-
+  const currentLocation = `${location.pathname}${location.search ? `${location.search}` : ""}`;
+  
   return (
     <>
-      <div className="fixed top-0 left-0 h-screen w-64 bg-base-100 border-r border-base-200 overflow-y-auto">
+      <div className="fixed top-0 left-0 h-screen w-64 bg-base-200 border-r border-base-200 overflow-y-auto">
         <div className="p-4">
           <h1 className="text-lg font-bold mb-6">
             <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
@@ -29,9 +29,7 @@ function renderDesktopHeader(handleSearchModalOpen: (status: boolean) => void){
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
-                const isActive = item.to.includes("tab=") 
-                  ? item.to.includes(`tab=${currentTab}`)
-                  : location.pathname === item.to.split("?")[0];
+                const isActive = item.to === currentLocation;
 
                 return (
                   <li key={item.to}>
