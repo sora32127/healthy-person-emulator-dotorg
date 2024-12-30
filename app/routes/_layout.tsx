@@ -208,7 +208,7 @@ export default function Component() {
       <div className="block md:hidden">
         {renderMobileHeader(handleSearchModalOpen)}
       </div>
-      <main className="p-4 ml-64 mt-16 flex-grow">
+      <main className="p-4 md:ml-64 mt-16 flex-grow">
         <div>
           <Outlet />
         </div>
