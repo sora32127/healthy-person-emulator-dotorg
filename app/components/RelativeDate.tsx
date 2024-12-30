@@ -16,16 +16,17 @@ const RelativeDate = ({ timestamp }: RelativeDateProps) => {
     if (diffInSeconds < secondsInDay) {
       const hours = Math.floor(diffInSeconds / secondsInHour);
       return `${hours}時間前`;
-    } else if (diffInSeconds < secondsInMonth) {
+    }
+    if (diffInSeconds < secondsInMonth) {
       const days = Math.floor(diffInSeconds / secondsInDay);
       return `${days}日前`;
-    } else if (diffInSeconds < secondsInYear) {
+    }
+    if (diffInSeconds < secondsInYear) {
       const months = Math.floor(diffInSeconds / secondsInMonth);
       return `${months}か月前`;
-    } else {
-      const years = Math.floor(diffInSeconds / secondsInYear);
-      return `${years}年前`;
     }
+    const years = Math.floor(diffInSeconds / secondsInYear);
+    return `${years}年前`;
   };
 
   const formatTime = (timestamp: string) => {
@@ -41,7 +42,7 @@ const RelativeDate = ({ timestamp }: RelativeDateProps) => {
   }
 
   return (
-    <div className="tooltip" data-tip={formatTime(timestamp)}>
+    <div className="tooltip tooltip-right" data-tip={formatTime(timestamp)}>
         <span>{getRelativeTime(timestamp)}</span>
     </div>
 );
