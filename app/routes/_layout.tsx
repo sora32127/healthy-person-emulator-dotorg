@@ -56,17 +56,6 @@ function renderDesktopHeader(){
           </nav>
         </div>
         <div className="border-t border-base-300">
-          <button 
-            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-            className="w-full btn btn-ghost 2xl:hidden"
-            type="button"
-          >
-            {isSidebarExpanded ? (
-              <span className="text-xl font-bold">&lt;</span>
-            ) : (
-              <span className="text-xl font-bold">&gt;</span>
-            )}
-          </button>
           <div className={`p-4 flex items-center ${!isSidebarExpanded ? 'justify-center' : 'justify-start'}`}>
             <ThemeSwitcher />
           </div>
