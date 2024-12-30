@@ -221,6 +221,40 @@ export default function Component() {
         </NavLink>
       </div>
       <Footer />
+      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? "modal-open" : ""}`}>
+        <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
+          <div className="mt-6">
+            <Form method="post" action="/search" className="flex flex-row" onSubmit={() => {
+              handleSearchModalOpen(false);
+            }}>
+              <input
+                type="text"
+                name="query"
+                placeholder="検索する..."
+                className="input input-bordered w-full placeholder-slate-500"
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary ml-4" onSubmit={() => {
+                handleSearchModalOpen(false);
+                setSearchQuery("");
+              }}>
+                <SearchIcon />
+              </button>
+              <input type="hidden" name="action" value="firstSearch" />
+              <button type="button" className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => {
+                handleSearchModalOpen(false);
+              }}>✕</button>
+            </Form>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button type="submit" onClick={() => {
+            handleSearchModalOpen(false);
+          }}>閉じる</button>
+        </form>
+    </dialog>
     </div>
   );
 }
