@@ -23,6 +23,7 @@ import { UserWarningMessage } from "~/components/UserWarningMessage";
 import { TurnstileModal } from "~/components/TurnstileModal";
 import { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
+import { SNSLinks } from "~/components/SNSLinks";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -289,6 +290,13 @@ export default function Component() {
               currentURL={data.postURL}
               postTitle={data.postTitle}
             />
+        </div>
+        <div>
+          <SNSLinks
+            tweetIdOfFirstTweet={data.tweetIdOfFirstTweet}
+            blueskyPostUriOfFirstPost={data.blueskyPostUriOfFirstPost}
+            misskeyNoteIdOfFirstNote={data.misskeyNoteIdOfFirstNote}
+          />
         </div>
         <br/>
         <div className="mb-8">
