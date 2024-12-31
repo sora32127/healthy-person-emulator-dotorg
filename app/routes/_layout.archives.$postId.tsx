@@ -151,6 +151,7 @@ export default function Component() {
             likesCount={comment.likesCount}
             dislikesCount={comment.dislikesCount}
             isCommentOpen={isCommentOpen}
+            postTitle={data.postTitle}
           />
           {renderComments(comment.commentId, level + 1)}
         </div>
