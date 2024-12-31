@@ -27,7 +27,7 @@ function renderDesktopHeader(){
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        <div className="p-4 flex-grow overflow-y-auto">
+        <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
