@@ -33,6 +33,7 @@ interface CommentCardProps {
   dislikesCount: number;
   postId: number;
   isCommentOpen: boolean;
+  postTitle: string;
 }
 
 export default function CommentCard({
@@ -48,6 +49,7 @@ export default function CommentCard({
   dislikesCount,
   postId,
   isCommentOpen,
+  postTitle,
 }: CommentCardProps) {
 
   const marginLeft = `${level * 2}rem`;
@@ -94,9 +96,11 @@ export default function CommentCard({
     onCommentVote(getValues());
   };
 
-  const invokeShareAPI = async (currentURL: string, postTitle: string) => {
+  const invokeShareAPI = async () => {
+    const currentURL = `${window.location.href.split("#")[0]}#comment-${commentId}`;
+    const shareTitle = `${commentAuthor}のコメント ${postTitle} - 健常者エミュレータ事例集`;
     try {
-        await navigator.share({ url: currentURL, title: postTitle });
+        await navigator.share({ url: currentURL, title: shareTitle });
     } catch (error) {
         console.error("シェアAPIが使えませんでした", error);
     }
@@ -114,7 +118,7 @@ export default function CommentCard({
           <button
             type="button"
             className="btn btn-circle btn-sm btn-ghost"
-            onClick={() => invokeShareAPI(`${window.location.href.split("#")[0]}#comment-${commentId}`, "健常者エミュレータ事例集")}
+            onClick={() => invokeShareAPI()}
           >
             <Share className="fill-none stroke-current w-4 h-4" />
           </button>
