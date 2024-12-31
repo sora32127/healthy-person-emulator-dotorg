@@ -9,6 +9,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CommentFormInputs } from "./CommentInputBox";
+import { Share } from 'lucide-react';
+
 
 const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -92,14 +94,31 @@ export default function CommentCard({
     onCommentVote(getValues());
   };
 
+  const invokeShareAPI = async (currentURL: string, postTitle: string) => {
+    try {
+        await navigator.share({ url: currentURL, title: postTitle });
+    } catch (error) {
+        console.error("シェアAPIが使えませんでした", error);
+    }
+}
+
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
       <div className="flex items-center">
         <p className="text-green-700 font-bold mr-1">{commentAuthor}</p>
         <div className="pr-0.5">
-        <ClockIcon  />
+          <ClockIcon  />
         </div>
         <RelativeDate timestamp={commentDateGmt} />
+        <div>
+          <button
+            type="button"
+            className="btn btn-circle btn-sm btn-ghost"
+            onClick={() => invokeShareAPI(`${window.location.href.split("#")[0]}#comment-${commentId}`, "健常者エミュレータ事例集")}
+          >
+            <Share className="fill-none stroke-current w-4 h-4" />
+          </button>
+        </div>
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
       <div className="flex items-center mt-4">　　　　　　

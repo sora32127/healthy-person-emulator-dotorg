@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, NavLink,useFetcher } from "@remix-run/react";
-import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma, ArchiveDataEntry } from "~/modules/db.server";
@@ -136,7 +137,7 @@ export default function Component() {
     return data.comments
       .filter((comment) => comment.commentParent === parentId)
       .map((comment) => (
-        <div key={comment.commentId}>
+        <div key={comment.commentId} id={`comment-${comment.commentId}`}>
           <CommentCard
             commentId={comment.commentId}
             postId={POSTID}
@@ -175,6 +176,18 @@ export default function Component() {
     }
   }, [fetcher.data, isValificationFailed]);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const commentId = hash.replace("#comment-", "");
+      const commentElement = document.getElementById(`comment-${commentId}`);
+      if (commentElement) {
+        commentElement.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, []);
+  // コメントIDをURLに含めると、そのコメントにスクロールするための機能
+  // http://localhost:3000/archives/46783#comment-32944
 
   return (
     <>
@@ -481,13 +494,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     return [{ title: "Loading..." }];
   }
   const title = data.data.postTitle;
-  const description = data.data.tags.map((tag) => tag.tagName).join(", ");
+  const postDescription = data.data.tags.map((tag) => tag.tagName).join(", ");
   const url = `https://healthy-person-emulator.org/archives/${data.data.postId}`;
   const image = data.data.ogpImageUrl;
 
   const commonMeta = commonMetaFunction({
     title,
-    description,
+    description: postDescription,
     url,
     image
   });
