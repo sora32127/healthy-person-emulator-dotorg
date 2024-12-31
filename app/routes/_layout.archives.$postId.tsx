@@ -136,7 +136,7 @@ export default function Component() {
     return data.comments
       .filter((comment) => comment.commentParent === parentId)
       .map((comment) => (
-        <div key={comment.commentId}>
+        <div key={comment.commentId} id={`comment-${comment.commentId}`}>
           <CommentCard
             commentId={comment.commentId}
             postId={POSTID}
