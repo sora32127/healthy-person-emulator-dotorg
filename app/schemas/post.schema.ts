@@ -24,7 +24,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
           if (value.every((v) => v.length < 1)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」もしくは「試行錯誤」は最低一つ入力してください',
+              message: '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」もしくは「試したこと」は最低一つ入力してください',
             })
           }
           if (value.some((v) => !checkStopWords(v))) {
@@ -40,7 +40,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
           if (value.every((v) => v.length < 1)) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」もしくは「仮想解決案」は最低一つ入力してください',
+              message: '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」もしくは「まだやっていないこと」は最低一つ入力してください',
             })
           }
           if (value.some((v) => !checkStopWords(v))) {
