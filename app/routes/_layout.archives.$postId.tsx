@@ -488,18 +488,29 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
 }
 
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
   if (!data){
     return [{ title: "Loading..." }];
   }
   const title = data.data.postTitle;
-  const description = data.data.tags.map((tag) => tag.tagName).join(", ");
+  const postDescription = data.data.tags.map((tag) => tag.tagName).join(", ");
+  
+  const hash = location.hash;
+  const commentId = hash.replace("#comment-", "");
+  let commentDescription = "";
+  if (commentId) {
+    const comment = data.data.comments.find((comment) => comment.commentId === Number(commentId));
+    if (comment) {
+      commentDescription = comment.commentContent;
+    }
+  }
+
   const url = `https://healthy-person-emulator.org/archives/${data.data.postId}`;
   const image = data.data.ogpImageUrl;
 
   const commonMeta = commonMetaFunction({
     title,
-    description,
+    description: commentDescription ?? postDescription,
     url,
     image
   });
