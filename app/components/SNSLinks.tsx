@@ -13,7 +13,7 @@ export function SNSLinks({ tweetIdOfFirstTweet, blueskyPostUriOfFirstPost, missk
   }
 
   return (
-    <div className="collapse collapse-arrow bg-base-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 mx-auto my-4 max-w-2xl w-full">
+    <div className="collapse collapse-arrow bg-base-200 rounded-lg shadow-sm transition-all duration-300 mx-auto my-4 max-w-2xl w-full">
       <input type="checkbox" className="peer" /> 
       <div className="collapse-title font-medium flex items-center justify-between p-4 md:p-6">
         <span className="flex items-center gap-2">
