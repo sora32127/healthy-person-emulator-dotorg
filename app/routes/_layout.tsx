@@ -61,10 +61,8 @@ function renderDesktopHeader(){
             </ul>
           </nav>
         </div>
-        <div className="border-t border-base-300 h-[60px] flex-shrink-0">
-          <div className="p-4 flex items-center justify-center h-full">
+        <div className="h-[60px] px-4">
             <ThemeSwitcher />
-          </div>
         </div>
       </div>
     </>
