@@ -60,6 +60,9 @@ export const PostDataSchema = z.object({
     postURL: z.string(),
     isWelcomed: z.boolean().nullable(),
     isWelcomedExplanation: z.string().nullable(),
+    tweetIdOfFirstTweet: z.string().nullable(),
+    blueskyPostUriOfFirstPost: z.string().nullable(),
+    misskeyNoteIdOfFirstNote: z.string().nullable(),
 })
 type PostData = z.infer<typeof PostDataSchema>;
 
@@ -77,6 +80,9 @@ async function getPostByPostId(postId: number): Promise<PostData> {
             ogpImageUrl: true,
             isWelcomed: true,
             isWelcomedExplanation: true,
+            tweetIdOfFirstTweet: true,
+            blueskyPostUriOfFirstPost: true,
+            misskeyNoteIdOfFirstNote: true,
             rel_post_tags: {
                 select: {
                     dimTag: {
@@ -229,6 +235,9 @@ export class ArchiveDataEntry {
     nextPost: PreviousOrNextPostData;
     isWelcomed: boolean | null;
     isWelcomedExplanation: string | null;
+    tweetIdOfFirstTweet: string | null;
+    blueskyPostUriOfFirstPost: string | null;
+    misskeyNoteIdOfFirstNote: string | null;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
@@ -251,6 +260,9 @@ export class ArchiveDataEntry {
         this.nextPost = nextPost;
         this.isWelcomed = postData.isWelcomed;
         this.isWelcomedExplanation = postData.isWelcomedExplanation;
+        this.tweetIdOfFirstTweet = postData.tweetIdOfFirstTweet;
+        this.blueskyPostUriOfFirstPost = postData.blueskyPostUriOfFirstPost;
+        this.misskeyNoteIdOfFirstNote = postData.misskeyNoteIdOfFirstNote;
     }
     
     static async getData(postId: number){
