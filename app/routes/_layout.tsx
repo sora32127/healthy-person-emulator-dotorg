@@ -22,7 +22,7 @@ function renderDesktopHeader(){
   return (
     <>
       <div 
-        className={`fixed top-0 left-0 h-screen bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
+        className={`fixed top-0 left-0 h-screen bg-base-100 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
           w-16 hover:w-64 2xl:w-64 group`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
