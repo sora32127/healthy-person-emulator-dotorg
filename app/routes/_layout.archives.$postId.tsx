@@ -1,6 +1,7 @@
 import { json } from "@remix-run/node";
 import { useLoaderData, NavLink,useFetcher } from "@remix-run/react";
-import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { prisma, ArchiveDataEntry } from "~/modules/db.server";
@@ -488,29 +489,18 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
 }
 
 
-export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
     return [{ title: "Loading..." }];
   }
   const title = data.data.postTitle;
   const postDescription = data.data.tags.map((tag) => tag.tagName).join(", ");
-  
-  const hash = location.hash;
-  const commentId = hash.replace("#comment-", "");
-  let commentDescription = "";
-  if (commentId) {
-    const comment = data.data.comments.find((comment) => comment.commentId === Number(commentId));
-    if (comment) {
-      commentDescription = comment.commentContent;
-    }
-  }
-
   const url = `https://healthy-person-emulator.org/archives/${data.data.postId}`;
   const image = data.data.ogpImageUrl;
 
   const commonMeta = commonMetaFunction({
     title,
-    description: commentDescription ?? postDescription,
+    description: postDescription,
     url,
     image
   });
