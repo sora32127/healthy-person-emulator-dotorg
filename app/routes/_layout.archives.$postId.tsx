@@ -175,6 +175,18 @@ export default function Component() {
     }
   }, [fetcher.data, isValificationFailed]);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const commentId = hash.replace("#comment-", "");
+      const commentElement = document.getElementById(`comment-${commentId}`);
+      if (commentElement) {
+        commentElement.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, []);
+  // コメントIDをURLに含めると、そのコメントにスクロールするための機能
+  // http://localhost:3000/archives/46783#comment-32944
 
   return (
     <>
