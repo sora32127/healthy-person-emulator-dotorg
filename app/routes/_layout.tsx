@@ -22,12 +22,12 @@ function renderDesktopHeader(){
   return (
     <>
       <div 
-        className={`fixed top-0 left-0 h-screen bg-base-200 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
-          w-16 hover:w-64 2xl:w-64 group`}
+        className={`fixed top-0 left-0 h-screen bg-base-100 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
+          w-16 hover:w-64 2xl:w-64 group py-32`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        <div className="p-4 flex-grow overflow-y-auto">
+        <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
@@ -61,10 +61,8 @@ function renderDesktopHeader(){
             </ul>
           </nav>
         </div>
-        <div className="border-t border-base-300 h-[60px] flex-shrink-0">
-          <div className="p-4 flex items-center justify-center h-full">
+        <div className="h-[60px] px-4">
             <ThemeSwitcher />
-          </div>
         </div>
       </div>
     </>

@@ -14,8 +14,6 @@ import ShareButtons from "~/components/ShareButtons";
 import ArrowBackIcon from "~/components/icons/ArrowBackIcon";
 import ClockIcon from "~/components/icons/ClockIcon";
 import TagIcon from "~/components/icons/TagIcon";
-import ThumbsUpIcon from "~/components/icons/ThumbsUpIcon";
-import ThumbsDownIcon from "~/components/icons/ThumbsDownIcon";
 import ArrowForwardIcon from "~/components/icons/ArrowForwardIcon";
 import RelativeDate from "~/components/RelativeDate";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
@@ -24,6 +22,7 @@ import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
 import { TurnstileModal } from "~/components/TurnstileModal";
 import { Toaster } from "react-hot-toast";
+import { VoteButton } from "~/components/VoteButton";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -155,30 +154,6 @@ export default function Component() {
         </div>
       ));
   };
-
-  const VoteButton = ({ type, count, isAnimating, isVoted, disabled, onClick }: { type: "like" | "dislike", count: number, isAnimating: boolean, isVoted: boolean, disabled: boolean, onClick: (event: React.MouseEvent<HTMLButtonElement>) => void }) => (
-    <div>
-      <button
-        type="submit"
-        name="voteType"
-        value={type}
-        className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
-          isAnimating
-            ? 'animate-voteSpin bg-base-300'
-            : isVoted
-            ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
-            : 'bg-base-300 hover:bg-base-200'
-        }`}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        {type === 'like' ? <ThumbsUpIcon /> : <ThumbsDownIcon />}
-        <p className="ml-2">
-          {count}
-        </p>
-      </button>
-    </div>
-  );
 
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();

@@ -103,7 +103,7 @@ export default function CommentCard({
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
       <div className="flex items-center mt-4">　　　　　　
-        <div className="tooltip" data-tip="このコメントを高評価する">
+        <div>
           <button
             className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
               isLiked ? "text-blue-500 font-bold" : ""
