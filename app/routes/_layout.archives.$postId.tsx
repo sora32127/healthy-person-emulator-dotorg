@@ -56,14 +56,13 @@ export default function Component() {
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
 
   const POSTID = data.postId;
-  const fetcher = useFetcher();
-
   const isLiked = likedPages.includes(POSTID);
   const isDisliked = dislikedPages.includes(POSTID);
 
   // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
-
+  
+  const postVoteFetcher = useFetcher();
   const handlePostVote = async (data: PostVoteSchema) => {
     setIsValificationFailed(false);
     const voteType = data.voteType;
@@ -86,8 +85,7 @@ export default function Component() {
     formData.append("postId", POSTID.toString() || "");
     formData.append("action", "votePost");
     formData.append("voteType", voteType);
-
-    fetcher.submit(formData, {
+    postVoteFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
@@ -97,7 +95,7 @@ export default function Component() {
 
   };
 
-
+  const commentSubmitFetcher = useFetcher();
   const handleCommentSubmit = async (data: CommentFormInputs) => {
     setIsValificationFailed(false);
     const formData = new FormData();
@@ -111,12 +109,13 @@ export default function Component() {
       formData.append(key, String(value));
     }
 
-    fetcher.submit(formData, {
+    commentSubmitFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
   };
   
+  const commentVoteFetcher = useFetcher();
   const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
     formData.append("postId", POSTID.toString() || "");
@@ -126,7 +125,7 @@ export default function Component() {
       formData.append(key, String(value));
     }
 
-    fetcher.submit(formData, {
+    commentVoteFetcher.submit(formData, {
         method: "post",
         action: `/archives/${POSTID}`,
     });
@@ -160,11 +159,12 @@ export default function Component() {
       ));
   };
 
+  const turnstileFetcher = useFetcher();
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    await fetcher.submit(formData, {
+    turnstileFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
@@ -172,12 +172,13 @@ export default function Component() {
 
   const [showTurnstileModal, setShowTurnstileModal] = useState(false);
   const [isValificationFailed, setIsValificationFailed] = useState(false);
+
   useEffect(() => {
-    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
+    if ((turnstileFetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
       setShowTurnstileModal(true);
       setIsValificationFailed(true);
     }
-  }, [fetcher.data, isValificationFailed]);
+  }, [turnstileFetcher.data, isValificationFailed]);
 
   useEffect(() => {
     const hash = window.location.hash;
