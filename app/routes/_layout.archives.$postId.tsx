@@ -132,8 +132,6 @@ export default function Component() {
       toast.error(data.message);
     }
   }, [commentSubmitFetcher.data]);
-
-
   
   const commentVoteFetcher = useFetcher();
   const handleCommentVote = async (data: CommentVoteSchema) => {
@@ -150,6 +148,16 @@ export default function Component() {
         action: `/archives/${POSTID}`,
     });
   };
+  useEffect(() => {
+    const data = commentVoteFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [commentVoteFetcher.data]);
+
 
   const isCommentOpen = data.commentStatus === "open";
 
