@@ -93,7 +93,6 @@ export default function Component() {
     setIsPageLikeButtonPushed(false);
     setIsPageDislikeButtonPushed(false);
   };
-  
   useEffect(() => {
     const data = postVoteFetcher.data as { success: boolean; message: string } | null;
     if (data?.success === true && data.message) {
@@ -103,6 +102,7 @@ export default function Component() {
       toast.error(data.message);
     }
   }, [postVoteFetcher.data]);
+
 
   const commentSubmitFetcher = useFetcher();
   const handleCommentSubmit = async (data: CommentFormInputs) => {
@@ -123,6 +123,17 @@ export default function Component() {
       action: `/archives/${POSTID}`,
     });
   };
+  useEffect(() => {
+    const data = commentSubmitFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [commentSubmitFetcher.data]);
+
+
   
   const commentVoteFetcher = useFetcher();
   const handleCommentVote = async (data: CommentVoteSchema) => {
