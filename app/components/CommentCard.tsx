@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState, useRef } from "react";
 import CommentInputBox from "./CommentInputBox";
-import { useSubmit } from "@remix-run/react";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
@@ -10,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CommentFormInputs } from "./CommentInputBox";
 import { Share } from 'lucide-react';
+import { CSSTransition } from 'react-transition-group';
 
 
 const commentVoteSchema = z.object({
@@ -27,6 +27,7 @@ interface CommentCardProps {
   commentContent: string;
   level: number;
   onCommentVote: (data: CommentVoteSchema) => void;
+  onCommentSubmit: (data: CommentFormInputs) => void;
   likedComments: number[];
   dislikedComments: number[];
   likesCount: number;
@@ -43,6 +44,7 @@ export default function CommentCard({
   commentContent,
   level,
   onCommentVote,
+  onCommentSubmit,
   likedComments,
   dislikedComments,
   likesCount,
@@ -60,41 +62,30 @@ export default function CommentCard({
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
-
-  const submit = useSubmit();
-
-  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
-
-    const formData = new FormData();
-    formData.append("postId", postId.toString());
-    formData.append("commentParentId", commentId.toString());
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, value.toString());
-    }
-    formData.append("action", "submitComment")
-
-    await submit(formData, {
-      method: "post",
-      action: `/archives/${postId}`,
-    });
-    setIsReplyBoxShown(false);
-  };
   
   const { setValue, getValues } = useForm<CommentVoteSchema>({
     resolver: zodResolver(commentVoteSchema),
   });
 
-  const handleVote = async (voteType: "like" | "dislike") => {
+  const nodeRef = useRef(null);
+
+  const handleCommentVote = async (voteType: "like" | "dislike") => {
     setValue("voteType", voteType);
     setValue("commentId", commentId);
     
     if (voteType === "like") {
       setIsCommentLikeButtonPushed(true);
-    } else {
+    }
+    if (voteType === "dislike") {
       setIsCommentDislikeButtonPushed(true);
     }
     onCommentVote(getValues());
   };
+
+  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
+    onCommentSubmit(data);
+    setIsReplyBoxShown(false);
+  }
 
   const invokeShareAPI = async () => {
     const currentURL = `${window.location.href.split("#")[0]}#comment-${commentId}`;
@@ -105,6 +96,7 @@ export default function CommentCard({
         console.error("シェアAPIが使えませんでした", error);
     }
 }
+  
 
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
@@ -132,7 +124,7 @@ export default function CommentCard({
               isLiked ? "text-blue-500 font-bold" : ""
             } comment-like-button`}
             onClick={() => {
-              handleVote("like");
+              handleCommentVote("like");
             }}
             disabled={isCommentLikeButtonPushed || isLiked}
             type="button"
@@ -149,7 +141,7 @@ export default function CommentCard({
               isDisliked ? "text-red-500 font-bold" : ""}
               comment-dislike-button`}
             onClick={() => {
-              handleVote("dislike");
+              handleCommentVote("dislike");
             }}
             disabled={isCommentDislikeButtonPushed || isDisliked}
             type="button"
@@ -169,13 +161,21 @@ export default function CommentCard({
         {isReplyBoxShown ? "キャンセル" : "返信"}
     </button>
         <div className="ml-2">
-        {isReplyBoxShown && (
+        <CSSTransition
+          in={isReplyBoxShown}
+          nodeRef={nodeRef}
+          timeout={300}
+          classNames="reply-box"
+          unmountOnExit
+        >
+          <div ref={nodeRef}>
             <CommentInputBox
-                onSubmit={handleReplyCommentSubmit}
-                isCommentOpen={isCommentOpen}
-                commentParentId={commentId}
+              onSubmit={handleReplyCommentSubmit}
+              isCommentOpen={isCommentOpen}
+              commentParentId={commentId}
             />
-        )}
+          </div>
+        </CSSTransition>
         </div>
     </div>
   );

@@ -22,7 +22,7 @@ import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/
 import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
 import { TurnstileModal } from "~/components/TurnstileModal";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
 
@@ -56,14 +56,13 @@ export default function Component() {
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
 
   const POSTID = data.postId;
-  const fetcher = useFetcher();
-
   const isLiked = likedPages.includes(POSTID);
   const isDisliked = dislikedPages.includes(POSTID);
 
   // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
-
+  
+  const postVoteFetcher = useFetcher();
   const handlePostVote = async (data: PostVoteSchema) => {
     setIsValificationFailed(false);
     const voteType = data.voteType;
@@ -86,18 +85,26 @@ export default function Component() {
     formData.append("postId", POSTID.toString() || "");
     formData.append("action", "votePost");
     formData.append("voteType", voteType);
-
-    fetcher.submit(formData, {
+    postVoteFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
     
     setIsPageLikeButtonPushed(false);
     setIsPageDislikeButtonPushed(false);
-
   };
+  useEffect(() => {
+    const data = postVoteFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [postVoteFetcher.data]);
 
 
+  const commentSubmitFetcher = useFetcher();
   const handleCommentSubmit = async (data: CommentFormInputs) => {
     setIsValificationFailed(false);
     const formData = new FormData();
@@ -106,16 +113,27 @@ export default function Component() {
     }
     formData.append("action", "submitComment");
     formData.append("postId", POSTID.toString());
+    formData.append("commentParentId", data.commentParentId?.toString() ?? "0");
     for (const [key, value] of Object.entries(data)) {
       formData.append(key, String(value));
     }
 
-    fetcher.submit(formData, {
+    commentSubmitFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
   };
+  useEffect(() => {
+    const data = commentSubmitFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [commentSubmitFetcher.data]);
   
+  const commentVoteFetcher = useFetcher();
   const handleCommentVote = async (data: CommentVoteSchema) => {
     const formData = new FormData();
     formData.append("postId", POSTID.toString() || "");
@@ -125,11 +143,21 @@ export default function Component() {
       formData.append(key, String(value));
     }
 
-    fetcher.submit(formData, {
+    commentVoteFetcher.submit(formData, {
         method: "post",
         action: `/archives/${POSTID}`,
     });
   };
+  useEffect(() => {
+    const data = commentVoteFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [commentVoteFetcher.data]);
+
 
   const isCommentOpen = data.commentStatus === "open";
 
@@ -146,6 +174,7 @@ export default function Component() {
             commentAuthor={comment.commentAuthor}
             level={level}
             onCommentVote={handleCommentVote}
+            onCommentSubmit={handleCommentSubmit}
             likedComments={likedComments}
             dislikedComments={dislikedComments}
             likesCount={comment.likesCount}
@@ -158,24 +187,25 @@ export default function Component() {
       ));
   };
 
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
+  const [isValificationFailed, setIsValificationFailed] = useState(false);
+  const turnstileFetcher = useFetcher();
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
     formData.append("token", token);
     formData.append("action", "setTurnstileToken");
-    await fetcher.submit(formData, {
+    turnstileFetcher.submit(formData, {
       method: "post",
       action: `/archives/${POSTID}`,
     });
   }
-
-  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
-  const [isValificationFailed, setIsValificationFailed] = useState(false);
   useEffect(() => {
-    if ((fetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
+    if ((turnstileFetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
       setShowTurnstileModal(true);
       setIsValificationFailed(true);
     }
-  }, [fetcher.data, isValificationFailed]);
+  }, [turnstileFetcher.data, isValificationFailed]);
+
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -368,13 +398,13 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
     console.log("User validation failed");
-    return json({ error: "Invalid request" }, { status: 400 });
+    return json({ message: "ユーザー検証に失敗しました", success: false }, { status: 400 });
   }
   const session = await getSession(request.headers.get("Cookie"));
   session.set("isValidUser", true);
   console.log("User validation succeeded");
   return json(
-    { success: true },
+    { message: "ユーザー検証が完了しました", success: true },
     {
       headers: {
         "Set-Cookie": await commitSession(session),
@@ -390,44 +420,45 @@ async function handleVotePost(
   userIpHashString: string,
   request: Request
 ) {
-  
-  const voteType = formData.get("voteType")?.toString();
-
-  if (voteType !== "like" && voteType !== "dislike") {
-    return json({ error: "Invalid vote type" }, { status: 400 });
-  }
-  
-  await prisma.$transaction(async (prisma) => {
-    await prisma.fctPostVoteHistory.create({
-      data: {
-        voteUserIpHash: userIpHashString,
-        postId,
-        voteTypeInt: voteType === "like" ? 1 : -1,
-      },
-    });
-    const updateData = voteType === "like" 
-      ? { countLikes: { increment: 1 } }
-      : { countDislikes: { increment: 1 } };
-    await prisma.dimPosts.update({
-      where: { postId },
-      data: updateData,
-    });
-  });
-
-  const session = await getSession(request.headers.get("Cookie"));
-  if (voteType === "like") {
-    session.set("likedPages", [...(session.get("likedPages") || []), postId]);
-  } else if (voteType === "dislike") {
-    session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
-  }
-  return json(
-    { success: true },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+  try {
+    const voteType = formData.get("voteType")?.toString();
+    if (voteType !== "like" && voteType !== "dislike") {
+      return json({ message: "Invalid vote type", success: false }, { status: 400 });
     }
-  );
+    await prisma.$transaction(async (prisma) => {
+      await prisma.fctPostVoteHistory.create({
+        data: {
+          voteUserIpHash: userIpHashString,
+          postId,
+          voteTypeInt: voteType === "like" ? 1 : -1,
+        },
+      });
+      const updateData = voteType === "like" 
+        ? { countLikes: { increment: 1 } }
+        : { countDislikes: { increment: 1 } };
+      await prisma.dimPosts.update({
+        where: { postId },
+        data: updateData,
+      });
+    });
+    const session = await getSession(request.headers.get("Cookie"));
+    if (voteType === "like") {
+      session.set("likedPages", [...(session.get("likedPages") || []), postId]);
+    } else if (voteType === "dislike") {
+      session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
+    }
+    return json(
+      { message: "投稿を評価しました", success: true },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+  }
 }
 
 async function handleVoteComment(
@@ -436,42 +467,44 @@ async function handleVoteComment(
   userIpHashString: string,
   request: Request
 ) {
-  const voteType = formData.get("voteType")?.toString();
-
-  const commentId = Number(formData.get("commentId"));
-  await prisma.$transaction(async (prisma) => {
-    await prisma.fctCommentVoteHistory.create({
-      data: {
-        voteUserIpHash: userIpHashString,
-        commentId,
-        postId,
-        voteType: voteType === "like" ? 1 : -1,
-      },
+  try {
+    const voteType = formData.get("voteType")?.toString();
+    const commentId = Number(formData.get("commentId"));
+    await prisma.$transaction(async (prisma) => {
+      await prisma.fctCommentVoteHistory.create({
+        data: {
+          voteUserIpHash: userIpHashString,
+          commentId,
+          postId,
+          voteType: voteType === "like" ? 1 : -1,
+        },
+      });
     });
-  });
-
-  const session = await getSession(request.headers.get("Cookie"));
-  if (voteType === "like") {
-    session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
-  } else if (voteType === "dislike") {
-    session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
-  }
-  return json(
-    { success: true },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+    const session = await getSession(request.headers.get("Cookie"));
+    if (voteType === "like") {
+      session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
+    } else if (voteType === "dislike") {
+      session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
     }
-  );
+    return json(
+      { message: "コメントを評価しました", success: true },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+  }
 }
 
 async function handleSubmitComment(formData: FormData, postId: number, userIpHashString: string) {
-  const commentAuthor = formData.get("commentAuthor")?.toString();
-  const commentContent = formData.get("commentContent")?.toString() || "";
-  const commentParent = Number(formData.get("commentParentId")) || 0;
-
   try {
+    const commentAuthor = formData.get("commentAuthor")?.toString();
+    const commentContent = formData.get("commentContent")?.toString() || "";
+    const commentParent = Number(formData.get("commentParentId")) || 0;
     await prisma.dimComments.create({
       data: {
         postId: Number(postId),
@@ -481,11 +514,11 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
         commentAuthorIpHash: userIpHashString
       },
     });
-    return json({ success: true });
+    return json({ message: "コメントを投稿しました", success: true });
   }
   catch (e) {
     console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }
 

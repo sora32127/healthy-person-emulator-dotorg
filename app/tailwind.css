@@ -74,3 +74,34 @@ svg {
   @apply hover:bg-base-300;
   @apply font-bold;
 }
+/* 表示時のアニメーション */
+.reply-box-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
+
+.reply-box-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 500px;
+  transition: opacity 300ms ease-in-out, 
+              transform 300ms ease-in-out,
+              max-height 300ms ease-in-out;
+}
+
+/* 非表示時のアニメーション */
+.reply-box-exit {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 500px;
+}
+
+.reply-box-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  transition: opacity 300ms ease-in-out,
+              transform 300ms ease-in-out,
+              max-height 300ms ease-in-out;
+}
