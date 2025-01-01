@@ -14,7 +14,7 @@ const RelativeDate = ({ timestamp }: RelativeDateProps) => {
     const secondsInYear = 31536000; // 365 days
 
     if (diffInSeconds < secondsInDay) {
-      const hours = Math.floor(diffInSeconds / secondsInHour);
+      const hours = Math.max(Math.floor(diffInSeconds / secondsInHour), 0);
       return `${hours}時間前`;
     }
     if (diffInSeconds < secondsInMonth) {
