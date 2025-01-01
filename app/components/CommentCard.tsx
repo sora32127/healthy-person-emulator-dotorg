@@ -84,13 +84,14 @@ export default function CommentCard({
     resolver: zodResolver(commentVoteSchema),
   });
 
-  const handleVote = async (voteType: "like" | "dislike") => {
+  const handleCommentVote = async (voteType: "like" | "dislike") => {
     setValue("voteType", voteType);
     setValue("commentId", commentId);
     
     if (voteType === "like") {
       setIsCommentLikeButtonPushed(true);
-    } else {
+    }
+    if (voteType === "dislike") {
       setIsCommentDislikeButtonPushed(true);
     }
     onCommentVote(getValues());
@@ -132,7 +133,7 @@ export default function CommentCard({
               isLiked ? "text-blue-500 font-bold" : ""
             } comment-like-button`}
             onClick={() => {
-              handleVote("like");
+              handleCommentVote("like");
             }}
             disabled={isCommentLikeButtonPushed || isLiked}
             type="button"
@@ -149,7 +150,7 @@ export default function CommentCard({
               isDisliked ? "text-red-500 font-bold" : ""}
               comment-dislike-button`}
             onClick={() => {
-              handleVote("dislike");
+              handleCommentVote("dislike");
             }}
             disabled={isCommentDislikeButtonPushed || isDisliked}
             type="button"
