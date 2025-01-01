@@ -63,7 +63,14 @@ export default function PostCard({
                     </div>
                 </div>
                 <NavLink to={`/archives/${postId}`} className="hover:underline hover:underline-offset-4">
-                    <img src={`https://healthy-person-emulator-public-assets.s3.ap-northeast-1.amazonaws.com/${postId}.jpg`} alt={postTitle} className="w-full object-cover" loading="lazy"/>
+                    <img
+                        src={`https://healthy-person-emulator-public-assets.s3.ap-northeast-1.amazonaws.com/${postId}.jpg`}
+                        alt={postTitle}
+                        className="w-full object-cover"
+                        loading="lazy"
+                        width={1200}
+                        height={630}
+                    />
                     <div className="mt-1 mb-2">
                         <p className="text-xl font-bold">{postTitle}</p>
                     </div>
