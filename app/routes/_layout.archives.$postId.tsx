@@ -106,6 +106,7 @@ export default function Component() {
     }
     formData.append("action", "submitComment");
     formData.append("postId", POSTID.toString());
+    formData.append("commentParentId", data.commentParentId?.toString() ?? "0");
     for (const [key, value] of Object.entries(data)) {
       formData.append(key, String(value));
     }
@@ -146,6 +147,7 @@ export default function Component() {
             commentAuthor={comment.commentAuthor}
             level={level}
             onCommentVote={handleCommentVote}
+            onCommentSubmit={handleCommentSubmit}
             likedComments={likedComments}
             dislikedComments={dislikedComments}
             likesCount={comment.likesCount}
@@ -470,7 +472,6 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
   const commentAuthor = formData.get("commentAuthor")?.toString();
   const commentContent = formData.get("commentContent")?.toString() || "";
   const commentParent = Number(formData.get("commentParentId")) || 0;
-
   try {
     await prisma.dimComments.create({
       data: {

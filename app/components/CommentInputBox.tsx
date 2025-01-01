@@ -14,7 +14,7 @@ export type CommentFormInputs = z.infer<typeof commentFormSchema>;
 interface CommentInputBoxProps {
   onSubmit: (data: CommentFormInputs) => void;
   isCommentOpen: boolean;
-  commentParentId: number;
+  commentParentId: number | undefined;
 }
 
 export default function CommentInputBox({
@@ -33,13 +33,13 @@ export default function CommentInputBox({
     defaultValues: {
       commentAuthor: "Anonymous",
       commentContent: "",
-      commentParentId: 0
+      commentParentId: commentParentId ?? 0
     }
   });
 
   const handleCommentSubmit = async (data: CommentFormInputs) => {
     setValue("commentParentId", commentParentId)
-    await onSubmit(data);
+    onSubmit(data);
     reset();
   };
 

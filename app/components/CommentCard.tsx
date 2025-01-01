@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CommentInputBox from "./CommentInputBox";
-import { useSubmit } from "@remix-run/react";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
@@ -27,6 +26,7 @@ interface CommentCardProps {
   commentContent: string;
   level: number;
   onCommentVote: (data: CommentVoteSchema) => void;
+  onCommentSubmit: (data: CommentFormInputs) => void;
   likedComments: number[];
   dislikedComments: number[];
   likesCount: number;
@@ -43,6 +43,7 @@ export default function CommentCard({
   commentContent,
   level,
   onCommentVote,
+  onCommentSubmit,
   likedComments,
   dislikedComments,
   likesCount,
@@ -60,25 +61,6 @@ export default function CommentCard({
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
-
-  const submit = useSubmit();
-
-  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
-
-    const formData = new FormData();
-    formData.append("postId", postId.toString());
-    formData.append("commentParentId", commentId.toString());
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, value.toString());
-    }
-    formData.append("action", "submitComment")
-
-    await submit(formData, {
-      method: "post",
-      action: `/archives/${postId}`,
-    });
-    setIsReplyBoxShown(false);
-  };
   
   const { setValue, getValues } = useForm<CommentVoteSchema>({
     resolver: zodResolver(commentVoteSchema),
@@ -97,6 +79,11 @@ export default function CommentCard({
     onCommentVote(getValues());
   };
 
+  const handleReplyCommentSubmit = async (data: CommentFormInputs) => {
+    onCommentSubmit(data);
+    setIsReplyBoxShown(false);
+  }
+
   const invokeShareAPI = async () => {
     const currentURL = `${window.location.href.split("#")[0]}#comment-${commentId}`;
     const shareTitle = `${commentAuthor}のコメント ${postTitle} - 健常者エミュレータ事例集`;
@@ -106,6 +93,7 @@ export default function CommentCard({
         console.error("シェアAPIが使えませんでした", error);
     }
 }
+  
 
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
