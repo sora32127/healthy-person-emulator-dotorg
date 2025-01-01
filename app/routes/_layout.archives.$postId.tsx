@@ -371,13 +371,13 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
     console.log("User validation failed");
-    return json({ error: "Invalid request" }, { status: 400 });
+    return json({ message: "ユーザー検証に失敗しました", success: false }, { status: 400 });
   }
   const session = await getSession(request.headers.get("Cookie"));
   session.set("isValidUser", true);
   console.log("User validation succeeded");
   return json(
-    { success: true },
+    { message: "ユーザー検証が完了しました", success: true },
     {
       headers: {
         "Set-Cookie": await commitSession(session),
@@ -393,44 +393,45 @@ async function handleVotePost(
   userIpHashString: string,
   request: Request
 ) {
-  
-  const voteType = formData.get("voteType")?.toString();
-
-  if (voteType !== "like" && voteType !== "dislike") {
-    return json({ error: "Invalid vote type" }, { status: 400 });
-  }
-  
-  await prisma.$transaction(async (prisma) => {
-    await prisma.fctPostVoteHistory.create({
-      data: {
-        voteUserIpHash: userIpHashString,
-        postId,
-        voteTypeInt: voteType === "like" ? 1 : -1,
-      },
-    });
-    const updateData = voteType === "like" 
-      ? { countLikes: { increment: 1 } }
-      : { countDislikes: { increment: 1 } };
-    await prisma.dimPosts.update({
-      where: { postId },
-      data: updateData,
-    });
-  });
-
-  const session = await getSession(request.headers.get("Cookie"));
-  if (voteType === "like") {
-    session.set("likedPages", [...(session.get("likedPages") || []), postId]);
-  } else if (voteType === "dislike") {
-    session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
-  }
-  return json(
-    { success: true },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+  try {
+    const voteType = formData.get("voteType")?.toString();
+    if (voteType !== "like" && voteType !== "dislike") {
+      return json({ message: "Invalid vote type", success: false }, { status: 400 });
     }
-  );
+    await prisma.$transaction(async (prisma) => {
+      await prisma.fctPostVoteHistory.create({
+        data: {
+          voteUserIpHash: userIpHashString,
+          postId,
+          voteTypeInt: voteType === "like" ? 1 : -1,
+        },
+      });
+      const updateData = voteType === "like" 
+        ? { countLikes: { increment: 1 } }
+        : { countDislikes: { increment: 1 } };
+      await prisma.dimPosts.update({
+        where: { postId },
+        data: updateData,
+      });
+    });
+    const session = await getSession(request.headers.get("Cookie"));
+    if (voteType === "like") {
+      session.set("likedPages", [...(session.get("likedPages") || []), postId]);
+    } else if (voteType === "dislike") {
+      session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
+    }
+    return json(
+      { message: "投稿を評価しました", success: true },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+  }
 }
 
 async function handleVoteComment(
@@ -439,41 +440,44 @@ async function handleVoteComment(
   userIpHashString: string,
   request: Request
 ) {
-  const voteType = formData.get("voteType")?.toString();
-
-  const commentId = Number(formData.get("commentId"));
-  await prisma.$transaction(async (prisma) => {
-    await prisma.fctCommentVoteHistory.create({
-      data: {
-        voteUserIpHash: userIpHashString,
-        commentId,
-        postId,
-        voteType: voteType === "like" ? 1 : -1,
-      },
+  try {
+    const voteType = formData.get("voteType")?.toString();
+    const commentId = Number(formData.get("commentId"));
+    await prisma.$transaction(async (prisma) => {
+      await prisma.fctCommentVoteHistory.create({
+        data: {
+          voteUserIpHash: userIpHashString,
+          commentId,
+          postId,
+          voteType: voteType === "like" ? 1 : -1,
+        },
+      });
     });
-  });
-
-  const session = await getSession(request.headers.get("Cookie"));
-  if (voteType === "like") {
-    session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
-  } else if (voteType === "dislike") {
-    session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
-  }
-  return json(
-    { success: true },
-    {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+    const session = await getSession(request.headers.get("Cookie"));
+    if (voteType === "like") {
+      session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
+    } else if (voteType === "dislike") {
+      session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
     }
-  );
+    return json(
+      { message: "コメントを評価しました", success: true },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+  }
 }
 
 async function handleSubmitComment(formData: FormData, postId: number, userIpHashString: string) {
-  const commentAuthor = formData.get("commentAuthor")?.toString();
-  const commentContent = formData.get("commentContent")?.toString() || "";
-  const commentParent = Number(formData.get("commentParentId")) || 0;
   try {
+    const commentAuthor = formData.get("commentAuthor")?.toString();
+    const commentContent = formData.get("commentContent")?.toString() || "";
+    const commentParent = Number(formData.get("commentParentId")) || 0;
     await prisma.dimComments.create({
       data: {
         postId: Number(postId),
@@ -483,11 +487,11 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
         commentAuthorIpHash: userIpHashString
       },
     });
-    return json({ success: true });
+    return json({ message: "コメントを投稿しました", success: true });
   }
   catch (e) {
     console.error(e);
-    return json({ error: "Internal Server Error" }, { status: 500 });
+    return json({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }
 
