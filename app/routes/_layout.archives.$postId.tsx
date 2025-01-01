@@ -22,7 +22,7 @@ import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/
 import { z } from "zod";
 import { UserWarningMessage } from "~/components/UserWarningMessage";
 import { TurnstileModal } from "~/components/TurnstileModal";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
 
@@ -92,8 +92,17 @@ export default function Component() {
     
     setIsPageLikeButtonPushed(false);
     setIsPageDislikeButtonPushed(false);
-
   };
+  
+  useEffect(() => {
+    const data = postVoteFetcher.data as { success: boolean; message: string } | null;
+    if (data?.success === true && data.message) {
+      toast.success(data.message);
+    }
+    if (data?.success === false && data.message) {
+      toast.error(data.message);
+    }
+  }, [postVoteFetcher.data]);
 
   const commentSubmitFetcher = useFetcher();
   const handleCommentSubmit = async (data: CommentFormInputs) => {
