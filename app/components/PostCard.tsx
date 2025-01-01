@@ -34,17 +34,6 @@ export default function PostCard({
     countComments,
     identifier,
 }: PostCardProps) {
-
-    tagNames.sort((a, b) => {
-        if (a > b) {
-            return 1;
-        }
-        if (a < b) {
-            return -1;
-        }
-        return 0;
-    });
-
     const displayedTags = tagNames.slice(0, 5);
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 

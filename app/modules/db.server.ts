@@ -311,10 +311,15 @@ export async function getRecentPosts(): Promise<PostCardData[]>{
                             tagId: true,
                         }
                     }
+                },
+                orderBy: {
+                    dimTag: {
+                        tagName: "asc",
                     }
                 }
             }
-    }).then((posts) => {
+        }
+        }).then((posts) => {
         return posts.map((post) => {
             return {
                 ...post,
@@ -381,6 +386,11 @@ export async function getRecentVotedPosts(): Promise<PostCardData[]>{
                             tagId: true,
                         }
                     }
+                },
+                orderBy: {
+                    dimTag: {
+                        tagName: "asc",
+                    }
                 }
             }
         }
@@ -416,6 +426,11 @@ export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData
                                     tagName: true,
                                     tagId: true,
                                 }
+                            }
+                        },
+                        orderBy: {
+                            dimTag: {
+                                tagName: "asc",
                             }
                         }
                     }
@@ -528,6 +543,11 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
                         },
                     },
                 },
+                orderBy: {
+                    dimTag: {
+                        tagName: "asc",
+                    }
+                }
             },
         },
         orderBy: { uuid : "asc"},
