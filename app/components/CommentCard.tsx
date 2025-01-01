@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import CommentInputBox from "./CommentInputBox";
 import ClockIcon from "./icons/ClockIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CommentFormInputs } from "./CommentInputBox";
 import { Share } from 'lucide-react';
+import { CSSTransition } from 'react-transition-group';
 
 
 const commentVoteSchema = z.object({
@@ -65,6 +66,8 @@ export default function CommentCard({
   const { setValue, getValues } = useForm<CommentVoteSchema>({
     resolver: zodResolver(commentVoteSchema),
   });
+
+  const nodeRef = useRef(null);
 
   const handleCommentVote = async (voteType: "like" | "dislike") => {
     setValue("voteType", voteType);
@@ -158,13 +161,21 @@ export default function CommentCard({
         {isReplyBoxShown ? "キャンセル" : "返信"}
     </button>
         <div className="ml-2">
-        {isReplyBoxShown && (
+        <CSSTransition
+          in={isReplyBoxShown}
+          nodeRef={nodeRef}
+          timeout={300}
+          classNames="reply-box"
+          unmountOnExit
+        >
+          <div ref={nodeRef}>
             <CommentInputBox
-                onSubmit={handleReplyCommentSubmit}
-                isCommentOpen={isCommentOpen}
-                commentParentId={commentId}
+              onSubmit={handleReplyCommentSubmit}
+              isCommentOpen={isCommentOpen}
+              commentParentId={commentId}
             />
-        )}
+          </div>
+        </CSSTransition>
         </div>
     </div>
   );
