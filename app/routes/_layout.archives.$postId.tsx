@@ -187,6 +187,8 @@ export default function Component() {
       ));
   };
 
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
+  const [isValificationFailed, setIsValificationFailed] = useState(false);
   const turnstileFetcher = useFetcher();
   const handleTurnstileSuccess = async (token: string) => {
     const formData = new FormData();
@@ -197,16 +199,13 @@ export default function Component() {
       action: `/archives/${POSTID}`,
     });
   }
-
-  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
-  const [isValificationFailed, setIsValificationFailed] = useState(false);
-
   useEffect(() => {
     if ((turnstileFetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
       setShowTurnstileModal(true);
       setIsValificationFailed(true);
     }
   }, [turnstileFetcher.data, isValificationFailed]);
+
 
   useEffect(() => {
     const hash = window.location.hash;
