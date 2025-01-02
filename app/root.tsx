@@ -21,12 +21,13 @@ import { FaSpinner } from "react-icons/fa";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap',
-  },
+  { 
+    rel: "preload",
+    href: "/fonts/NotoSansJP-Medium.ttf",
+    as: "font",
+    type: "font/ttf",
+    crossOrigin: "anonymous"
+  }
 ];
 
 export const loader: LoaderFunction = (args) => rootAuthLoader(args);
@@ -38,7 +39,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta property="og:site_name" content="健常者エミュレータ事例集"/>
-        <meta name="google-adsense-account" content="ca-pub-8395466399694773"/>
         <Meta />
         <Links />
       </head>

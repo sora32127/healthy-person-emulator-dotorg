@@ -1,8 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@font-face {
+  font-family: 'Noto Sans JP';
+  src: url('/fonts/NotoSansJP-Medium.ttf') format('truetype');
+  font-weight: 400;
+  font-display: optional;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
 
 h1 {
   @apply text-4xl font-bold;
