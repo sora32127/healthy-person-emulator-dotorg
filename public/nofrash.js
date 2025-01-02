@@ -24,4 +24,15 @@
         setClassOnDocumentBody(classNameLight)
       }
     }
+    // メディアクエリのデフォルトを設定
+    if (!localStorageExists) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      if (mediaQuery.matches) {
+        setClassOnDocumentBody(classNameDark)
+        localStorage.setItem(storageKey, JSON.stringify(classNameDark))
+      } else {
+        setClassOnDocumentBody(classNameLight)
+        localStorage.setItem(storageKey, JSON.stringify(classNameLight))
+      }
+    }
   })()
