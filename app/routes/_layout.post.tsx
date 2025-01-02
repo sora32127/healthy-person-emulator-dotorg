@@ -14,6 +14,7 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useLocation,
   useNavigate,
 } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
@@ -253,17 +254,21 @@ export default function App() {
   }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
 
   const navigate = useNavigate();
-
   useEffect(() => {
-    if (secondSubmitFetcher.data?.success === true) {
-      handleClearForm();
+    if (secondSubmitFetcher.data?.success === true && secondSubmitFetcher.state === "idle") {
       toast.success("投稿しました。リダイレクトします...", {
         icon: "🎉",
+        id: "post-success-toast",
       })
-      const postId = secondSubmitFetcher.data?.data?.postId;
-      navigate(`/archives/${postId}`);
+      setTimeout(() => {
+        const postId = secondSubmitFetcher.data?.data?.postId;
+        navigate(`/archives/${postId}`, {viewTransition: true});
+      }, 1000);
     }
-  }, [secondSubmitFetcher.data, navigate]);
+    return () => {
+      toast.dismiss("post-success-toast");
+    }
+  }, [secondSubmitFetcher.data, navigate, secondSubmitFetcher.state]);
 
   const handleClearForm = () => {
     window.localStorage.removeItem(formId);
