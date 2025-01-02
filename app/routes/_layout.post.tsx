@@ -256,6 +256,7 @@ export default function App() {
 
   useEffect(() => {
     if (secondSubmitFetcher.data?.success === true) {
+      handleClearForm();
       toast.success("投稿しました。リダイレクトします...", {
         icon: "🎉",
       })
