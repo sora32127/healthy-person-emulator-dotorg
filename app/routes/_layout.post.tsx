@@ -249,9 +249,6 @@ export default function App() {
     }
     if (secondSubmitFetcher.state === "loading" && secondSubmitFetcher.data?.success === true) {
       toast.dismiss();
-      toast.success("投稿しました。リダイレクトします...", {
-        icon: "🎉",
-      })
     }
   }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
 
@@ -259,6 +256,9 @@ export default function App() {
 
   useEffect(() => {
     if (secondSubmitFetcher.data?.success === true) {
+      toast.success("投稿しました。リダイレクトします...", {
+        icon: "🎉",
+      })
       const postId = secondSubmitFetcher.data?.data?.postId;
       navigate(`/archives/${postId}`);
     }
