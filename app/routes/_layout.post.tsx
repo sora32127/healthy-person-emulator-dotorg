@@ -739,7 +739,7 @@ function StaticTextInput({
     const inputs = [];
     for (let i = 0; i < rowNumber; i++) {
       inputs.push(
-        <div className="w-full">
+        <div className="w-full" key={`${title}-input-${i}`}>
           <textarea
             key={`${title}-input-${i}`}
             className="flex-grow px-3 py-2 border rounded-lg focus:outline-none w-full my-2 placeholder-slate-500"
