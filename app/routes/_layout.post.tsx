@@ -162,6 +162,15 @@ export default function App() {
     turnstileFetcher.submit(formData, { method: "post", action: "/post" });
   };
 
+  useEffect(() => {
+    if (turnstileFetcher.data?.success === false) {
+      toast.error("リクエスト検証に失敗しました。時間をおいて再度お試しください。");
+    }
+    if (turnstileFetcher.data?.success === true) {
+      setIsFirstSubmitButtonOpen(true);
+    }
+  }, [turnstileFetcher.data]);
+
   function MakeToastMessage(errors: z.ZodIssue[]): string {
     let errorMessage = "";
     if (errors.length > 0) {
@@ -193,7 +202,7 @@ export default function App() {
   };
 
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(true);
+  const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(false);
 
   useEffect(() => {
     if ((firstSubmitFetcher.data as { success: boolean })?.success) {
@@ -819,10 +828,8 @@ export async function action({ request }: ActionFunctionArgs) {
   } as unknown as Inputs;
   const isValidUser = await isUserValid(request); 
   if (!isValidUser) {
-    return json({ success: false, error: "Needed for user validation" }, { status: 400 });
+    return json({ success: false, error: "リクエスト検証に失敗しました。時間をおいて再度お試しください。" }, { status: 400 });
   }
-
-
 
   if (actionType === "firstSubmit") {
     try {
