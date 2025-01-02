@@ -2,17 +2,17 @@
 
 ;(() => {
     const storageKey = 'theme'
-    const classNameDark = '"dark"'
-    const classNameLight = '"light"'
+    const classNameDark = 'dark'
+    const classNameLight = 'light'
   
     function setClassOnDocumentBody(className) {
       const html = document.getElementsByTagName('html')[0]
-      html.setAttribute('data-theme', className.slice(1, -1))
+      html.setAttribute('data-theme', className)
     }
   
     let localStorageTheme = null
     try {
-      localStorageTheme = localStorage.getItem(storageKey)
+      localStorageTheme = JSON.parse(localStorage.getItem(storageKey))
     } catch (err) {}
     const localStorageExists = localStorageTheme !== null
   
