@@ -264,6 +264,13 @@ export default function App() {
     }
   }, [secondSubmitFetcher.data, navigate]);
 
+  const handleClearForm = () => {
+    methods.reset();
+    window.localStorage.removeItem(formId);
+    window.localStorage.removeItem("selectedTags");
+    window.localStorage.removeItem("createdTags");
+  }
+
   return (
     <>
       <div className="templateSubmitForm">
@@ -273,7 +280,7 @@ export default function App() {
             <UserExplanation />
             <br />
             <div className="flex justify-start mt-6">
-              <ClearFormButton clearInputs={() => clearForm(methods.reset)} />
+              <ClearFormButton clearInputs={handleClearForm} />
             </div>
             <br />
             <TextTypeSwitcher />
