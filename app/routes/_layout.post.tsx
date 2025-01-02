@@ -140,8 +140,6 @@ export default function App() {
     resolver: zodResolver(postFormSchema),
   });
 
-
-
   useEffect(() => {
     const interval = setInterval(() => {
       if (typeof window !== "undefined") {
@@ -155,7 +153,6 @@ export default function App() {
   }, [methods.getValues]);
 
   const postCategory = methods.watch("postCategory");
-  const actionData = useActionData<typeof action>();
 
   const turnstileFetcher = useFetcher();
   const handleTurnStileSuccess = (token: string) => {
