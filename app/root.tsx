@@ -34,7 +34,7 @@ export const loader: LoaderFunction = (args) => rootAuthLoader(args);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" className="font-noto-sans">
+    <html lang="ja" className="font-noto-sans" data-theme="light">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -43,7 +43,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <script src="/nofrash.js"/>
         <PageTransitionProgressBar />
         {children}
         <ScrollRestoration />
