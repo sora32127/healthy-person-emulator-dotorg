@@ -208,13 +208,55 @@ export default function App() {
   }, [firstSubmitFetcher.data]);
 
   useEffect(() => {
+    if (firstSubmitFetcher.state === "submitting") {
+      toast.loading("プレビューを取得しています");
+    }
     if (firstSubmitFetcher.state === "submitting" || firstSubmitFetcher.state === "loading") {
       setIsFirstSubmitButtonOpen(false);
     }
     if (firstSubmitFetcher.state === "idle") {
       setIsFirstSubmitButtonOpen(true);
+      toast.dismiss();// ローディング中のトーストを消す
     }
   }, [firstSubmitFetcher.state]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(firstSubmitFetcher?.data?.data?.MarkdownResult);
+  }
+
+  const secondSubmitFetcher = useFetcher();
+  const handleSecondSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("_action", "secondSubmit");
+    for (const [key, value] of Object.entries(methods.getValues())) {
+      formData.append(key, JSON.stringify(value));
+    }
+    secondSubmitFetcher.submit(formData, { method: "post", action: "/post" });
+  }
+  const [isSecondSubmitButtonOpen, setIsSecondSubmitButtonOpen] = useState(true);
+  
+  useEffect(() => {
+    if (secondSubmitFetcher.state === "submitting") {
+      setIsSecondSubmitButtonOpen(false);
+      toast.loading("投稿中です...")
+    }
+    if (secondSubmitFetcher.state === "loading" && secondSubmitFetcher.data?.success === true) {
+      toast.dismiss();
+      toast.success("投稿しました。リダイレクトします...", {
+        icon: "🎉",
+      })
+    }
+  }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (secondSubmitFetcher.data?.success === true) {
+      const postId = secondSubmitFetcher.data?.data?.postId;
+      navigate(`/archives/${postId}`);
+    }
+  }, [secondSubmitFetcher.data, navigate]);
 
   return (
     <>
@@ -354,11 +396,41 @@ export default function App() {
               投稿する
             </button>
             </div>
-            <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="投稿確認">
-              <p>投稿する内容を確認してください。</p>
+            <Modal
+              isOpen={isPreviewModalOpen}
+              onClose={() => setIsPreviewModalOpen(false)}
+              title="投稿する内容を確認してください。"
+              showCloseButton={false}
+            >
               <div className="postContent">
                 <H1>{methods.getValues().title}</H1>
                 <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.WikifiedResult }} />
+              </div>
+              <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewModalOpen(false)}
+                  className="btn btn-secondary"
+                >
+                  修正する
+                </button>
+                <div className="flex flex-row items-center gap-1 p-2">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="btn btn-circle"
+                  >
+                    <FaCopy />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSecondSubmit}
+                  className="btn btn-primary disabled:btn-disabled"
+                  disabled={!isSecondSubmitButtonOpen}
+                >
+                  投稿する
+                </button>
               </div>
             </Modal>
           </div>
