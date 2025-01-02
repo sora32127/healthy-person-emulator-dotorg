@@ -20,7 +20,14 @@ import { useCallback, useEffect } from "react";
 import { FaSpinner } from "react-icons/fa";
 
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet }
+  { rel: "stylesheet", href: stylesheet },
+  { 
+    rel: "preload",
+    href: "/fonts/NotoSansJP-Medium.ttf",
+    as: "font",
+    type: "font/ttf",
+    crossOrigin: "anonymous"
+  }
 ];
 
 export const loader: LoaderFunction = (args) => rootAuthLoader(args);

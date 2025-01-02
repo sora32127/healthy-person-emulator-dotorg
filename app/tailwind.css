@@ -1,13 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @font-face {
   font-family: 'Noto Sans JP';
   src: url('/fonts/NotoSansJP-Medium.ttf') format('truetype');
   font-weight: 400;
   font-display: swap;
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 
 h1 {
   @apply text-4xl font-bold;
