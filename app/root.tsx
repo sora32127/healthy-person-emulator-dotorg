@@ -43,7 +43,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <script src="/nofrash.js"/>
         <PageTransitionProgressBar />
         {children}
         <ScrollRestoration />
