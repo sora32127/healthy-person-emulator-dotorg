@@ -1,6 +1,5 @@
 import {
   useForm,
-  type SubmitHandler,
   FormProvider,
   useFormContext,
   useWatch,
@@ -31,7 +30,6 @@ import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
 import { Modal } from "~/components/Modal";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { useSubmit } from "@remix-run/react";
 import { createEmbedding } from "~/modules/embedding.server";
 import { FaCopy } from "react-icons/fa";
 import { NodeHtmlMarkdown } from "node-html-markdown";
@@ -142,14 +140,14 @@ export default function App() {
     resolver: zodResolver(postFormSchema),
   });
 
-  const submit = useSubmit();
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const firstSubmitFetcher = useFetcher();
+  const handleFirstSubmit = (data: Inputs) => {
     const formData = new FormData();
     formData.append("_action", "firstSubmit");
     for (const [key, value] of Object.entries(data)) {
       formData.append(key, JSON.stringify(value));
     }
-    submit(formData, {
+    firstSubmitFetcher.submit(formData, {
       method: "post",
       action: "/post",
     });
@@ -170,19 +168,19 @@ export default function App() {
   const postCategory = methods.watch("postCategory");
   const actionData = useActionData<typeof action>();
 
-  const fetcher = useFetcher();
+  const turnstileFetcher = useFetcher();
   const handleTurnStileSuccess = (token: string) => {
     const formData = new FormData();
     formData.append("token", token);
     formData.append("_action", "validateTurnstile");
-    fetcher.submit(formData, { method: "post", action: "/post" });
+    turnstileFetcher.submit(formData, { method: "post", action: "/post" });
   };
 
   return (
     <>
       <div className="templateSubmitForm">
         <FormProvider {...methods}>
-          <Form method="post" onSubmit={methods.handleSubmit(onSubmit)}>
+          <Form method="post" onSubmit={methods.handleSubmit(handleFirstSubmit)}>
             <UserExplanation />
             <br />
             <div className="flex justify-start mt-6">
