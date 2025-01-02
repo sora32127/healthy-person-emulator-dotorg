@@ -36,6 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className="font-noto-sans">
       <head>
+        <script src="/nofrash.js" async defer />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta property="og:site_name" content="健常者エミュレータ事例集"/>
