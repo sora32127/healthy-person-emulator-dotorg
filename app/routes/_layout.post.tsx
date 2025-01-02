@@ -266,10 +266,31 @@ export default function App() {
   }, [secondSubmitFetcher.data, navigate]);
 
   const handleClearForm = () => {
-    methods.reset();
     window.localStorage.removeItem(formId);
     window.localStorage.removeItem("selectedTags");
     window.localStorage.removeItem("createdTags");
+    methods.reset({
+      title: [],
+      postCategory: "misDeed",
+      situations: {
+        who: "",
+        what: "",
+        when: "",
+        where: "",
+        why: "",
+        how: "",
+        then: "",
+      },
+      reflection: [],
+      counterReflection: [],
+      note: [],
+      selectedTags: [],
+      createdTags: [],
+    });
+    
+    setSelectedTags([]);
+    setCreatedTags([]);
+    window.location.reload();
   }
 
   return (
