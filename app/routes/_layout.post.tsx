@@ -140,18 +140,7 @@ export default function App() {
     resolver: zodResolver(postFormSchema),
   });
 
-  const firstSubmitFetcher = useFetcher();
-  const handleFirstSubmit = (data: Inputs) => {
-    const formData = new FormData();
-    formData.append("_action", "firstSubmit");
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, JSON.stringify(value));
-    }
-    firstSubmitFetcher.submit(formData, {
-      method: "post",
-      action: "/post",
-    });
-  };
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -176,11 +165,63 @@ export default function App() {
     turnstileFetcher.submit(formData, { method: "post", action: "/post" });
   };
 
+  function MakeToastMessage(errors: z.ZodIssue[]): string {
+    let errorMessage = "";
+    if (errors.length > 0) {
+      errorMessage = errors.map((error) => `- ${error.message}`).join("\n");
+    }
+    return errorMessage;
+  }
+
+  const firstSubmitFetcher = useFetcher();
+  const handleFirstSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const inputValues = methods.getValues();
+    const zodErrors = postFormSchema.safeParse(inputValues);
+    if (!zodErrors.success) {
+      const toastValidationMessage = MakeToastMessage(zodErrors.error.issues);
+      toast.error(toastValidationMessage);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("_action", "firstSubmit");
+    for (const [key, value] of Object.entries(inputValues)) {
+      formData.append(key, JSON.stringify(value));
+    }
+    firstSubmitFetcher.submit(formData, {
+      method: "post",
+      action: "/post",
+    });
+  };
+
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(true);
+
+  useEffect(() => {
+    if ((firstSubmitFetcher.data as { success: boolean })?.success) {
+      setIsPreviewModalOpen(true);
+    }
+    if ((firstSubmitFetcher.data as { success: boolean })?.success === false) {
+      toast.error("プレビューを取得できませんでした。時間をおいて再度試してください。");
+    }
+  }, [firstSubmitFetcher.data]);
+
+  useEffect(() => {
+    if (firstSubmitFetcher.state === "submitting" || firstSubmitFetcher.state === "loading") {
+      setIsFirstSubmitButtonOpen(false);
+    }
+    if (firstSubmitFetcher.state === "idle") {
+      setIsFirstSubmitButtonOpen(true);
+    }
+  }, [firstSubmitFetcher.state]);
+
   return (
     <>
       <div className="templateSubmitForm">
         <FormProvider {...methods}>
-          <Form method="post" onSubmit={methods.handleSubmit(handleFirstSubmit)}>
+          <Toaster />
+          <Form method="post">
             <UserExplanation />
             <br />
             <div className="flex justify-start mt-6">
@@ -298,13 +339,30 @@ export default function App() {
               placeholders={["タイトル"]}
               registerKey="title"
             />
-            <PreviewButton
-              actionData={actionData}
-              postFormSchema={postFormSchema}
-              turnStileSiteKey={turnStileSiteKey}
-              handleTurnStileSuccess={handleTurnStileSuccess}
+        <div className="flex justify-end">
+          <div className="flex flex-col items-center gap-1 p-2">
+            <Turnstile
+              siteKey={turnStileSiteKey}
+              onSuccess={handleTurnStileSuccess}
             />
-          </Form>
+            <button
+              type="submit"
+              className="btn btn-primary disabled:btn-disabled"
+              onClick={handleFirstSubmit}
+              disabled={!isFirstSubmitButtonOpen}
+            >
+              投稿する
+            </button>
+            </div>
+            <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="投稿確認">
+              <p>投稿する内容を確認してください。</p>
+              <div className="postContent">
+                <H1>{methods.getValues().title}</H1>
+                <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.WikifiedResult }} />
+              </div>
+            </Modal>
+          </div>
+        </Form>
         </FormProvider>
       </div>
     </>
@@ -642,187 +700,6 @@ function ErrorMessageContainer({ errormessage }: { errormessage: string }) {
 function clearForm(formClear: () => void) {
   formClear();
   window.localStorage.clear();
-}
-
-// useActionDataを丸ごと使う
-function PreviewButton({
-  actionData,
-  postFormSchema,
-  turnStileSiteKey,
-  handleTurnStileSuccess,
-}: {
-  actionData: typeof action;
-  postFormSchema: ReturnType<typeof createPostFormSchema>;
-  turnStileSiteKey: string;
-  handleTurnStileSuccess: (token: string) => void;
-}) {
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const {
-    getValues,
-    trigger,
-    reset,
-    setValue,
-    formState: { isSubmitSuccessful, isSubmitting },
-  } = useFormContext();
-  const [isFirstSubmitButtonDisabled, setIsFirstSubmitButtonDisabled] =
-    useState(false);
-  const [isSecondSubmitButtonDisabled, setIsSecondSubmitButtonDisabled] =
-    useState(false);
-
-  const submit = useSubmit();
-  type Inputs = z.infer<typeof postFormSchema>;
-
-  function MakeToastMessage(errors: z.ZodIssue[]): string {
-    let errorMessage = "";
-    if (errors.length > 0) {
-      errorMessage = errors.map((error) => `- ${error.message}`).join("\n");
-    }
-    return errorMessage;
-  }
-
-  const toastNotify = (errorMessage: string) => toast.error(errorMessage);
-
-  useEffect(() => {
-    if (isSubmitSuccessful) {
-      setIsFirstSubmitButtonDisabled(false);
-    }
-    if (isSubmitting) {
-      setIsFirstSubmitButtonDisabled(true);
-    }
-  }, [isSubmitSuccessful, isSubmitting]);
-
-  const handleFirstSubmit = async (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-    setIsFirstSubmitButtonDisabled(true);
-    setTimeout(() => {
-      setIsFirstSubmitButtonDisabled(false);
-    }, 3000);
-    await trigger();
-    const inputData = getValues();
-    const zodErrors = postFormSchema.safeParse(inputData);
-    if (!zodErrors.success) {
-      const errorMessage = MakeToastMessage(zodErrors.error.issues);
-      toastNotify(errorMessage);
-      return;
-    }
-
-    const data = getValues() as Inputs;
-    const formData = new FormData();
-    formData.append("_action", "firstSubmit");
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, JSON.stringify(value));
-    }
-    submit(formData, { method: "post", action: "/post" });
-    setShowPreviewModal(true);
-  };
-
-  const navigate = useNavigate();
-
-  const handleSecondSubmit = async () => {
-    setIsSecondSubmitButtonDisabled(true);
-    setTimeout(() => {
-      setIsSecondSubmitButtonDisabled(false);
-    }, 3000);
-    const data = getValues() as Inputs;
-    const formData = new FormData();
-    formData.append("_action", "secondSubmit");
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, JSON.stringify(value));
-    }
-    submit(formData, { method: "post", action: "/post" });
-  };
-
-  useEffect(() => {
-    if (actionData?.success && actionData?.data?.postId) {
-      toast.success("投稿が完了しました。リダイレクトします...");
-      setTimeout(() => {
-        navigate(`/archives/${actionData.data.postId}`);
-        clearForm(reset);
-      }, 2000);
-    }
-  }, [actionData, navigate, reset]);
-
-  const handleCopy = async () => {
-    if (actionData?.data?.MarkdownResult) {
-      navigator.clipboard.writeText(actionData.data.MarkdownResult);
-      toast.success("クリップボードにコピーしました");
-    }
-  };
-
-  const postTitle = getValues("title")[0];
-  return (
-    <div className="flex justify-end">
-      <div className="flex flex-col items-center gap-1 p-2">
-        <Turnstile
-          siteKey={turnStileSiteKey}
-          onSuccess={handleTurnStileSuccess}
-        />
-        <button
-          type="submit"
-          onClick={handleFirstSubmit}
-          className={`btn
-            ${isFirstSubmitButtonDisabled ? "animate-pulse bg-base-300" : ""}
-            ${!isFirstSubmitButtonDisabled ? "btn-primary" : ""}
-          `}
-          disabled={isFirstSubmitButtonDisabled}
-        >
-          投稿する
-        </button>
-      </div>
-      <Toaster />
-      <Modal
-        isOpen={showPreviewModal}
-        onClose={() => setShowPreviewModal(false)}
-        title="投稿内容を確認してください"
-        showCloseButton={false}
-      >
-        <div className="postContent">
-          <H1>{postTitle}</H1>
-          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
-          <div
-            dangerouslySetInnerHTML={{
-              __html: actionData?.data?.WikifiedResult ?? "",
-            }}
-          />
-        </div>
-        <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
-          <button
-            type="button"
-            onClick={() => setShowPreviewModal(false)}
-            className="btn btn-secondary"
-          >
-            修正する
-          </button>
-          <div className="flex flex-row items-center gap-1 p-2">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="btn btn-circle"
-            >
-              <FaCopy />
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={handleSecondSubmit}
-            className={`btn
-                ${
-                  isSecondSubmitButtonDisabled
-                    ? "animate-pulse bg-base-300"
-                    : ""
-                }
-                ${!isSecondSubmitButtonDisabled ? "btn-primary" : ""}
-              `}
-            disabled={isSecondSubmitButtonDisabled}
-          >
-            {isSubmitting ? "投稿中..." : "投稿する"}
-          </button>
-        </div>
-      </Modal>
-    </div>
-  );
 }
 
 export async function action({ request }: ActionFunctionArgs) {
