@@ -1,32 +1,30 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Sun, Moon, Loader } from "lucide-react";
+import { useAtomValue, useSetAtom } from "jotai";
+import { getThemeAtom, toggleThemeAtom } from "../stores/theme";
 
 export default function ThemeSwitcher() {
-  const [nowTheme, setNowTheme] = useState<string>();
+  const nowTheme = useAtomValue(getThemeAtom);
+  const toggleTheme = useSetAtom(toggleThemeAtom);
   const [isChanging, setIsChanging] = useState(false);
 
-  useEffect(() => {
-    if (window.localStorage.getItem("theme") === null) {
-      const initialTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      window.localStorage.setItem("theme", initialTheme);
-    }
-    const theme = window.localStorage.getItem("theme") || "dark";
-    setNowTheme(theme);
-    document.querySelector("html")?.setAttribute("data-theme", theme);
-  }, []);
-
-  const toggleTheme = () => {
+  const handleToggleTheme = () => {
     setIsChanging(true);
-    const newTheme = nowTheme === "dark" ? "light" : "dark";
-    window.localStorage.setItem("theme", newTheme);
-    setNowTheme(newTheme);
-    document.querySelector("html")?.setAttribute("data-theme", newTheme);
-    setTimeout(() => setIsChanging(false), 500);
+    document.documentElement.classList.add('theme-transition');
+    toggleTheme();
+    setTimeout(() => {
+      setIsChanging(false);
+      document.documentElement.classList.remove('theme-transition');
+    }, 500);
   };
+
+  useEffect(() => {
+    document.documentElement.classList.remove('theme-transition');
+  }, []);
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleToggleTheme}
       type="button"
       className="btn btn-ghost h-9 w-9 p-0"
     >
