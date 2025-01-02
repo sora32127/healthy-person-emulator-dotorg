@@ -249,9 +249,6 @@ export default function App() {
     }
     if (secondSubmitFetcher.state === "loading" && secondSubmitFetcher.data?.success === true) {
       toast.dismiss();
-      toast.success("投稿しました。リダイレクトします...", {
-        icon: "🎉",
-      })
     }
   }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
 
@@ -259,10 +256,21 @@ export default function App() {
 
   useEffect(() => {
     if (secondSubmitFetcher.data?.success === true) {
+      handleClearForm();
+      toast.success("投稿しました。リダイレクトします...", {
+        icon: "🎉",
+      })
       const postId = secondSubmitFetcher.data?.data?.postId;
       navigate(`/archives/${postId}`);
     }
   }, [secondSubmitFetcher.data, navigate]);
+
+  const handleClearForm = () => {
+    methods.reset();
+    window.localStorage.removeItem(formId);
+    window.localStorage.removeItem("selectedTags");
+    window.localStorage.removeItem("createdTags");
+  }
 
   return (
     <>
@@ -273,7 +281,7 @@ export default function App() {
             <UserExplanation />
             <br />
             <div className="flex justify-start mt-6">
-              <ClearFormButton clearInputs={() => clearForm(methods.reset)} />
+              <ClearFormButton clearInputs={handleClearForm} />
             </div>
             <br />
             <TextTypeSwitcher />
