@@ -112,3 +112,11 @@ svg {
               transform 300ms ease-in-out,
               max-height 300ms ease-in-out;
 }
+
+.theme-transition {
+  transition: background-color 0.5s ease;
+}
+
+.theme-transition * {
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
