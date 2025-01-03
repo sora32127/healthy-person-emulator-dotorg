@@ -207,7 +207,6 @@ export default function App() {
 
   useEffect(() => {
     const response = firstSubmitFetcher.data as { success: boolean };
-    console.log(response);
     if (response?.success) {
       setIsPreviewModalOpen(true);
     }
