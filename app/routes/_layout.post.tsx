@@ -219,10 +219,10 @@ export default function App() {
     if (firstSubmitFetcher.state === "submitting") {
       toast.loading("プレビューを取得しています");
     }
-    if (firstSubmitFetcher.state === "submitting" || firstSubmitFetcher.state === "loading") {
+    if (firstSubmitFetcher.state === "submitting") {
       setIsFirstSubmitButtonOpen(false);
     }
-    if (firstSubmitFetcher.state === "idle") {
+    if (firstSubmitFetcher.state === "loading") {
       setIsFirstSubmitButtonOpen(true);
       toast.dismiss();// ローディング中のトーストを消す
     }
