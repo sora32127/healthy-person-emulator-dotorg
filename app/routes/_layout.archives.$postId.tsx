@@ -25,6 +25,7 @@ import { TurnstileModal } from "~/components/TurnstileModal";
 import toast, { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
+import { CommonNavLink } from "~/components/CommonNavLink";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -286,21 +287,21 @@ export default function Component() {
           <NavLink
             to={`/archives/edit/${POSTID}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
+            viewTransition
           >
             編集する
           </NavLink>
         </div>
         <H2>関連記事</H2>
-        <div>
+        <div className="w-full px-1">
           <ul className="list-disc list-outside mb-4 ml-4">
             {data.similarPosts.map((post) => (
               <li key={post.postId} className="my-2">
-                <NavLink
+                <CommonNavLink
                   to={`/archives/${post.postId}`}
-                  className="text-info underline underline-offset-4"
                 >
                   {post.postTitle}
-                </NavLink>
+                </CommonNavLink>
               </li>
             ))}
           </ul>
@@ -309,22 +310,20 @@ export default function Component() {
           {data.nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
               <ArrowForwardIcon />
-              <NavLink
+              <CommonNavLink
                 to={`/archives/${data.nextPost.postId}`}
-                className="text-info underline underline-offset-4"
               >
                 {data.nextPost.postTitle}
-              </NavLink>
+              </CommonNavLink>
             </div>
           ): (<div/>)}
           {data.previousPost ? (
             <div className="flex items-center">
-              <NavLink
+              <CommonNavLink
                 to={`/archives/${data.previousPost.postId}`}
-                className="text-info underline underline-offset-4 mr-2"
               >
                 {data.previousPost.postTitle}
-              </NavLink>
+              </CommonNavLink>
               <ArrowBackIcon  />
             </div>
           ): <div/>}
