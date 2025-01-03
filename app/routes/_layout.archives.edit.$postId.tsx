@@ -1,5 +1,5 @@
-import { json, redirect } from "@remix-run/node";
-import { Form, NavLink, useFetcher, useLoaderData, useNavigate, useNavigation, useSubmit } from "@remix-run/react";
+import { redirect } from "@remix-run/node";
+import { NavLink, useFetcher, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { useEffect, useState } from "react";
 import { getAuth } from "@clerk/remix/ssr.server";
@@ -18,7 +18,7 @@ import { setVisitorCookieData } from "~/modules/visitor.server";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -75,7 +75,7 @@ export const loader:LoaderFunction = async(args) => {
   if (isEditing && nowEditingInfo){
     // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
     // 「戻る」を押してredirect(`/archives/${postId}`)する
-    return json({
+    return ({
       postData: null,
       postMarkdown: null,
       tagNames: null,
@@ -162,7 +162,7 @@ export const loader:LoaderFunction = async(args) => {
   });
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-  return json({
+  return {
     postData,
     tagNames,
     postMarkdown,
@@ -172,7 +172,7 @@ export const loader:LoaderFunction = async(args) => {
     isEditing:false,
     postId,
     editHistory,
-  });
+  };
 }
 
 export default function EditPost() {
@@ -403,7 +403,7 @@ export const action: ActionFunction = async (args) => {
   const ipAddress = await getHashedUserIPAddress(args.request);
   const isValidRequest = await validateRequest(editData.turnstileToken as string, ipAddress);
   if (!isValidRequest){
-    return json({ message: "認証に失敗しました。時間をおいて再度試してください。", success: false });
+    return ({ message: "認証に失敗しました。時間をおいて再度試してください。", success: false });
   }
 
 
@@ -419,7 +419,7 @@ export const action: ActionFunction = async (args) => {
 
   const parseResult = postEditSchema.safeParse(parsedData);
   if (!parseResult.success){
-    return json({ message: "バリデーションエラーが発生しました。", success: false });
+    return ({ message: "バリデーションエラーが発生しました。", success: false });
   }
 
   const postId = Number(args.params.postId);
@@ -429,7 +429,7 @@ export const action: ActionFunction = async (args) => {
   });
 
   if (!latestPost) {
-    return json({ message: "投稿履歴が見つかりません", success: false });
+    return ({ message: "投稿履歴が見つかりません", success: false });
   }
 
   let newRevisionNumber: number;
@@ -505,7 +505,7 @@ export const action: ActionFunction = async (args) => {
   });
 
   await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent, postTitle: updatedPost.postTitle});
-  return json({ success: true, message: "投稿を編集しました。" });
+  return ({ success: true, message: "投稿を編集しました。" });
 }
 
 export const meta : MetaFunction = () => {

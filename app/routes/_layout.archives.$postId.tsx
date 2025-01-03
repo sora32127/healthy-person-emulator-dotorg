@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { useLoaderData, NavLink,useFetcher } from "@remix-run/react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
@@ -26,6 +25,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
 import { CommonNavLink } from "~/components/CommonNavLink";
+import { data } from "@remix-run/node";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -46,7 +46,7 @@ export async function loader({ request }:LoaderFunctionArgs){
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return json({ data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY });
+    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY };
 }
 
 export default function Component() {
@@ -369,14 +369,11 @@ export async function action({ request }: ActionFunctionArgs) {
   console.log("action is : ", action);
   if (!isValidUser && action !== "setTurnstileToken") {
     console.log("Invalid User has been detected, action is : ", action);
-    return json(
-      { 
-        error: "INVALID_USER",
-        message: "ユーザー認証が必要です",
-        requiresUserValidation: true 
-      },
-      { status: 401 }
-    );
+    return data({
+      error: "INVALID_USER",
+      message: "ユーザー認証が必要です",
+      requiresUserValidation: true 
+    }, { status: 401 });
   }
   switch (action) {
     case "setTurnstileToken":
@@ -388,7 +385,7 @@ export async function action({ request }: ActionFunctionArgs) {
     case "submitComment":
       return handleSubmitComment(formData, postId, userIpHashString);
     default:
-      return json({ error: "Invalid action" }, { status: 400 });
+      return data({ error: "Invalid action" }, { status: 400 });
   }
 }
 
@@ -397,12 +394,12 @@ async function handleSetTurnstileToken(formData: FormData, request: Request, ipA
   const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
     console.log("User validation failed");
-    return json({ message: "ユーザー検証に失敗しました", success: false }, { status: 400 });
+    return data({ message: "ユーザー検証に失敗しました", success: false }, { status: 400 });
   }
   const session = await getSession(request.headers.get("Cookie"));
   session.set("isValidUser", true);
   console.log("User validation succeeded");
-  return json(
+  return data(
     { message: "ユーザー検証が完了しました", success: true },
     {
       headers: {
@@ -422,7 +419,7 @@ async function handleVotePost(
   try {
     const voteType = formData.get("voteType")?.toString();
     if (voteType !== "like" && voteType !== "dislike") {
-      return json({ message: "Invalid vote type", success: false }, { status: 400 });
+      return data({ message: "Invalid vote type", success: false }, { status: 400 });
     }
     await prisma.$transaction(async (prisma) => {
       await prisma.fctPostVoteHistory.create({
@@ -446,7 +443,7 @@ async function handleVotePost(
     } else if (voteType === "dislike") {
       session.set("dislikedPages", [...(session.get("dislikedPages") || []), postId]);
     }
-    return json(
+    return data(
       { message: "投稿を評価しました", success: true },
       {
         headers: {
@@ -456,7 +453,7 @@ async function handleVotePost(
     );
   } catch (error) {
     console.error(error);
-    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+    return data({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }
 
@@ -485,7 +482,7 @@ async function handleVoteComment(
     } else if (voteType === "dislike") {
       session.set("dislikedComments", [...(session.get("dislikedComments") || []), commentId]);
     }
-    return json(
+    return data(
       { message: "コメントを評価しました", success: true },
       {
         headers: {
@@ -495,7 +492,7 @@ async function handleVoteComment(
     );
   } catch (error) {
     console.error(error);
-    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+    return data({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }
 
@@ -513,11 +510,11 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
         commentAuthorIpHash: userIpHashString
       },
     });
-    return json({ message: "コメントを投稿しました", success: true });
+    return data({ message: "コメントを投稿しました", success: true });
   }
   catch (e) {
     console.error(e);
-    return json({ message: "Internal Server Error", success: false }, { status: 500 });
+    return data({ message: "Internal Server Error", success: false }, { status: 500 });
   }
 }
 

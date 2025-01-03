@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
@@ -27,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const mostRecentComments = await getRecentComments();
     const randomPosts = await getRandomPosts();
     const randomComments = await getRandomComments();
-    return json({
+    return ({
         tab,
         mostRecentPosts,
         recentVotedPosts,
