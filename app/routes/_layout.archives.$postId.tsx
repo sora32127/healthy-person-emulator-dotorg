@@ -309,22 +309,20 @@ export default function Component() {
           {data.nextPost ? (
             <div className="flex items-center mb-4 md:mb-0">
               <ArrowForwardIcon />
-              <NavLink
+              <CommonNavLink
                 to={`/archives/${data.nextPost.postId}`}
-                className="text-info underline underline-offset-4"
               >
                 {data.nextPost.postTitle}
-              </NavLink>
+              </CommonNavLink>
             </div>
           ): (<div/>)}
           {data.previousPost ? (
             <div className="flex items-center">
-              <NavLink
+              <CommonNavLink
                 to={`/archives/${data.previousPost.postId}`}
-                className="text-info underline underline-offset-4 mr-2"
               >
                 {data.previousPost.postTitle}
-              </NavLink>
+              </CommonNavLink>
               <ArrowBackIcon  />
             </div>
           ): <div/>}
