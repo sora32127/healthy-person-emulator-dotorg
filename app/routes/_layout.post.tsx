@@ -6,15 +6,14 @@ import {
   useFieldArray,
 } from "react-hook-form";
 import { useEffect, useState } from "react";
+// biome-ignore lint/style/useImportType: <explanation>
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   json,
-  useActionData,
   useFetcher,
   useLoaderData,
-  useLocation,
   useNavigate,
 } from "@remix-run/react";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
@@ -55,7 +54,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function App() {
-  const { tags, stopWords, isValid, turnStileSiteKey } = useLoaderData<typeof loader>();
+  const { tags, stopWords, turnStileSiteKey } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
@@ -92,7 +91,6 @@ export default function App() {
   type Inputs = z.infer<typeof postFormSchema>;
 
   const getStoredValues = (): Inputs => {
-    // biome-ignore lint/suspicious/noThenProperty: <explanation>
     if (typeof window === "undefined")
       return {
         title: [],
@@ -104,6 +102,7 @@ export default function App() {
           where: "",
           why: "",
           how: "",
+          // biome-ignore lint/suspicious/noThenProperty: <explanation>
           then: "",
         },
         reflection: [],
@@ -113,7 +112,6 @@ export default function App() {
         createdTags: [],
       };
     const stored = window.localStorage.getItem(formId);
-    // biome-ignore lint/suspicious/noThenProperty: <explanation>
     return stored
       ? JSON.parse(stored)
       : {
@@ -126,6 +124,7 @@ export default function App() {
             where: "",
             why: "",
             how: "",
+            // biome-ignore lint/suspicious/noThenProperty: <explanation>
             then: "",
           },
           reflection: [],
@@ -164,10 +163,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (turnstileFetcher.data?.success === false) {
+    const response = turnstileFetcher.data as { success: boolean };
+    if (response?.success === false) {
       toast.error("リクエスト検証に失敗しました。時間をおいて再度お試しください。");
     }
-    if (turnstileFetcher.data?.success === true) {
+    if (response?.success === true) {
       setIsFirstSubmitButtonOpen(true);
     }
   }, [turnstileFetcher.data]);
@@ -206,10 +206,11 @@ export default function App() {
   const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(false);
 
   useEffect(() => {
-    if ((firstSubmitFetcher.data as { success: boolean })?.success) {
+    const response = firstSubmitFetcher.data as { success: boolean };
+    if (response?.success) {
       setIsPreviewModalOpen(true);
     }
-    if ((firstSubmitFetcher.data as { success: boolean })?.success === false) {
+    if (response?.success === false) {
       toast.error("プレビューを取得できませんでした。時間をおいて再度試してください。");
     }
   }, [firstSubmitFetcher.data]);
@@ -218,17 +219,23 @@ export default function App() {
     if (firstSubmitFetcher.state === "submitting") {
       toast.loading("プレビューを取得しています");
     }
-    if (firstSubmitFetcher.state === "submitting" || firstSubmitFetcher.state === "loading") {
+    if (firstSubmitFetcher.state === "submitting") {
       setIsFirstSubmitButtonOpen(false);
     }
-    if (firstSubmitFetcher.state === "idle") {
+    if (firstSubmitFetcher.state === "loading") {
       setIsFirstSubmitButtonOpen(true);
       toast.dismiss();// ローディング中のトーストを消す
     }
   }, [firstSubmitFetcher.state]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(firstSubmitFetcher?.data?.data?.MarkdownResult);
+    const response = firstSubmitFetcher.data as { data: { MarkdownResult: string } };
+    try {
+      navigator.clipboard.writeText(response?.data?.MarkdownResult);
+      toast.success("クリップボードにコピーしました。");
+    } catch (error) {
+      toast.error("クリップボードにコピーできませんでした。");
+    }
   }
 
   const secondSubmitFetcher = useFetcher();
@@ -255,15 +262,16 @@ export default function App() {
 
   const navigate = useNavigate();
   useEffect(() => {
-    if (secondSubmitFetcher.data?.success === true && secondSubmitFetcher.state === "idle") {
+    const response = secondSubmitFetcher.data as { success: boolean, data: { postId: number } };
+    if (response?.success === true && secondSubmitFetcher.state === "idle") {
       toast.success("投稿しました。リダイレクトします...", {
         icon: "🎉",
         id: "post-success-toast",
       })
       setTimeout(() => {
-        const postId = secondSubmitFetcher.data?.data?.postId;
+        const postId = response?.data?.postId;
         navigate(`/archives/${postId}`, {viewTransition: true});
-      }, 1000);
+      }, 2000);
     }
     return () => {
       toast.dismiss("post-success-toast");
@@ -284,6 +292,7 @@ export default function App() {
         where: "",
         why: "",
         how: "",
+        // biome-ignore lint/suspicious/noThenProperty: <explanation>
         then: "",
       },
       reflection: [],

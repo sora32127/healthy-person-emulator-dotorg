@@ -3,6 +3,7 @@ import MastodonLogo from "~/src/assets/mastodon_logo.svg"
 import MisskeyLogo from "~/src/assets/misskey_icon.png"
 import CopyToClipBoard from "./icons/CopyToClipboard";
 import ShareButtonAPI from "./icons/ShareButtonAPI";
+import toast from "react-hot-toast";
 
 interface ShareButtonsProps {
     currentURL: string;
@@ -14,7 +15,12 @@ export default function ShareButtons({ currentURL, postTitle }: ShareButtonsProp
     const url = new URL(currentURL);
     const hatenaBlogUrl = url.hostname + url.pathname;
     const copy = async (currentURL: string) => {
-        await navigator.clipboard.writeText(currentURL);
+        try {
+            await navigator.clipboard.writeText(currentURL);
+            toast.success("クリップボードにコピーしました。");
+        } catch (error) {
+            toast.error("クリップボードにコピーできませんでした。");
+        }
     }
 
     const invokeShareAPI = async (currentURL: string, postTitle: string) => {
