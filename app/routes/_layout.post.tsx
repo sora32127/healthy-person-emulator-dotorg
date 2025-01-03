@@ -228,7 +228,12 @@ export default function App() {
   }, [firstSubmitFetcher.state]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(firstSubmitFetcher?.data?.data?.MarkdownResult);
+    try {
+      navigator.clipboard.writeText(firstSubmitFetcher?.data?.data?.MarkdownResult);
+      toast.success("クリップボードにコピーしました。");
+    } catch (error) {
+      toast.error("クリップボードにコピーできませんでした。");
+    }
   }
 
   const secondSubmitFetcher = useFetcher();
