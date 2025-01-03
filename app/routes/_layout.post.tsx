@@ -271,7 +271,7 @@ export default function App() {
       setTimeout(() => {
         const postId = response?.data?.postId;
         navigate(`/archives/${postId}`, {viewTransition: true});
-      }, 1000);
+      }, 2000);
     }
     return () => {
       toast.dismiss("post-success-toast");
