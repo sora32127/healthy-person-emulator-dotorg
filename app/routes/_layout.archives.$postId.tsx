@@ -287,6 +287,7 @@ export default function Component() {
           <NavLink
             to={`/archives/edit/${POSTID}`}
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
+            viewTransition
           >
             編集する
           </NavLink>
