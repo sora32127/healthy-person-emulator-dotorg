@@ -9,6 +9,7 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       remix({
         future: {
           v3_fetcherPersist: true,
+          v3_relativeSplatPath: true,
         },
       }),
       tsconfigPaths(),
