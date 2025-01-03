@@ -6,7 +6,11 @@ export default defineConfig(({ mode }: ConfigEnv) => {
   process.env = {...process.env, ...loadEnv(mode, process.cwd())};
   return defineConfig({
     plugins: [
-      remix(),
+      remix({
+        future: {
+          v3_fetcherPersist: true,
+        },
+      }),
       tsconfigPaths(),
     ],
     test: {
