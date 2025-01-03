@@ -284,7 +284,7 @@ export default function App() {
     window.localStorage.removeItem("selectedTags");
     window.localStorage.removeItem("createdTags");
     methods.reset({
-      title: [],
+      title: [""],
       postCategory: "misDeed",
       situations: {
         who: "",
@@ -296,9 +296,9 @@ export default function App() {
         // biome-ignore lint/suspicious/noThenProperty: <explanation>
         then: "",
       },
-      reflection: [],
-      counterReflection: [],
-      note: [],
+      reflection: ["", "", ""],
+      counterReflection: ["", "", ""],
+      note: ["", "", ""],
       selectedTags: [],
       createdTags: [],
     });
@@ -451,8 +451,8 @@ export default function App() {
               title="投稿する内容を確認してください。"
               showCloseButton={false}
             >
-              <div className="postContent">
-                <H1>{methods.getValues().title}</H1>
+              <div className="postContent previewContainer">
+                <H1>{firstSubmitFetcher?.data?.data?.title}</H1>
                 <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.data?.WikifiedResult }} />
               </div>
               <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
@@ -818,11 +818,6 @@ function ErrorMessageContainer({ errormessage }: { errormessage: string }) {
   );
 }
 
-function clearForm(formClear: () => void) {
-  formClear();
-  window.localStorage.clear();
-}
-
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const actionType = formData.get("_action");
@@ -879,7 +874,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const html = await Wikify(parsedData, postFormSchema);
       return data({
         success: true,
-        data: html.data,
+        data: { ...html.data, title: parsedData.title[0], tags: [...(parsedData.createdTags || []), ...(parsedData.selectedTags || [])] },
         error: undefined,
       });
     } catch (error) {
