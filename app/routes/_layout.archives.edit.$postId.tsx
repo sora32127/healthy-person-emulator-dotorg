@@ -1,7 +1,7 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, NavLink, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { Form, NavLink, useFetcher, useLoaderData, useNavigate, useNavigation, useSubmit } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getAuth } from "@clerk/remix/ssr.server";
 import { marked } from 'marked';
 
@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
+import toast, { Toaster } from "react-hot-toast";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -178,9 +179,9 @@ export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
-  const [isValidUser, setIsValidUser] = useState(false);
+  const [isSubmitButtonOpen, setIsSubmitButtonOpen] = useState(false);
 
-  const { setValue, getValues, register, handleSubmit, formState: { errors } } = useForm<PostEditSchema>({
+  const { setValue, getValues, register, formState: { errors } } = useForm<PostEditSchema>({
     resolver: zodResolver(postEditSchema),
     defaultValues: {
       postTitle: postData.postTitle,
@@ -217,25 +218,54 @@ export default function EditPost() {
 
   function handleTurnstileSuccess(token: string): void {
     setValue('turnstileToken', token);
-    setIsValidUser(true);
+    setIsSubmitButtonOpen(true);
   }
 
-  const submit = useSubmit();
-  const onSubmit: SubmitHandler<PostEditSchema> = (data) => {
+  const fetcher = useFetcher();
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     const formData = new FormData();
-    for (const [key, value] of Object.entries(data)) {
+    const inputData = getValues();
+    for (const [key, value] of Object.entries(inputData)) {
       formData.append(key, value.toString());
     }
-    submit(formData, {
+    fetcher.submit(formData, {
       method: "post",
       action: `/archives/edit/${postId}`,
     });
   }
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (fetcher.state === "submitting") {
+      setIsSubmitButtonOpen(false);
+      toast.loading("投稿を編集しています。");
+    }
+    if (fetcher.data?.success && fetcher.state === "idle") {
+      setIsSubmitButtonOpen(false);
+      toast.success("投稿を編集しました。リダイレクトします...", {
+        icon: "🎉",
+        id: "post-success-toast",
+      })
+      setTimeout(() => {
+        navigate(`/archives/${postId}`);
+      }, 2000);
+    }
+
+    if (fetcher.data?.success === false && fetcher.data?.message) {
+      toast.error(fetcher.data.message);
+      setIsSubmitButtonOpen(true);
+    }
+    return () => {
+      toast.dismiss();
+    }
+  }, [fetcher.state, fetcher.data, navigate, postId]);
 
   return (
         <div className="max-w-2xl mx-auto">
+          <Toaster />
           <H1>投稿を編集する</H1>
-          <form method="post" onSubmit={handleSubmit(onSubmit)}>
+          <form method="post">
             <H2>タイトルを編集する</H2>
             <p>変更前：{postData.postTitle}</p>
             <p className="my-4">変更後：</p>
@@ -300,11 +330,9 @@ export default function EditPost() {
             />
             <button
               type="submit"
-              className={`btn 
-                ${!isValidUser ? "btn-disabled animate-pulse" : ""}
-                ${isValidUser ? "btn-primary" : ""}
-              `}
-              disabled={navigation.state === "submitting" || !isValidUser}
+              className="btn btn-primary disabled:btn-disabled"
+              disabled={!isSubmitButtonOpen}
+              onClick={handleSubmit}
             >
               変更を保存する
             </button>
@@ -336,7 +364,7 @@ export default function EditPost() {
                          const end = Math.min(part.value.length, part.value.indexOf(part.value) + 50);
                          const excerpt = part.value.slice(start, end);
                          return (
-                           <span className={part.added ? 'bg-green-200' : 'bg-red-200'}>
+                           <span className={part.added ? 'bg-green-200' : 'bg-red-200'} >
                              {excerpt}
                            </span>
                          );
@@ -375,7 +403,7 @@ export const action: ActionFunction = async (args) => {
   const ipAddress = await getHashedUserIPAddress(args.request);
   const isValidRequest = await validateRequest(editData.turnstileToken as string, ipAddress);
   if (!isValidRequest){
-    return json({ error: "認証に失敗しました。時間をおいて再度試してください。" }, { status: 400 });
+    return json({ message: "認証に失敗しました。時間をおいて再度試してください。", success: false });
   }
 
 
@@ -391,7 +419,7 @@ export const action: ActionFunction = async (args) => {
 
   const parseResult = postEditSchema.safeParse(parsedData);
   if (!parseResult.success){
-    return json({ error: "バリデーションエラーが発生しました。" }, { status: 400 });
+    return json({ message: "バリデーションエラーが発生しました。", success: false });
   }
 
   const postId = Number(args.params.postId);
@@ -401,7 +429,7 @@ export const action: ActionFunction = async (args) => {
   });
 
   if (!latestPost) {
-    throw new Response("Post not found", { status: 404 });
+    return json({ message: "投稿履歴が見つかりません", success: false });
   }
 
   let newRevisionNumber: number;
@@ -477,8 +505,7 @@ export const action: ActionFunction = async (args) => {
   });
 
   await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent, postTitle: updatedPost.postTitle});
-
-  return redirect(`/archives/${updatedPost.postId}`);
+  return json({ success: true, message: "投稿を編集しました。" });
 }
 
 export const meta : MetaFunction = () => {
