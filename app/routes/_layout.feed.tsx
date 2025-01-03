@@ -1,7 +1,7 @@
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction} from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { getFeedPosts } from "~/modules/db.server";
 import PostSection from "~/components/PostSection";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
@@ -14,7 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const type = url.searchParams.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
   const chunkSize = 12;
   const postData = await getFeedPosts(pagingNumber, type, chunkSize, likeFromHour, likeToHour);
-  return json({ 
+  return ({ 
     postData
   });
 }

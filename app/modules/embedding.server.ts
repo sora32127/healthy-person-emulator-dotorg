@@ -1,4 +1,3 @@
-import { json } from "@remix-run/node";
 import { OpenAI } from "openai";
 import { prisma } from "./db.server";
 
@@ -50,7 +49,7 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
     catch (error) {
         throw new Error(`Failed to update embedding:` + error);
     }
-    return json({
+    return ({
         status: 200,
         message: "Embedding created successfully"
     });

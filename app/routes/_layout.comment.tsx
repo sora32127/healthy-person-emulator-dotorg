@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { redirect, json } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import CommentSection from "~/components/CommentSection";
 import { H1 } from "~/components/Headings";
@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const commentFeedData = await getFeedComments(Number(pagingNumber), type as FeedPostType, Number(chunkSize), Number(likeFromHour), Number(likeToHour));
 
-    return json({ commentFeedData });
+    return ({ commentFeedData });
 }
 
 export default function Comment(){

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Form, useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
 import { H1 } from "~/components/Headings";
 import PostCard  from "~/components/PostCard";
@@ -17,7 +17,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const searchQuery = url.searchParams.get("q") || "";
   const searchTags = url.searchParams.get("tags")?.split(" ") || [];
   const searchResults = await getSearchResults(searchQuery, searchTags, pageNumber, orderby ) as SearchResults;
-  return json({ searchResults });
+  return ({ searchResults });
 }
 
 export const action: ActionFunction = async ({ request }) => {

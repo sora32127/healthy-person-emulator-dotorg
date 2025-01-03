@@ -11,11 +11,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
-  json,
   useFetcher,
   useLoaderData,
   useNavigate,
 } from "@remix-run/react";
+import { data } from "@remix-run/node";
 import UserExplanation from "~/components/SubmitFormComponents/UserExplanation";
 import ClearFormButton from "~/components/SubmitFormComponents/ClearFormButton";
 import { H1, H3 } from "~/components/Headings";
@@ -50,7 +50,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const stopWords = await getStopWords();
   const isValid = await isUserValid(request);
   const turnStileSiteKey = await getTurnStileSiteKey();
-  return json({ tags, stopWords, isValid, turnStileSiteKey });
+  return ({ tags, stopWords, isValid, turnStileSiteKey });
 }
 
 export default function App() {
@@ -264,13 +264,14 @@ export default function App() {
   useEffect(() => {
     const response = secondSubmitFetcher.data as { success: boolean, data: { postId: number } };
     if (response?.success === true && secondSubmitFetcher.state === "idle") {
+      handleClearForm();
       toast.success("投稿しました。リダイレクトします...", {
         icon: "🎉",
         id: "post-success-toast",
       })
       setTimeout(() => {
         const postId = response?.data?.postId;
-        navigate(`/archives/${postId}`, {viewTransition: true});
+        navigate(`/archives/${postId}`, { viewTransition: true });
       }, 2000);
     }
     return () => {
@@ -304,7 +305,6 @@ export default function App() {
     
     setSelectedTags([]);
     setCreatedTags([]);
-    window.location.reload();
   }
 
   return (
@@ -453,7 +453,7 @@ export default function App() {
             >
               <div className="postContent">
                 <H1>{methods.getValues().title}</H1>
-                <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.WikifiedResult }} />
+                <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.data?.WikifiedResult }} />
               </div>
               <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
                 <button
@@ -837,11 +837,11 @@ export async function action({ request }: ActionFunctionArgs) {
     );
     console.log("isValidatedByTurnstile", isValidatedByTurnstile);
     if (!isValidatedByTurnstile) {
-      return json({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
+      return data({ success: false, error: "リクエストの検証に失敗しました。再度お試しください。" }, { status: 400 });
     }
     const session = await getSession(request.headers.get("Cookie"));
     session.set("isValidUser", true);
-    return json(
+    return data(
       {
         success: true,
       },
@@ -871,20 +871,19 @@ export async function action({ request }: ActionFunctionArgs) {
   } as unknown as Inputs;
   const isValidUser = await isUserValid(request); 
   if (!isValidUser) {
-    return json({ success: false, error: "リクエスト検証に失敗しました。時間をおいて再度お試しください。" }, { status: 400 });
+    return data({ success: false, error: "リクエスト検証に失敗しました。時間をおいて再度お試しください。" }, { status: 400 });
   }
 
   if (actionType === "firstSubmit") {
     try {
       const html = await Wikify(parsedData, postFormSchema);
-      const data = await html.json();
-      return json({
+      return data({
         success: true,
-        data: data.data,
+        data: html.data,
         error: undefined,
       });
     } catch (error) {
-      return json({
+      return data({
         success: false,
         data: undefined,
         error: "Wikify failed",
@@ -894,24 +893,23 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (actionType === "secondSubmit") {
     const html = await Wikify(parsedData, postFormSchema);
-    const data = await html.json();
-    const isSuccess = data.success;
-    const wikifyResult = data.data?.WikifiedResult;
+    const isSuccess = html.data.success;
+    const wikifyResult = html.data?.data?.WikifiedResult;
     const postTitle = parsedData.title[0];
     const createdTags = parsedData.createdTags;
     const selectedTags = parsedData.selectedTags;
     if (!wikifyResult) {
-      return json({ success: false, error: "Wikify failed", data: undefined });
+      return data({ success: false, error: "Wikify failed", data: undefined });
     }
 
     if (isSuccess) {
       const hashedUserIpAddress = await getHashedUserIPAddress(request);
-      if (data.data === undefined) {
-        return json({
+      if (html.data === undefined) {
+        return data({
           success: false,
           error: "Wikify failed",
           data: undefined,
-        });
+        }, { status: 400 });
       }
       const newPost = await prisma.$transaction(async (prisma) => {
         const newPost = await prisma.dimPosts.create({
@@ -966,14 +964,14 @@ export async function action({ request }: ActionFunctionArgs) {
       );
       await updatePostWelcomed(Number(newPost.postId), isWelcomed, explanation);
 
-      return json({
+      return data({
         success: true,
         error: undefined,
         data: { postId: newPost.postId },
       });
     }
 
-    return json({ success: false, error: data.error, data: undefined });
+    return data({ success: false, error: "Wikify failed", data: undefined }, { status: 400 });
   }
 }
 
@@ -984,11 +982,11 @@ async function Wikify(
   // バリデーションを実施
   const validationResult = postFormSchema.safeParse(postData);
   if (!validationResult.success) {
-    return json({
+    return data({
       success: false,
       error: validationResult.error.errors,
       data: undefined,
-    });
+    }, { status: 400 });
   }
 
   const { who, when, where, why, what, how, then, assumption } =
@@ -1070,7 +1068,7 @@ async function Wikify(
     }
   `;
   const markdownContent = NodeHtmlMarkdown.translate(result);
-  return json({
+  return data({
     success: true,
     error: undefined,
     data: { WikifiedResult: result, MarkdownResult: markdownContent },
