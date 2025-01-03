@@ -25,6 +25,7 @@ import { TurnstileModal } from "~/components/TurnstileModal";
 import toast, { Toaster } from "react-hot-toast";
 import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
+import { CommonNavLink } from "~/components/CommonNavLink";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -295,12 +296,11 @@ export default function Component() {
           <ul className="list-disc list-outside mb-4 ml-4">
             {data.similarPosts.map((post) => (
               <li key={post.postId} className="my-2">
-                <NavLink
+                <CommonNavLink
                   to={`/archives/${post.postId}`}
-                  className="text-info underline underline-offset-4"
                 >
                   {post.postTitle}
-                </NavLink>
+                </CommonNavLink>
               </li>
             ))}
           </ul>
