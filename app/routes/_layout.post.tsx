@@ -296,9 +296,9 @@ export default function App() {
         // biome-ignore lint/suspicious/noThenProperty: <explanation>
         then: "",
       },
-      reflection: [],
-      counterReflection: [],
-      note: [],
+      reflection: ["", "", ""],
+      counterReflection: ["", "", ""],
+      note: ["", "", ""],
       selectedTags: [],
       createdTags: [],
     });
