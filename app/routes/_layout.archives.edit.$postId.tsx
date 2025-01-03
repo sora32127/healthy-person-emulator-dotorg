@@ -248,7 +248,7 @@ export default function EditPost() {
         id: "post-success-toast",
       })
       setTimeout(() => {
-        navigate(`/archives/${postId}`);
+        navigate(`/archives/${postId}`, { viewTransition: true });
       }, 2000);
     }
 
