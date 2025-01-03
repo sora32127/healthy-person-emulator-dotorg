@@ -273,6 +273,7 @@ export default function App() {
         const postId = response?.data?.postId;
         navigate(`/archives/${postId}`, {viewTransition: true});
       }, 2000);
+      handleClearForm()
     }
     return () => {
       toast.dismiss("post-success-toast");
