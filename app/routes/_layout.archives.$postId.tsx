@@ -292,7 +292,7 @@ export default function Component() {
           </NavLink>
         </div>
         <H2>関連記事</H2>
-        <div>
+        <div className="w-full px-1">
           <ul className="list-disc list-outside mb-4 ml-4">
             {data.similarPosts.map((post) => (
               <li key={post.postId} className="my-2">
