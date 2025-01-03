@@ -77,7 +77,9 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
         <h1 className="text-xl font-bold">
-          <NavLink to="/?referrer=fromHeader">健常者エミュレータ事例集</NavLink>
+        <NavLink to="/?referrer=fromHeader" className="text-[clamp(0.875rem,3vw,1.25rem)] whitespace-nowrap">
+            健常者エミュレータ事例集
+          </NavLink>
         </h1>
       </div>
       <div className="flex flex-row">
