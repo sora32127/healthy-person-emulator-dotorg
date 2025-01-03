@@ -48,6 +48,7 @@ function renderDesktopHeader(){
                       <NavLink 
                         to={item.to} 
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
+                        viewTransition
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
                         <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
@@ -142,6 +143,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
                         document.getElementById('drawer-toggle')?.click();
                       }}
                       className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                      viewTransition
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none" />
                         {item.text}
@@ -230,7 +232,7 @@ export default function Component() {
         </div>
       </main>
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
-        <NavLink to="/post">
+        <NavLink to="/post" viewTransition>
           <button className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? "hidden inert" : ""}`} type="button">
             <PostIcon />
           </button>
