@@ -265,15 +265,15 @@ export default function App() {
   useEffect(() => {
     const response = secondSubmitFetcher.data as { success: boolean, data: { postId: number } };
     if (response?.success === true && secondSubmitFetcher.state === "idle") {
+      handleClearForm();
       toast.success("投稿しました。リダイレクトします...", {
         icon: "🎉",
         id: "post-success-toast",
       })
       setTimeout(() => {
         const postId = response?.data?.postId;
-        navigate(`/archives/${postId}`, {viewTransition: true});
+        navigate(`/archives/${postId}`, { viewTransition: true });
       }, 2000);
-      handleClearForm()
     }
     return () => {
       toast.dismiss("post-success-toast");
@@ -306,7 +306,6 @@ export default function App() {
     
     setSelectedTags([]);
     setCreatedTags([]);
-    window.location.reload();
   }
 
   return (
