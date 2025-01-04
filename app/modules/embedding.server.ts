@@ -47,7 +47,7 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
         // Supabaseのクライアントを利用してembeddingを更新する際、たまに`permission denied for schema public`が出現するため、supabaseクライアントを利用しない
     }
     catch (error) {
-        throw new Error(`Failed to update embedding:` + error);
+        throw new Error(`Failed to update embedding: ${error}`);
     }
     return ({
         status: 200,
