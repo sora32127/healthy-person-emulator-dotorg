@@ -1,7 +1,9 @@
-name: google cloud
+name: Preview Deployment
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize]
+    paths: 'app/*'
 
 jobs:
   gsls:
@@ -20,7 +22,7 @@ jobs:
 
       - name: Deploy
         run: |
-         gcloud run deploy healthy-person-emulator-dotorg --source . \
+         gcloud run deploy preview-healthy-person-emulator-dotorg --source . \
           --region=asia-northeast1 \
           --concurrency=1 \
           --memory=2Gi \
