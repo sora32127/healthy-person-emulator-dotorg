@@ -1,11 +1,10 @@
 type RelativeDateProps = {
-  timestamp: string;
+  targetDate: Date;
 };
 
-const RelativeDate = ({ timestamp }: RelativeDateProps) => {
-  const getRelativeTime = (timestamp:string) => {
+const RelativeDate = ({ targetDate }: RelativeDateProps) => {
+  const getRelativeTime = (targetDate:Date) => {
     const now = new Date();
-    const targetDate = new Date(timestamp);
     const diffInSeconds = (now.getTime() - targetDate.getTime()) / 1000;
 
     const secondsInHour = 3600;
@@ -29,9 +28,8 @@ const RelativeDate = ({ timestamp }: RelativeDateProps) => {
     return `${years}年前`;
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString("ja-JP", {
+  const formatTime = (targetDate: Date) => {
+    return targetDate.toLocaleString("ja-JP", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -42,8 +40,8 @@ const RelativeDate = ({ timestamp }: RelativeDateProps) => {
   }
 
   return (
-    <div className="tooltip tooltip-right" data-tip={formatTime(timestamp)}>
-        <span>{getRelativeTime(timestamp)}</span>
+    <div className="tooltip tooltip-right" data-tip={formatTime(targetDate)}>
+        <span>{getRelativeTime(targetDate)}</span>
     </div>
 );
 };
