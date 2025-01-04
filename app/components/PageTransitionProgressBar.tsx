@@ -34,8 +34,12 @@ function PageTransitionProgressBar() {
   return (
     <div
       role="progressbar"
+      tabIndex={0}
       aria-hidden={!isTransitioning}
       aria-valuetext={isTransitioning ? 'Loading' : undefined}
+      aria-valuenow={isTransitioning ? 70 : 0}
+      aria-valuemin={0}
+      aria-valuemax={100}
       className="fixed inset-x-0 top-0 left-0 z-50 h-2 animate-pulse"
     >
       <div

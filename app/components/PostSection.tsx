@@ -19,7 +19,7 @@ export default function PostSection({ title, posts, identifier, children }: Post
                             key={`${identifier}-${post.postId}`}
                             postId={post.postId}
                             postTitle={post.postTitle}
-                            postDateGmt={post.postDateGmt.toString()}
+                            postDateGmt={post.postDateGmt}
                             tagNames={post.tags.map((tag) => tag.tagName)}
                             countLikes={post.countLikes}
                             countDislikes={post.countDislikes}

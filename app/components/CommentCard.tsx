@@ -22,7 +22,7 @@ export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
 
 interface CommentCardProps {
   commentId: number;
-  commentDateGmt: string;
+  commentDateGmt: Date;
   commentAuthor: string;
   commentContent: string;
   level: number;
@@ -105,7 +105,7 @@ export default function CommentCard({
         <div className="pr-0.5">
           <ClockIcon  />
         </div>
-        <RelativeDate timestamp={commentDateGmt} />
+        <RelativeDate targetDate={commentDateGmt} />
         <div>
           <button
             type="button"

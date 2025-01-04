@@ -14,9 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const type = url.searchParams.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
   const chunkSize = 12;
   const postData = await getFeedPosts(pagingNumber, type, chunkSize, likeFromHour, likeToHour);
-  return ({ 
-    postData
-  });
+  return postData;
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -58,7 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Feed() {
-  const { postData } = useLoaderData<typeof loader>();
+  const postData = useLoaderData<typeof loader>();
   const chunkSize = postData.meta.chunkSize;
   const totalPages = Math.ceil(postData.meta.totalCount / chunkSize);
   const type = postData.meta.type;
@@ -95,7 +93,7 @@ export default function Feed() {
         </select>
       </div>
       <div className="feed-posts">
-        <PostSection posts={postData.result} />
+        <PostSection posts={postData.result} title="" identifier="" />
       </div>
       <div className="search-navigation flex justify-center my-4">
         {totalPages >= 1 && (
@@ -147,24 +145,20 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data){
     return [{ title: "Loading..." }];
   }
-  const { postData } = data;
-  const type = postData.meta.type;
-  const currentPage = postData.meta.currentPage;
-  const likeFrom = postData.meta.likeFromHour;
-  const likeTo = postData.meta.likeToHour;
+  const { type, currentPage, likeFromHour, likeToHour } = data.meta;
 
   const title = `フィード : ${
     type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
     type === "timeDesc" ? `新着順 ページ：${currentPage}` : 
     type === "timeAsc" ? `古い順 ページ：${currentPage}` :
-    type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
+    type === "likes" ? `いいね順 ページ：${currentPage} ${likeFromHour ? `(${likeFromHour}時間前 〜 ${likeToHour}時間前)` : ""}` : 
     `古い順 ${currentPage} ページ`
   }`
 
   const commonMeta = commonMetaFunction({
     title,
     description: "フィード",
-    url: `https://healthy-person-emulator.org/feed?p=${currentPage}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`,
+    url: `https://healthy-person-emulator.org/feed?p=${currentPage}&type=${type}${likeFromHour ? `&likeFromHour=${likeFromHour}` : ""}${likeToHour ? `&likeToHour=${likeToHour}` : ""}`,
     image: "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
   });
   return commonMeta;

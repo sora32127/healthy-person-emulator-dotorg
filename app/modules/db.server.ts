@@ -194,7 +194,14 @@ type PreviousOrNextPostData = z.infer<typeof PreviousOrNextPostSchema>;
 
 async function getPreviousPost(postId: number): Promise<PreviousOrNextPostData> {
     const previousPost = await prisma.dimPosts.findFirst({
-        where : {postId: {lt: postId}},
+        where : {
+            postId: {lt: postId},
+            postTitle: {
+                not: {
+                    contains: "%プログラムテスト%"
+                }
+            }
+        },
         orderBy: {postId: "desc"},
         select: {
             postId: true,
@@ -207,7 +214,14 @@ async function getPreviousPost(postId: number): Promise<PreviousOrNextPostData> 
 
 async function getNextPost(postId: number): Promise<PreviousOrNextPostData> {
     const nextPost = await prisma.dimPosts.findFirst({
-        where : {postId: {gt: postId}},
+        where : {
+            postId: {gt: postId},
+            postTitle: {
+                not: {
+                    contains: "%プログラムテスト%"
+                }
+            }
+        },
         orderBy: {postId: "asc"},
         select: {
             postId: true,
@@ -316,6 +330,13 @@ export async function getRecentPosts(): Promise<PostCardData[]>{
                     dimTag: {
                         tagName: "asc",
                     }
+                }
+            }
+        },
+        where: {
+            postTitle: {
+                not: {
+                    contains: "%プログラムテスト%"
                 }
             }
         }
@@ -494,6 +515,15 @@ export async function getRecentComments(chunkSize = 12, pageNumber = 1): Promise
                     postTitle: true,
                 },
             },
+        },
+        where: {
+            dimPosts: {
+                postTitle: {
+                    not: {
+                        contains: "%プログラムテスト%"
+                    }
+                }
+            }
         },
         skip: offset,
     })

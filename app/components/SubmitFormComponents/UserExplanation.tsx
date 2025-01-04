@@ -1,10 +1,10 @@
 import { NavLink } from "@remix-run/react";
 import { H1, H2 } from "../Headings";
 
-const UserExplanation = () => {
+export default function UserExplanation() {
     return(
         <div>
-            <H1>健エミュ投稿フォーム</H1>
+            <H1>健エミュポストフォーム</H1>
             <ul>
                 <li>このフォームは、健常者エミュレータ事例集への投稿を促進するために作成されました。</li>
                 <li>上から順にフォームへ入力することにより、過去の経験を整理することが可能です。</li>
@@ -24,5 +24,3 @@ const UserExplanation = () => {
         </div>
     )
 }
-
-export default UserExplanation;

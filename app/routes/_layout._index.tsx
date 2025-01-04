@@ -1,5 +1,5 @@
 import { NavLink, useLoaderData } from "@remix-run/react";
-import type { LoaderFunction, MetaFunction } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import ReloadButton from "~/components/ReloadButton";
 import PostSection from "~/components/PostSection";
@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
     return commonMeta;
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const tab = url.searchParams.get("tab") || "trend";
     const mostRecentPosts = await getRecentPosts();
@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const mostRecentComments = await getRecentComments();
     const randomPosts = await getRandomPosts();
     const randomComments = await getRandomComments();
-    return ({
+    return {
         tab,
         mostRecentPosts,
         recentVotedPosts,
@@ -35,7 +35,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         mostRecentComments,
         randomPosts,
         randomComments,
-    });
+    };
 }
 
 export default function Feed() {

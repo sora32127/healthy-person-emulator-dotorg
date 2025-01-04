@@ -23,7 +23,7 @@ export default function CommentShowCard({
                 <div className="pr-2">
                     <ClockIcon/>
                 </div>
-                <RelativeDate timestamp={commentDateGmt.toString()} />
+                <RelativeDate targetDate={commentDateGmt} />
             </div>
             <div className="flex justify-between items-center gap-x-2">
                 <div className="flex gap-x-1">

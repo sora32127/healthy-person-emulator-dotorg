@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Form } from "@remix-run/react";
+import { useState } from 'react';
 
 interface TagCreateBoxProps {
   handleTagCreated: (tag: string) => void;
@@ -7,7 +6,7 @@ interface TagCreateBoxProps {
   parentComponentStateValues: string[];
 }
 
-const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTagRemoved, parentComponentStateValues }) => {
+export default function TagCreateBox({ handleTagCreated, handleTagRemoved, parentComponentStateValues }: TagCreateBoxProps) {
   const [tagInput, setTagInput] = useState('');
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,6 +52,11 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
               key={tag}
               className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer"
               onClick={() => handleTagRemoved(tag)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleTagRemoved(tag);
+                }
+              }}
             >
               {tag}
               <svg
@@ -62,6 +66,7 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
+                <title>tag-delete</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -77,4 +82,4 @@ const TagCreateBox: React.FC<TagCreateBoxProps> = ({ handleTagCreated, handleTag
   );
 };
 
-export default TagCreateBox;
+

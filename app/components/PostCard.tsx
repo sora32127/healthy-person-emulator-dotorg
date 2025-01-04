@@ -10,7 +10,7 @@ import ThumbsUpIcon from "./icons/ThumbsUpIcon";
 export interface PostCardProps {
     postId: number;
     postTitle: string;
-    postDateGmt: string;
+    postDateGmt: Date;
     tagNames: string[];
     countLikes: number;
     countDislikes: number;
@@ -43,7 +43,7 @@ export default function PostCard({
             <div className="mx-2">
                 <div className="flex flex-row my-2 justify-between">
                     <div className="flex items-center">
-                        <RelativeDate timestamp={postDateGmt} />
+                        <RelativeDate targetDate={postDateGmt} />
                     </div>
                     <div className="flex items-center gap-x-4">
                         <div className="flex items-center">

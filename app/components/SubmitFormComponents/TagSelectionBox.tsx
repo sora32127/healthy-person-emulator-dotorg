@@ -12,11 +12,11 @@ interface TagSelectionBoxProps {
     allTagsOnlyForSearch: Tag[];
 }
 
-const TagSelectionBox = ({
+export default function TagSelectionBox({
     onTagsSelected,
     parentComponentStateValues,
     allTagsOnlyForSearch,
-}: TagSelectionBoxProps): JSX.Element => {
+}: TagSelectionBoxProps) {
     const [searchText, setSearchText] = useState('');
     const [sortBy, setSortBy] = useState<'count' | 'name'>('count');
     const [highlightedTag, setHighlightedTag] = useState<string | null>(null);
@@ -138,5 +138,3 @@ const TagSelectionBox = ({
         </div>
     );
 };
-
-export default TagSelectionBox;

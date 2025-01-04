@@ -7,7 +7,7 @@ type VisitorCookieData = { redirectUrl?: string };
 export async function getVisitorCookieData(request: Request): Promise<VisitorCookieData> {
   const cookieHeader = request.headers.get('Cookie');
   const cookie = await visitorCookie.parse(cookieHeader);
-  return cookie && cookie.redirectUrl ? cookie : { redirectUrl: undefined };
+  return cookie?.redirectUrl ? cookie : { redirectUrl: undefined };
 }
 
 export async function setVisitorCookieData(data: VisitorCookieData, headers = new Headers()): Promise<Headers> {
