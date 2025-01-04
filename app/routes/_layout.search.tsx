@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Form, useLoaderData, useSubmit, useNavigation } from "@remix-run/react";
 import { redirect } from "@remix-run/node";
-import type { ActionFunction, LoaderFunction, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { H1 } from "~/components/Headings";
 import PostCard  from "~/components/PostCard";
 import { Accordion, AccordionItem } from "~/components/Accordion";
@@ -10,17 +10,17 @@ import { getSearchResults, type SearchResults, type OrderBy } from "~/modules/se
 import type { PostCardData } from "~/modules/db.server";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const pageNumber = Number.parseInt(url.searchParams.get("p") || "1");
   const orderby = (url.searchParams.get("orderby") || "timeDesc") as OrderBy;
   const searchQuery = url.searchParams.get("q") || "";
   const searchTags = url.searchParams.get("tags")?.split(" ") || [];
   const searchResults = await getSearchResults(searchQuery, searchTags, pageNumber, orderby ) as SearchResults;
-  return ({ searchResults });
+  return searchResults;
 }
 
-export const action: ActionFunction = async ({ request }) => {
+export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
   const currentPage = Number.parseInt(formData.get("currentPage") as string);
@@ -61,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function SearchPage() {
-  const { searchResults } = useLoaderData<typeof loader>();
+  const searchResults = useLoaderData<typeof loader>();
   const SearchResults = searchResults as SearchResults;
   const [searchQuery, setSearchQuery] = useState(SearchResults.meta.searchParams.q);
   const [searchTags, setSearchTags] = useState<string[]>(SearchResults.meta.searchParams.tags);
@@ -194,7 +194,7 @@ export default function SearchPage() {
                 key={post.postId}
                 postId={post.postId}
                 postTitle={post.postTitle}
-                postDateGmt={post.postDateGmt.toString()}
+                postDateGmt={post.postDateGmt}
                 countLikes={post.countLikes}
                 countDislikes={post.countDislikes}
                 countComments={post.countComments}
@@ -251,12 +251,12 @@ export default function SearchPage() {
 
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data, location }) => {
   if (!data) {
   return [{ title: "Loading..." }];
   }
 
-  const { tags, q, orderby, p } = data.searchResults.meta.searchParams;
+  const { tags, q, orderby, p } = data.meta.searchParams;
   function convertOrderBy(orderby: OrderBy) {
     switch (orderby) {
       case "timeDesc":
@@ -280,14 +280,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     pageTitle += ` ページ: ${p}`;
   }
   if (orderby) {
-    pageTitle += ` ${convertOrderBy(orderby)}`;
+    pageTitle += ` ${convertOrderBy(orderby as OrderBy)}`;
   }
   if ((q === "") && (tags.length === 0)) pageTitle = "検索する";
 
   const commonMeta = commonMetaFunction({
     title: pageTitle,
     description: "検索",
-    url: data.url,
+    url: `https://healthy-person-emulator.org/search${location.search}`,
     image: null
   });
 
