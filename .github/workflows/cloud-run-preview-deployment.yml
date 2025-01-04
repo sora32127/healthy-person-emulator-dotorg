@@ -15,6 +15,7 @@ jobs:
         
       - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+          workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider-2'
           service_account: 'workflow-identity-github@healthy-person-emulator.iam.gserviceaccount.com'
+
       - run: echo AUTH_CLEAR
