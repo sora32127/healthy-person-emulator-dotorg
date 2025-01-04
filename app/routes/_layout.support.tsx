@@ -19,10 +19,9 @@ export default function BeSponsor() {
           </ul>
           <br/>
           <p>もし健常者エミュレータ事例集の理念に共感していただけるのなら、以下のPixiv Fanboxから寄付していただけると助かります。</p>
-          <NavLink to="https://contradiction29.fanbox.cc/"
-            role="link"
+          <a href="https://contradiction29.fanbox.cc/"
             className="btn-primary font-bold py-2 px-8 rounded-md block w-full mt-8">サポートする
-          </NavLink>
+          </a>
           <div className="text-center mt-6">
             <p>以下のQRコードから支払うことも可能です。</p>
             <img src={fanboxQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
