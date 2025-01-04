@@ -446,6 +446,7 @@ export default function App() {
             >
               <div className="postContent previewContainer">
                 <H1>{firstSubmitFetcher?.data?.data?.title}</H1>
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
                 <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.data?.WikifiedResult }} />
               </div>
               <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
