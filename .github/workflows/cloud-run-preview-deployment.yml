@@ -15,6 +15,17 @@ jobs:
         
       - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
-          service_account: 'workflow-identity-github@healthy-person-emulator.iam.gserviceaccount.com'
-      - run: echo AUTH_CLEAR
+          workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool-3/providers/github-actions-provider-3'
+          service_account: 'github-actions@healthy-person-emulator.iam.gserviceaccount.com'
+
+      - name: Deploy
+        run: |
+         gcloud run deploy healthy-person-emulator-dotorg --source . \
+          --region=asia-northeast1 \
+          --concurrency=1 \
+          --memory=2Gi \
+          --cpu=2 \
+          --timeout=300 \
+          --project=healthy-person-emulator \
+          --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com \
+          --verbosity=debug
