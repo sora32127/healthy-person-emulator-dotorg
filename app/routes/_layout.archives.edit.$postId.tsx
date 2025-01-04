@@ -33,24 +33,17 @@ const postEditSchema = z.object({
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
 
-async function requireUserId(args: LoaderFunctionArgs) {
-  const { userId } = await getAuth(args);
+export async function loader({ request, params, context }: LoaderFunctionArgs) {
+  const { userId } = await getAuth({ request, params, context });
   if (!userId) {
-    const url = new URL(args.request.url)
+    const url = new URL(request.url)
     const pathName = url.pathname
     const headers = await setVisitorCookieData({
         redirectUrl: pathName
     });
     throw redirect('/login', { headers });
   }
-  
-  return userId;
-}
-
-
-export const loader:LoaderFunction = async(args) => {
-  const userId = await requireUserId(args);
-  const postId = args.params.postId;
+  const postId = params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({
     where : { postId: Number(postId) },
     select : {
@@ -75,7 +68,7 @@ export const loader:LoaderFunction = async(args) => {
   if (isEditing && nowEditingInfo){
     // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
     // 「戻る」を押してredirect(`/archives/${postId}`)する
-    return ({
+    return {
       postData: null,
       postMarkdown: null,
       tagNames: null,
@@ -84,7 +77,7 @@ export const loader:LoaderFunction = async(args) => {
       postId,
       isEditing: true,
       editHistory: null,
-    });
+    };
   }
     
 
@@ -177,17 +170,16 @@ export const loader:LoaderFunction = async(args) => {
 
 export default function EditPost() {
   const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
-  const navigation = useNavigation();
-  const [selectedTags, setSelectedTags] = useState<string[]>(tagNames);
+  const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
   const [isSubmitButtonOpen, setIsSubmitButtonOpen] = useState(false);
 
   const { setValue, getValues, register, formState: { errors } } = useForm<PostEditSchema>({
     resolver: zodResolver(postEditSchema),
     defaultValues: {
-      postTitle: postData.postTitle,
-      postContent: postMarkdown,
-      tags: tagNames,
-      userId: userId,
+      postTitle: postData?.postTitle ?? '',
+      postContent: postMarkdown ?? '',
+      tags: tagNames ?? [],
+      userId: userId ?? '',
     },
   });
 
@@ -237,11 +229,12 @@ export default function EditPost() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const response = fetcher.data as { success: boolean; message: string };
     if (fetcher.state === "submitting") {
       setIsSubmitButtonOpen(false);
       toast.loading("投稿を編集しています。");
     }
-    if (fetcher.data?.success && fetcher.state === "idle") {
+    if (response?.success && fetcher.state === "idle") {
       setIsSubmitButtonOpen(false);
       toast.success("投稿を編集しました。リダイレクトします...", {
         icon: "🎉",
@@ -252,8 +245,8 @@ export default function EditPost() {
       }, 2000);
     }
 
-    if (fetcher.data?.success === false && fetcher.data?.message) {
-      toast.error(fetcher.data.message);
+    if (response?.success === false && fetcher.state === "idle") {
+      toast.error(response.message);
       setIsSubmitButtonOpen(true);
     }
     return () => {
@@ -411,7 +404,7 @@ export const action: ActionFunction = async (args) => {
     postTitle: editData.postTitle.toString(),
     postContent: editData.postContent.toString(),
     tags: typeof editData.tags === 'string' 
-    ? editData.tags.split(',').map(tag => tag.trim())
+    ? editData.tags.split(',').map(tag => tag.trim() )
     : [],
     userId: editData.userId.toString(),
     turnstileToken: editData.turnstileToken.toString(),
