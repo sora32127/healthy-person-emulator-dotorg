@@ -21,6 +21,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import toast, { Toaster } from "react-hot-toast";
+import { MakeToastMessage } from "~/utils/makeToastMessage";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -216,6 +217,13 @@ export default function EditPost() {
   const fetcher = useFetcher();
   const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    const formDataInput = getValues();
+    const zodError = postEditSchema.safeParse(formDataInput);
+    if (!zodError.success){
+      const toastValidationMessage = MakeToastMessage(zodError.error.issues);
+      toast.error(toastValidationMessage);
+      return;
+    }
     const formData = new FormData();
     const inputData = getValues();
     for (const [key, value] of Object.entries(inputData)) {

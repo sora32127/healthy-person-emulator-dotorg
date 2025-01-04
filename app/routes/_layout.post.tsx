@@ -44,6 +44,7 @@ import {
 } from "~/modules/security.server";
 import { commitSession, getSession, isUserValid } from "~/modules/session.server";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { MakeToastMessage } from "~/utils/makeToastMessage";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
@@ -171,14 +172,6 @@ export default function App() {
       setIsFirstSubmitButtonOpen(true);
     }
   }, [turnstileFetcher.data]);
-
-  function MakeToastMessage(errors: z.ZodIssue[]): string {
-    let errorMessage = "";
-    if (errors.length > 0) {
-      errorMessage = errors.map((error) => `- ${error.message}`).join("\n");
-    }
-    return errorMessage;
-  }
 
   const firstSubmitFetcher = useFetcher();
   const handleFirstSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
