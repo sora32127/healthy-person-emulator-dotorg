@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as csv from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
@@ -41,15 +41,15 @@ async function main() {
   for (const record of dimPostsRecords) {
     await prisma.dimPosts.create({
       data: {
-        postId: parseInt(record.post_id) ?? 0,
+        postId: Number.parseInt(record.post_id) ?? 0,
         postAuthorIPHash: record.post_author_ip_hash,
         postDateJst: new Date(record.post_date_jst),
         postDateGmt: new Date(record.post_date_gmt),
         postContent: record.post_content,
         postTitle: record.post_title,
         commentStatus: record.comment_status,
-        countLikes: parseInt(record.count_likes) ?? 0,
-        countDislikes: parseInt(record.count_dislikes) ?? 0,
+        countLikes: Number.parseInt(record.count_likes) ?? 0,
+        countDislikes: Number.parseInt(record.count_dislikes) ?? 0,
         uuid: record.uuid,
       }
     });
@@ -65,7 +65,7 @@ async function main() {
   for (const record of dimTagsRecords) {
     await prisma.dimTags.create({
       data: {
-        tagId: parseInt(record.tag_id),
+        tagId: Number.parseInt(record.tag_id),
         tagName: record.tag_name,
       }
     });
@@ -81,8 +81,8 @@ async function main() {
   for (const record of relPostTagsRecords) {
     await prisma.relPostTags.create({
       data: {
-        postId: parseInt(record.post_id),
-        tagId: parseInt(record.tag_id),
+        postId: Number.parseInt(record.post_id),
+        tagId: Number.parseInt(record.tag_id),
       }
     });
   }
@@ -111,14 +111,14 @@ async function main() {
   for (const record of dimCommentsRecords) {
     await prisma.dimComments.create({
       data: {
-        commentId: parseInt(record.comment_id),
-        postId: parseInt(record.post_id),
+        commentId: Number.parseInt(record.comment_id),
+        postId: Number.parseInt(record.post_id),
         commentAuthor: record.comment_author,
         commentAuthorIpHash: record.comment_author_ip_hash,
         commentDateJst: new Date(record.comment_date_jst),
         commentDateGmt: new Date(record.comment_date_gmt),
         commentContent: record.comment_content,
-        commentParent: parseInt(record.comment_parent),
+        commentParent: Number.parseInt(record.comment_parent),
         uuid: record.uuid,
       }
     });
@@ -140,10 +140,10 @@ async function main() {
       data: {
         voteDateGmt: new Date(record.vote_date_gmt),
         voteUserIpHash: record.vote_user_ip_hash,
-        postId: parseInt(record.post_id),
-        voteTypeInt: parseInt(record.vote_type_int),
+        postId: Number.parseInt(record.post_id),
+        voteTypeInt: Number.parseInt(record.vote_type_int),
         vote_date_jst: new Date(record.vote_date_jst),
-        postVoteId: parseInt(record.post_vote_id),
+        postVoteId: Number.parseInt(record.post_vote_id),
       }
     });
   }
@@ -164,11 +164,11 @@ async function main() {
   for (const record of fctCommentVoteHistoryRecords) {
     await prisma.fctCommentVoteHistory.create({
       data: {
-        commentVoteId: parseInt(record.comment_vote_id),
+        commentVoteId: Number.parseInt(record.comment_vote_id),
         voteUserIpHash: record.vote_user_ip_hash,
-        commentId: parseInt(record.comment_id),
-        voteType: parseInt(record.vote_type),
-        postId: parseInt(record.post_id),
+        commentId: Number.parseInt(record.comment_id),
+        voteType: Number.parseInt(record.vote_type),
+        postId: Number.parseInt(record.post_id),
         commentVoteDateJst: new Date(record.comment_vote_date_jst),
         comment_vote_date_utc: new Date(record.comment_vote_utc),
       }
