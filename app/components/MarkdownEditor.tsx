@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { type IconType } from 'react-icons';
+import type { IconType } from 'react-icons';
 import { FaHeading, FaBold, FaItalic, FaLink, FaListUl, FaListOl, FaEye, FaEdit, FaQuestionCircle, FaStrikethrough } from 'react-icons/fa';
-import { type UseFormRegister } from 'react-hook-form';
+import type { UseFormRegister } from 'react-hook-form';
 
 interface MarkdownEditorProps {
   value: string;
@@ -33,7 +33,7 @@ export function MarkdownEditor({ value, onChange, register, name = "postContent"
     return () => observer.disconnect();
   }, []);
 
-  const insertMarkdown = useCallback((prefix: string, suffix: string = '') => {
+  const insertMarkdown = useCallback((prefix: string, suffix = '') => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
