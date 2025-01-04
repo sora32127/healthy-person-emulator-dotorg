@@ -1,11 +1,9 @@
-import React from 'react';
-
 interface TagPreviewBoxProps {
   selectedTags: string[];
   createdTags: string[];
 }
 
-const TagPreviewBox: React.FC<TagPreviewBoxProps> = ({ selectedTags, createdTags }: TagPreviewBoxProps) => {
+export default function TagPreviewBox({ selectedTags, createdTags }: TagPreviewBoxProps) {
   return (
     <div className="mb-8">
       <h3 className="text-2xl font-bold mb-4">選択したタグ</h3>
@@ -25,5 +23,3 @@ const TagPreviewBox: React.FC<TagPreviewBoxProps> = ({ selectedTags, createdTags
     </div>
   );
 };
-
-export default TagPreviewBox;
