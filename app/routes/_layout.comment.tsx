@@ -16,11 +16,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const commentFeedData = await getFeedComments(Number(pagingNumber), type as FeedPostType, Number(chunkSize), Number(likeFromHour), Number(likeToHour));
 
-    return ({ commentFeedData });
+    return commentFeedData;
 }
 
 export default function Comment(){
-    const { commentFeedData } = useLoaderData<typeof loader>();
+    const commentFeedData = useLoaderData<typeof loader>();
     const submit = useSubmit();
     const currentPage = commentFeedData.meta.currentPage;
     const totalCount = commentFeedData.meta.totalCount;
@@ -58,7 +58,7 @@ export default function Comment(){
                 </select>
             </div>
             <div className="comment-feed">
-                <CommentSection comments={commentFeedData.result} />
+                <CommentSection comments={commentFeedData.result} title="" />
             </div>
             <div className="search-navigation flex justify-center my-4">
                 {totalPages >= 1 && (
@@ -139,17 +139,13 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     if (!data){
         return [{ title: "Loading..." }];
       }
-      const { commentFeedData } = data;
-      const type = commentFeedData.meta.type;
-      const currentPage = commentFeedData.meta.currentPage;
-      const likeFrom = commentFeedData.meta.likeFromHour;
-      const likeTo = commentFeedData.meta.likeToHour;
+      const { type, currentPage, likeFromHour, likeToHour } = data.meta;
     
       const title = `コメント : ${
         type === "unboundedLikes" ? `無期限いいね順 ページ：${currentPage}` : 
         type === "timeDesc" ? `新着順 ページ：${currentPage}` :
         type === "timeAsc" ? `古い順 ページ：${currentPage}` :
-        type === "likes" ? `いいね順 ページ：${currentPage} ${likeFrom ? `(${likeFrom}時間前 〜 ${likeTo}時間前)` : ""}` : 
+        type === "likes" ? `いいね順 ページ：${currentPage} ${likeFromHour ? `(${likeFromHour}時間前 〜 ${likeToHour}時間前)` : ""}` : 
         `古い順 ${currentPage} ページ`
       }`
     
@@ -157,7 +153,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const commonMeta = commonMetaFunction({
         title,
         description: "コメント",
-        url: `https://healthy-person-emulator.org/comment?p=${currentPage}&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`,
+        url: `https://healthy-person-emulator.org/comment?p=${currentPage}&type=${type}${likeFromHour ? `&likeFromHour=${likeFromHour}` : ""}${likeToHour ? `&likeToHour=${likeToHour}` : ""}`,
         image: null
     });
 
