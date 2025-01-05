@@ -663,7 +663,7 @@ function SituationInput() {
             key: "why",
             description: "なぜそのような行動をしたのですか？(Why)",
             placeholder: "何を話せば良いのかわからないため",
-            rows: 1,
+            rows: 2,
           },
           {
             key: "what",
