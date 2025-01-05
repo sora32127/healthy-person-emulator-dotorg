@@ -114,14 +114,11 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       remix-auth:
-        specifier: ^4.1.0
-        version: 4.1.0
-      remix-auth-form:
-        specifier: ^3.0.0
-        version: 3.0.0(remix-auth@4.1.0)
+        specifier: 3.7.0
+        version: 3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2))
       remix-auth-google:
-        specifier: ^2.0.0
-        version: 2.0.0(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@4.1.0)
+        specifier: 2.0.0
+        version: 2.0.0(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2)))
       remix-flat-routes:
         specifier: ^0.6.5
         version: 0.6.5(@remix-run/dev@2.15.2(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/serve@2.15.2(typescript@5.7.2))(@types/node@22.10.5)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.5)))
@@ -3977,12 +3974,6 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
-  remix-auth-form@3.0.0:
-    resolution: {integrity: sha512-2c8d9BUJhnOrXg2w/iELLMj7RYT9EDI5eip9DSfN8caCTw0V33tNXvUNW44cYJQ8CjwAPi94vVaaezCHEdTSbQ==}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      remix-auth: ^4.0.0
-
   remix-auth-google@2.0.0:
     resolution: {integrity: sha512-qP38N1ZJADz+HlH2lrEn/rSL6m5Dwcnz8xUFDhbHecDMl9FU/UpkUx3w8jj5XhNSnkSue/GWT+p7OEkatgbXNA==}
     peerDependencies:
@@ -3995,9 +3986,11 @@ packages:
       '@remix-run/server-runtime': ^1.0.0 || ^2.0.0
       remix-auth: ^3.6.0
 
-  remix-auth@4.1.0:
-    resolution: {integrity: sha512-Xdy42clt+g79GCn+Wl1+B6S/yWnvrStnk62vo1pGuRuUwHC+pjmeEE52ZRkRPuhLGqsQnoDD9TVz/wfEJAGF8g==}
-    engines: {node: '>=20.0.0'}
+  remix-auth@3.7.0:
+    resolution: {integrity: sha512-2QVjp2nJVaYxuFBecMQwzixCO7CLSssttLBU5eVlNcNlVeNMmY1g7OkmZ1Ogw9sBcoMXZ18J7xXSK0AISVFcfQ==}
+    peerDependencies:
+      '@remix-run/react': ^1.0.0 || ^2.0.0
+      '@remix-run/server-runtime': ^1.0.0 || ^2.0.0
 
   remix-flat-routes@0.6.5:
     resolution: {integrity: sha512-VvPak+LCxL4Fm6Kb/nqPLipB71k9p+GXpzRNPVxs9FmCeJ7hxVmQ3HQMpStzuRQyAh0PMkaX6mBiRlCRHTCYHw==}
@@ -4570,6 +4563,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
@@ -9305,28 +9302,28 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  remix-auth-form@3.0.0(remix-auth@4.1.0):
-    dependencies:
-      remix-auth: 4.1.0
-
-  remix-auth-google@2.0.0(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@4.1.0):
+  remix-auth-google@2.0.0(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2))):
     dependencies:
       '@remix-run/server-runtime': 2.15.2(typescript@5.7.2)
-      remix-auth: 4.1.0
-      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@4.1.0)
+      remix-auth: 3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2))
+      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2)))
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth-oauth2@1.11.2(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@4.1.0):
+  remix-auth-oauth2@1.11.2(@remix-run/server-runtime@2.15.2(typescript@5.7.2))(remix-auth@3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2))):
     dependencies:
       '@remix-run/server-runtime': 2.15.2(typescript@5.7.2)
       debug: 4.4.0
-      remix-auth: 4.1.0
+      remix-auth: 3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2))
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
 
-  remix-auth@4.1.0: {}
+  remix-auth@3.7.0(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/server-runtime@2.15.2(typescript@5.7.2)):
+    dependencies:
+      '@remix-run/react': 2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2)
+      '@remix-run/server-runtime': 2.15.2(typescript@5.7.2)
+      uuid: 8.3.2
 
   remix-flat-routes@0.6.5(@remix-run/dev@2.15.2(@remix-run/react@2.15.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/serve@2.15.2(typescript@5.7.2))(@types/node@22.10.5)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.5))):
     dependencies:
@@ -10029,6 +10026,8 @@ snapshots:
       which-typed-array: 1.1.18
 
   utils-merge@1.0.1: {}
+
+  uuid@8.3.2: {}
 
   uuid@9.0.1: {}
 

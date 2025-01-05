@@ -51,9 +51,8 @@
     "react-markdown": "^9.0.1",
     "react-transition-group": "^4.4.5",
     "remark-gfm": "^4.0.0",
-    "remix-auth": "^4.1.0",
-    "remix-auth-form": "^3.0.0",
-    "remix-auth-google": "^2.0.0",
+    "remix-auth": "3.7.0",
+    "remix-auth-google": "2.0.0",
     "remix-flat-routes": "^0.6.5",
     "use-debounce": "^10.0.4",
     "zod": "^3.24.1"
