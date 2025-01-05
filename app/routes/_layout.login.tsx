@@ -9,6 +9,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast, { Toaster } from "react-hot-toast";
+import GoogleLoginButton from "~/components/GoogleLoginButton";
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -65,13 +66,18 @@ export default function login() {
       toast.success("新規登録しました");
     }
   }, [createUserFetcher.data]);
-  
+
+  const handleGoogleLogin = () => {
+    console.log("GoogleLogin");
+  }
+
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="card w-full max-w-sm bg-base-100">
           <Toaster />
           <div className="card-body">
             <H1>ログイン</H1>
+            <GoogleLoginButton onClick={handleGoogleLogin}/>
             <Form method="post" action="/login" className="space-y-4">
               <div className="form-control w-full">
                 <label className="label" htmlFor="email">
