@@ -704,9 +704,11 @@ function SituationInput() {
               {...register(`situations.${data.key}`)}
             />
             <div>
+              {/* @ts-ignore */}
               {errors.situations?.[data.key] && (
                 <ErrorMessageContainer
                   errormessage={
+                    // @ts-ignore
                     errors.situations?.[data.key]?.message as string
                   }
                 />
