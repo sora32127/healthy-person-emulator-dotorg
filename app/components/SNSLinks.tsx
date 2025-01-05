@@ -26,7 +26,7 @@ export function SNSLinks({ tweetIdOfFirstTweet, blueskyPostUriOfFirstPost, missk
             <a href={`https://twitter.com/x/status/${tweetIdOfFirstTweet}`} 
                target="_blank"
                rel="noopener noreferrer"
-               className="link link-primary flex items-center gap-2 hover:gap-3 transition-all duration-200">
+               className="text-info flex items-center gap-2 hover:gap-3 hover:underline hover:underline-offset-4 transition-all duration-200">
               Twitterでの反応を見る
               <ExternalLink className="h-4 w-4 md:h-5 md:w-5 fill-none stroke-current" />
             </a>
@@ -35,7 +35,7 @@ export function SNSLinks({ tweetIdOfFirstTweet, blueskyPostUriOfFirstPost, missk
             <a href={`https://bsky.app/profile/helthypersonemu.bsky.social/post/${blueskyPostUriOfFirstPost.split("/").pop()}`}
                target="_blank" 
                rel="noopener noreferrer"
-               className="link link-primary flex items-center gap-2 hover:gap-3 transition-all duration-200">
+               className="text-info flex items-center gap-2 hover:gap-3 hover:underline hover:underline-offset-4 transition-all duration-200">
               Blueskyでの反応を見る
               <ExternalLink className="h-4 w-4 md:h-5 md:w-5 fill-none stroke-current" />
             </a>
@@ -44,7 +44,7 @@ export function SNSLinks({ tweetIdOfFirstTweet, blueskyPostUriOfFirstPost, missk
             <a href={`https://misskey.io/notes/${misskeyNoteIdOfFirstNote}`}
                target="_blank"
                rel="noopener noreferrer" 
-               className="link link-primary flex items-center gap-2 hover:gap-3 transition-all duration-200">
+               className="text-info flex items-center gap-2 hover:gap-3 hover:underline hover:underline-offset-4 transition-all duration-200">
               Misskeyでの反応を見る
               <ExternalLink className="h-4 w-4 md:h-5 md:w-5 fill-none stroke-current" />
             </a>
