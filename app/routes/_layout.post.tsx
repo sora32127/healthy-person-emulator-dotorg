@@ -254,7 +254,7 @@ export default function App() {
       setIsSecondSubmitButtonOpen(false);
       toast.loading("投稿中です...")
     }
-    if (secondSubmitFetcher.state === "loading" && secondSubmitFetcher.data?.success === true) {
+    if (secondSubmitFetcher.state === "loading" && (secondSubmitFetcher.data as { success: boolean })?.success === true) {
       toast.dismiss();
     }
   }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
