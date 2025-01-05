@@ -1,6 +1,7 @@
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
-import { sessionStorage } from "./session.server";
+import { prisma } from "./db.server";
+import bcrypt from "bcrypt";
 
 export type LoginFormData = {
     email: string;
@@ -18,6 +19,54 @@ authenticator.use(
     }), "email-login"
 );
 
-export async function loginByEmail(email: string, password: string): Promise<number> {
-    return 1;
+
+async function loginByEmail(email: string, password: string): Promise<{ message: string, success: boolean, data: { email: string, password: string } }> {
+    const isUserExists = await judgeUserExistsByEmail(email);
+    if (!isUserExists) {
+        throw new Error("指定したメールアドレスを持つユーザーは存在しません。");
+    }
+    const userEncryptedPassword = await getUserEncryptedPasswordByEmail(email);
+    if (!userEncryptedPassword) {
+        throw new Error("パスワードが設定されていません。");
+    }
+    const isPasswordCorrect = await verifyPassword(password, userEncryptedPassword);
+    if (!isPasswordCorrect) {
+        throw new Error("パスワードが正しくありません。");
+    }
+    return {
+        message: "ログイン成功",
+        success: true,
+        data: {
+            email: email,
+            password: password,
+        }
+    }
 }
+
+async function judgeUserExistsByEmail(email: string): Promise<boolean> {
+    try {
+        const user = await prisma.dimUsers.findUniqueOrThrow({
+            where: { email: email },
+        });
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+async function getUserEncryptedPasswordByEmail(email: string): Promise<string | null> {
+    try {
+        const user = await prisma.dimUsers.findUniqueOrThrow({
+            where: { email: email },
+        });
+        return user.encryptedPassword;
+    } catch (error) {
+        throw new Error("User not found");
+    }
+}
+
+async function verifyPassword(passwordEnteredByUser: string, passwordInDatabase: string): Promise<boolean> {
+    const bcrptedPassword = await bcrypt.hash(passwordEnteredByUser, 10);
+    return bcrptedPassword === passwordInDatabase;
+}
+
