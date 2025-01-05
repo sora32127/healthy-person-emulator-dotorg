@@ -105,6 +105,7 @@ export default function login() {
               <button type="button" className="btn btn-primary w-full mt-6" onClick={handleLogin}>
                 メールアドレスでログイン
               </button>
+              {/* TODO: メールアドレスの新規登録は今後非推奨とする*/}
               <button type="button" className="btn btn-primary w-full mt-6" onClick={handleCreateUser}>
                 メールアドレスで新規登録
               </button>
