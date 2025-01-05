@@ -82,7 +82,5 @@ async function getUserEncryptedPasswordByEmail(email: string): Promise<string | 
 }
 
 async function verifyPassword(passwordEnteredByUser: string, passwordInDatabase: string): Promise<boolean> {
-    const bcrptedPassword = await bcrypt.hash(passwordEnteredByUser, 10);
-    return bcrptedPassword === passwordInDatabase;
+    return await bcrypt.compare(passwordEnteredByUser, passwordInDatabase);
 }
-

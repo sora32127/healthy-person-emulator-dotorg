@@ -30,7 +30,7 @@ export default function login() {
     formData.append("password", inputValues.password);
     loginFetcher.submit(formData, {
       method: "post",
-      action: "/login",
+      action: "/api/loginEmail",
     });
   }
 
@@ -44,7 +44,7 @@ export default function login() {
     formData.append("password", inputValues.password);
     createUserFetcher.submit(formData, {
       method: "post",
-      action: "/login",
+      action: "/api/signUpEmail",
     });
   }
 
@@ -52,11 +52,17 @@ export default function login() {
     if (loginFetcher.data?.success === false) {
       toast.error(loginFetcher.data.message);
     }
+    if (loginFetcher.data?.success === true) {
+      toast.success("ログインしました");
+    }
   }, [loginFetcher.data]);
 
   useEffect(() => {
     if (createUserFetcher.data?.success === false) {
       toast.error(createUserFetcher.data.message);
+    }
+    if (createUserFetcher.data?.success === true) {
+      toast.success("新規登録しました");
     }
   }, [createUserFetcher.data]);
   
@@ -109,42 +115,6 @@ export default function login() {
     );
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  const formData = await request.formData();
-  const type = formData.get("type");
-  if (type === "email-login") {
-    try {
-        const result = await authenticator.authenticate("email-login", request);
-        return {
-            success: true,
-            data: result,
-        }
-    } catch (error) {
-        console.log(error);
-        return {
-            message: (error as Error).message,
-            success: false,
-        }
-    }
-  }
-  if (type === "email-create-user") {
-    try {
-      const email = formData.get("email") as string;
-      const password = formData.get("password") as string;
-      const result = await createUserByEmail(email, password);
-      return {
-        success: result.success,
-        data: result.data,
-      }
-    } catch (error) {
-      console.log(error);
-      return {
-        message: (error as Error).message,
-        success: false,
-      }
-    }
-  }
-}
   
 export const meta : MetaFunction = () => {
     const commonMeta = commonMetaFunction({
