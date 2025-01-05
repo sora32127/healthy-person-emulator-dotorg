@@ -222,9 +222,15 @@ export default function App() {
   }, [firstSubmitFetcher.state]);
 
   const handleCopy = () => {
-    const response = firstSubmitFetcher.data.data.data;
+    const response = firstSubmitFetcher.data as { 
+      data: { 
+        data: { 
+          MarkdownResult: string 
+        } 
+      } 
+    };
     try {
-      navigator.clipboard.writeText(response?.MarkdownResult);
+      navigator.clipboard.writeText(response?.data?.data?.MarkdownResult);
       toast.success("クリップボードにコピーしました。");
     } catch (error) {
       toast.error("クリップボードにコピーできませんでした。");
@@ -248,7 +254,7 @@ export default function App() {
       setIsSecondSubmitButtonOpen(false);
       toast.loading("投稿中です...")
     }
-    if (secondSubmitFetcher.state === "loading" && secondSubmitFetcher.data?.success === true) {
+    if (secondSubmitFetcher.state === "loading" && (secondSubmitFetcher.data as { success: boolean })?.success === true) {
       toast.dismiss();
     }
   }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
@@ -445,9 +451,11 @@ export default function App() {
               showCloseButton={false}
             >
               <div className="postContent previewContainer">
-                <H1>{firstSubmitFetcher?.data?.data?.title}</H1>
+                <H1>{(firstSubmitFetcher?.data as { data: { title: string } })?.data?.title}</H1>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
-                <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.data?.WikifiedResult }} />
+                <div dangerouslySetInnerHTML={{ 
+                  __html: (firstSubmitFetcher?.data as { data: { data: { WikifiedResult: string } } })?.data?.data?.WikifiedResult 
+                }} />
               </div>
               <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
                 <button
@@ -655,7 +663,7 @@ function SituationInput() {
             key: "why",
             description: "なぜそのような行動をしたのですか？(Why)",
             placeholder: "何を話せば良いのかわからないため",
-            rows: 1,
+            rows: 2,
           },
           {
             key: "what",
@@ -696,9 +704,11 @@ function SituationInput() {
               {...register(`situations.${data.key}`)}
             />
             <div>
+              {/* @ts-ignore */}
               {errors.situations?.[data.key] && (
                 <ErrorMessageContainer
                   errormessage={
+                    // @ts-ignore
                     errors.situations?.[data.key]?.message as string
                   }
                 />
