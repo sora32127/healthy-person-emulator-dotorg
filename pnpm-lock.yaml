@@ -104,6 +104,15 @@ importers:
       remark-gfm:
         specifier: ^4.0.0
         version: 4.0.0
+      remix-auth:
+        specifier: ^4.1.0
+        version: 4.1.0
+      remix-auth-form:
+        specifier: ^3.0.0
+        version: 3.0.0(remix-auth@4.1.0)
+      remix-auth-google:
+        specifier: ^2.0.0
+        version: 2.0.0(@remix-run/server-runtime@2.15.1(typescript@5.7.2))(remix-auth@4.1.0)
       remix-flat-routes:
         specifier: ^0.6.5
         version: 0.6.5(@remix-run/dev@2.15.1(@remix-run/react@2.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/serve@2.15.1(typescript@5.7.2))(@types/node@22.10.2)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.2)))
@@ -3866,6 +3875,28 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
+  remix-auth-form@3.0.0:
+    resolution: {integrity: sha512-2c8d9BUJhnOrXg2w/iELLMj7RYT9EDI5eip9DSfN8caCTw0V33tNXvUNW44cYJQ8CjwAPi94vVaaezCHEdTSbQ==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      remix-auth: ^4.0.0
+
+  remix-auth-google@2.0.0:
+    resolution: {integrity: sha512-qP38N1ZJADz+HlH2lrEn/rSL6m5Dwcnz8xUFDhbHecDMl9FU/UpkUx3w8jj5XhNSnkSue/GWT+p7OEkatgbXNA==}
+    peerDependencies:
+      '@remix-run/server-runtime': ^2.0.1
+      remix-auth: ^3.2.1
+
+  remix-auth-oauth2@1.11.2:
+    resolution: {integrity: sha512-5ORP+LMi5CVCA/Wb8Z+FCAJ73Uiy4uyjEzhlVwNBfdAkPOnfxzoi+q/pY/CrueYv3OniCXRM35ZYqkVi3G1UPw==}
+    peerDependencies:
+      '@remix-run/server-runtime': ^1.0.0 || ^2.0.0
+      remix-auth: ^3.6.0
+
+  remix-auth@4.1.0:
+    resolution: {integrity: sha512-Xdy42clt+g79GCn+Wl1+B6S/yWnvrStnk62vo1pGuRuUwHC+pjmeEE52ZRkRPuhLGqsQnoDD9TVz/wfEJAGF8g==}
+    engines: {node: '>=20.0.0'}
+
   remix-flat-routes@0.6.5:
     resolution: {integrity: sha512-VvPak+LCxL4Fm6Kb/nqPLipB71k9p+GXpzRNPVxs9FmCeJ7hxVmQ3HQMpStzuRQyAh0PMkaX6mBiRlCRHTCYHw==}
     hasBin: true
@@ -4421,6 +4452,10 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+
+  uuid@9.0.1:
+    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    hasBin: true
 
   uvu@0.5.6:
     resolution: {integrity: sha512-+g8ENReyr8YsOc6fv/NVJs2vFdHBnBNdfE49rshrTzDWOlUx4Gq7KOS2GD8eqhy2j+Ejq29+SbKH8yjkAqXqoA==}
@@ -6690,7 +6725,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@9.17.0(jiti@2.4.2)):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@9.17.0(jiti@2.4.2)))(eslint@9.17.0(jiti@2.4.2)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -6712,7 +6747,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.17.0(jiti@2.4.2)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@9.17.0(jiti@2.4.2))
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@8.18.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@9.17.0(jiti@2.4.2)))(eslint@9.17.0(jiti@2.4.2))
       hasown: 2.0.2
       is-core-module: 2.16.0
       is-glob: 4.0.3
@@ -9017,6 +9052,29 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
+  remix-auth-form@3.0.0(remix-auth@4.1.0):
+    dependencies:
+      remix-auth: 4.1.0
+
+  remix-auth-google@2.0.0(@remix-run/server-runtime@2.15.1(typescript@5.7.2))(remix-auth@4.1.0):
+    dependencies:
+      '@remix-run/server-runtime': 2.15.1(typescript@5.7.2)
+      remix-auth: 4.1.0
+      remix-auth-oauth2: 1.11.2(@remix-run/server-runtime@2.15.1(typescript@5.7.2))(remix-auth@4.1.0)
+    transitivePeerDependencies:
+      - supports-color
+
+  remix-auth-oauth2@1.11.2(@remix-run/server-runtime@2.15.1(typescript@5.7.2))(remix-auth@4.1.0):
+    dependencies:
+      '@remix-run/server-runtime': 2.15.1(typescript@5.7.2)
+      debug: 4.4.0
+      remix-auth: 4.1.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  remix-auth@4.1.0: {}
+
   remix-flat-routes@0.6.5(@remix-run/dev@2.15.1(@remix-run/react@2.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/serve@2.15.1(typescript@5.7.2))(@types/node@22.10.2)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.2))):
     dependencies:
       '@remix-run/dev': 2.15.1(@remix-run/react@2.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2))(@remix-run/serve@2.15.1(typescript@5.7.2))(@types/node@22.10.2)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.2))
@@ -9701,6 +9759,8 @@ snapshots:
       which-typed-array: 1.1.18
 
   utils-merge@1.0.1: {}
+
+  uuid@9.0.1: {}
 
   uvu@0.5.6:
     dependencies:
