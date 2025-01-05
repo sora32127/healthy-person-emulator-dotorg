@@ -1,8 +1,6 @@
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { SignIn } from "@clerk/remix";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { Form, useFetcher } from "@remix-run/react";
-import { authenticator, createUserByEmail } from "~/modules/auth.server";
 import { H1 } from "~/components/Headings";
 import { useEffect } from "react";
 import { z } from "zod";
@@ -67,8 +65,12 @@ export default function login() {
     }
   }, [createUserFetcher.data]);
 
+  const googleLoginFetcher = useFetcher();
   const handleGoogleLogin = () => {
-    console.log("GoogleLogin");
+    googleLoginFetcher.submit(null, {
+      method: "post",
+      action: "/api/googleLogin",
+    });
   }
 
     return (

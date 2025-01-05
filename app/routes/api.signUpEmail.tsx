@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { createUserByEmail } from "~/modules/auth.server";
+import { createUserByEmail } from "~/modules/auth.mail.server";
 
 export async function action({ request }: ActionFunctionArgs) {
     try {
