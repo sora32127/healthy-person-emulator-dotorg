@@ -451,9 +451,11 @@ export default function App() {
               showCloseButton={false}
             >
               <div className="postContent previewContainer">
-                <H1>{firstSubmitFetcher?.data?.data?.title}</H1>
+                <H1>{(firstSubmitFetcher?.data as { data: { title: string } })?.data?.title}</H1>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
-                <div dangerouslySetInnerHTML={{ __html: firstSubmitFetcher?.data?.data?.data?.WikifiedResult }} />
+                <div dangerouslySetInnerHTML={{ 
+                  __html: (firstSubmitFetcher?.data as { data: { data: { WikifiedResult: string } } })?.data?.data?.WikifiedResult 
+                }} />
               </div>
               <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
                 <button
