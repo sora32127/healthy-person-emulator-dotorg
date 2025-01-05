@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { SignIn } from "@clerk/remix";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { Form, useFetcher } from "@remix-run/react";
-import { authenticator } from "~/modules/auth.server";
+import { authenticator, createUserByEmail } from "~/modules/auth.server";
 import { H1 } from "~/components/Headings";
 import { useEffect } from "react";
 import { z } from "zod";
@@ -25,9 +25,24 @@ export default function login() {
     e.preventDefault();
     const inputValues = getValues();
     const formData = new FormData();
+    formData.append("type", "email-login");
     formData.append("email", inputValues.email);
     formData.append("password", inputValues.password);
     loginFetcher.submit(formData, {
+      method: "post",
+      action: "/login",
+    });
+  }
+
+  const createUserFetcher = useFetcher();
+  const handleCreateUser = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const inputValues = getValues();
+    const formData = new FormData();
+    formData.append("type", "email-create-user");
+    formData.append("email", inputValues.email);
+    formData.append("password", inputValues.password);
+    createUserFetcher.submit(formData, {
       method: "post",
       action: "/login",
     });
@@ -38,6 +53,12 @@ export default function login() {
       toast.error(loginFetcher.data.message);
     }
   }, [loginFetcher.data]);
+
+  useEffect(() => {
+    if (createUserFetcher.data?.success === false) {
+      toast.error(createUserFetcher.data.message);
+    }
+  }, [createUserFetcher.data]);
   
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
@@ -78,6 +99,9 @@ export default function login() {
               <button type="button" className="btn btn-primary w-full mt-6" onClick={handleLogin}>
                 メールアドレスでログイン
               </button>
+              <button type="button" className="btn btn-primary w-full mt-6" onClick={handleCreateUser}>
+                メールアドレスで新規登録
+              </button>
             </Form>
           </div>
         </div>
@@ -86,6 +110,9 @@ export default function login() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const type = formData.get("type");
+  if (type === "email-login") {
     try {
         const result = await authenticator.authenticate("email-login", request);
         return {
@@ -99,6 +126,24 @@ export async function action({ request }: ActionFunctionArgs) {
             success: false,
         }
     }
+  }
+  if (type === "email-create-user") {
+    try {
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+      const result = await createUserByEmail(email, password);
+      return {
+        success: result.success,
+        data: result.data,
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        message: (error as Error).message,
+        success: false,
+      }
+    }
+  }
 }
   
 export const meta : MetaFunction = () => {

@@ -23,6 +23,18 @@ authenticator.use(
     }), "email-login"
 );
 
+export async function createUserByEmail(email: string, password: string): Promise<{ message: string, success: boolean, data: { email: string, password: string } }> {
+    const isUserExists = await judgeUserExistsByEmail(email);
+    if (isUserExists) {
+        throw new Error("指定したメールアドレスを持つユーザーは既に存在します。");
+    }
+    const bcrptedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.dimUsers.create({
+        data: { email, encryptedPassword: bcrptedPassword, userAuthType: "Email" },
+    });
+    return { message: "ユーザー作成に成功しました。", success: true, data: { email, password } };
+}
+
 
 async function loginByEmail(email: string, password: string): Promise<{ message: string, success: boolean, data: { email: string, password: string } }> {
     const isUserExists = await judgeUserExistsByEmail(email);
