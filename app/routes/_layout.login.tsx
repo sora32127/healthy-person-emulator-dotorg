@@ -75,7 +75,7 @@ export default function login() {
                 />
               </div>
 
-              <button type="button" className="btn btn-primary w-full mt-6">
+              <button type="button" className="btn btn-primary w-full mt-6" onClick={handleLogin}>
                 メールアドレスでログイン
               </button>
             </Form>
@@ -87,10 +87,15 @@ export default function login() {
 
 export async function action({ request }: ActionFunctionArgs) {
     try {
-        return await authenticator.authenticate("email-login", request);
-    } catch (error) {
+        const result = await authenticator.authenticate("email-login", request);
         return {
-            message: (error as string),
+            success: true,
+            data: result,
+        }
+    } catch (error) {
+        console.log(error);
+        return {
+            message: (error as Error).message,
             success: false,
         }
     }

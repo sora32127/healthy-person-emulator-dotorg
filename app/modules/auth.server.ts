@@ -1,7 +1,6 @@
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { prisma } from "./db.server";
-import bcrypt from "bcrypt";
 
 export type LoginFormData = {
     email: string;
@@ -70,7 +69,8 @@ async function getUserEncryptedPasswordByEmail(email: string): Promise<string | 
 }
 
 async function verifyPassword(passwordEnteredByUser: string, passwordInDatabase: string): Promise<boolean> {
-    const bcrptedPassword = await bcrypt.hash(passwordEnteredByUser, 10);
+    // const bcrptedPassword = await bcrypt.hash(passwordEnteredByUser, 10);
+    const bcrptedPassword = passwordEnteredByUser;
     return bcrptedPassword === passwordInDatabase;
 }
 
