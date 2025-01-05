@@ -14,8 +14,12 @@ authenticator.use(
     new FormStrategy(async ({ form }) => {
         const email = form.get("email") as string;
         const password = form.get("password") as string;
-        const userId = await loginByEmail(email, password);
-        return { email, password, userId };
+        try {
+            const loginResult = await loginByEmail(email, password);
+            return { email, password };
+        } catch (error) {
+            throw new Error(error as string);
+        }
     }), "email-login"
 );
 
