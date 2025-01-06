@@ -52,6 +52,7 @@
     "react-transition-group": "^4.4.5",
     "remark-gfm": "^4.0.0",
     "remix-auth": "3.7.0",
+    "remix-auth-form": "1.5.0",
     "remix-auth-google": "2.0.0",
     "remix-flat-routes": "^0.6.5",
     "use-debounce": "^10.0.4",

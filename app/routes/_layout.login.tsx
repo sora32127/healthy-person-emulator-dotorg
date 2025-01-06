@@ -58,6 +58,7 @@ export default function login() {
   }
 
   useEffect(() => {
+    console.log("loginFetcher.data", loginFetcher.data);
     if (loginFetcher.data?.success === false) {
       toast.error(loginFetcher.data.message);
     }
