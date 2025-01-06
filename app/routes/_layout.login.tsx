@@ -100,6 +100,7 @@ export default function login() {
           <div className="card-body">
             <H1>ログイン</H1>
             <GoogleLoginButton onClick={handleGoogleLogin}/>
+            <p className="text-center text-sm py-6">もしくは</p>
             <Form method="post" action="/login" className="space-y-4">
               <div className="form-control w-full">
                 <label className="label" htmlFor="email">
@@ -129,14 +130,15 @@ export default function login() {
                   {...register("password")}
                 />
               </div>
-
-              <button type="button" className="btn btn-primary w-full mt-6" onClick={handleLogin}>
+              <div className="my-4 py-10">
+              <button type="button" className="btn btn-primary w-full" onClick={handleLogin}>
                 メールアドレスでログイン
-              </button>
-              {/* TODO: メールアドレスの新規登録は今後非推奨とする*/}
-              <button type="button" className="btn btn-primary w-full mt-6" onClick={handleCreateUser}>
-                メールアドレスで新規登録
-              </button>
+                </button>
+                {/* TODO: メールアドレスの新規登録は今後非推奨とする*/}
+                <button type="button" className="btn btn-primary w-full mt-6" onClick={handleCreateUser}>
+                  メールアドレスで新規登録
+                </button>
+              </div>
             </Form>
           </div>
         </div>
