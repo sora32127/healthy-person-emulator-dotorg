@@ -42,16 +42,6 @@ function renderDesktopHeader(){
 
                 return (
                   <li key={item.to} className="h-[40px]">
-                    {item.to === "/logout" ? (
-                      <SignOutButton redirectUrl="/">
-                        <div className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}>
-                          <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
-                          <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
-                            ログアウト
-                          </span>
-                        </div>
-                      </SignOutButton>
-                    ) : (
                       <NavLink 
                         to={item.to} 
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
@@ -62,7 +52,6 @@ function renderDesktopHeader(){
                           {item.text}
                         </span>
                       </NavLink>
-                    )}
                   </li>
                 );
               })}
@@ -128,24 +117,6 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
               <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
                 {navItems.map((item) => (
                   <li key={item.to} className="justify-center">
-                    {item.to === "/logout" ? (
-                      <div
-                        onClick={() => {
-                          document.getElementById('drawer-toggle')?.click();
-                          }}
-                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2 cursor-pointer"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              document.getElementById('drawer-toggle')?.click();
-                            }
-                          }}
-                        > 
-                          <LogoutIcon/>
-                          <SignOutButton redirectUrl="/">
-                            ログアウト
-                          </SignOutButton>
-                        </div>
-                    ) : (
                       <NavLink to={item.to} onClick={() => {
                         document.getElementById('drawer-toggle')?.click();
                       }}
@@ -155,7 +126,6 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
                         <item.icon className="w-5 h-5 stroke-current fill-none" />
                         {item.text}
                       </NavLink>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -184,6 +154,14 @@ export default function Component() {
         userUuid: userObject.userUuid,
         email: userObject.email,
         userAuthType: userObject.userAuthType,
+      });
+    }
+    if (!userObject) {
+      setAuthState({
+        isSignedIn: false,
+        userUuid: null,
+        email: null,
+        userAuthType: null,
       });
     }
   }, [userObject, setAuthState]);
