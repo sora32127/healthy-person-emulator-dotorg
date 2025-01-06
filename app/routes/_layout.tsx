@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Form, Outlet, NavLink, useLocation } from "@remix-run/react";
+import { Form, Outlet, NavLink, useLocation, useLoaderData } from "@remix-run/react";
 import { useUser, SignOutButton } from "@clerk/remix";
 import PostIcon from "~/components/icons/PostIcon";
 import SearchIcon from "~/components/icons/SearchIcon";
@@ -10,6 +10,13 @@ import { Footer } from "~/components/Footer";
 import { useAtom } from "jotai";
 import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
 import { getNavItems } from "~/utils/itemMenu";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { authenticator } from "~/modules/auth.google.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const userObject = await authenticator.isAuthenticated(request);
+  return { userObject }
+}
 
 
 function renderDesktopHeader(){
@@ -168,18 +175,18 @@ export default function Component() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const user = useUser();
   const [ _, setAuthState ] = useAtom(setAuthStateAtom);
-  
+  const { userObject } = useLoaderData<typeof loader>();
+
   useEffect(() => {
-    if (user.isSignedIn) {
-      const newAuthState = {
-        isSignedIn: user.isSignedIn ?? false,
-        userId: user.user?.id ?? null,
-        email: user.user?.emailAddresses[0]?.emailAddress ?? null,
-        userName: user.user?.username ?? null,
-      };
-      setAuthState(newAuthState);
+    if (userObject) {
+      setAuthState({
+        isSignedIn: true,
+        userUuid: userObject.userUuid,
+        email: userObject.email,
+        userAuthType: userObject.userAuthType,
+      });
     }
-  }, [user.isSignedIn, setAuthState, user.user?.id, user.user?.emailAddresses, user.user?.username]);
+  }, [userObject, setAuthState]);
 
 
   const searchInputRef = useRef<HTMLInputElement>(null);
