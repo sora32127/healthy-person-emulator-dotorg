@@ -86,8 +86,8 @@ export default function login() {
   }
 
     return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center">
-        <div className="card w-full max-w-sm bg-base-100">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="card w-full max-w-sm">
           <Toaster />
           {isRedirectedFromEditPost &&
           <div className="card-body bg-error">
