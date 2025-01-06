@@ -43,7 +43,7 @@ async function getUserUuid(request: Request) {
     const headers = await setVisitorCookieData({
         redirectUrl: pathName
     });
-    throw redirect('/login', { headers });
+    throw redirect('/login?refferer=fromEditPost', { headers });
   }
   return userObject.userUuid;
  }

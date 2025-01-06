@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
-import { Form, useFetcher } from "@remix-run/react";
+import { Form, useFetcher, useLoaderData } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import { useEffect } from "react";
 import { z } from "zod";
@@ -15,7 +15,17 @@ export const loginSchema = z.object({
 });
 type LoginSchema = z.infer<typeof loginSchema>;
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url)
+  const searchParams = url.searchParams
+  const refferer = searchParams.get("refferer")
+  return { refferer }
+}
+
 export default function login() {
+  const { refferer } = useLoaderData<typeof loader>();
+  const isRedirectedFromEditPost = refferer === "fromEditPost";
+  
   const loginFetcher = useFetcher();
   const { register, handleSubmit, formState: { errors }, getValues } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -77,6 +87,10 @@ export default function login() {
       <div className="min-h-screen bg-base-200 flex items-center justify-center">
         <div className="card w-full max-w-sm bg-base-100">
           <Toaster />
+          {isRedirectedFromEditPost &&
+          <div className="card-body bg-error">
+            <p className="text-error-content">編集するにはログインする必要があります</p>
+          </div>}
           <div className="card-body">
             <H1>ログイン</H1>
             <GoogleLoginButton onClick={handleGoogleLogin}/>
