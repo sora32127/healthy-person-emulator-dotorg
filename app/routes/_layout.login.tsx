@@ -25,7 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function login() {
   const { refferer } = useLoaderData<typeof loader>();
   const isRedirectedFromEditPost = refferer === "fromEditPost";
-  
+  const isError = refferer === "error";
   const loginFetcher = useFetcher();
   const { register, handleSubmit, formState: { errors }, getValues } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -58,20 +58,21 @@ export default function login() {
   }
 
   useEffect(() => {
-    console.log("loginFetcher.data", loginFetcher.data);
-    if (loginFetcher.data?.success === false) {
-      toast.error(loginFetcher.data.message);
+    const response = loginFetcher.data as { success: boolean, message: string };
+    if (response?.success === false) {
+      toast.error(response.message);
     }
-    if (loginFetcher.data?.success === true) {
+    if (response?.success === true) {
       toast.success("ログインしました");
     }
   }, [loginFetcher.data]);
 
   useEffect(() => {
-    if (createUserFetcher.data?.success === false) {
-      toast.error(createUserFetcher.data.message);
+    const response = createUserFetcher.data as { success: boolean, message: string };
+    if (response?.success === false) {
+      toast.error(response.message);
     }
-    if (createUserFetcher.data?.success === true) {
+    if (response?.success === true) {
       toast.success("新規登録しました");
     }
   }, [createUserFetcher.data]);
@@ -91,6 +92,10 @@ export default function login() {
           {isRedirectedFromEditPost &&
           <div className="card-body bg-error">
             <p className="text-error-content">編集するにはログインする必要があります</p>
+          </div>}
+          {isError &&
+          <div className="card-body bg-error">
+            <p className="text-error-content">メールアドレスもしくはパスワードが一致しません</p>
           </div>}
           <div className="card-body">
             <H1>ログイン</H1>

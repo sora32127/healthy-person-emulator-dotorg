@@ -8,7 +8,7 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
         return await authenticator.authenticate("email-login", request, {
             successRedirect: visitorUrl ?? "/",
-            failureRedirect: "/login?error=true",
+            failureRedirect: "/login?refferer=error",
             throwOnError: true,
         });
     } catch (e) {
