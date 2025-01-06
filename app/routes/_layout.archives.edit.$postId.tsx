@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import toast, { Toaster } from "react-hot-toast";
 import { MakeToastMessage } from "~/utils/makeToastMessage";
+import { authenticator } from "~/modules/auth.google.server";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -33,10 +34,24 @@ const postEditSchema = z.object({
 
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
+async function getUserUuid(request: Request) {
+  const userObject = await authenticator.isAuthenticated(request);
+  if (!userObject) {
+    // ログインしていない場合は、ログイン画面にリダイレクトする
+    const url = new URL(request.url)
+    const pathName = url.pathname
+    const headers = await setVisitorCookieData({
+        redirectUrl: pathName
+    });
+    throw redirect('/login', { headers });
+  }
+  return userObject.userUuid;
+ }
+
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
-  const { userId } = await getAuth({ request, params, context });
-  if (!userId) {
+  const userUuid = await getUserUuid(request);
+  if (!userUuid) {
     const url = new URL(request.url)
     const pathName = url.pathname
     const headers = await setVisitorCookieData({
@@ -64,7 +79,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     - なおかつ、自分以外のユーザーIDが格納されている
     - なおかつ、lasteHeartBeatAtUTCから30分以内である
   */
-  const isEditing = nowEditingInfo && nowEditingInfo.userId !== userId && (new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime()) < 30 * 60 * 1000;
+  const isEditing = nowEditingInfo && nowEditingInfo.userId !== userUuid && (new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime()) < 30 * 60 * 1000;
 
   if (isEditing && nowEditingInfo){
     // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
@@ -74,7 +89,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       postMarkdown: null,
       tagNames: null,
       allTagsForSearch: null,
-      userId,
+      userUuid,
       postId,
       isEditing: true,
       editHistory: null,
@@ -91,7 +106,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   await prisma.nowEditingPages.create({
     data: {
       postId: Number(postId),
-      userId: userId,
+      userId: userUuid,
     },
   });
 
@@ -161,7 +176,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     tagNames,
     postMarkdown,
     allTagsForSearch,
-    userId,
+    userUuid,
     CF_TURNSTILE_SITEKEY,
     isEditing:false,
     postId,
@@ -170,7 +185,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
 }
 
 export default function EditPost() {
-  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userId, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { postData, postMarkdown, tagNames, allTagsForSearch, isEditing, postId, userUuid, editHistory, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
   const [isSubmitButtonOpen, setIsSubmitButtonOpen] = useState(false);
 
@@ -180,7 +195,7 @@ export default function EditPost() {
       postTitle: postData?.postTitle ?? '',
       postContent: postMarkdown ?? '',
       tags: tagNames ?? [],
-      userId: userId ?? '',
+      userId: userUuid ?? '',
     },
   });
 
@@ -188,7 +203,7 @@ export default function EditPost() {
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-8 shadow-lg">
-          <p className="text-xl font-bold mb-4">{userId}さんが編集中です。</p>
+          <p className="text-xl font-bold mb-4">{userUuid}さんが編集中です。</p>
           <NavLink to={`/archives/${postId}`} className="block w-full text-center text-white bg-blue-500 hover:bg-blue-600 py-2 rounded-md">
             戻る
           </NavLink>
@@ -324,7 +339,7 @@ export default function EditPost() {
               />
             </div>
             {errors.postContent && <p className="text-error">{errors.postContent.message}</p>}
-            <input type="hidden" name="userId" value={userId} />
+            <input type="hidden" name="userId" value={userUuid} />
             <Turnstile
               siteKey={CF_TURNSTILE_SITEKEY}
               onSuccess={handleTurnstileSuccess}
