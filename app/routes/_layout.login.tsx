@@ -98,7 +98,7 @@ export default function login() {
             <p className="text-error-content">メールアドレスもしくはパスワードが一致しません</p>
           </div>}
           <div className="card-body">
-            <H1>ログイン</H1>
+            <H1>ユーザー認証</H1>
             <GoogleLoginButton onClick={handleGoogleLogin}/>
             <p className="text-center text-sm py-6">もしくは</p>
             <Form method="post" action="/login" className="space-y-4">
@@ -149,8 +149,8 @@ export default function login() {
   
 export const meta : MetaFunction = () => {
     const commonMeta = commonMetaFunction({
-        title: "ログイン",
-        description: "ログインして編集しよう",
+        title: "ユーザー認証",
+        description: "ユーザー認証して編集しよう",
         url: "https://healthy-person-emulator.org/login",
         image: null
     });
