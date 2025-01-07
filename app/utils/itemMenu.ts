@@ -14,7 +14,6 @@ export function getNavItems(isSignedIn: boolean){
         ...(isSignedIn
           ? [{ to: "/logout", text: "ログアウト", icon: LogOut }]
           : [
-              { to: "/signup", text: "サインアップ", icon: UserPlus },
               { to: "/login", text: "ログイン", icon: LogIn },
             ]),
     ]

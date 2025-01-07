@@ -1,7 +1,7 @@
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import { setVisitorCookieData } from "./visitor.server";
 
-const { getSession, commitSession, destroySession } = createCookieSessionStorage({
+export const sessionStorage = createCookieSessionStorage({
     cookie: {
         name: "__healthy_person_emulator",
         httpOnly: true,
@@ -13,7 +13,7 @@ const { getSession, commitSession, destroySession } = createCookieSessionStorage
     }
 });
 
-export { getSession, commitSession, destroySession };
+export const { getSession, commitSession, destroySession } = sessionStorage;
 
 export async function requireUserId(request: Request){
     const session = await getSession(request.headers.get('Cookie'));

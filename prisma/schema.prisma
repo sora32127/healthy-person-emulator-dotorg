@@ -176,3 +176,19 @@ model DimStopWords {
 
   @@map("dim_stop_words")
 }
+
+model DimUsers {
+  userId Int @id @default(autoincrement()) @map("user_id")
+  email String @unique @map("email")
+  encryptedPassword String? @map("encrypted_password")
+  userCreatedAtGMT DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("user_created_at_gmt") @db.Timestamptz(6)
+  userCreatedAtJST DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("user_created_at_jst") @db.Timestamptz(6)
+  userAuthType UserAuthType @map("user_auth_type")
+  userUuid String @unique @default(dbgenerated("gen_random_uuid()")) @map("user_uuid") @db.Uuid
+  @@map("dim_users")
+}
+
+enum UserAuthType {
+  Email
+  Google
+}
