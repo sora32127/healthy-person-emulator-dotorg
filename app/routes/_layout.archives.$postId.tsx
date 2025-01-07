@@ -26,6 +26,9 @@ import { VoteButton } from "~/components/VoteButton";
 import { SNSLinks } from "~/components/SNSLinks";
 import { CommonNavLink } from "~/components/CommonNavLink";
 import { data } from "@remix-run/node";
+import { authenticator } from "~/modules/auth.google.server";
+import { setIsLoginModalOpenAtom } from "~/stores/loginmodal";
+import { useSetAtom } from "jotai";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -44,17 +47,21 @@ export async function loader({ request }:LoaderFunctionArgs){
     const postId = Number(url.pathname.split("/")[2]);
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
+    const isAuthenticated = await authenticator.isAuthenticated(request);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY };
+    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated };
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
+  const isUserAuthenticated = isAuthenticated !== null;
+  const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
+  
 
   const POSTID = data.postId;
   const isLiked = likedPages.includes(POSTID);
@@ -284,13 +291,19 @@ export default function Component() {
           </div>
       </div>
         <div className="my-6">
-          <NavLink
-            to={`/archives/edit/${POSTID}`}
+          <button
+            onClick={() => {
+              if (isUserAuthenticated) {
+                window.location.href = `/archives/edit/${POSTID}`;
+              } else {
+                setIsLoginModalOpen(true);
+              }
+            }}
+            type="button"
             className="btn-primary rounded px-4 py-2 mx-1 my-20"
-            viewTransition
           >
             編集する
-          </NavLink>
+          </button>
         </div>
         <H2>関連記事</H2>
         <div className="w-full px-1">

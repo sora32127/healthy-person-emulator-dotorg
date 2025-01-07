@@ -7,11 +7,14 @@ import LogoutIcon from "~/components/icons/LogoutIcon";
 import MenuIcon from "~/components/icons/MenuIcon";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import { Footer } from "~/components/Footer";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
 import { getNavItems } from "~/utils/itemMenu";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "~/modules/auth.google.server";
+import { Modal } from "~/components/Modal";
+import GoogleLoginButton from "~/components/GoogleAuthButton";
+import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from "~/stores/loginmodal";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userObject = await authenticator.isAuthenticated(request);
@@ -25,7 +28,8 @@ function renderDesktopHeader(){
   const location = useLocation();
   const currentLocation = `${location.pathname}${location.search ? `${location.search}` : ""}`;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  
+  const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
+
   return (
     <>
       <div 
@@ -39,11 +43,24 @@ function renderDesktopHeader(){
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = item.to === currentLocation;
+                const isLoginButton = item.to === "/login";
 
                 return (
                   <li key={item.to} className="h-[40px]">
+                    {isLoginButton ? (
+                      <button 
+                        onClick={() => setIsLoginModalOpen(true)}
+                        className={`w-full flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
+                        type="button"
+                      >
+                        <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
+                        <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
+                          {item.text}
+                        </span>
+                      </button>
+                    ) : (
                       <NavLink 
-                        to={item.to} 
+                        to={item.to}
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                         viewTransition
                       >
@@ -52,6 +69,7 @@ function renderDesktopHeader(){
                           {item.text}
                         </span>
                       </NavLink>
+                    )}
                   </li>
                 );
               })}
@@ -69,7 +87,7 @@ function renderDesktopHeader(){
 function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
   const [ isSignedIn ] = useAtom(isSignedInAtom);
   const navItems = getNavItems(isSignedIn);
-
+  const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
   return (
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
@@ -115,19 +133,39 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void){
                 <ThemeSwitcher />
               </div>
               <ul className="p-4 w-50 text-base-content min-h-screen py-1 flex flex-col">
-                {navItems.map((item) => (
-                  <li key={item.to} className="justify-center">
-                      <NavLink to={item.to} onClick={() => {
-                        document.getElementById('drawer-toggle')?.click();
-                      }}
-                      className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
-                      viewTransition
-                      >
-                        <item.icon className="w-5 h-5 stroke-current fill-none" />
-                        {item.text}
-                      </NavLink>
-                  </li>
-                ))}
+                {navItems.map((item) => {
+                  const isLoginButton = item.to === "/login";
+                  
+                  return (
+                    <li key={item.to} className="justify-center">
+                      {isLoginButton ? (
+                        <button
+                          onClick={() => {
+                            setIsLoginModalOpen(true);
+                            document.getElementById('drawer-toggle')?.click();
+                          }}
+                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2 w-full"
+                          type="button"
+                        >
+                          <item.icon className="w-5 h-5 stroke-current fill-none" />
+                          {item.text}
+                        </button>
+                      ) : (
+                        <NavLink 
+                          to={item.to} 
+                          onClick={() => {
+                            document.getElementById('drawer-toggle')?.click();
+                          }}
+                          className="flex gap-x-3 my-3 hover:bg-base-200 rounded-lg p-2"
+                          viewTransition
+                        >
+                          <item.icon className="w-5 h-5 stroke-current fill-none" />
+                          {item.text}
+                        </NavLink>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
@@ -146,7 +184,9 @@ export default function Component() {
   const user = useUser();
   const [ _, setAuthState ] = useAtom(setAuthStateAtom);
   const { userObject } = useLoaderData<typeof loader>();
-
+  const isLoginModalOpen = useAtomValue(getIsLoginModalOpenAtom);
+  const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
+  
   useEffect(() => {
     if (userObject) {
       setAuthState({
@@ -258,6 +298,18 @@ export default function Component() {
           }}>閉じる</button>
         </form>
     </dialog>
+    <Modal
+      isOpen={isLoginModalOpen}
+      onClose={() => {
+        setIsLoginModalOpen(false);
+      }}
+      title="ログイン"
+      showCloseButton={false}
+    >
+      <div className="mx-4 my-4">
+        <GoogleLoginButton />
+      </div>
+    </Modal>
     </div>
   );
 }
