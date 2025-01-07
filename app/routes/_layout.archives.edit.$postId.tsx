@@ -2,7 +2,6 @@ import { redirect } from "@remix-run/node";
 import { NavLink, useFetcher, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { useEffect, useState } from "react";
-import { getAuth } from "@clerk/remix/ssr.server";
 import { marked } from 'marked';
 
 import type { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";

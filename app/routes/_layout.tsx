@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, Outlet, NavLink, useLocation, useLoaderData } from "@remix-run/react";
-import { useUser, SignOutButton } from "@clerk/remix";
 import PostIcon from "~/components/icons/PostIcon";
 import SearchIcon from "~/components/icons/SearchIcon";
 import LogoutIcon from "~/components/icons/LogoutIcon";
@@ -182,7 +181,6 @@ export default function Component() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const user = useUser();
   const [ _, setAuthState ] = useAtom(setAuthStateAtom);
   const { userObject } = useLoaderData<typeof loader>();
   const isLoginModalOpen = useAtomValue(getIsLoginModalOpenAtom);

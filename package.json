@@ -16,8 +16,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@clerk/localizations": "^3.9.5",
-    "@clerk/remix": "^4.4.6",
     "@google/generative-ai": "^0.21.0",
     "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.1.0",
