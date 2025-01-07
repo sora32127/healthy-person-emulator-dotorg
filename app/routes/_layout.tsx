@@ -15,6 +15,7 @@ import { authenticator } from "~/modules/auth.google.server";
 import { Modal } from "~/components/Modal";
 import GoogleLoginButton from "~/components/GoogleAuthButton";
 import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from "~/stores/loginmodal";
+import toast, { Toaster } from "react-hot-toast";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userObject = await authenticator.isAuthenticated(request);
@@ -242,9 +243,16 @@ export default function Component() {
   const location = useLocation();
   const isInPostPage = location.pathname === "/post";
 
+  useEffect(() => {
+    if (location.search === "?loginSuccess=true") {
+      toast.success("ログインしました", { id: "loginSuccess" });
+    }
+  }, [location.search]);
+
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Toaster />
       <div className="hidden md:block">
         {renderDesktopHeader()}
       </div>

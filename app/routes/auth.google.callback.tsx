@@ -6,7 +6,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const visitorCookieData = await getVisitorCookieData(request);
   const visitorRedirectUrl = visitorCookieData.redirectUrl;
   return authenticator.authenticate('google', request, {
-    successRedirect: visitorRedirectUrl ?? '/',
+    successRedirect: `${visitorRedirectUrl ?? '/'}?loginSuccess=true`,
     failureRedirect: '/login',
   })
 }
