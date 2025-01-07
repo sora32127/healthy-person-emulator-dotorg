@@ -296,6 +296,7 @@ export default function Component() {
               if (isUserAuthenticated) {
                 window.location.href = `/archives/edit/${POSTID}`;
               } else {
+                toast.error("編集するにはユーザー登録が必要です");
                 setIsLoginModalOpen(true);
               }
             }}
