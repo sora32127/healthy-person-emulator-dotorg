@@ -311,7 +311,7 @@ export default function Component() {
       onClose={() => {
         setIsLoginModalOpen(false);
       }}
-      title="ログイン"
+      title="ユーザー認証"
       showCloseButton={false}
     >
       <div className="mx-4 my-4">
