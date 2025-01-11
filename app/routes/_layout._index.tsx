@@ -1,6 +1,6 @@
 import { NavLink, useLoaderData } from "@remix-run/react";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
+import { getFeedComments, getFeedPosts, getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
 import ReloadButton from "~/components/ReloadButton";
 import PostSection from "~/components/PostSection";
 import CommentSection from "~/components/CommentSection";
@@ -19,11 +19,11 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const tab = url.searchParams.get("tab") || "trend";
-    const mostRecentPosts = await getRecentPosts();
-    const recentVotedPosts = await getRecentVotedPosts();
+    const mostRecentPosts = await getFeedPosts(1, "timeDesc", 12, );
+    const recentVotedPosts = await getFeedPosts(1, "likes", 12, 24, 0);
     const communityPosts = await getRecentPostsByTagId(986);
     const famedPosts = await getRecentPostsByTagId(575);
-    const mostRecentComments = await getRecentComments();
+    const mostRecentComments = await getFeedComments(1, "timeDesc");
     const randomPosts = await getRandomPosts();
     const randomComments = await getRandomComments();
     return {
@@ -44,21 +44,21 @@ export default function Feed() {
         <div>
             <div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
-                    <PostSection title="最近いいねされた投稿" posts={recentVotedPosts} identifier="voted">
+                    <PostSection title="最近いいねされた投稿" posts={recentVotedPosts.result} identifier="voted">
                         <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
                             <NavLink to="/feed?p=2&likeFrom=48&likeTo=0&type=likes" className="block w-full h-full">
                                 最近いいねされた投稿を見る
                             </NavLink>
                         </button>
                     </PostSection>
-                    <CommentSection title="最近のコメント" comments={mostRecentComments}>
+                    <CommentSection title="最近のコメント" comments={mostRecentComments.result}>
                         <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
                             <NavLink to="/comment?p=2&type=timeDesc" className="block w-full h-full">
                                 最近のコメントを見る
                             </NavLink>
                         </button>
                     </CommentSection>
-                    <PostSection title="最新の投稿" posts={mostRecentPosts} identifier="latest">
+                    <PostSection title="最新の投稿" posts={mostRecentPosts.result} identifier="latest">
                         <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
                             <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
                                 最新の投稿を見る
