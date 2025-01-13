@@ -27,7 +27,7 @@ export default function BookmarkLayout(){
         <div>
             <H1>ブックマーク</H1>
             <BookMarkView bookmarkPosts={bookmarkPosts} />
-            
+
         </div>
     )
 }
@@ -40,7 +40,14 @@ function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[]
                     <div className="flex flex-col gap-2">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 sm:gap-x-3">
                             <time className="text-sm text-gray-500">
-                                {post.bookmarkDateJST.toLocaleDateString()}
+                                {post.bookmarkDateJST.toLocaleString('ja-JP', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }).replace(/\//g, '-')}
                             </time>
                             <CommonNavLink 
                                 to={`/archives/${post.postId}`}
