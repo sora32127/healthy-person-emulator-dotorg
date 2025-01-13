@@ -13,7 +13,6 @@ import { MarkdownEditor } from "~/components/MarkdownEditor";
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { setVisitorCookieData } from "~/modules/visitor.server";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,12 +36,7 @@ async function getUserUuid(request: Request) {
   const userObject = await authenticator.isAuthenticated(request);
   if (!userObject) {
     // ログインしていない場合は、ログイン画面にリダイレクトする
-    const url = new URL(request.url)
-    const pathName = url.pathname
-    const headers = await setVisitorCookieData({
-        redirectUrl: pathName
-    });
-    throw redirect('/login?refferer=fromEditPost', { headers });
+    return undefined;
   }
   return userObject.userUuid;
  }
@@ -51,12 +45,7 @@ async function getUserUuid(request: Request) {
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const userUuid = await getUserUuid(request);
   if (!userUuid) {
-    const url = new URL(request.url)
-    const pathName = url.pathname
-    const headers = await setVisitorCookieData({
-        redirectUrl: pathName
-    });
-    throw redirect('/login', { headers });
+    throw redirect('/login?refferer=fromEditPost');
   }
   const postId = params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({
