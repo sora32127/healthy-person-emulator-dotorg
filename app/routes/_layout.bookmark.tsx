@@ -2,7 +2,7 @@ import { type MetaFunction, redirect, type LoaderFunctionArgs } from "@remix-run
 import { useLoaderData } from "@remix-run/react";
 import { CommonNavLink } from "~/components/CommonNavLink";
 import { authenticator } from "~/modules/auth.google.server";
-import { getBookmarkPosts, getUserId, PostCardData } from "~/modules/db.server";
+import { getBookmarkPostsByPagenation, getUserId, type BookmarkPostCardData } from "~/modules/db.server";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { ThumbsUp, ThumbsDown, MessageSquareText } from 'lucide-react';
 
@@ -12,7 +12,7 @@ export async function loader({ request }: LoaderFunctionArgs){
         return redirect("/?referrer=fromBookmark");
     }
     const userId = await getUserId(isAuthenticated.userUuid);
-    const bookmarkPosts = await getBookmarkPosts(userId);
+    const bookmarkPosts = await getBookmarkPostsByPagenation(userId, 1, 10);
     return { bookmarkPosts, email: isAuthenticated.email };
 }
 
@@ -29,7 +29,7 @@ export default function BookmarkLayout(){
     )
 }
 
-function BookMarkView({ bookmarkPosts }: { bookmarkPosts: PostCardData[] }){
+function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[] }){
     return (
         <ul>
             {bookmarkPosts.map((post) => (

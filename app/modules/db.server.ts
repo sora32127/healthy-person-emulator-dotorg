@@ -314,24 +314,26 @@ export async function getUserId(userUuid: string): Promise<number>{
     return userId?.userId || 0;
 }
 
-export async function getBookmarkPosts(userId: number): Promise<PostCardData[]>{
-    const bookmarkPostIds = await prisma.fctUserBookmarkActivity.findMany({
+
+
+export async function getBookmarkPostsByPagenation(userId: number, pageNumber: number, chunkSize: number): Promise<BookmarkPostCardData[]>{
+    const offset = (pageNumber - 1) * chunkSize;
+    const bookmarkPostIdsAndDate = await prisma.fctUserBookmarkActivity.findMany({
         where: { userId },
-        select: { postId: true },
-    }).then((bookmarkPosts) => {
-        return bookmarkPosts.map((bookmarkPost) => {
-            return bookmarkPost.postId;
-        })
+        select: { postId: true, bookmarkDateJST: true },
+        skip: offset,
+        take: chunkSize,
+        orderBy: { bookmarkDateJST: "desc" },
     })
 
     const commentCount = await prisma.dimComments.groupBy({
         by: ["postId"],
         _count: { commentId: true },
-        where: { postId: { in: bookmarkPostIds } },
+        where: { postId: { in: bookmarkPostIdsAndDate.map((bookmark) => bookmark.postId) } },
     })
 
     const bookmarkPosts = await prisma.dimPosts.findMany({
-        where: { postId: { in: bookmarkPostIds } },
+        where: { postId: { in: bookmarkPostIdsAndDate.map((bookmark) => bookmark.postId) } },
         select: {
             postId: true,
             postTitle: true,
@@ -352,6 +354,7 @@ export async function getBookmarkPosts(userId: number): Promise<PostCardData[]>{
             ...post,
             countComments: count,
             tags: post.rel_post_tags.map((tag) => tag.dimTag),
+            bookmarkDateJST: bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)?.bookmarkDateJST ?? new Date(),
         }
     })
     return bookmarkPostsWithCountComments;
@@ -387,6 +390,11 @@ export const PostCardDataSchema = z.object({
 })
 
 export type PostCardData = z.infer<typeof PostCardDataSchema>;
+
+const BookmarkPostCardDataSchema = PostCardDataSchema.extend({
+    bookmarkDateJST: z.date(),
+})
+export type BookmarkPostCardData = z.infer<typeof BookmarkPostCardDataSchema>;
 
 export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>{
     const recentPosts = await prisma.relPostTags.findMany({
