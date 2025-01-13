@@ -243,7 +243,15 @@ export default function Component() {
   }
 
   const bookmarkFetcher = useFetcher();
+  const [isBookmarkSubmitting, setIsBookmarkSubmitting] = useState(false);
   const handleBookmarkPost = async () => {
+    if (!isAuthenticated) {
+      handleSetVisitorRedirectURL();
+      toast.error("記事をブックマークするにはユーザー登録が必要です");
+      setIsLoginModalOpen(true);
+      return;
+    }
+    setIsBookmarkSubmitting(true);
     const formData = new FormData();
     formData.append("action", "bookmarkPost");
     formData.append("postId", POSTID.toString());
@@ -252,6 +260,16 @@ export default function Component() {
       action: `/archives/${POSTID}`,
     });
   }
+  useEffect(() => {
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === true) {
+      setIsBookmarkSubmitting(false);
+      toast.success((bookmarkFetcher.data as { message: string })?.message);
+    }
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === false) {
+      setIsBookmarkSubmitting(false);
+      toast.error((bookmarkFetcher.data as { message: string })?.message);
+    }
+  }, [bookmarkFetcher.data]);
 
   return (
     <>
@@ -317,7 +335,8 @@ export default function Component() {
               type="button"
               onClick={() => handleBookmarkPost()}
               className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
-                ${isBookmarked ? "text-green-500 hover:text-base-content" : "text-base-content hover:text-green-500"}`}
+                ${isBookmarked ? "text-green-500 hover:text-base-content" : "text-base-content hover:text-green-500"}
+                ${isBookmarkSubmitting ? "animate-spin" : ""}`}
             >
               <Bookmark className="fill-none" />
               <p className="text-xs">
