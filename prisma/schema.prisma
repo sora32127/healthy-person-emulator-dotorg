@@ -99,28 +99,29 @@ model nowEditingPages {
 
 // content_embeddingとtoken_countはprismaでは使わず、supabaseのクライアントを使って操作する想定となっている
 model DimPosts {
-  postId                Int                    @id @unique @default(autoincrement()) @map("post_id")
-  postAuthorIPHash      String                 @map("post_author_ip_hash")
-  postDateJst           DateTime               @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_date_jst") @db.Timestamp(6)
-  postDateGmt           DateTime               @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_date_gmt") @db.Timestamp(6)
-  postContent           String                 @map("post_content")
-  postTitle             String                 @map("post_title") @db.VarChar(255)
-  commentStatus         String                 @map("comment_status") @db.VarChar(50)
-  countLikes            Int                    @default(0) @map("count_likes")
-  countDislikes         Int                    @default(0) @map("count_dislikes")
-  uuid                  String                 @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
-  content_embedding     Unsupported("vector")?
-  ogpImageUrl           String?                @map("ogp_image_url")
-  tweetIdOfFirstTweet   String?                @map("tweet_id_of_first_tweet")
-  blueskyPostUriOfFirstPost String?            @map("bluesky_post_uri_of_first_post")
-  misskeyNoteIdOfFirstNote String?             @map("misskey_note_id_of_first_note")
-  isWelcomed            Boolean?               @default(false) @map("is_welcomed")
-  isWelcomedExplanation String?                @map("is_welcomed_explanation")
-  dimComments           DimComments[]
-  fct_post_edit_history FctPostEditHistory[]
-  fct_post_vote_history FctPostVoteHistory[]
-  now_editing_pages     nowEditingPages?
-  rel_post_tags         RelPostTags[]
+  postId                    Int                       @id @unique @default(autoincrement()) @map("post_id")
+  postAuthorIPHash          String                    @map("post_author_ip_hash")
+  postDateJst               DateTime                  @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("post_date_jst") @db.Timestamp(6)
+  postDateGmt               DateTime                  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("post_date_gmt") @db.Timestamp(6)
+  postContent               String                    @map("post_content")
+  postTitle                 String                    @map("post_title") @db.VarChar(255)
+  commentStatus             String                    @map("comment_status") @db.VarChar(50)
+  countLikes                Int                       @default(0) @map("count_likes")
+  countDislikes             Int                       @default(0) @map("count_dislikes")
+  uuid                      String                    @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
+  content_embedding         Unsupported("vector")?
+  ogpImageUrl               String?                   @map("ogp_image_url")
+  tweetIdOfFirstTweet       String?                   @map("tweet_id_of_first_tweet")
+  blueskyPostUriOfFirstPost String?                   @map("bluesky_post_uri_of_first_post")
+  misskeyNoteIdOfFirstNote  String?                   @map("misskey_note_id_of_first_note")
+  isWelcomed                Boolean?                  @default(false) @map("is_welcomed")
+  isWelcomedExplanation     String?                   @map("is_welcomed_explanation")
+  dimComments               DimComments[]
+  fct_post_edit_history     FctPostEditHistory[]
+  fct_post_vote_history     FctPostVoteHistory[]
+  now_editing_pages         nowEditingPages?
+  rel_post_tags             RelPostTags[]
+  FctUserBookmarkActivity   FctUserBookmarkActivity[]
 
   @@index([content_embedding])
   @@map("dim_posts")
@@ -143,24 +144,24 @@ model FctPostEditHistory {
 }
 
 model FctAICompletionSuggestionHistory {
-  suggestionId      String   @id @default(dbgenerated("gen_random_uuid()")) @map("suggestion_id") @db.Uuid
-  suggestedUserIPHash  String   @map("suggested_user_ip_hash")
-  suggestionAtUtc   DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("suggest_at_utc") @db.Timestamptz(6)
-  suggestionAtJst   DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("suggest_at_jst") @db.Timestamptz(6)
-  usedTokens         Int      @map("used_token")
-  promptText        String   @map("prompt_text")
-  contextText       String   @map("context_text")
-  text              String   @map("text")
-  suggestionResult String[] @map("suggestion_result")
+  suggestionId        String   @id @default(dbgenerated("gen_random_uuid()")) @map("suggestion_id") @db.Uuid
+  suggestedUserIPHash String   @map("suggested_user_ip_hash")
+  suggestionAtUtc     DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("suggest_at_utc") @db.Timestamptz(6)
+  suggestionAtJst     DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("suggest_at_jst") @db.Timestamptz(6)
+  usedTokens          Int      @map("used_token")
+  promptText          String   @map("prompt_text")
+  contextText         String   @map("context_text")
+  text                String   @map("text")
+  suggestionResult    String[] @map("suggestion_result")
 
   @@map("fct_aicompletion_suggestion_history")
 }
 
 model FctAICompletionCommitHistory {
-  commitId          String   @id @default(dbgenerated("gen_random_uuid()")) @map("commit_id") @db.Uuid
+  commitId         String   @id @default(dbgenerated("gen_random_uuid()")) @map("commit_id") @db.Uuid
   commitAtUtc      DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("commit_at_utc") @db.Timestamptz(6)
   commitAtJst      DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("commit_at_jst") @db.Timestamptz(6)
-  commitUserIPHash  String   @map("commit_user_ip_hash")
+  commitUserIPHash String   @map("commit_user_ip_hash")
   suggestionResult String[] @map("suggestion_result")
   commitText       String   @map("commit_text")
 
@@ -168,27 +169,41 @@ model FctAICompletionCommitHistory {
 }
 
 model DimStopWords {
-  stopWordId Int @id @default(autoincrement()) @map("stop_word_id")
-  stopWord String @map("stop_word")
+  stopWordId   Int      @id @default(autoincrement()) @map("stop_word_id")
+  stopWord     String   @map("stop_word")
   createdAtGMT DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at_gmt") @db.Timestamptz(6)
   createdAtJST DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("created_at_jst") @db.Timestamptz(6)
-  memo String @map("memo")
+  memo         String   @map("memo")
 
   @@map("dim_stop_words")
 }
 
 model DimUsers {
-  userId Int @id @default(autoincrement()) @map("user_id")
-  email String @unique @map("email")
-  encryptedPassword String? @map("encrypted_password")
-  userCreatedAtGMT DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("user_created_at_gmt") @db.Timestamptz(6)
-  userCreatedAtJST DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("user_created_at_jst") @db.Timestamptz(6)
-  userAuthType UserAuthType @map("user_auth_type")
-  userUuid String @unique @default(dbgenerated("gen_random_uuid()")) @map("user_uuid") @db.Uuid
+  userId                  Int                       @id @default(autoincrement()) @map("user_id")
+  email                   String                    @unique @map("email")
+  encryptedPassword       String?                   @map("encrypted_password")
+  userCreatedAtGMT        DateTime                  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("user_created_at_gmt") @db.Timestamptz(6)
+  userCreatedAtJST        DateTime                  @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("user_created_at_jst") @db.Timestamptz(6)
+  userAuthType            UserAuthType              @map("user_auth_type")
+  userUuid                String                    @unique @default(dbgenerated("gen_random_uuid()")) @map("user_uuid") @db.Uuid
+  FctUserBookmarkActivity FctUserBookmarkActivity[]
+
   @@map("dim_users")
 }
 
 enum UserAuthType {
   Email
   Google
+}
+
+model FctUserBookmarkActivity {
+  bookmarkId      Int      @id @default(autoincrement()) @map("bookmark_id")
+  userId          Int      @map("user_id")
+  postId          Int      @map("post_id")
+  bookmarkDateGMT DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("bookmark_date_gmt") @db.Timestamptz(6)
+  bookmarkDateJST DateTime @default(dbgenerated("(now() AT TIME ZONE 'jst'::text)")) @map("bookmark_date_jst") @db.Timestamptz(6)
+  dim_posts       DimPosts @relation(fields: [postId], references: [postId], onDelete: Cascade, map: "public_fct_user_bookmark_activity_post_id_fkey")
+  dim_users       DimUsers @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "public_fct_user_bookmark_activity_user_id_fkey")
+
+  @@map("fct_user_bookmark_activity")
 }
