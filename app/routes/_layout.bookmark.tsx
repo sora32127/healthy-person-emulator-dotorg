@@ -5,6 +5,7 @@ import { authenticator } from "~/modules/auth.google.server";
 import { getBookmarkPostsByPagenation, getUserId, type BookmarkPostCardData } from "~/modules/db.server";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 import { ThumbsUp, ThumbsDown, MessageSquareText } from 'lucide-react';
+import { H1 } from "~/components/Headings";
 
 export async function loader({ request }: LoaderFunctionArgs){
     const isAuthenticated = await authenticator.isAuthenticated(request);
@@ -20,10 +21,7 @@ export default function BookmarkLayout(){
     const { bookmarkPosts, email } = useLoaderData<typeof loader>();
     return (
         <div>
-            <h1>ブックマーク</h1>
-            <p>ブックマークした記事</p>
-            <p>メールアドレス: {email}</p>
-            <p>ブックマーク数: {bookmarkPosts.length}</p>
+            <H1>ブックマーク</H1>
             <BookMarkView bookmarkPosts={bookmarkPosts} />
         </div>
     )
@@ -31,14 +29,36 @@ export default function BookmarkLayout(){
 
 function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[] }){
     return (
-        <ul>
+        <ul className="space-y-4">
             {bookmarkPosts.map((post) => (
-                <li key={post.postId} className="flex gap-x-3 my-2">
-                    <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
-                    <div className="flex items-center gap-x-1">
-                        <ThumbsUp className="fill-none stroke-current gap-x-1" /> {post.countLikes}
-                        <ThumbsDown className="fill-none stroke-current gap-x-1" /> {post.countDislikes}
-                        <MessageSquareText className="fill-none stroke-current gap-x-1" /> {post.countComments}
+                <li key={post.postId} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 sm:gap-x-3">
+                            <time className="text-sm text-gray-500">
+                                {post.bookmarkDateJST.toLocaleDateString()}
+                            </time>
+                            <CommonNavLink 
+                                to={`/archives/${post.postId}`}
+                                className="text-base sm:text-lg font-medium hover:text-blue-600"
+                            >
+                                {post.postTitle}
+                            </CommonNavLink>
+                        </div>
+                        
+                        <div className="flex items-center gap-x-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-x-1">
+                                <ThumbsUp className="w-4 h-4 fill-none stroke-current" />
+                                <span>{post.countLikes}</span>
+                            </div>
+                            <div className="flex items-center gap-x-1">
+                                <ThumbsDown className="w-4 h-4 fill-none stroke-current" />
+                                <span>{post.countDislikes}</span>
+                            </div>
+                            <div className="flex items-center gap-x-1">
+                                <MessageSquareText className="w-4 h-4 fill-none stroke-current" />
+                                <span>{post.countComments}</span>
+                            </div>
+                        </div>
                     </div>
                 </li>
             ))}
