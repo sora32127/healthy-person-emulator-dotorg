@@ -10,6 +10,7 @@ export const exposedUserSchema = z.object({
   userUuid: z.string(),
   email: z.string(),
   userAuthType: z.enum(["Email", "Google"]),
+  photoUrl: z.string().optional()
 });
 
 export type ExposedUser = z.infer<typeof exposedUserSchema>;
@@ -49,6 +50,7 @@ const googleStrategy = new GoogleStrategy({
       userUuid: user.userUuid,
       email: user.email,
       userAuthType: user.userAuthType,
+      photoUrl: profile.photos[0].value,
     };
   },
 );

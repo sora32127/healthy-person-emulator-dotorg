@@ -7,7 +7,7 @@ import MenuIcon from "~/components/icons/MenuIcon";
 import ThemeSwitcher from "~/components/ThemeSwitcher";
 import { Footer } from "~/components/Footer";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
+import { getAuthStateAtom, isSignedInAtom, setAuthStateAtom } from "~/stores/auth";
 import { getNavItems } from "~/utils/itemMenu";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "~/modules/auth.google.server";
@@ -29,6 +29,8 @@ function renderDesktopHeader(){
   const currentLocation = `${location.pathname}${location.search ? `${location.search}` : ""}`;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
+  const authState = useAtomValue(getAuthStateAtom);
+  const photoUrl = authState.photoUrl;
 
   return (
     <>
@@ -76,8 +78,17 @@ function renderDesktopHeader(){
             </ul>
           </nav>
         </div>
-        <div className="h-[60px] px-4">
+        <div className="h-[60px] px-4 flex flex-col justify-center">
             <ThemeSwitcher />
+            <a href="/bookmark">
+              <div className="avatar">
+              {photoUrl ? (
+                <div className="w-7 h-7 ml-1 mt-2 rounded-full">
+                  <img src={photoUrl} alt="user" />
+                </div>
+              ) :　<></>}
+            </div>
+            </a>
         </div>
       </div>
     </>
@@ -193,6 +204,7 @@ export default function Component() {
         userUuid: userObject.userUuid,
         email: userObject.email,
         userAuthType: userObject.userAuthType,
+        photoUrl: userObject.photoUrl ?? null,
       });
     }
     if (!userObject) {
@@ -201,6 +213,7 @@ export default function Component() {
         userUuid: null,
         email: null,
         userAuthType: null,
+        photoUrl: null,
       });
     }
   }, [userObject, setAuthState]);
