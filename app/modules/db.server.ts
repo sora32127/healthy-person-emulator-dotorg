@@ -396,6 +396,15 @@ const BookmarkPostCardDataSchema = PostCardDataSchema.extend({
 })
 export type BookmarkPostCardData = z.infer<typeof BookmarkPostCardDataSchema>;
 
+export async function judgeIsBookmarked(postId: number, userUuid: string | undefined): Promise<boolean>{
+    if (!userUuid) return false;
+    const userId = await getUserId(userUuid);
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId, userId },
+    })
+    return bookmarkCount > 0;
+}
+
 export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>{
     const recentPosts = await prisma.relPostTags.findMany({
         where: { tagId },

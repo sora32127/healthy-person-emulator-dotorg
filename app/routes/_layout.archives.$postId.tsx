@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, ArchiveDataEntry, getUserId, addOrRemoveBookmark } from "~/modules/db.server";
+import { prisma, ArchiveDataEntry, getUserId, addOrRemoveBookmark, judgeIsBookmarked } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useEffect, useState } from "react";
@@ -50,13 +50,14 @@ export async function loader({ request }:LoaderFunctionArgs){
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
     const isAuthenticated = await authenticator.isAuthenticated(request);
+    const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated };
+    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated, isBookmarked };
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated, isBookmarked } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
@@ -315,7 +316,8 @@ export default function Component() {
             <button
               type="button"
               onClick={() => handleBookmarkPost()}
-              className="btn btn-circle disabled:text-green-500 hover:text-green-500 hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2"
+              className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
+                ${isBookmarked ? "text-green-500 hover:text-base-content" : "text-base-content hover:text-green-500"}`}
             >
               <Bookmark className="fill-none" />
               <p className="text-xs">
