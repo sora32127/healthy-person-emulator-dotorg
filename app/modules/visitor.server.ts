@@ -7,7 +7,6 @@ const sessionStorage = createCookieSessionStorage({
       maxAge: 1000 * 60 * 5, // 5 minutes
       path: "/",
       sameSite: "lax",
-      secrets: [process.env.SESSION_SECRET || "s3cr3t"],
       secure: process.env.NODE_ENV === "production",
   }
 });
@@ -20,9 +19,11 @@ export async function getVisitorCookieURL(request: Request): Promise<string> {
   return cookie.get("redirectUrl") ?? undefined;
 }
 
-export async function setVisitorCookieData(request: Request, redirectUrl: string): Promise<string> {
+export async function setVisitorCookieData(request: Request, redirectUrl: string): Promise<Headers> {
   const session = await getSession(request.headers.get('Cookie'));
   session.set("redirectUrl", redirectUrl);
   const cookie = await commitSession(session);
-  return cookie;
+  const headers = new Headers();
+  headers.append('Set-Cookie', cookie);
+  return headers;
 }

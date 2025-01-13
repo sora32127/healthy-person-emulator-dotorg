@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { getHashedUserIPAddress, getTurnStileSiteKey, validateRequest } from "~/modules/security.server";
 import toast, { Toaster } from "react-hot-toast";
 import { MakeToastMessage } from "~/utils/makeToastMessage";
-import { authenticator } from "~/modules/auth.google.server";
+import { authenticator, type ExposedUser } from "~/modules/auth.google.server";
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, "タイトルが必要です"),
@@ -33,19 +33,19 @@ const postEditSchema = z.object({
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
 async function getUserUuid(request: Request) {
-  const userObject = await authenticator.isAuthenticated(request);
+  const userObject = await authenticator.isAuthenticated(request) as {data: ExposedUser} | null;
   if (!userObject) {
     // ログインしていない場合は、ログイン画面にリダイレクトする
     return undefined;
   }
-  return userObject.userUuid;
+  return userObject.data?.userUuid;
  }
 
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const userUuid = await getUserUuid(request);
   if (!userUuid) {
-    throw redirect('/login?refferer=fromEditPost');
+    throw redirect("/");
   }
   const postId = params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({

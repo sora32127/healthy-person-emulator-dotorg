@@ -3,6 +3,8 @@ import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import { sessionStorage } from "./session.server";
 import { prisma } from "./db.server";
 import { z } from "zod";
+import { setVisitorCookieData } from "./visitor.server";
+import { data } from "@remix-run/node";
 /*
 ブラウザ側に露出しうるユーザーのデータのスキーマ
 */
@@ -30,7 +32,9 @@ const googleStrategy = new GoogleStrategy({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
 },
-  async ({ profile }: { profile: GoogleProfile }) => {
+  async ({ profile, request }: { profile: GoogleProfile, request: Request }) => {
+    const requestURL = new URL(request.url);
+    const headers = await setVisitorCookieData(request, requestURL.pathname);
     const email = getUserEmail(profile);
     const isUserExists = await judgeIsUserExists(email);
     if (!isUserExists) {
@@ -45,11 +49,11 @@ const googleStrategy = new GoogleStrategy({
     if (!user) {
       throw new Error("User not found");
     }
-    return {
+    return data({
       userUuid: user.userUuid,
       email: user.email,
       userAuthType: user.userAuthType,
-    };
+    }, { headers });
   },
 );
 
