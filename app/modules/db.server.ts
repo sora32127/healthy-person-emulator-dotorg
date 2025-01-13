@@ -306,6 +306,29 @@ async function getCountBookmarks(postId: number): Promise<number> {
     return bookmarkCount;
 }
 
+export async function getUserId(userUuid: string): Promise<number>{
+    const userId = await prisma.dimUsers.findUnique({
+        where: { userUuid },
+        select: { userId: true },
+    })
+    return userId?.userId || 0;
+}
+
+export async function addOrRemoveBookmark(postId: number, userId: number){
+    // Bookmarkが存在する場合は削除、存在しない場合は追加する
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId, userId },
+    })
+    if (bookmarkCount > 0){
+        await prisma.fctUserBookmarkActivity.deleteMany({
+            where: { postId, userId },
+        })
+        return { message: "ブックマークを削除しました", success: true }
+    }
+    await prisma.fctUserBookmarkActivity.create({ data: { postId, userId } });
+    return { message: "ブックマークしました", success: true }
+}
+
 export const PostCardDataSchema = z.object({
     postId: z.number(),
     postTitle: z.string(),

@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, ArchiveDataEntry } from "~/modules/db.server";
+import { prisma, ArchiveDataEntry, getUserId, addOrRemoveBookmark } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useEffect, useState } from "react";
@@ -241,6 +241,17 @@ export default function Component() {
     });
   }
 
+  const bookmarkFetcher = useFetcher();
+  const handleBookmarkPost = async () => {
+    const formData = new FormData();
+    formData.append("action", "bookmarkPost");
+    formData.append("postId", POSTID.toString());
+    bookmarkFetcher.submit(formData, {
+      method: "post",
+      action: `/archives/${POSTID}`,
+    });
+  }
+
   return (
     <>
       <div className="overflow-x-hidden max-w-full">
@@ -424,9 +435,21 @@ export async function action({ request }: ActionFunctionArgs) {
       return handleSubmitComment(formData, postId, userIpHashString);
     case "setVisitorRedirectURL":
       return handleSetVisitorRedirectURL(formData, request, postId);
+    case "bookmarkPost":
+      return handleBookmarkPost(request, postId);
     default:
       return data({ error: "Invalid action" }, { status: 400 });
   }
+}
+
+async function handleBookmarkPost(request:Request, postId: number){
+  const isAuthenticated = await authenticator.isAuthenticated(request);
+  if (!isAuthenticated) {
+    return data({ message: "記事をブックマークするにはログインが必要です。ログインしてください。", success: false }, { status: 401 });
+  }
+  const userId = await getUserId(isAuthenticated.userUuid);
+  const result = await addOrRemoveBookmark(postId, userId);
+  return data({ message: result.message, success: result.success });
 }
 
 async function handleSetVisitorRedirectURL(formData: FormData, request:Request, postId: number){
