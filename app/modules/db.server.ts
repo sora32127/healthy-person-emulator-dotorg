@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client"
 import { z } from "zod"
+import { formatDate } from "./util.server";
 
 declare global {
     var __prisma: PrismaClient | undefined;
@@ -354,10 +355,10 @@ export async function getBookmarkPostsByPagenation(userId: number, pageNumber: n
             ...post,
             countComments: count,
             tags: post.rel_post_tags.map((tag) => tag.dimTag),
-            bookmarkDateJST: bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)?.bookmarkDateJST ?? new Date(),
+            bookmarkDateJST: formatDate(bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)?.bookmarkDateJST ?? new Date()),
         }
     }).sort((a, b) => {
-        return b.bookmarkDateJST.getTime() - a.bookmarkDateJST.getTime();
+        return b.bookmarkDateJST.localeCompare(a.bookmarkDateJST);
     })
     return bookmarkPostsWithCountComments;
 }
@@ -394,7 +395,7 @@ export const PostCardDataSchema = z.object({
 export type PostCardData = z.infer<typeof PostCardDataSchema>;
 
 const BookmarkPostCardDataSchema = PostCardDataSchema.extend({
-    bookmarkDateJST: z.date(),
+    bookmarkDateJST: z.string(),
 })
 export type BookmarkPostCardData = z.infer<typeof BookmarkPostCardDataSchema>;
 
