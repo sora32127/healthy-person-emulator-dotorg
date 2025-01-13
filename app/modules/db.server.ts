@@ -314,12 +314,47 @@ export async function getUserId(userUuid: string): Promise<number>{
     return userId?.userId || 0;
 }
 
-export async function getBookmarkPosts(userId: number){
-    const bookmarkPosts = await prisma.fctUserBookmarkActivity.findMany({
+export async function getBookmarkPosts(userId: number): Promise<PostCardData[]>{
+    const bookmarkPostIds = await prisma.fctUserBookmarkActivity.findMany({
         where: { userId },
         select: { postId: true },
+    }).then((bookmarkPosts) => {
+        return bookmarkPosts.map((bookmarkPost) => {
+            return bookmarkPost.postId;
+        })
     })
-    return bookmarkPosts;
+
+    const commentCount = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: bookmarkPostIds } },
+    })
+
+    const bookmarkPosts = await prisma.dimPosts.findMany({
+        where: { postId: { in: bookmarkPostIds } },
+        select: {
+            postId: true,
+            postTitle: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            ogpImageUrl: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: { select: { tagName: true, tagId: true } },
+                },
+            },
+        },
+    })
+    const bookmarkPostsWithCountComments = bookmarkPosts.map((post) => {
+        const count = commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
+        return {
+            ...post,
+            countComments: count,
+            tags: post.rel_post_tags.map((tag) => tag.dimTag),
+        }
+    })
+    return bookmarkPostsWithCountComments;
 }
 
 export async function addOrRemoveBookmark(postId: number, userId: number){
