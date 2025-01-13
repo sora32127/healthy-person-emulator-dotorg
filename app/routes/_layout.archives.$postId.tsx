@@ -29,6 +29,7 @@ import { data } from "@remix-run/node";
 import { authenticator } from "~/modules/auth.google.server";
 import { setIsLoginModalOpenAtom } from "~/stores/loginmodal";
 import { useSetAtom } from "jotai";
+import { setVisitorCookieData } from "~/modules/visitor.server";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -228,6 +229,17 @@ export default function Component() {
   // コメントIDをURLに含めると、そのコメントにスクロールするための機能
   // http://localhost:3000/archives/46783#comment-32944
 
+  const setVisitorRedirectURLFetcher = useFetcher();
+  const handleSetVisitorRedirectURL = async () => {
+    const formData = new FormData();
+    formData.append("action", "setVisitorRedirectURL");
+    formData.append("postId", POSTID.toString());
+    setVisitorRedirectURLFetcher.submit(formData, {
+      method: "post",
+      action: `/archives/${POSTID}`,
+    });
+  }
+
   return (
     <>
       <div className="overflow-x-hidden max-w-full">
@@ -296,6 +308,7 @@ export default function Component() {
               if (isUserAuthenticated) {
                 window.location.href = `/archives/edit/${POSTID}`;
               } else {
+                handleSetVisitorRedirectURL();
                 toast.error("編集するにはユーザー登録が必要です");
                 setIsLoginModalOpen(true);
               }
@@ -398,9 +411,17 @@ export async function action({ request }: ActionFunctionArgs) {
       return handleVoteComment(formData, postId, userIpHashString, request);
     case "submitComment":
       return handleSubmitComment(formData, postId, userIpHashString);
+    case "setVisitorRedirectURL":
+      return handleSetVisitorRedirectURL(formData, request, postId);
     default:
       return data({ error: "Invalid action" }, { status: 400 });
   }
+}
+
+async function handleSetVisitorRedirectURL(formData: FormData, request:Request, postId: number){
+  const redirectURL = `/archives/edit/${postId}`;
+  const headers = await setVisitorCookieData(request, redirectURL);
+  return data({ message: "リダイレクトURLを設定しました", success: true }, { headers });
 }
 
 async function handleSetTurnstileToken(formData: FormData, request: Request, ipAddress: string) {

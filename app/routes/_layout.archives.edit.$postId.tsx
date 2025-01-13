@@ -1,10 +1,10 @@
 import { redirect } from "@remix-run/node";
-import { NavLink, useFetcher, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
+import { NavLink, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { NodeHtmlMarkdown } from "node-html-markdown"
 import { useEffect, useState } from "react";
 import { marked } from 'marked';
 
-import type { ActionFunction, LoaderFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import type { Tokens } from 'marked';
 
 import { prisma } from "~/modules/db.server";
@@ -13,7 +13,6 @@ import { MarkdownEditor } from "~/components/MarkdownEditor";
 import * as diff from 'diff';
 import { createEmbedding } from "~/modules/embedding.server";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
-import { setVisitorCookieData } from "~/modules/visitor.server";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,30 +32,11 @@ const postEditSchema = z.object({
 
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
-async function getUserUuid(request: Request) {
-  const userObject = await authenticator.isAuthenticated(request);
-  if (!userObject) {
-    // ログインしていない場合は、ログイン画面にリダイレクトする
-    const url = new URL(request.url)
-    const pathName = url.pathname
-    const headers = await setVisitorCookieData({
-        redirectUrl: pathName
-    });
-    throw redirect('/login?refferer=fromEditPost', { headers });
-  }
-  return userObject.userUuid;
- }
-
-
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
-  const userUuid = await getUserUuid(request);
+  const userObject = await authenticator.isAuthenticated(request);
+  const userUuid = userObject?.userUuid;
   if (!userUuid) {
-    const url = new URL(request.url)
-    const pathName = url.pathname
-    const headers = await setVisitorCookieData({
-        redirectUrl: pathName
-    });
-    throw redirect('/login', { headers });
+    throw redirect("/");
   }
   const postId = params.postId;
   const nowEditingInfo = await prisma.nowEditingPages.findUnique({
