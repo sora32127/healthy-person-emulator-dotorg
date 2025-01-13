@@ -26,6 +26,7 @@ export default function BookmarkLayout(){
     return (
         <div>
             <H1>ブックマーク</H1>
+            <p>{email}さんのブックマーク</p>
             <BookMarkView bookmarkPosts={bookmarkPosts} />
         </div>
     )
