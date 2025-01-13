@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client"
 import { z } from "zod"
+import { formatDate } from "./util.server";
 
 declare global {
     var __prisma: PrismaClient | undefined;
@@ -252,12 +253,20 @@ export class ArchiveDataEntry {
     tweetIdOfFirstTweet: string | null;
     blueskyPostUriOfFirstPost: string | null;
     misskeyNoteIdOfFirstNote: string | null;
+    countBookmarks: number;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
     */
 
-    private constructor(postData: PostData, comments: CommentData[], similarPosts: SimilarPostsData[], previousPost: PreviousOrNextPostData, nextPost: PreviousOrNextPostData){
+    private constructor(
+        postData: PostData, 
+        comments: CommentData[], 
+        similarPosts: SimilarPostsData[], 
+        previousPost: PreviousOrNextPostData, 
+        nextPost: PreviousOrNextPostData,
+        bookmarkCount: number
+    ){
         this.postId = postData.postId;
         this.postTitle = postData.postTitle;
         this.postURL = postData.postURL;
@@ -277,6 +286,7 @@ export class ArchiveDataEntry {
         this.tweetIdOfFirstTweet = postData.tweetIdOfFirstTweet;
         this.blueskyPostUriOfFirstPost = postData.blueskyPostUriOfFirstPost;
         this.misskeyNoteIdOfFirstNote = postData.misskeyNoteIdOfFirstNote;
+        this.countBookmarks = bookmarkCount;
     }
     
     static async getData(postId: number){
@@ -285,9 +295,87 @@ export class ArchiveDataEntry {
         const similarPosts = await getSimilarPosts(postId);
         const previousPost = await getPreviousPost(postId);
         const nextPost = await getNextPost(postId);
-        return new ArchiveDataEntry(postData, comments, similarPosts, previousPost, nextPost);
+        const countBookmarks = await getCountBookmarks(postId);
+        return new ArchiveDataEntry(postData, comments, similarPosts, previousPost, nextPost, countBookmarks);
     }
+}
 
+async function getCountBookmarks(postId: number): Promise<number> {
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId },
+    })
+    return bookmarkCount;
+}
+
+export async function getUserId(userUuid: string): Promise<number>{
+    const userId = await prisma.dimUsers.findUnique({
+        where: { userUuid },
+        select: { userId: true },
+    })
+    return userId?.userId || 0;
+}
+
+
+
+export async function getBookmarkPostsByPagenation(userId: number, pageNumber: number, chunkSize: number): Promise<BookmarkPostCardData[]>{
+    const offset = (pageNumber - 1) * chunkSize;
+    const bookmarkPostIdsAndDate = await prisma.fctUserBookmarkActivity.findMany({
+        where: { userId },
+        select: { postId: true, bookmarkDateJST: true },
+        skip: offset,
+        take: chunkSize,
+        orderBy: { bookmarkDateJST: "desc" },
+    })
+
+    const commentCount = await prisma.dimComments.groupBy({
+        by: ["postId"],
+        _count: { commentId: true },
+        where: { postId: { in: bookmarkPostIdsAndDate.map((bookmark) => bookmark.postId) } },
+    })
+
+    const bookmarkPosts = await prisma.dimPosts.findMany({
+        where: { postId: { in: bookmarkPostIdsAndDate.map((bookmark) => bookmark.postId) } },
+        select: {
+            postId: true,
+            postTitle: true,
+            postDateGmt: true,
+            countLikes: true,
+            countDislikes: true,
+            ogpImageUrl: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: { select: { tagName: true, tagId: true } },
+                },
+            },
+        },
+    })
+    const bookmarkPostsWithCountComments = bookmarkPosts.map((post) => {
+        const count = commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
+        return {
+            ...post,
+            countComments: count,
+            tags: post.rel_post_tags.map((tag) => tag.dimTag),
+            bookmarkDateJST: formatDate(bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)?.bookmarkDateJST ?? new Date()),
+        }
+    }).sort((a, b) => {
+        return b.bookmarkDateJST.localeCompare(a.bookmarkDateJST);
+    })
+    return bookmarkPostsWithCountComments;
+}
+
+export async function addOrRemoveBookmark(postId: number, userId: number){
+    // Bookmarkが存在する場合は削除、存在しない場合は追加する
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId, userId },
+    })
+    if (bookmarkCount > 0){
+        await prisma.fctUserBookmarkActivity.deleteMany({
+            where: { postId, userId },
+        })
+        return { message: "ブックマークを削除しました", success: true }
+    }
+    await prisma.fctUserBookmarkActivity.create({ data: { postId, userId } });
+    return { message: "ブックマークしました", success: true }
 }
 
 export const PostCardDataSchema = z.object({
@@ -306,126 +394,18 @@ export const PostCardDataSchema = z.object({
 
 export type PostCardData = z.infer<typeof PostCardDataSchema>;
 
-export async function getRecentPosts(): Promise<PostCardData[]>{
-    const recentPosts = await prisma.dimPosts.findMany({
-        orderBy: { postDateGmt: "desc" },
-        take: 12,
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            ogpImageUrl: true,
-            rel_post_tags: {
-                select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                            tagId: true,
-                        }
-                    }
-                },
-                orderBy: {
-                    dimTag: {
-                        tagName: "asc",
-                    }
-                }
-            }
-        },
-        where: {
-            postTitle: {
-                not: {
-                    contains: "%プログラムテスト%"
-                }
-            }
-        }
-        }).then((posts) => {
-        return posts.map((post) => {
-            return {
-                ...post,
-                tags: post.rel_post_tags.map((tag) => tag.dimTag),
-            }
-        })
+const BookmarkPostCardDataSchema = PostCardDataSchema.extend({
+    bookmarkDateJST: z.string(),
+})
+export type BookmarkPostCardData = z.infer<typeof BookmarkPostCardDataSchema>;
+
+export async function judgeIsBookmarked(postId: number, userUuid: string | undefined): Promise<boolean>{
+    if (!userUuid) return false;
+    const userId = await getUserId(userUuid);
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId, userId },
     })
-
-    const countComments = await prisma.dimComments.groupBy({
-        by: ["postId"],
-        _count: { commentId: true },
-        where: { postId: { in: recentPosts.map((post) => post.postId) } },
-    })
-
-    const recentPostsWithCountComments = recentPosts.map((post) => {
-        const count = countComments.find((c) => c.postId === post.postId)?._count.commentId || 0;
-        return {
-            ...post,
-            countComments: count,
-        }
-    })
-
-    return recentPostsWithCountComments;
-}
-
-export async function getRecentVotedPosts(): Promise<PostCardData[]>{
-    const recentVotedPostIds = await prisma.fctPostVoteHistory.groupBy({
-        by: ["postId"],
-        where: { 
-            voteDateGmt : { 
-                gte: new Date(new Date().getTime() - 48 * 60 * 60 * 1000),
-                lte: new Date(),
-            },
-            voteTypeInt : { in : [1]}
-        },
-        _count: { voteUserIpHash: true },
-        orderBy: { _count: { voteUserIpHash: "desc" } },
-        take: 12,
-    }).then((votes) => {
-        return votes.map((vote) => vote.postId)
-    })
-
-    const countComments = await prisma.dimComments.groupBy({
-        by: ["postId"],
-        _count: { commentId: true },
-        where: { postId: { in: recentVotedPostIds } },
-    })
-
-
-    const recentVotedPosts = await prisma.dimPosts.findMany({
-        where: { postId: { in: recentVotedPostIds } },
-        select: {
-            postId: true,
-            postTitle: true,
-            postDateGmt: true,
-            countLikes: true,
-            countDislikes: true,
-            ogpImageUrl: true,
-            rel_post_tags: {
-                select: {
-                    dimTag: {
-                        select: {
-                            tagName: true,
-                            tagId: true,
-                        }
-                    }
-                },
-                orderBy: {
-                    dimTag: {
-                        tagName: "asc",
-                    }
-                }
-            }
-        }
-    }).then((posts) => {
-        return posts.map((post) => {
-            return {
-                ...post,
-                tags: post.rel_post_tags.map((tag) => tag.dimTag),
-                countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
-            }
-        })
-    })
-
-    return recentVotedPosts;
+    return bookmarkCount > 0;
 }
 
 export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>{

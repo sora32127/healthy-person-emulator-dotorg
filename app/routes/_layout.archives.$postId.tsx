@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, ArchiveDataEntry } from "~/modules/db.server";
+import { prisma, ArchiveDataEntry, getUserId, addOrRemoveBookmark, judgeIsBookmarked } from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useEffect, useState } from "react";
@@ -30,6 +30,7 @@ import { authenticator } from "~/modules/auth.google.server";
 import { setIsLoginModalOpenAtom } from "~/stores/loginmodal";
 import { useSetAtom } from "jotai";
 import { setVisitorCookieData } from "~/modules/visitor.server";
+import { Bookmark } from "lucide-react";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -49,13 +50,14 @@ export async function loader({ request }:LoaderFunctionArgs){
     const data = await ArchiveDataEntry.getData(postId);
     const { likedPages, dislikedPages, likedComments, dislikedComments } = await getUserActivityData(request);
     const isAuthenticated = await authenticator.isAuthenticated(request);
+    const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
     const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
-    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated };
+    return { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated, isBookmarked };
 }
 
 export default function Component() {
-  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated } = useLoaderData<typeof loader>();
+  const { data, likedPages, dislikedPages, likedComments, dislikedComments, CF_TURNSTILE_SITEKEY, isAuthenticated, isBookmarked } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
@@ -240,6 +242,35 @@ export default function Component() {
     });
   }
 
+  const bookmarkFetcher = useFetcher();
+  const [isBookmarkSubmitting, setIsBookmarkSubmitting] = useState(false);
+  const handleBookmarkPost = async () => {
+    if (!isAuthenticated) {
+      handleSetVisitorRedirectURL();
+      toast.error("記事をブックマークするにはユーザー登録が必要です");
+      setIsLoginModalOpen(true);
+      return;
+    }
+    setIsBookmarkSubmitting(true);
+    const formData = new FormData();
+    formData.append("action", "bookmarkPost");
+    formData.append("postId", POSTID.toString());
+    bookmarkFetcher.submit(formData, {
+      method: "post",
+      action: `/archives/${POSTID}`,
+    });
+  }
+  useEffect(() => {
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === true) {
+      setIsBookmarkSubmitting(false);
+      toast.success((bookmarkFetcher.data as { message: string })?.message);
+    }
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === false) {
+      setIsBookmarkSubmitting(false);
+      toast.error((bookmarkFetcher.data as { message: string })?.message);
+    }
+  }, [bookmarkFetcher.data]);
+
   return (
     <>
       <div className="overflow-x-hidden max-w-full">
@@ -300,6 +331,19 @@ export default function Component() {
               disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
               onClick={() => handlePostVote({ voteType: "dislike" })}
             />
+            <button
+              type="button"
+              onClick={() => handleBookmarkPost()}
+              className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
+                ${isBookmarked ? "text-green-500 hover:text-base-content" : "text-base-content hover:text-green-500"}
+                ${isBookmarkSubmitting ? "animate-spin" : ""}`}
+              disabled={isBookmarkSubmitting}
+            >
+              <Bookmark className="fill-none" />
+              <p className="text-xs">
+                {data.countBookmarks}
+              </p>
+            </button>
           </div>
       </div>
         <div className="my-6">
@@ -413,9 +457,21 @@ export async function action({ request }: ActionFunctionArgs) {
       return handleSubmitComment(formData, postId, userIpHashString);
     case "setVisitorRedirectURL":
       return handleSetVisitorRedirectURL(formData, request, postId);
+    case "bookmarkPost":
+      return handleBookmarkPost(request, postId);
     default:
       return data({ error: "Invalid action" }, { status: 400 });
   }
+}
+
+async function handleBookmarkPost(request:Request, postId: number){
+  const isAuthenticated = await authenticator.isAuthenticated(request);
+  if (!isAuthenticated) {
+    return data({ message: "記事をブックマークするにはログインが必要です。ログインしてください。", success: false }, { status: 401 });
+  }
+  const userId = await getUserId(isAuthenticated.userUuid);
+  const result = await addOrRemoveBookmark(postId, userId);
+  return data({ message: result.message, success: result.success });
 }
 
 async function handleSetVisitorRedirectURL(formData: FormData, request:Request, postId: number){

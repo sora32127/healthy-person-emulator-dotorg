@@ -6,6 +6,7 @@ const authStateSchema = z.object({
   userUuid: z.string().nullable(),
   email: z.string().nullable(),
   userAuthType: z.string().nullable(),
+  photoUrl: z.string().nullable(),
 });
 
 type AuthState = z.infer<typeof authStateSchema>;
@@ -15,9 +16,12 @@ const initialAuthState: AuthState = {
   userUuid: null,
   email: null,
   userAuthType: null,
+  photoUrl: null,
 };
 
 export const authStateAtom = atom<AuthState>(initialAuthState);
+
+export const getAuthStateAtom = atom((get) => get(authStateAtom));
 
 export const isSignedInAtom = atom((get) => get(authStateAtom).isSignedIn);
 

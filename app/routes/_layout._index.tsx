@@ -1,6 +1,6 @@
 import { NavLink, useLoaderData } from "@remix-run/react";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { getFeedComments, getFeedPosts, getRandomComments, getRandomPosts, getRecentComments, getRecentPosts, getRecentPostsByTagId, getRecentVotedPosts } from "~/modules/db.server";
+import { getFeedComments, getFeedPosts, getRandomComments, getRandomPosts, getRecentPostsByTagId } from "~/modules/db.server";
 import ReloadButton from "~/components/ReloadButton";
 import PostSection from "~/components/PostSection";
 import CommentSection from "~/components/CommentSection";
