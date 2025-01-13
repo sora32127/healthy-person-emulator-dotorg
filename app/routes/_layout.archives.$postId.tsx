@@ -337,6 +337,7 @@ export default function Component() {
               className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
                 ${isBookmarked ? "text-green-500 hover:text-base-content" : "text-base-content hover:text-green-500"}
                 ${isBookmarkSubmitting ? "animate-spin" : ""}`}
+              disabled={isBookmarkSubmitting}
             >
               <Bookmark className="fill-none" />
               <p className="text-xs">
