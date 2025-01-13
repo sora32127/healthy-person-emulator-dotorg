@@ -30,6 +30,7 @@ import { authenticator } from "~/modules/auth.google.server";
 import { setIsLoginModalOpenAtom } from "~/stores/loginmodal";
 import { useSetAtom } from "jotai";
 import { setVisitorCookieData } from "~/modules/visitor.server";
+import { Bookmark } from "lucide-react";
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -300,6 +301,16 @@ export default function Component() {
               disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
               onClick={() => handlePostVote({ voteType: "dislike" })}
             />
+            <button
+              type="button"
+              onClick={() => handleBookmarkPost()}
+              className="btn btn-circle disabled:text-green-500 hover:text-green-500 hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2"
+            >
+              <Bookmark className="fill-none" />
+              <p className="text-xs">
+                {data.countBookmarks}
+              </p>
+            </button>
           </div>
       </div>
         <div className="my-6">
