@@ -12,17 +12,22 @@ export async function loader({ request }: LoaderFunctionArgs){
     if (!isAuthenticated){
         return redirect("/?referrer=fromBookmark");
     }
+    const url = new URL(request.url);
+    const pageNumber = Number.parseInt(url.searchParams.get("page") || "1");
+    const pageSize = Number.parseInt(url.searchParams.get("pageSize") || "10");
+
     const userId = await getUserId(isAuthenticated.userUuid);
-    const bookmarkPosts = await getBookmarkPostsByPagenation(userId, 1, 10);
-    return { bookmarkPosts, email: isAuthenticated.email };
+    const bookmarkPosts = await getBookmarkPostsByPagenation(userId, Number(pageNumber), pageSize);
+    return { bookmarkPosts, email: isAuthenticated.email, pageNumber, pageSize };
 }
 
 export default function BookmarkLayout(){
-    const { bookmarkPosts, email } = useLoaderData<typeof loader>();
+    const { bookmarkPosts, email, pageNumber, pageSize } = useLoaderData<typeof loader>();
     return (
         <div>
             <H1>ブックマーク</H1>
             <BookMarkView bookmarkPosts={bookmarkPosts} />
+            
         </div>
     )
 }
