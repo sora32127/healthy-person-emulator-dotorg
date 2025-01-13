@@ -356,6 +356,8 @@ export async function getBookmarkPostsByPagenation(userId: number, pageNumber: n
             tags: post.rel_post_tags.map((tag) => tag.dimTag),
             bookmarkDateJST: bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)?.bookmarkDateJST ?? new Date(),
         }
+    }).sort((a, b) => {
+        return b.bookmarkDateJST.getTime() - a.bookmarkDateJST.getTime();
     })
     return bookmarkPostsWithCountComments;
 }
