@@ -1,4 +1,4 @@
-import { House, Search, HandCoins, BookText, ThumbsUp, Notebook, Shuffle, LogOut, LogIn, UserPlus, FilePlus } from 'lucide-react';
+import { House, Search, HandCoins, BookText, ThumbsUp, Notebook, Shuffle, LogOut, LogIn, UserPlus, FilePlus, Bookmark } from 'lucide-react';
 
 export function getNavItems(isSignedIn: boolean){
     return [
@@ -12,7 +12,10 @@ export function getNavItems(isSignedIn: boolean){
         { to: "/post", text: "投稿する", icon: FilePlus },
 
         ...(isSignedIn
-          ? [{ to: "/logout", text: "ログアウト", icon: LogOut }]
+          ? [
+            { to: "/bookmark", text: "ブックマーク", icon: Bookmark },
+            { to: "/logout", text: "ログアウト", icon: LogOut },
+          ]
           : [
               { to: "/login", text: "ログイン", icon: LogIn },
             ]),

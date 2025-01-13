@@ -314,6 +314,14 @@ export async function getUserId(userUuid: string): Promise<number>{
     return userId?.userId || 0;
 }
 
+export async function getBookmarkPosts(userId: number){
+    const bookmarkPosts = await prisma.fctUserBookmarkActivity.findMany({
+        where: { userId },
+        select: { postId: true },
+    })
+    return bookmarkPosts;
+}
+
 export async function addOrRemoveBookmark(postId: number, userId: number){
     // Bookmarkが存在する場合は削除、存在しない場合は追加する
     const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
