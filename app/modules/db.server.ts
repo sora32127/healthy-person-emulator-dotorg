@@ -252,12 +252,20 @@ export class ArchiveDataEntry {
     tweetIdOfFirstTweet: string | null;
     blueskyPostUriOfFirstPost: string | null;
     misskeyNoteIdOfFirstNote: string | null;
+    countBookmarks: number;
     /*
     - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
     - 回避策として、初期化処理を通じてコンストラクタを呼び出している
     */
 
-    private constructor(postData: PostData, comments: CommentData[], similarPosts: SimilarPostsData[], previousPost: PreviousOrNextPostData, nextPost: PreviousOrNextPostData){
+    private constructor(
+        postData: PostData, 
+        comments: CommentData[], 
+        similarPosts: SimilarPostsData[], 
+        previousPost: PreviousOrNextPostData, 
+        nextPost: PreviousOrNextPostData,
+        bookmarkCount: number
+    ){
         this.postId = postData.postId;
         this.postTitle = postData.postTitle;
         this.postURL = postData.postURL;
@@ -277,6 +285,7 @@ export class ArchiveDataEntry {
         this.tweetIdOfFirstTweet = postData.tweetIdOfFirstTweet;
         this.blueskyPostUriOfFirstPost = postData.blueskyPostUriOfFirstPost;
         this.misskeyNoteIdOfFirstNote = postData.misskeyNoteIdOfFirstNote;
+        this.countBookmarks = bookmarkCount;
     }
     
     static async getData(postId: number){
@@ -285,9 +294,16 @@ export class ArchiveDataEntry {
         const similarPosts = await getSimilarPosts(postId);
         const previousPost = await getPreviousPost(postId);
         const nextPost = await getNextPost(postId);
-        return new ArchiveDataEntry(postData, comments, similarPosts, previousPost, nextPost);
+        const countBookmarks = await getCountBookmarks(postId);
+        return new ArchiveDataEntry(postData, comments, similarPosts, previousPost, nextPost, countBookmarks);
     }
+}
 
+async function getCountBookmarks(postId: number): Promise<number> {
+    const bookmarkCount = await prisma.fctUserBookmarkActivity.count({
+        where: { postId },
+    })
+    return bookmarkCount;
 }
 
 export const PostCardDataSchema = z.object({
