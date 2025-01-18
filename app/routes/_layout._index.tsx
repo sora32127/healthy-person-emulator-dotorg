@@ -44,6 +44,13 @@ export default function Feed() {
         <div>
             <div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "trend" ? "block" : "none" }}>
+                    <PostSection title="最新の投稿" posts={mostRecentPosts.result} identifier="latest">
+                        <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
+                            <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
+                                最新の投稿を見る
+                            </NavLink>
+                        </button>
+                    </PostSection>
                     <PostSection title="最近いいねされた投稿" posts={recentVotedPosts.result} identifier="voted">
                         <button className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300" type="button">
                             <NavLink to="/feed?p=2&likeFrom=48&likeTo=0&type=likes" className="block w-full h-full">
@@ -58,13 +65,7 @@ export default function Feed() {
                             </NavLink>
                         </button>
                     </CommentSection>
-                    <PostSection title="最新の投稿" posts={mostRecentPosts.result} identifier="latest">
-                        <button className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto" type="button">
-                            <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
-                                最新の投稿を見る
-                            </NavLink>
-                        </button>
-                    </PostSection>
+
                 </div>
                 <div role="tabpanel" className="tab-content" style={{ display: tab === "fixed" ? "block" : "none" }}>
                     <PostSection title="殿堂入り" posts={famedPosts} identifier="famed" />
