@@ -44,13 +44,13 @@ export default function PostCard({
     return (
         <div className="bg-base-100 p-4 my-2 border-b border-neutral">
             <div className="mx-2">
-                <div className="flex flex-row my-2 justify-between">
-                <div className="flex my-1">
-                    <div className="pr-2">
-                        <ClockIcon/>
+                <div className="flex flex-row my-2 justify-start gap-x-4">
+                    <div className="flex my-1">
+                        <div className="pr-2">
+                            <ClockIcon/>
+                        </div>
+                        <RelativeDate targetDate={postDateGmt} />
                     </div>
-                    <RelativeDate targetDate={postDateGmt} />
-                </div>
                     <div className="flex items-center gap-x-2">
                         <div className="flex gap-x-1">
                             <ThumbsUpIcon />
@@ -61,10 +61,10 @@ export default function PostCard({
                             <span>{countDislikes}</span>
                         </div>
                         {countComments !== undefined && (
-                            <div className="flex items-center">
-                                <CommentIcon/>
-                                <span className="text-sm text-base-content ml-1">{countComments}</span>
-                            </div>
+                        <div className="flex items-center">
+                            <CommentIcon/>
+                            <span className="text-sm text-base-content ml-1">{countComments}</span>
+                        </div>
                         )}
                     </div>
                 </div>
