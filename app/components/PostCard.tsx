@@ -42,7 +42,7 @@ export default function PostCard({
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 
     return (
-        <div className="bg-base-100 p-4 my-2">
+        <div className="bg-base-100 p-4 my-2 border-b border-neutral">
             <div className="mx-2">
                 <div className="flex flex-row my-2 justify-between">
                 <div className="flex my-1">
