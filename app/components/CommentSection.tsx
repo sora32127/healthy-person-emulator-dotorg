@@ -12,7 +12,7 @@ export default function CommentSection({ title, comments, children }: CommentSec
     return (
         <section className="recent-comments">
             <H2>{title}</H2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 {comments.map((comment) => (
                     <CommentShowCard
                         key={comment.commentId}
