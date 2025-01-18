@@ -6,6 +6,10 @@ import { FaRegComments } from "react-icons/fa6";
 import CommentIcon from "./icons/CommentIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
+import ClockIcon from "./icons/ClockIcon";
+import ArticleIcon from "./icons/ArticleIcon";
+import TagIcon from "./icons/TagIcon";
+
 
 export interface PostCardProps {
     postId: number;
@@ -38,21 +42,23 @@ export default function PostCard({
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 
     return (
-        <div className="bg-base-100 p-4 grid grid-cols-[1fr_minmax(auto,_800px)_1fr] my-2">
-            <div className="col-span-1" />
+        <div className="bg-base-100 p-4 my-2">
             <div className="mx-2">
                 <div className="flex flex-row my-2 justify-between">
-                    <div className="flex items-center">
-                        <RelativeDate targetDate={postDateGmt} />
+                <div className="flex my-1">
+                    <div className="pr-2">
+                        <ClockIcon/>
                     </div>
-                    <div className="flex items-center gap-x-4">
-                        <div className="flex items-center">
-                            <ThumbsUpIcon/>
-                            <span className="text-sm text-base-content ml-1">{countLikes}</span>
+                    <RelativeDate targetDate={postDateGmt} />
+                </div>
+                    <div className="flex items-center gap-x-2">
+                        <div className="flex gap-x-1">
+                            <ThumbsUpIcon />
+                            <span>{countLikes}</span>
                         </div>
-                        <div className="flex items-center">
-                            <ThumbsDownIcon/>
-                            <span className="text-sm text-base-content ml-1">{countDislikes}</span>
+                        <div className="flex gap-x-1">
+                            <ThumbsDownIcon />
+                            <span>{countDislikes}</span>
                         </div>
                         {countComments !== undefined && (
                             <div className="flex items-center">
@@ -62,21 +68,17 @@ export default function PostCard({
                         )}
                     </div>
                 </div>
-                <NavLink to={`/archives/${postId}`} className="hover:underline hover:underline-offset-4" viewTransition>
-                    <img
-                        src={`https://healthy-person-emulator-public-assets.s3.ap-northeast-1.amazonaws.com/${postId}.jpg`}
-                        alt={postTitle}
-                        className="w-full object-cover"
-                        loading="lazy"
-                        width={1200}
-                        height={630}
-                    />
-                    <div className="mt-1 mb-2">
-                        <p className="text-xl font-bold">{postTitle}</p>
+                <div className="grid grid-cols-[auto_1fr] gap-2 items-center">
+                    <div className="w-6 h-6">
+                        <ArticleIcon />
                     </div>
-                </NavLink>
-                <div>
-                    <div className="flex flex-wrap items-center">
+                        <NavLink to={`/archives/${postId}`} className="text-xl font-bold post-title hover:underline hover:underline-offset-4">{postTitle}</NavLink>
+                    </div>
+                <div className="grid grid-cols-[auto_1fr] gap-2 mb-2 items-center">
+                    <div className="w-6 h-6">
+                    <TagIcon />
+                    </div>
+                    <div className="flex flex-wrap gap-y-3 my-2">
                         {displayedTags.map((tag, index) => (
                             <span key={`${tag}-${postId}-${identifier}`} className="inline-block mr-1 mb-1">
                                 <TagCard tagName={tag} />
