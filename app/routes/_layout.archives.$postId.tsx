@@ -475,7 +475,7 @@ async function handleBookmarkPost(request:Request, postId: number){
 }
 
 async function handleSetVisitorRedirectURL(formData: FormData, request:Request, postId: number){
-  const redirectURL = `/archives/edit/${postId}`;
+  const redirectURL = `/archives/${postId}`;
   const headers = await setVisitorCookieData(request, redirectURL);
   return data({ message: "リダイレクトURLを設定しました", success: true }, { headers });
 }
