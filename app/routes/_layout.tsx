@@ -271,7 +271,7 @@ export default function Component() {
         {renderMobileHeader(handleSearchModalOpen)}
       </div>
       <main className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}>
-        <div>
+        <div className="md:mx-10 lg:mx-20 xl:mx-32 2xl:mx-96">
           <Outlet />
         </div>
       </main>

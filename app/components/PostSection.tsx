@@ -13,7 +13,7 @@ export default function PostSection({ title, posts, identifier, children }: Post
     return (
         <section className={`${identifier}-posts`}>
             <H2>{title}</H2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                     {posts.map((post) => (
                         <PostCard
                             key={`${identifier}-${post.postId}`}
