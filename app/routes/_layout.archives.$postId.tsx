@@ -210,12 +210,7 @@ export default function Component() {
       action: `/archives/${POSTID}`,
     });
   }
-  useEffect(() => {
-    if ((turnstileFetcher.data as { error: string })?.error === "INVALID_USER" && isValificationFailed === false) {
-      setShowTurnstileModal(true);
-      setIsValificationFailed(true);
-    }
-  }, [turnstileFetcher.data, isValificationFailed]);
+
 
 
   useEffect(() => {
@@ -270,6 +265,19 @@ export default function Component() {
       toast.error((bookmarkFetcher.data as { message: string })?.message);
     }
   }, [bookmarkFetcher.data]);
+
+  useEffect(() => {
+    const votePostData = postVoteFetcher.data as { requiresUserValidation: boolean } | null;
+    const voteCommentData = commentVoteFetcher.data as { requiresUserValidation: boolean } | null;
+    const bookmarkData = bookmarkFetcher.data as { requiresUserValidation: boolean } | null;
+    const turnstileData = turnstileFetcher.data as { requiresUserValidation: boolean } | null;
+    const submitCommentData = commentSubmitFetcher.data as { requiresUserValidation: boolean } | null;
+
+    if (votePostData?.requiresUserValidation || voteCommentData?.requiresUserValidation || bookmarkData?.requiresUserValidation || turnstileData?.requiresUserValidation || submitCommentData?.requiresUserValidation) {
+      setShowTurnstileModal(true);
+      setIsValificationFailed(true);
+    }
+  }, [postVoteFetcher.data, commentVoteFetcher.data, bookmarkFetcher.data, turnstileFetcher.data, commentSubmitFetcher.data]);
 
   return (
     <>
