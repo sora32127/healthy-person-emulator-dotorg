@@ -4,6 +4,9 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
 const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
+const GOOGLE_GENERATIVE_API_KEY = process.env.NODE_ENV === "test" ?
+  process.env.VITE_GOOGLE_GENERATIVE_API_KEY :
+  process.env.GOOGLE_GENERATIVE_API_KEY;
 
 export async function validateRequest(token: string, ipAddress: string) {
   if (!CF_TURNSTILE_SECRET_KEY) {
@@ -51,7 +54,6 @@ export async function getHashedUserIPAddress(request: Request){
 }
 
 export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string){
-  const GOOGLE_GENERATIVE_API_KEY = process.env.GOOGLE_GENERATIVE_API_KEY;
   if (!GOOGLE_GENERATIVE_API_KEY) {
     throw new Error("GOOGLE_GENERATIVE_API_KEY is not set");
   }

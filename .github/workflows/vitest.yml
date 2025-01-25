@@ -1,0 +1,52 @@
+name: Vitest
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+env:
+  WORKING_DIRECTORY: app
+
+jobs:
+  test:
+    name: Run test codes
+    if: |
+      github.event.pull_request.draft == false
+      && !startsWith(github.head_ref, 'release')
+      && !startsWith(github.head_ref, 'doc')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Load .env from secrets
+        run: |
+          cd ..
+          touch .env
+          echo "SUPABASE_CONNECTION_STRING=${{ secrets.SUPABASE_CONNECTION_STRING }}" >> .env
+          echo "VITE_GOOGLE_GENERATIVE_API_KEY=${{ secrets.VITE_GOOGLE_GENERATIVE_API_KEY }}" >> .env
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Run Vitest
+        run: pnpm vitest --coverage.enabled true
+      - name: Show coverage
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
+
+

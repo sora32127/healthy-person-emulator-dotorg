@@ -1,10 +1,6 @@
 export function formatDate(date: Date): string {
-    return date.toLocaleString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    }).replace(/\//g, '-');
+    const isoString = date.toISOString();
+    const yyyyMMDD = isoString.split('T')[0];
+    const hhmm = isoString.split('T')[1].slice(0, 5);
+    return `${yyyyMMDD} ${hhmm}`;
 }

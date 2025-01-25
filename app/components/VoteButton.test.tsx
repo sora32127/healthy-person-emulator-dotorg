@@ -1,9 +1,14 @@
 import { VoteButton } from "./VoteButton";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import '@testing-library/jest-dom/vitest';
-
+import { cleanup } from "@testing-library/react";
 describe("VoteButton", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        cleanup();
+    });
+
     it("いいねボタンが正しくレンダリングされる", () => {
         render(
             <VoteButton

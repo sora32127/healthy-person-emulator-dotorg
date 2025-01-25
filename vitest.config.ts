@@ -1,16 +1,15 @@
 import { defineConfig } from "vitest/config";
-import dotenv from 'dotenv';
 
-export default defineConfig(({ mode }: ConfigEnv) => {
-    return defineConfig({   
-        test: {
-            exclude: ["tests", "node_modules", "app/tests"],
-            coverage: {
-                provider: "v8",
-                reporter: ["text", "html", "json"],
-                all: true,
-            },
-            environment: "happy-dom",
-        }
-    });
+export default defineConfig({   
+    test: {
+        exclude: ["tests", "node_modules", "app/tests"],
+        coverage: {
+            provider: "v8",
+            reporter: ["text", "json-summary", "json"],
+            all: true,
+            reportOnFailure: true,
+        },
+        environment: "happy-dom",
+        testTimeout: 60000,
+    }
 });
