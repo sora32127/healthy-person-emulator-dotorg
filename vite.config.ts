@@ -26,14 +26,6 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       }),
       tsconfigPaths(),
     ],
-    test: {
-      exclude: ["tests", "node_modules", "app/tests"],
-      coverage: {
-        provider: "v8",
-        reporter: ["text", "html", "json"],
-        all: true,
-      },
-    }
   })
 })
 
