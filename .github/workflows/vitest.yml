@@ -41,13 +41,12 @@ jobs:
           cache-dependency-path: 'pnpm-lock.yaml'
       - name: Install dependencies
         run: |
-          pnpm install -D
-          pnpm install -P
+          pnpm install
       - name: Run Vitest
         run: |
           pwd
           ls
-          pnpm run test --coverage
+          pnpm exec vitest --coverage
           
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
