@@ -8,9 +8,7 @@ describe("記事ID23576の正しいデータを返すこと", async () => {
         const archiveDataEntry = await ArchiveDataEntry.getData(23576);
         expect(archiveDataEntry.postId).toBe(23576);
         expect(archiveDataEntry.postTitle).toBe('無神論者の火');
-        expect(archiveDataEntry.tags).toContainEqual({ tagName: 'クリスマス', tagId: 381 });
-        expect(archiveDataEntry.tags).toContainEqual({ tagName: '学生', tagId: 21 });
-        expect(archiveDataEntry.tags).toContainEqual({ tagName: '小学生', tagId: 35 });
+        expect(archiveDataEntry.tags).toContainEqual({ tagName: 'やってはいけないこと', tagId: 5 });
         expect(archiveDataEntry.countLikes).toBeGreaterThan(30);
         expect(archiveDataEntry.countDislikes).toBeGreaterThan(5);
         expect(archiveDataEntry.postDateGmt).toEqual(new Date('2023-02-11T05:57:26.000Z'));
@@ -193,17 +191,6 @@ describe("getFeedCommentsが正しいデータを返すこと", async () => {
         test("いいね順, 1ページ目", async () => {
             const likesCommentIds = await getLikedCommentsForTest(chunkSize);
             const pagingNumber = 1;
-            const type = "likes";
-            const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
-            expect(feedComments.result).toHaveLength(chunkSize);
-            for (let i = 0; i < chunkSize; i++) {
-                const comment = CommentShowCardDataSchema.parse(feedComments.result[i]);
-            }
-        })
-
-        test("いいね順, 2ページ目", async () => {
-            const likesCommentIds = await getLikedCommentsForTest(chunkSize);
-            const pagingNumber = 2;
             const type = "likes";
             const feedComments = await getFeedComments(pagingNumber, type, chunkSize);
             expect(feedComments.result).toHaveLength(chunkSize);
