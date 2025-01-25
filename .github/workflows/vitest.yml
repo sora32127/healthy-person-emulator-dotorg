@@ -44,6 +44,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Run Vitest
-        run: pnpm vitest --coverage.enabled true
+        run: |
+          pwd
+          ls
+          pnpm vitest --coverage.enabled true
+          
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
+        if: always()
