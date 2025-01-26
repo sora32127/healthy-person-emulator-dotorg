@@ -26,8 +26,6 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       }),
       tsconfigPaths(),
     ],
-    test: {
-      exclude: ["tests", "node_modules", "app/tests"]
-    }
   })
 })
+

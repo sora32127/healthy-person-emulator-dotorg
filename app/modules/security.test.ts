@@ -4,31 +4,26 @@ import { describe, it, expect } from "vitest";
 describe('security.server', () => {
   it('明らかにテスト投稿の場合は歓迎されない投稿と判断される', async () => {
     const result = await getJudgeWelcomedByGenerativeAI(testPostHtml, 'プログラムテスト投稿');
-    console.log(result);
     expect(result.isWelcomed).toBe(false);
   });
 
   it("明らかにスパム投稿の場合は歓迎されない投稿と判断される", async () => {
     const result = await getJudgeWelcomedByGenerativeAI(spamPostHtml, 'スパム投稿');
-    console.log(result);
     expect(result.isWelcomed).toBe(false);
   });
 
   it("基本的人権を侵害する行為が奨励されている場合は歓迎されない投稿と判断される", async () => {
     const result = await getJudgeWelcomedByGenerativeAI(basicHumanRightViolationPostHtml, '困った時の神頼みは意外と有効');
-    console.log(result);
     expect(result.isWelcomed).toBe(false);
   });
 
   it("違法な行為を奨励する内容を含む投稿は歓迎されない投稿と判断される", async () => {
     const result = await getJudgeWelcomedByGenerativeAI(illegalPostHtml, '違法な行為を奨励する内容を含む投稿');
-    console.log(result);
     expect(result.isWelcomed).toBe(false);
   });
   
   it("通常の投稿は歓迎される投稿と判断される", async () => {
     const result = await getJudgeWelcomedByGenerativeAI(normalPostHtml, '実家の風呂場で北朝鮮の曲を歌ってはいけない');
-    console.log(result);
     expect(result.isWelcomed).toBe(true);
   });
 });
