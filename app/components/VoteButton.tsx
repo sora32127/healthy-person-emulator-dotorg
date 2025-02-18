@@ -6,7 +6,7 @@ export function VoteButton({ type, count, isAnimating, isVoted, disabled, onClic
     <div>
       <button
         type="submit"
-        className={`flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
+        className={`${type} flex items-center rounded-md px-2 py-2 mx-1 transition-all duration-500 ${
           isAnimating
             ? 'animate-voteSpin bg-base-300'
             : isVoted
