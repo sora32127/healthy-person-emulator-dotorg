@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import CommentInputBox from "./CommentInputBox";
 import ClockIcon from "./icons/ClockIcon";
-import ThumbsUpIcon from "./icons/ThumbsUpIcon";
-import ThumbsDownIcon from "./icons/ThumbsDownIcon";
+import { VoteButton } from "./VoteButton";
 import RelativeDate from "./RelativeDate";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -62,6 +61,8 @@ export default function CommentCard({
 
   const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
   const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
+  const [isCommentLikeAnimating, setIsCommentLikeAnimating] = useState(false);
+  const [isCommentDislikeAnimating, setIsCommentDislikeAnimating] = useState(false);
   
   const { setValue, getValues } = useForm<CommentVoteSchema>({
     resolver: zodResolver(commentVoteSchema),
@@ -74,10 +75,18 @@ export default function CommentCard({
     setValue("commentId", commentId);
     
     if (voteType === "like") {
-      setIsCommentLikeButtonPushed(true);
+      setIsCommentLikeAnimating(true);
+      setTimeout(() => {
+        setIsCommentLikeButtonPushed(true);
+        setIsCommentLikeAnimating(false);
+      }, 1000);
     }
     if (voteType === "dislike") {
-      setIsCommentDislikeButtonPushed(true);
+      setIsCommentDislikeAnimating(true);
+      setTimeout(() => {
+        setIsCommentDislikeButtonPushed(true);
+        setIsCommentDislikeAnimating(false);
+      }, 1000);
     }
     onCommentVote(getValues());
   };
@@ -118,40 +127,22 @@ export default function CommentCard({
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
       <div className="flex items-center mt-4">　　　　　　
-        <div>
-          <button
-            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isLiked ? "text-blue-500 font-bold" : ""
-            } comment-like-button`}
-            onClick={() => {
-              handleCommentVote("like");
-            }}
-            disabled={isCommentLikeButtonPushed || isLiked}
-            type="button"
-          >
-            <ThumbsUpIcon />
-            <p className="ml-2">
-            {likesCount}
-            </p>
-          </button>
-        </div>
-        <div>
-          <button
-            className={`flex items-center mr-4 rounded-md px-2 py-2 bg-base-300 hover:bg-base-200 ${
-              isDisliked ? "text-red-500 font-bold" : ""}
-              comment-dislike-button`}
-            onClick={() => {
-              handleCommentVote("dislike");
-            }}
-            disabled={isCommentDislikeButtonPushed || isDisliked}
-            type="button"
-          >
-            <ThumbsDownIcon />
-            <p className="ml-2">
-            {dislikesCount}
-            </p>
-          </button>
-        </div>
+        <VoteButton
+          type="like"
+          count={likesCount}
+          isAnimating={isCommentLikeAnimating}
+          isVoted={isLiked}
+          disabled={isCommentLikeButtonPushed || isLiked || isCommentLikeAnimating}
+          onClick={() => handleCommentVote("like")}
+        />
+        <VoteButton
+          type="dislike"
+          count={dislikesCount}
+          isAnimating={isCommentDislikeAnimating}
+          isVoted={isDisliked}
+          disabled={isCommentDislikeButtonPushed || isDisliked || isCommentDislikeAnimating}
+          onClick={() => handleCommentVote("dislike")}
+        />
       </div>
     <button
         className="mt-2 text-blue-500"
