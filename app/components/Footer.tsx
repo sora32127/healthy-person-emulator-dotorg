@@ -50,7 +50,7 @@ const socialLinks = [
         icon: <SiBluesky />
     },
     {
-        title: "Mieeky.io",
+        title: "Misskey.io",
         url: "https://misskey.io/@helthypersonemu",
         icon: <SiMisskey />
     }
