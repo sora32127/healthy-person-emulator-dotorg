@@ -1,5 +1,5 @@
-import { Outlet, useLoaderData } from "@remix-run/react";
-import { H1, H2 } from "~/components/Headings";
+import { useLoaderData } from "@remix-run/react";
+import { H1} from "~/components/Headings";
 import { authenticator } from "~/modules/auth.google.server";
 import { type MetaFunction, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserEditHistory } from "~/modules/db.server";
@@ -50,10 +50,9 @@ export default function MyPageLayout() {
     const { userEditHistory } = useLoaderData<typeof loader>();
     return (
         <div className="flex flex-col gap-4">
-            <H1>マイページ</H1>
+            <H1>編集履歴</H1>
             {userEditHistory.length > 0 && (
                 <div className="flex flex-col gap-4">
-                    <H2>編集履歴</H2>
                     <ul className="divide-y divide-gray-200">
                         {userEditHistory.map((editHistory) => (
                             <EditHistoryItem key={`${editHistory.postId}-${editHistory.postRevisionNumber}`} editHistory={editHistory} />
@@ -67,6 +66,6 @@ export default function MyPageLayout() {
 
 export const meta: MetaFunction = () => {
     return [
-        { title: "マイページ" },
+        { title: "編集履歴" },
     ];
 };
