@@ -1088,3 +1088,25 @@ export async function updatePostWelcomed(postId: number, isWelcomed: boolean, ex
         data: { isWelcomed: isWelcomed, isWelcomedExplanation: explanation },
     })
 }
+
+export async function getUserEditHistory(userUuid: string){
+    const userEditHistory = await prisma.fctPostEditHistory.findMany({
+        where: { editorUserId: userUuid },
+        orderBy: { postEditDateGmt: "desc" },
+        take: 10,
+        select: {
+            postId: true,
+            postRevisionNumber: true,
+            postEditDateGmt: true,
+            postEditDateJst: true,
+            postTitleBeforeEdit: true,
+            postTitleAfterEdit: true,
+            dim_posts: {
+                select: {
+                    postTitle: true,
+                }
+            }
+        }
+    })
+    return userEditHistory;
+}

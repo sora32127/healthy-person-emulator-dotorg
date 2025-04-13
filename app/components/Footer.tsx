@@ -19,6 +19,10 @@ const footerItems = [
         url: "/privacyPolicy"
     },
     {
+        title: "特定商取引法に基づく表記",
+        url: "/commerceDisclosure"
+    },
+    {
         title: "寄付する",
         url: "/support"
     }
@@ -52,7 +56,7 @@ const socialLinks = [
     }
 ]
 
-const currentYear = "2024"
+const currentYear = "2025"
 
 export const Footer = () => {
   return (
