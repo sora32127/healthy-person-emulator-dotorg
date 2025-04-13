@@ -1,7 +1,7 @@
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { H1, H2 } from "~/components/Headings";
 import { authenticator } from "~/modules/auth.google.server";
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { type MetaFunction, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { getUserEditHistory } from "~/modules/db.server";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -64,3 +64,9 @@ export default function MyPageLayout() {
         </div>
     )
 }
+
+export const meta: MetaFunction = () => {
+    return [
+        { title: "マイページ" },
+    ];
+};
