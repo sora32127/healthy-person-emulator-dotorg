@@ -52,7 +52,7 @@ const socialLinks = [
     }
 ]
 
-const currentYear = "2024"
+const currentYear = "2025"
 
 export const Footer = () => {
   return (
