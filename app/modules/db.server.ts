@@ -181,6 +181,10 @@ async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
     )::varchar as result
     from search_similar_content(${postId}, 0, 16)
     ` as { result: string }[]
+    
+    if (similarPostsRaw[0].result === null) {
+        return [];
+    }
 
     const similarPosts: SimilarPostsData[] = JSON.parse(similarPostsRaw[0].result).slice(1,) // 0番目のエントリはその記事自身を指すため除外する
     return similarPosts;
