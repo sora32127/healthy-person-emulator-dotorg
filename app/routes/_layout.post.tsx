@@ -739,7 +739,7 @@ function DynamicTextInput({
       <div className="flex mb-4 flex-col">
         {fields.map((field, index) => (
           <div key={field.id} className="flex flex-row my-2">
-            <input
+            <textarea
               key={field.id}
               {...register(`${registerKey}.${index}`)}
               className="w-3/4 border rounded-lg placeholder-slate-500 px-3 py-2"
