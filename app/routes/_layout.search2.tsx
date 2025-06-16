@@ -1,21 +1,36 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import useSWR from 'swr'
 import * as duckdb from '@duckdb/duckdb-wasm';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { debounce } from "es-toolkit";
 
-export async function loader() {
+export async function loader({ request }: LoaderFunctionArgs) {
     const { searchURL, tagsURL } = getObjectUrls();
+    const url = new URL(request.url);
+    const q = url.searchParams.get("q") || "";
     return {
         searchURL,
         tagsURL,
+        q,
     }
 }
 
 export default function Search2() {
-    const { searchURL, tagsURL } = useLoaderData<typeof loader>();
+    const { searchURL, tagsURL, q } = useLoaderData<typeof loader>();
     const { data: searchData, error: searchError, isLoading: searchLoading } = useDownloadFile(searchURL);
     const { data: tagsData, error: tagsError, isLoading: tagsLoading } = useDownloadFile(tagsURL);
     const [isInitializationCompleted, setIsInitializationCompleted] = useState(false);
+    const [query, setQuery] = useState(q);
+    
+    // debounce関数をuseCallbackでメモ化
+    const debouncedSearch = useCallback(
+        debounce((searchQuery: string) => {
+            setQuery(searchQuery);
+        }, 300),
+        []
+    );
+    
     useEffect(() => {
         if (!searchLoading && !tagsLoading && searchData && tagsData) {
             initializeDuckDB(searchData, tagsData).then(() => {
@@ -23,12 +38,12 @@ export default function Search2() {
             });
         }
     }, [searchLoading, tagsLoading, searchData, tagsData]);
+    
     return <div>
-        {searchLoading && <div>Loading...</div>}
-        {searchError && <div>Error: {searchError.message}</div>}
-        {tagsLoading && <div>Loading...</div>}
-        {tagsError && <div>Error: {tagsError.message}</div>}
-        {isInitializationCompleted && <div>Initialization completed</div>}
+        {!isInitializationCompleted && <div>Loading...</div>}
+        {isInitializationCompleted && <div>
+            <input type="text" value={query} onChange={(e) => debouncedSearch(e.target.value)} />
+        </div>}
     </div>;
 }
 
