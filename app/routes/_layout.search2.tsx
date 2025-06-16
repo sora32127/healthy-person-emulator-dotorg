@@ -1,4 +1,5 @@
-import { useLoaderData } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
+import useSWR from 'swr'
 
 export async function loader() {
     const { searchURL, tagsURL } = getObjectUrls();
@@ -10,11 +11,20 @@ export async function loader() {
 
 export default function Search2() {
     const { searchURL, tagsURL } = useLoaderData<typeof loader>();
+    const { data: searchData, error: searchError, isLoading: searchLoading } = useDownloadFile(searchURL);
+    const { data: tagsData, error: tagsError, isLoading: tagsLoading } = useDownloadFile(tagsURL);
     return <div>
-        <h1>Search2</h1>
-        <p>{searchURL}</p>
-        <p>{tagsURL}</p>
+        {searchLoading && <div>Loading...</div>}
+        {searchError && <div>Error: {searchError.message}</div>}
+        {tagsLoading && <div>Loading...</div>}
+        {tagsError && <div>Error: {tagsError.message}</div>}
     </div>;
+}
+
+function useDownloadFile(url:string) {
+    const fetcher = (url: string) => fetch(url).then(res => res.blob());
+    const { data, error, isLoading } = useSWR(url, fetcher);
+    return { data, error, isLoading };
 }
 
 function getObjectUrls(): {
