@@ -1,7 +1,7 @@
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import useSWR from 'swr'
 import * as duckdb from '@duckdb/duckdb-wasm';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export async function loader() {
     const { searchURL, tagsURL } = getObjectUrls();
@@ -15,10 +15,12 @@ export default function Search2() {
     const { searchURL, tagsURL } = useLoaderData<typeof loader>();
     const { data: searchData, error: searchError, isLoading: searchLoading } = useDownloadFile(searchURL);
     const { data: tagsData, error: tagsError, isLoading: tagsLoading } = useDownloadFile(tagsURL);
+    const [isInitializationCompleted, setIsInitializationCompleted] = useState(false);
     useEffect(() => {
         if (!searchLoading && !tagsLoading && searchData && tagsData) {
-            console.log("Data is downloaded");
-            initializeDuckDB(searchData, tagsData);
+            initializeDuckDB(searchData, tagsData).then(() => {
+                setIsInitializationCompleted(true);
+            });
         }
     }, [searchLoading, tagsLoading, searchData, tagsData]);
     return <div>
@@ -26,6 +28,7 @@ export default function Search2() {
         {searchError && <div>Error: {searchError.message}</div>}
         {tagsLoading && <div>Loading...</div>}
         {tagsError && <div>Error: {tagsError.message}</div>}
+        {isInitializationCompleted && <div>Initialization completed</div>}
     </div>;
 }
 
