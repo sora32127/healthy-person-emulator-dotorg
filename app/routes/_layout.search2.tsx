@@ -1,5 +1,8 @@
 import { useAtomValue } from "jotai";
 import { useLoaderData } from "@remix-run/react";
+import { LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
+import { useEffect, useState } from "react";
+import { debounce } from "es-toolkit";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
@@ -11,23 +14,62 @@ export async function loader() {
 
 export default function LightSearch() {
     const { searchAssetURL } = useLoaderData<typeof loader>();
+    const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
+    const [searchResults, setSearchResults] = useState<SearchResult>({
+        metadata: {
+            query: "",
+            count: 0,
+            page: 1,
+            totalPages: 0
+        },
+        results: []
+    });
+
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
-    const arrayBuffer = fetchData(searchAssetURL);
-    console.log(arrayBuffer);
-
+    
+    useEffect(() => {
+        const handler = new LightSearchHandler(searchAssetURL);
+        setLightSearchHandler(handler);
+    }, [searchAssetURL]);
+    
+    const handleSearch = debounce(async (query: string) => {
+        if (lightSearchHandler) {
+            const results = await lightSearchHandler.search(query);
+            setSearchResults({
+                metadata: {
+                    query: results.metadata.query,
+                    count: results.metadata.count,
+                    page: results.metadata.page,
+                    totalPages: results.metadata.totalPages
+                    },
+                results: results.results
+            });
+        }
+    }, 300);
+    
     return (
         <div>
             <h1>Light Search</h1>
-            <input type="text"></input>
+            <input type="text" onChange={(e) => handleSearch(e.target.value)}></input>
+            <SearchResults searchResults={searchResults} />
         </div>
     );
 }
 
-async function fetchData(url: string) {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const arrayBuffer = await blob.arrayBuffer();
-    return arrayBuffer;
+function SearchResults({ searchResults }: { searchResults: SearchResult }) {
+    return (
+        <div>
+            <p>Query: {searchResults?.metadata.query}</p>
+            <p>Count: {searchResults?.metadata.count}</p>
+            <p>Page: {searchResults?.metadata.page}</p>
+            <p>Total Pages: {searchResults?.metadata.totalPages}</p>
+            <div>
+                {searchResults?.results.map((result) => (
+                    <div key={result.postId}>{result.postTitle}</div>
+                ))}
+            </div>
+        </div>
+    );
 }
