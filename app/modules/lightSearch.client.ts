@@ -23,11 +23,11 @@ export class LightSearchHandler {
         results: []
     };
 
-    constructor(searchAssetURL: string) {
-        this.initialize(searchAssetURL);
+    constructor(searchAssetURL: string, tagsAssetURL: string) {
+        this.initialize(searchAssetURL, tagsAssetURL);
     }
 
-    async initialize(searchAssetURL: string) {
+    async initialize(searchAssetURL: string, tagsAssetURL: string) {
         const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
         const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
         const worker_url = URL.createObjectURL(
@@ -39,14 +39,11 @@ export class LightSearchHandler {
         this.db = new duckdb.AsyncDuckDB(logger, worker);
         await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
         URL.revokeObjectURL(worker_url);
-        const res = await fetch(searchAssetURL);
-        const blob = await res.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        await this.db.registerFileBuffer('search.parquet', new Uint8Array(arrayBuffer));
         const conn = await this.db.connect();
         await conn.query("INSTALL parquet");
         await conn.query("LOAD 'parquet'");
-        await conn.query(`CREATE TABLE search AS SELECT * FROM read_parquet('search.parquet')`);
+        await conn.query(`CREATE TABLE search AS SELECT * FROM read_parquet('${searchAssetURL}')`);
+        await conn.query(`CREATE TABLE tags AS SELECT * FROM read_parquet('${tagsAssetURL}')`);
         await conn.close();
     }
 
@@ -55,7 +52,7 @@ export class LightSearchHandler {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
-        const res = await conn.query(`SELECT * FROM search WHERE post_title LIKE '%${query}%'`);
+        const res = await conn.query(`SELECT * FROM search WHERE post_title LIKE '%${query}%' limit 10`);
         await conn.close();
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;

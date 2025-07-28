@@ -6,14 +6,15 @@ import { debounce } from "es-toolkit";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
-
+    const tagsAssetURL = process.env.TAGS_PARQUET_FILE_PATH
     return {
         searchAssetURL,
+        tagsAssetURL
     };
 }
 
 export default function LightSearch() {
-    const { searchAssetURL } = useLoaderData<typeof loader>();
+    const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
     const [searchResults, setSearchResults] = useState<SearchResult>({
         metadata: {
@@ -28,9 +29,12 @@ export default function LightSearch() {
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
+    if (!tagsAssetURL) {
+        throw new Error("Tags asset URL is not set");
+    }
     
     useEffect(() => {
-        const handler = new LightSearchHandler(searchAssetURL);
+        const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
         setLightSearchHandler(handler);
     }, [searchAssetURL]);
     
