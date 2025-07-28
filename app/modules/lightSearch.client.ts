@@ -87,15 +87,15 @@ export class LightSearchHandler {
                 }
             });
             // post_date_jstを日付文字列に変換
-            if (obj.post_date_jst) {
-                obj.post_date_jst = new Date(obj.post_date_jst);
+            if (obj.postDateJst) {
+                obj.postDateGmt = new Date(obj.postDateJst);
             }
             return {
                 ...obj,
                 tags: tags.filter((tag) => tag.postId === obj.postId).map((tag) => tag.tagName)
             } as PostCardData;
         });
-        console.log(this.searchResults.results);
+        console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;
     }
 

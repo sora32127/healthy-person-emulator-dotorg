@@ -3,6 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
 import { useEffect, useState } from "react";
 import { debounce } from "es-toolkit";
+import PostCard from "~/components/PostCard";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
@@ -71,7 +72,7 @@ function SearchResults({ searchResults }: { searchResults: SearchResult }) {
             <p>Total Pages: {searchResults?.metadata.totalPages}</p>
             <div>
                 {searchResults?.results.map((result) => (
-                    <div key={result.postId}>{result.postTitle}</div>
+                    <PostCard key={result.postId} {...result} tagNames={result.tags} />
                 ))}
             </div>
         </div>
