@@ -47,12 +47,28 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string) {
+    async search(query: string){
+        return this.searchByQuery(query);
+    }
+
+    async searchByQuery(query: string) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
-        const res = await conn.query(`SELECT * FROM search WHERE post_title LIKE '%${query}%' limit 10`);
+        const res = await conn.query(`SELECT * FROM search WHERE post_title LIKE '%${query}%' OR post_content LIKE '%${query}%' limit 10`);
+        const postIds = res.toArray().map((row) => {
+            const obj = Object.fromEntries(row);
+            return obj.post_id;
+        });
+        const tagsRes = await conn.query(`SELECT * FROM tags WHERE post_id IN (${postIds.join(',')})`);
+        const tags = tagsRes.toArray().map((row) => {
+            const obj = Object.fromEntries(row);
+            return {
+                postId: Number(obj.post_id),
+                tagName: obj.tag_name,
+            }
+        });
         await conn.close();
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;
@@ -74,8 +90,10 @@ export class LightSearchHandler {
             if (obj.post_date_jst) {
                 obj.post_date_jst = new Date(obj.post_date_jst);
             }
-            return obj as PostCardData;
-
+            return {
+                ...obj,
+                tags: tags.filter((tag) => tag.postId === obj.postId).map((tag) => tag.tagName)
+            } as PostCardData;
         });
         console.log(this.searchResults.results);
         return this.searchResults;
