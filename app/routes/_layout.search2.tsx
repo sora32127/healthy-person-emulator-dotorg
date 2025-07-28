@@ -4,6 +4,7 @@ import { LightSearchHandler,type SearchResult } from "~/modules/lightSearch.clie
 import { useEffect, useState } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
+import { useSearchParams } from "@remix-run/react";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
@@ -26,6 +27,8 @@ export default function LightSearch() {
         },
         results: []
     });
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get("q") || "";
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
@@ -51,6 +54,7 @@ export default function LightSearch() {
                     },
                 results: results.results
             });
+            setSearchParams({ q: query });
         }
     }, 300);
     
