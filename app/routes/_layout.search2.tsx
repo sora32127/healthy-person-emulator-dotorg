@@ -29,6 +29,7 @@ export default function LightSearch() {
     });
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get("q") || "";
+    const [inputValue, setInputValue] = useState(query);
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
@@ -56,12 +57,19 @@ export default function LightSearch() {
             });
             setSearchParams({ q: query });
         }
-    }, 300);
+    }, 1000);
     
     return (
         <div>
             <h1>Light Search</h1>
-            <input type="text" onChange={(e) => handleSearch(e.target.value)}></input>
+            <input
+                type="text"
+                onChange={(e) => {
+                    setInputValue(e.target.value);
+                    handleSearch(e.target.value);
+                }}
+                value={inputValue}
+            ></input>
             <SearchResults searchResults={searchResults} />
         </div>
     );
