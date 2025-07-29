@@ -55,7 +55,9 @@ export default function LightSearch() {
                     },
                 results: results.results
             });
-            setSearchParams({ q: query });
+            if (searchParams.get("q") !== query) {
+                setSearchParams({ q: query });
+            }
         }
     }, 1000);
     

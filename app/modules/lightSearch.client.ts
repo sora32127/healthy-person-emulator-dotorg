@@ -61,14 +61,13 @@ export class LightSearchHandler {
             const obj = Object.fromEntries(row);
             return obj.post_id;
         });
-        const tagsRes = await conn.query(`SELECT * FROM tags WHERE post_id IN (${postIds.join(',')})`);
-        const tags = tagsRes.toArray().map((row) => {
+        const tags = postIds.length > 0 ? (await conn.query(`SELECT * FROM tags WHERE post_id IN (${postIds.join(',')})`)).toArray().map((row) => {
             const obj = Object.fromEntries(row);
             return {
                 postId: Number(obj.post_id),
                 tagName: obj.tag_name,
             }
-        });
+        }) : [];
         await conn.close();
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;
