@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { useLoaderData } from "@remix-run/react";
 import { LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
@@ -58,7 +58,7 @@ export default function LightSearch() {
         }
     }, [isInitialized, lightSearchHandler, query]);
     
-    const executeSearch = async (query: string) => {
+    const executeSearch = useCallback(async (query: string) => {
         if (lightSearchHandler && isInitialized) {
             try {
                 const results = await lightSearchHandler.search(query);
@@ -78,11 +78,15 @@ export default function LightSearch() {
                 console.error("Search error:", error);
             }
         }
-    };
+    }, [lightSearchHandler, isInitialized, searchParams, setSearchParams]);
     
-    const handleSearch = debounce(async (query: string) => {
-        await executeSearch(query);
-    }, 1000);
+    // debounceされた検索関数を作成
+    const handleSearch = useCallback(
+        debounce(async (query: string) => {
+            await executeSearch(query);
+        }, 1000),
+        [executeSearch]
+    );
     
     return (
         <div>
