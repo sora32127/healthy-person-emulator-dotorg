@@ -18,6 +18,7 @@ export async function loader() {
 export default function LightSearch() {
     const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult>({
         metadata: {
             query: "",
@@ -39,26 +40,48 @@ export default function LightSearch() {
     }
     
     useEffect(() => {
-        const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
-        setLightSearchHandler(handler);
-    }, [searchAssetURL]);
+        const initializeHandler = async () => {
+            const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
+            setLightSearchHandler(handler);
+            // 初期化完了を待つ
+            await handler.waitForInitialization();
+            setIsInitialized(true);
+        };
+        
+        initializeHandler();
+    }, [searchAssetURL, tagsAssetURL]);
     
-    const handleSearch = debounce(async (query: string) => {
-        if (lightSearchHandler) {
-            const results = await lightSearchHandler.search(query);
-            setSearchResults({
-                metadata: {
-                    query: results.metadata.query,
-                    count: results.metadata.count,
-                    page: results.metadata.page,
-                    totalPages: results.metadata.totalPages
+    // 初回レンダリング時の検索実行
+    useEffect(() => {
+        if (isInitialized && lightSearchHandler && query) {
+            executeSearch(query);
+        }
+    }, [isInitialized, lightSearchHandler, query]);
+    
+    const executeSearch = async (query: string) => {
+        if (lightSearchHandler && isInitialized) {
+            try {
+                const results = await lightSearchHandler.search(query);
+                setSearchResults({
+                    metadata: {
+                        query: results.metadata.query,
+                        count: results.metadata.count,
+                        page: results.metadata.page,
+                        totalPages: results.metadata.totalPages
                     },
-                results: results.results
-            });
-            if (searchParams.get("q") !== query) {
-                setSearchParams({ q: query });
+                    results: results.results
+                });
+                if (searchParams.get("q") !== query) {
+                    setSearchParams({ q: query });
+                }
+            } catch (error) {
+                console.error("Search error:", error);
             }
         }
+    };
+    
+    const handleSearch = debounce(async (query: string) => {
+        await executeSearch(query);
     }, 1000);
     
     return (
@@ -72,6 +95,7 @@ export default function LightSearch() {
                 }}
                 value={inputValue}
             ></input>
+            {!isInitialized && <p>初期化中...</p>}
             <SearchResults searchResults={searchResults} />
         </div>
     );

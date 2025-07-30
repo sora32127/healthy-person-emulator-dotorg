@@ -13,6 +13,7 @@ export type SearchResult = {
 
 export class LightSearchHandler {
     private db: duckdb.AsyncDuckDB | null = null;
+    private initializationPromise: Promise<void> | null = null;
     private searchResults: SearchResult = {
         metadata: {
             query: "",
@@ -24,7 +25,14 @@ export class LightSearchHandler {
     };
 
     constructor(searchAssetURL: string, tagsAssetURL: string) {
-        this.initialize(searchAssetURL, tagsAssetURL);
+        this.initializationPromise = this.initialize(searchAssetURL, tagsAssetURL);
+    }
+
+    // 初期化完了を待つメソッド
+    async waitForInitialization() {
+        if (this.initializationPromise) {
+            await this.initializationPromise;
+        }
     }
 
     async initialize(searchAssetURL: string, tagsAssetURL: string) {
