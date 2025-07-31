@@ -1,5 +1,5 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
-import type { PostCardData } from "./db.server";
+import type { PostCardProps } from "../components/PostCard";
 
 export type SearchResult = {
     metadata: {
@@ -8,7 +8,7 @@ export type SearchResult = {
         page: number;
         totalPages: number;
     },
-    results: PostCardData[]
+    results: PostCardProps[]
 }
 
 export class LightSearchHandler {
@@ -64,43 +64,39 @@ export class LightSearchHandler {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
-        const res = await conn.query(`SELECT * FROM search WHERE post_title LIKE '%${query}%' OR post_content LIKE '%${query}%' limit 10`);
-        const postIds = res.toArray().map((row) => {
-            const obj = Object.fromEntries(row);
-            return obj.post_id;
-        });
-        const tags = postIds.length > 0 ? (await conn.query(`SELECT * FROM tags WHERE post_id IN (${postIds.join(',')})`)).toArray().map((row) => {
-            const obj = Object.fromEntries(row);
-            return {
-                postId: Number(obj.post_id),
-                tagName: obj.tag_name,
-            }
-        }) : [];
+        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' limit 10`)
         await conn.close();
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;
         this.searchResults.results = res.toArray().map((row) => {
             const obj = Object.fromEntries(row);
-            // snake_case to camelCase
-            Object.keys(obj).forEach(key => {
-                const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-                obj[camelKey] = obj[key];
-                delete obj[key];
-            });
             // BigIntを通常の数値に変換
             Object.keys(obj).forEach(key => {
                 if (typeof obj[key] === 'bigint') {
                     obj[key] = Number(obj[key]);
                 }
             });
-            // post_date_jstを日付文字列に変換
-            if (obj.postDateJst) {
-                obj.postDateGmt = new Date(obj.postDateJst);
+            // tagNameを単純なstring[]に変換する
+            const tagNames = obj.tagNames.toArray();
+
+            // UNIXTIME形式のpostDateGmtをDateに変換する
+            const postDateGmt = new Date(obj.postDateGmt);
+
+            // countCommentsにnullが入っている場合は0にする
+            if (obj.countComments === null) {
+                obj.countComments = 0;
             }
+
             return {
-                ...obj,
-                tags: tags.filter((tag) => tag.postId === obj.postId).map((tag) => tag.tagName)
-            } as PostCardData;
+                postId: obj.postId,
+                postTitle: obj.postTitle,
+                postDateGmt: postDateGmt,
+                countLikes: obj.countLikes,
+                countDislikes: obj.countDislikes,
+                ogpImageUrl: obj.ogpImageUrl,
+                tagNames: tagNames,
+                countComments: obj.countComments,
+            } as PostCardProps
         });
         console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;

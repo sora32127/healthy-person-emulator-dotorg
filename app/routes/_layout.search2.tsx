@@ -114,7 +114,7 @@ function SearchResults({ searchResults }: { searchResults: SearchResult }) {
             <p>Total Pages: {searchResults?.metadata.totalPages}</p>
             <div>
                 {searchResults?.results.map((result) => (
-                    <PostCard key={result.postId} {...result} tagNames={result.tags} />
+                    <PostCard key={result.postId} {...result} />
                 ))}
             </div>
         </div>
