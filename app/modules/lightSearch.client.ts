@@ -79,11 +79,10 @@ export class LightSearchHandler {
 
     async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = []): Promise<SearchResult> {
         const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags);
-        const tagCounts = await this.getTagCounts(query);
-        console.log("tagCounts", tagCounts);
+        const tagCounts = await this.getTagCounts(query, tags);
         return {
             ...searchResult,
-            tagCounts: tagCounts
+            tagCounts
         };
     }
 
@@ -168,22 +167,30 @@ export class LightSearchHandler {
         return Number(countRes.toArray()[0].total);
     }
 
-    private async getTagCounts(query: string): Promise<Array<{tagName: string, count: number}>> {
+
+    private async getTagCounts(query: string, tags: string[]): Promise<Array<{tagName: string, count: number}>> {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
         const isQueryEmpty = this.isQueryEmpty(query);
-        const sql = isQueryEmpty 
-        ? `SELECT JSON_EXTRACT_STRING(tagName, '$.unnest') as tagName, COUNT(*) as count 
-            FROM search, UNNEST(tagNames) as tagName 
-            GROUP BY tagName 
-            ORDER BY count DESC` 
-        : `SELECT JSON_EXTRACT_STRING(tagName, '$.unnest') as tagName, COUNT(*) as count 
-            FROM search, UNNEST(tagNames) as tagName 
-            WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' 
-            GROUP BY tagName 
-            ORDER BY count DESC`;
+        const isTagsEmpty = tags.length === 0;
+        console.log("isQueryEmpty", isQueryEmpty);
+        console.log("isTagsEmpty", isTagsEmpty);
+       
+        const sql = isQueryEmpty && isTagsEmpty
+        ? `SELECT tagName, count(*) as count FROM tags GROUP BY tagName ORDER BY count DESC`
+        : isQueryEmpty && !isTagsEmpty
+        ? `SELECT tagName, count(*) as count FROM tags WHERE tagName IN (${tags.map(tag => `'${tag}'`).join(",")}) GROUP BY tagName ORDER BY count DESC`
+        : !isQueryEmpty && isTagsEmpty
+        ? `with post as (SELECT postId FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
+        SELECT tagName, count(*) as count FROM tags WHERE postId in (SELECT postId FROM post) GROUP BY tagName ORDER BY count DESC`
+        : !isQueryEmpty && !isTagsEmpty
+        ? `with post as (SELECT postId FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
+        SELECT tagName, count(*) as count FROM tags WHERE postId in (SELECT postId FROM post) AND tagName IN (${tags.map(tag => `'${tag}'`).join(",")}) GROUP BY tagName ORDER BY count DESC`
+        : "";
+        
+        console.log("sql", sql);
         const countRes = await conn.query(sql);
         await conn.close();
         return countRes.toArray().map((row) => ({

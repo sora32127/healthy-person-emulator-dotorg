@@ -100,7 +100,7 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     const executeSearch = useCallback(async (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
         if (lightSearchHandler && isInitialized) {
             try {
-                const results = await lightSearchHandler.search(query, orderby, page);
+                const results = await lightSearchHandler.search(query, orderby, page, tags);
                 setSearchResults({
                     metadata: {
                         query: results.metadata.query,
