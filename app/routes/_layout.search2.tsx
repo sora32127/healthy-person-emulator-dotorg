@@ -31,8 +31,10 @@ export default function LightSearch() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get("q") || "";
     const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
+    const page = Number(searchParams.get("p")) || 1;
     const [inputValue, setInputValue] = useState(query);
     const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
+    const [currentPage, setCurrentPage] = useState(page);
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
@@ -56,15 +58,16 @@ export default function LightSearch() {
     // 初回レンダリング時の検索実行
     useEffect(() => {
         if (isInitialized && lightSearchHandler && query) {
-            executeSearch(query, currentOrderby);
+            executeSearch(query, currentOrderby, currentPage);
         }
     }, [isInitialized, lightSearchHandler, query]);
     
     // URL パラメータの管理
-    const updateSearchParams = (query: string, orderby: OrderBy) => {
+    const updateSearchParams = (query: string, orderby: OrderBy, page: number) => {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         params.set("orderby", orderby);
+        params.set("p", page.toString());
         setSearchParams(params);
     };
     
@@ -73,12 +76,15 @@ export default function LightSearch() {
         if (orderby !== currentOrderby) {
             setCurrentOrderby(orderby);
         }
-    }, [orderby]);
+        if (page !== currentPage) {
+            setCurrentPage(page);
+        }
+    }, [orderby, page]);
     
-    const executeSearch = useCallback(async (query: string, orderby: OrderBy) => {
+    const executeSearch = useCallback(async (query: string, orderby: OrderBy, page: number) => {
         if (lightSearchHandler && isInitialized) {
             try {
-                const results = await lightSearchHandler.search(query, orderby);
+                const results = await lightSearchHandler.search(query, orderby, page);
                 setSearchResults({
                     metadata: {
                         query: results.metadata.query,
@@ -89,7 +95,7 @@ export default function LightSearch() {
                     },
                     results: results.results
                 });
-                updateSearchParams(query, orderby);
+                updateSearchParams(query, orderby, page);
             } catch (error) {
                 console.error("Search error:", error);
             }
@@ -99,15 +105,21 @@ export default function LightSearch() {
     // debounceされた検索関数を作成
     const handleSearch = useCallback(
         debounce(async (query: string, orderby: OrderBy) => {
-            await executeSearch(query, orderby);
+            await executeSearch(query, orderby, 1); // 検索時は1ページ目に戻る
         }, 1000),
         [executeSearch]
     );
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         setCurrentOrderby(newOrderby);
-        // 直接検索を実行（デバウンスなし）
-        executeSearch(inputValue, newOrderby);
+        // 並び順変更時は1ページ目に戻る
+        executeSearch(inputValue, newOrderby, 1);
+    };
+
+    // ページ変更ハンドラー
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+        executeSearch(inputValue, currentOrderby, newPage);
     };
     
     return (
@@ -136,6 +148,12 @@ export default function LightSearch() {
             )}
             {!isInitialized && <p>初期化中...</p>}
             <SearchResults searchResults={searchResults} />
+            <Pagination 
+                currentPage={searchResults.metadata.page}
+                totalPages={searchResults.metadata.totalPages}
+                onPageChange={handlePageChange}
+                totalCount={searchResults.metadata.count}
+            />
         </div>
     );
 }
@@ -149,18 +167,103 @@ function SearchResults({ searchResults }: { searchResults: SearchResult }) {
         }
     }
 
+    // 検索が実行されていない場合
+    if (!searchResults.metadata.query && searchResults.metadata.count === 0) {
+        return (
+            <div className="search-results">
+                <p>検索キーワードを入力してください</p>
+            </div>
+        );
+    }
+
+    // 検索結果が0件の場合
+    if (searchResults.metadata.query && searchResults.metadata.count === 0) {
+        return (
+            <div className="search-results">
+                <div className="search-meta-data my-3 min-h-[80px]">
+                    <div className="h-full flex flex-col justify-center">
+                        <p>検索結果: 0件</p>
+                        <p className="truncate">キーワード: {searchResults.metadata.query}</p>
+                        <p>検索結果がありません</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div>
-            <p>Query: {searchResults?.metadata.query}</p>
-            <p>Count: {searchResults?.metadata.count}</p>
-            <p>Page: {searchResults?.metadata.page}</p>
-            <p>Total Pages: {searchResults?.metadata.totalPages}</p>
-            <p>Sort: {convertOrderBy(searchResults?.metadata.orderby)}</p>
-            <div>
-                {searchResults?.results.map((result) => (
+        <div className="search-results">
+            <div className="search-meta-data my-3 min-h-[80px]">
+                <div className="h-full flex flex-col justify-center">
+                    <p>検索結果: {searchResults.metadata.count}件</p>
+                    <p className="truncate">キーワード: {searchResults.metadata.query}</p>
+                    <p>ページ: {searchResults.metadata.page} / {searchResults.metadata.totalPages}</p>
+                    <p>並び順: {convertOrderBy(searchResults.metadata.orderby)}</p>
+                </div>
+            </div>
+            <div className="search-results-container">
+                {searchResults.results.map((result) => (
                     <PostCard key={result.postId} {...result} />
                 ))}
             </div>
+        </div>
+    );
+}
+
+function Pagination({ 
+    currentPage, 
+    totalPages, 
+    onPageChange, 
+    totalCount 
+}: { 
+    currentPage: number; 
+    totalPages: number; 
+    onPageChange: (page: number) => void;
+    totalCount: number;
+}) {
+    if (totalCount === 0) return null;
+
+    return (
+        <div className="search-navigation flex justify-center my-4">
+            {totalPages >= 1 && (
+                <div className="join">
+                    <button
+                        className="join-item btn btn-lg"
+                        onClick={() => onPageChange(1)}
+                        disabled={currentPage === 1}
+                        type="button"
+                    >
+                        «
+                    </button>
+                    <button
+                        className="join-item btn btn-lg"
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        type="button"
+                    >
+                        ‹
+                    </button>
+                    <div className="join-item bg-base-200 font-bold text-lg flex items-center justify-center min-w-[100px]">
+                        {currentPage} / {totalPages}
+                    </div>
+                    <button
+                        className="join-item btn btn-lg"
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        type="button"
+                    >
+                        ›
+                    </button>
+                    <button
+                        className="join-item btn btn-lg"
+                        onClick={() => onPageChange(totalPages)}
+                        disabled={currentPage === totalPages}
+                        type="button"
+                    >
+                        »
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

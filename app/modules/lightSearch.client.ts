@@ -72,24 +72,35 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string, orderby: OrderBy = "timeDesc"){
-        return this.searchByQueryWithSort(query, orderby);
+    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1){
+        return this.searchByQueryWithSort(query, orderby, page);
     }
 
     async searchByQuery(query: string) {
-        return this.searchByQueryWithSort(query, "timeDesc");
+        return this.searchByQueryWithSort(query, "timeDesc", 1);
     }
 
-    async searchByQueryWithSort(query: string, orderby: OrderBy) {
+    async searchByQueryWithSort(query: string, orderby: OrderBy, page: number = 1) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
         const orderByClause = this.getOrderByClause(orderby);
-        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' ${orderByClause} limit 10`)
+        const pageSize = 10;
+        const offset = (page - 1) * pageSize;
+        
+        // 総件数を取得
+        const countRes = await conn.query(`SELECT COUNT(*) as total FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%'`);
+        const totalCount = Number(countRes.toArray()[0].total);
+        
+        // ページング付きで検索結果を取得
+        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' ${orderByClause} LIMIT ${pageSize} OFFSET ${offset}`);
         await conn.close();
+        
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;
+        this.searchResults.metadata.page = page;
+        this.searchResults.metadata.totalPages = this.calculateTotalPages(totalCount, pageSize);
         this.searchResults.metadata.orderby = orderby;
         this.searchResults.results = res.toArray().map((row) => {
             const obj = Object.fromEntries(row);
@@ -123,6 +134,22 @@ export class LightSearchHandler {
         });
         console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;
+    }
+
+    // 総件数取得メソッド
+    async getTotalCount(query: string): Promise<number> {
+        if (!this.db) {
+            throw new Error("Database not initialized");
+        }
+        const conn = await this.db.connect();
+        const countRes = await conn.query(`SELECT COUNT(*) as total FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%'`);
+        await conn.close();
+        return Number(countRes.toArray()[0].total);
+    }
+
+    // totalPages計算ロジック
+    private calculateTotalPages(totalCount: number, pageSize: number = 10): number {
+        return Math.ceil(totalCount / pageSize);
     }
 
     private getOrderByClause(orderby: OrderBy): string {
