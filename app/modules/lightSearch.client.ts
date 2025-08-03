@@ -1,12 +1,15 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
 import type { PostCardProps } from "../components/PostCard";
 
+export type OrderBy = "timeDesc" | "timeAsc" | "like";
+
 export type SearchResult = {
     metadata: {
         query: string;
         count: number;
         page: number;
         totalPages: number;
+        orderby: OrderBy;
     },
     results: PostCardProps[]
 }
@@ -32,7 +35,8 @@ export class LightSearchHandler {
             query: "",
             count: 0,
             page: 1,
-            totalPages: 0
+            totalPages: 0,
+            orderby: "timeDesc"
         },
         results: []
     };
@@ -68,19 +72,25 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string){
-        return this.searchByQuery(query);
+    async search(query: string, orderby: OrderBy = "timeDesc"){
+        return this.searchByQueryWithSort(query, orderby);
     }
 
     async searchByQuery(query: string) {
+        return this.searchByQueryWithSort(query, "timeDesc");
+    }
+
+    async searchByQueryWithSort(query: string, orderby: OrderBy) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
-        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' limit 10`)
+        const orderByClause = this.getOrderByClause(orderby);
+        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' ${orderByClause} limit 10`)
         await conn.close();
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = res.numRows;
+        this.searchResults.metadata.orderby = orderby;
         this.searchResults.results = res.toArray().map((row) => {
             const obj = Object.fromEntries(row);
             // BigIntを通常の数値に変換
@@ -113,6 +123,15 @@ export class LightSearchHandler {
         });
         console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;
+    }
+
+    private getOrderByClause(orderby: OrderBy): string {
+        switch (orderby) {
+            case "timeDesc": return "ORDER BY postDateGmt DESC";
+            case "timeAsc": return "ORDER BY postDateGmt ASC";
+            case "like": return "ORDER BY countLikes DESC";
+            default: return "ORDER BY postDateGmt DESC";
+        }
     }
 
     getSearchResults() {
