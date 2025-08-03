@@ -6,11 +6,55 @@ import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
 import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
+import { Storage } from '@google-cloud/storage';
+
+/**
+ * ファイルの署名付きダウンロードURLを生成
+ * @param fileName ファイル名
+ * @param expirationMinutes 有効期限（分）
+ * @returns 署名付きURL
+ */
+async function generateDownloadSignedUrl(
+  fileName: string,
+  expirationMinutes: number = 15
+): Promise<string> {
+  try {
+    const bucket = new Storage({
+        keyFilename: "./hpe-temp-downloader-key.json"
+    }).bucket("hpe-temp");
+    const file = bucket.file(fileName);
+
+    // ファイルの存在確認
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new Error(`File ${fileName} does not exist in bucket hpe-temp`);
+    }
+
+    // 署名付きURLを生成
+    const [signedUrl] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + expirationMinutes * 60 * 1000,
+    });
+
+    return signedUrl;
+  } catch (error) {
+    console.error('Error generating signed URL:', error);
+    throw new Error(`Failed to generate signed URL for ${fileName}`);
+  }
+}
+
 
 export async function loader() {
-    const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
-    const tagsAssetURL1 = process.env.TAGS_PARQUET_FILE_PATH_1
-    const tagsAssetURL2 = process.env.TAGS_PARQUET_FILE_PATH_2
+    const SEARCH_PARQUET_FILE_NAME = process.env.SEARCH_PARQUET_FILE_NAME;
+    const TAGS_PARQUET_FILE_NAME_1 = process.env.TAGS_PARQUET_FILE_NAME_1;
+    const TAGS_PARQUET_FILE_NAME_2 = process.env.TAGS_PARQUET_FILE_NAME_2;
+    if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME_1 || !TAGS_PARQUET_FILE_NAME_2) {
+        throw new Error("Search or tags parquet file name is not set");
+    }
+    const searchAssetURL = await generateDownloadSignedUrl(SEARCH_PARQUET_FILE_NAME);
+    const tagsAssetURL1 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_1);
+    const tagsAssetURL2 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_2);
     return {
         searchAssetURL,
         tagsAssetURL1,
@@ -33,17 +77,16 @@ export default function LightSearch() {
         tagCounts: [],
         results: []
     });
-// ... existing code ...
-const [searchParams, setSearchParams] = useSearchParams();
-const query = searchParams.get("q") || "";
-const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
-const page = Number(searchParams.get("p")) || 1;
-const tags = searchParams.get("tags")?.split(" ") || [];
-const [inputValue, setInputValue] = useState(query);
-const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
-const [currentPage, setCurrentPage] = useState(page);
-const [selectedTags, setSelectedTags] = useState<string[]>(tags);
-const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get("q") || "";
+    const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
+    const page = Number(searchParams.get("p")) || 1;
+    const tags = searchParams.get("tags")?.split(" ") || [];
+    const [inputValue, setInputValue] = useState(query);
+    const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
+    const [currentPage, setCurrentPage] = useState(page);
+    const [selectedTags, setSelectedTags] = useState<string[]>(tags);
+    const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
