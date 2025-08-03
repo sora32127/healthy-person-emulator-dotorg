@@ -80,7 +80,7 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
         if (tags.length > 0) {
             params.set("tags", tags.join(" "));
         }
-        setSearchParams(params);
+        setSearchParams(params, { preventScrollReset: true });
     };
     
     useEffect(() => {
