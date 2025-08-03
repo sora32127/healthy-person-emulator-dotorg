@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useLoaderData } from "@remix-run/react";
-import { LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
+import { getOrCreateHandler, LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
 import { useEffect, useState, useCallback } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
@@ -41,7 +41,7 @@ export default function LightSearch() {
     
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
+            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL);
             setLightSearchHandler(handler);
             // 初期化完了を待つ
             await handler.waitForInitialization();

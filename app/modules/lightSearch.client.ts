@@ -11,6 +11,19 @@ export type SearchResult = {
     results: PostCardProps[]
 }
 
+const handlerCache = new Map<string, LightSearchHandler>();
+
+export function getOrCreateHandler(searchAssetURL: string, tagsAssetURL: string): LightSearchHandler {
+    const cacheKey = `${searchAssetURL}:${tagsAssetURL}`;
+    
+    if (!handlerCache.has(cacheKey)) {
+        const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
+        handlerCache.set(cacheKey, handler);
+    }
+    
+    return handlerCache.get(cacheKey)!;
+}
+
 export class LightSearchHandler {
     private db: duckdb.AsyncDuckDB | null = null;
     private initializationPromise: Promise<void> | null = null;
