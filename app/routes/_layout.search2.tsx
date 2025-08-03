@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
+import { Accordion, AccordionItem } from "~/components/Accordion";
+import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
@@ -27,13 +29,17 @@ export default function LightSearch() {
         tagCounts: [],
         results: []
     });
-    const [searchParams, setSearchParams] = useSearchParams();
-    const query = searchParams.get("q") || "";
-    const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
-    const page = Number(searchParams.get("p")) || 1;
-    const [inputValue, setInputValue] = useState(query);
-    const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
-    const [currentPage, setCurrentPage] = useState(page);
+// ... existing code ...
+const [searchParams, setSearchParams] = useSearchParams();
+const query = searchParams.get("q") || "";
+const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
+const page = Number(searchParams.get("p")) || 1;
+const tags = searchParams.get("tags")?.split(" ") || [];
+const [inputValue, setInputValue] = useState(query);
+const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
+const [currentPage, setCurrentPage] = useState(page);
+const [selectedTags, setSelectedTags] = useState<string[]>(tags);
+const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
@@ -54,20 +60,22 @@ export default function LightSearch() {
     // 初回レンダリング時の検索実行
     useEffect(() => {
         if (isInitialized && lightSearchHandler && query) {
-            executeSearch(query, currentOrderby, currentPage);
+            executeSearch(query, currentOrderby, currentPage, selectedTags);
         }
-    }, [isInitialized, lightSearchHandler, query]);
+    }, [isInitialized, lightSearchHandler, query, currentOrderby, currentPage, selectedTags]);
     
     // URL パラメータの管理
-    const updateSearchParams = (query: string, orderby: OrderBy, page: number) => {
+    const updateSearchParams = (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
         params.set("orderby", orderby);
         params.set("p", page.toString());
+        if (tags.length > 0) {
+            params.set("tags", tags.join(" "));
+        }
         setSearchParams(params);
     };
     
-    // URLパラメータの初期化
     useEffect(() => {
         if (orderby !== currentOrderby) {
             setCurrentOrderby(orderby);
@@ -75,9 +83,14 @@ export default function LightSearch() {
         if (page !== currentPage) {
             setCurrentPage(page);
         }
-    }, [orderby, page]);
+        // タグ状態の復元
+        if (tags.length > 0 && selectedTags.length === 0) {
+            setSelectedTags(tags);
+        }
+    }, [orderby, page, tags]);
     
-    const executeSearch = useCallback(async (query: string, orderby: OrderBy, page: number) => {
+    // executeSearch関数を修正
+    const executeSearch = useCallback(async (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
         if (lightSearchHandler && isInitialized) {
             try {
                 const results = await lightSearchHandler.search(query, orderby, page);
@@ -92,31 +105,39 @@ export default function LightSearch() {
                     tagCounts: results.tagCounts,
                     results: results.results
                 });
-                updateSearchParams(query, orderby, page);
+                updateSearchParams(query, orderby, page, tags); // タグパラメータを追加
             } catch (error) {
                 console.error("Search error:", error);
             }
         }
     }, [lightSearchHandler, isInitialized]);
     
-    // debounceされた検索関数を作成
+    // handleSearch関数を修正
     const handleSearch = useCallback(
         debounce(async (query: string, orderby: OrderBy) => {
-            await executeSearch(query, orderby, 1); // 検索時は1ページ目に戻る
+            await executeSearch(query, orderby, 1, selectedTags); // タグパラメータを追加
         }, 1000),
-        [executeSearch]
+        [executeSearch, selectedTags] // selectedTagsを依存配列に追加
     );
     
+    // handleSortOrderChange関数を修正
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         setCurrentOrderby(newOrderby);
         // 並び順変更時は1ページ目に戻る
-        executeSearch(inputValue, newOrderby, 1);
+        executeSearch(inputValue, newOrderby, 1, selectedTags); // タグパラメータを追加
     };
 
-    // ページ変更ハンドラー
+    // handlePageChange関数を修正
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
-        executeSearch(inputValue, currentOrderby, newPage);
+        executeSearch(inputValue, currentOrderby, newPage, selectedTags); // タグパラメータを追加
+    };
+
+    // handleTagsSelected関数を修正
+    const handleTagsSelected = (newTags: string[]) => {
+        setSelectedTags(newTags);
+        // とりあえず既存のsearchメソッドを呼び出す（タグは無視）
+        executeSearch(inputValue, currentOrderby, 1, newTags); // タグパラメータを追加
     };
     
     return (
@@ -130,6 +151,21 @@ export default function LightSearch() {
                 }}
                 value={inputValue}
             ></input>
+            <div className="my-4">
+                <Accordion>
+                    <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
+                        <TagSelectionBox
+                            allTagsOnlyForSearch={[
+                                {tagName: "test", count: 10},
+                                {tagName: "test2", count: 20},
+                                {tagName: "test3", count: 30},
+                            ]}
+                            onTagsSelected={handleTagsSelected}
+                            parentComponentStateValues={selectedTags}
+                        />
+                    </AccordionItem>
+                </Accordion>
+            </div>
             {searchResults.metadata.count > 0 && (
                 <div className="search-sort-order py-2">
                     <select 
