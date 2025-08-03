@@ -58,7 +58,7 @@ export default function LightSearch() {
         if (isInitialized && lightSearchHandler && query) {
             executeSearch(query, currentOrderby);
         }
-    }, [isInitialized, lightSearchHandler, query, currentOrderby]);
+    }, [isInitialized, lightSearchHandler, query]);
     
     // URL パラメータの管理
     const updateSearchParams = (query: string, orderby: OrderBy) => {
@@ -106,7 +106,8 @@ export default function LightSearch() {
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         setCurrentOrderby(newOrderby);
-        handleSearch(inputValue, newOrderby);
+        // 直接検索を実行（デバウンスなし）
+        executeSearch(inputValue, newOrderby);
     };
     
     return (
