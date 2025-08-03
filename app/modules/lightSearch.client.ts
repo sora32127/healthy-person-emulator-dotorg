@@ -93,9 +93,16 @@ export class LightSearchHandler {
         const conn = await this.db.connect();
         const orderByClause = this.getOrderByClause(orderby);
         let tagFilterClause = "";
+        
         if (tags.length > 0) {
-            const tagConditions = tags.map(tag => `'${tag}' IN (SELECT UNNEST(tagNames))`).join(" AND ");
-            tagFilterClause = `AND (${tagConditions})`;
+            if (tags.length === 1) {
+                // 単一タグの場合
+                tagFilterClause = `AND '${tags[0]}' IN (SELECT UNNEST(tagNames))`;
+            } else {
+                // 複数タグの場合：AND条件
+                const tagConditions = tags.map(tag => `'${tag}' IN (SELECT UNNEST(tagNames))`).join(" AND ");
+                tagFilterClause = `AND (${tagConditions})`;
+            }
         }
 
         // 検索条件の構築
@@ -178,17 +185,102 @@ export class LightSearchHandler {
         console.log("isQueryEmpty", isQueryEmpty);
         console.log("isTagsEmpty", isTagsEmpty);
        
-        const sql = isQueryEmpty && isTagsEmpty
-        ? `SELECT tagName, count(*) as count FROM tags GROUP BY tagName ORDER BY count DESC`
-        : isQueryEmpty && !isTagsEmpty
-        ? `SELECT tagName, count(*) as count FROM tags WHERE tagName IN (${tags.map(tag => `'${tag}'`).join(",")}) GROUP BY tagName ORDER BY count DESC`
-        : !isQueryEmpty && isTagsEmpty
-        ? `with post as (SELECT postId FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
-        SELECT tagName, count(*) as count FROM tags WHERE postId in (SELECT postId FROM post) GROUP BY tagName ORDER BY count DESC`
-        : !isQueryEmpty && !isTagsEmpty
-        ? `with post as (SELECT postId FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
-        SELECT tagName, count(*) as count FROM tags WHERE postId in (SELECT postId FROM post) AND tagName IN (${tags.map(tag => `'${tag}'`).join(",")}) GROUP BY tagName ORDER BY count DESC`
-        : "";
+        let sql: string;
+        
+        if (isQueryEmpty && isTagsEmpty) {
+            // 検索条件なし：すべてのタグを集計
+            sql = `SELECT tagName, count(*) as count FROM tags GROUP BY tagName ORDER BY count DESC`;
+        } else if (isQueryEmpty && !isTagsEmpty) {
+            // タグフィルターのみ：選択されたタグをすべて持つ記事のIDを取得し、それらの記事が持つすべてのタグを集計
+            if (tags.length === 1) {
+                // 単一タグの場合
+                sql = `
+                    WITH filtered_posts AS (
+                        SELECT DISTINCT postId 
+                        FROM tags 
+                        WHERE tagName = '${tags[0]}'
+                    )
+                    SELECT tagName, count(*) as count 
+                    FROM tags 
+                    WHERE postId IN (SELECT postId FROM filtered_posts) 
+                    GROUP BY tagName 
+                    ORDER BY count DESC
+                `;
+            } else {
+                // 複数タグの場合：AND条件（INTERSECTを使用）
+                const tagSubqueries = tags.map(tag => 
+                    `SELECT postId FROM tags WHERE tagName = '${tag}'`
+                ).join(" INTERSECT ");
+                
+                sql = `
+                    WITH filtered_posts AS (
+                        ${tagSubqueries}
+                    )
+                    SELECT tagName, count(*) as count 
+                    FROM tags 
+                    WHERE postId IN (SELECT postId FROM filtered_posts) 
+                    GROUP BY tagName 
+                    ORDER BY count DESC
+                `;
+            }
+        } else if (!isQueryEmpty && isTagsEmpty) {
+            // 検索クエリのみ：検索結果の記事が持つすべてのタグを集計
+            sql = `
+                WITH filtered_posts AS (
+                    SELECT postId 
+                    FROM search 
+                    WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%'
+                )
+                SELECT tagName, count(*) as count 
+                FROM tags 
+                WHERE postId IN (SELECT postId FROM filtered_posts) 
+                GROUP BY tagName 
+                ORDER BY count DESC
+            `;
+        } else {
+            // 検索クエリとタグフィルター両方：両方の条件を満たす記事が持つすべてのタグを集計
+            if (tags.length === 1) {
+                // 単一タグの場合
+                sql = `
+                    WITH filtered_posts AS (
+                        SELECT postId 
+                        FROM search 
+                        WHERE (postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
+                        AND postId IN (
+                            SELECT DISTINCT postId 
+                            FROM tags 
+                            WHERE tagName = '${tags[0]}'
+                        )
+                    )
+                    SELECT tagName, count(*) as count 
+                    FROM tags 
+                    WHERE postId IN (SELECT postId FROM filtered_posts) 
+                    GROUP BY tagName 
+                    ORDER BY count DESC
+                `;
+            } else {
+                // 複数タグの場合：AND条件（INTERSECTを使用）
+                const tagSubqueries = tags.map(tag => 
+                    `SELECT postId FROM tags WHERE tagName = '${tag}'`
+                ).join(" INTERSECT ");
+                
+                sql = `
+                    WITH filtered_posts AS (
+                        SELECT postId 
+                        FROM search 
+                        WHERE (postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%')
+                        AND postId IN (
+                            ${tagSubqueries}
+                        )
+                    )
+                    SELECT tagName, count(*) as count 
+                    FROM tags 
+                    WHERE postId IN (SELECT postId FROM filtered_posts) 
+                    GROUP BY tagName 
+                    ORDER BY count DESC
+                `;
+            }
+        }
         
         console.log("sql", sql);
         const countRes = await conn.query(sql);
