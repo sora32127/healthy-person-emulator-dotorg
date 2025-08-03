@@ -9,13 +9,17 @@ import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
+    const tagsAssetURL1 = process.env.TAGS_PARQUET_FILE_PATH_1
+    const tagsAssetURL2 = process.env.TAGS_PARQUET_FILE_PATH_2
     return {
         searchAssetURL,
+        tagsAssetURL1,
+        tagsAssetURL2
     };
 }
 
 export default function LightSearch() {
-    const { searchAssetURL } = useLoaderData<typeof loader>();
+    const { searchAssetURL, tagsAssetURL1, tagsAssetURL2 } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult>({
@@ -44,10 +48,13 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
+    if (!tagsAssetURL1 || !tagsAssetURL2) {
+        throw new Error("Tags asset URL is not set : ");
+    }
     
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = getOrCreateHandler(searchAssetURL);
+            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
             setLightSearchHandler(handler);
             // 初期化完了を待つ
             await handler.waitForInitialization();
