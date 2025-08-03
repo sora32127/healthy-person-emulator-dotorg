@@ -1,4 +1,3 @@
-import { useAtomValue } from "jotai";
 import { useLoaderData } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler,type SearchResult } from "~/modules/lightSearch.client";
 import { useEffect, useState, useCallback } from "react";
