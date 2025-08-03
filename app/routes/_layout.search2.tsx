@@ -24,6 +24,7 @@ export default function LightSearch() {
             totalPages: 0,
             orderby: "timeDesc"
         },
+        tagCounts: [],
         results: []
     });
     const [searchParams, setSearchParams] = useSearchParams();
@@ -88,6 +89,7 @@ export default function LightSearch() {
                         totalPages: results.metadata.totalPages,
                         orderby: results.metadata.orderby
                     },
+                    tagCounts: results.tagCounts,
                     results: results.results
                 });
                 updateSearchParams(query, orderby, page);

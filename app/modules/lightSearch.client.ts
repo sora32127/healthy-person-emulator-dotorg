@@ -11,6 +11,7 @@ export type SearchResult = {
         totalPages: number;
         orderby: OrderBy;
     },
+    tagCounts: Array<{tagName: string, count: number}>,
     results: PostCardProps[]
 }
 
@@ -38,6 +39,7 @@ export class LightSearchHandler {
             totalPages: 0,
             orderby: "timeDesc"
         },
+        tagCounts: [],
         results: []
     };
 
@@ -71,15 +73,16 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1){
-        return this.searchByQueryWithSort(query, orderby, page);
+    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1): Promise<SearchResult> {
+        const searchResult = await this.searchByQueryWithSort(query, orderby, page);
+        const tagCounts = await this.getTagCounts(query);
+        return {
+            ...searchResult,
+            tagCounts: tagCounts
+        };
     }
 
-    async searchByQuery(query: string) {
-        return this.searchByQueryWithSort(query, "timeDesc", 1);
-    }
-
-    async searchByQueryWithSort(query: string, orderby: OrderBy, page: number = 1) {
+    private async searchByQueryWithSort(query: string, orderby: OrderBy, page: number = 1) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
@@ -144,6 +147,34 @@ export class LightSearchHandler {
         const countRes = await conn.query(`SELECT COUNT(*) as total FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%'`);
         await conn.close();
         return Number(countRes.toArray()[0].total);
+    }
+
+    private async getTagCounts(query: string): Promise<Array<{tagName: string, count: number}>> {
+        if (!this.db) {
+            throw new Error("Database not initialized");
+        }
+        const conn = await this.db.connect();
+        const isQueryEmpty = this.isQueryEmpty(query);
+        const sql = isQueryEmpty 
+        ? `SELECT tagName, COUNT(*) as count 
+            FROM search, UNNEST(tagNames) as tagName 
+            GROUP BY tagName 
+            ORDER BY count DESC` 
+        : `SELECT tagName, COUNT(*) as count 
+            FROM search, UNNEST(tagNames) as tagName 
+            WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' 
+            GROUP BY tagName 
+            ORDER BY count DESC`;
+        const countRes = await conn.query(sql);
+        await conn.close();
+        return countRes.toArray().map((row) => ({
+            tagName: row.tagName,
+            count: Number(row.count)
+        }));
+    }
+
+    private isQueryEmpty(query: string): boolean {
+        return query === "" || query.trim() === "" || !query;
     }
 
     // totalPages計算ロジック
