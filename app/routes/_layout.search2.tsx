@@ -69,7 +69,7 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
         if (isInitialized && lightSearchHandler && query) {
             executeSearch(query, currentOrderby, currentPage, selectedTags);
         }
-    }, [isInitialized, lightSearchHandler, query, currentOrderby, currentPage, selectedTags]);
+    }, [isInitialized, lightSearchHandler, query, currentOrderby, currentPage]);
     
     // URL パラメータの管理
     const updateSearchParams = (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
@@ -90,8 +90,9 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
         if (page !== currentPage) {
             setCurrentPage(page);
         }
-        // タグ状態の復元
-        if (tags.length > 0 && selectedTags.length === 0) {
+        // タグ状態の復元 - URLパラメータが変更された場合のみ
+        if (tags.length !== selectedTags.length || 
+            tags.some((tag, index) => tag !== selectedTags[index])) {
             setSelectedTags(tags);
         }
     }, [orderby, page, tags]);
@@ -122,9 +123,9 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     // handleSearch関数を修正
     const handleSearch = useCallback(
         debounce(async (query: string, orderby: OrderBy) => {
-            await executeSearch(query, orderby, 1, selectedTags); // タグパラメータを追加
+            await executeSearch(query, orderby, 1, selectedTags);
         }, 1000),
-        [executeSearch, selectedTags] // selectedTagsを依存配列に追加
+        [executeSearch]
     );
     
     // handleSortOrderChange関数を修正
@@ -143,8 +144,8 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     // handleTagsSelected関数を修正
     const handleTagsSelected = (newTags: string[]) => {
         setSelectedTags(newTags);
-        // とりあえず既存のsearchメソッドを呼び出す（タグは無視）
-        executeSearch(inputValue, currentOrderby, 1, newTags); // タグパラメータを追加
+        // タグが変更されたら検索を実行し、URLパラメータも更新
+        executeSearch(inputValue, currentOrderby, 1, newTags);
     };
     
     return (
