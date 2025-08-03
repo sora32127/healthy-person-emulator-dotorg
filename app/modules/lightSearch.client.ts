@@ -73,30 +73,45 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1): Promise<SearchResult> {
-        const searchResult = await this.searchByQueryWithSort(query, orderby, page);
+    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = []): Promise<SearchResult> {
+        const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags);
         const tagCounts = await this.getTagCounts(query);
+        console.log("tagCounts", tagCounts);
         return {
             ...searchResult,
             tagCounts: tagCounts
         };
     }
 
-    private async searchByQueryWithSort(query: string, orderby: OrderBy, page: number = 1) {
+    private async searchByQueryAndTagsWithSort(query: string, orderby: OrderBy, page: number = 1, tags: string[] = []) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
         const conn = await this.db.connect();
         const orderByClause = this.getOrderByClause(orderby);
+        let tagFilterClause = "";
+        if (tags.length > 0) {
+            const tagConditions = tags.map(tag => `'${tag}' IN (SELECT UNNEST(tagNames))`).join(" AND ");
+            tagFilterClause = `AND (${tagConditions})`;
+        }
+
+        // 検索条件の構築
+        const searchCondition = query.trim() !== "" 
+        ? `WHERE (postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%') ${tagFilterClause}`
+        : tags.length > 0 
+            ? `WHERE ${tagFilterClause.substring(4)}` // "AND "を除去
+            : "";
+
         const pageSize = 10;
         const offset = (page - 1) * pageSize;
         
         // 総件数を取得
-        const countRes = await conn.query(`SELECT COUNT(*) as total FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%'`);
+        const countSql = `SELECT COUNT(*) as total FROM search ${searchCondition}`;
+        const countRes = await conn.query(countSql);
         const totalCount = Number(countRes.toArray()[0].total);
-        
+
         // ページング付きで検索結果を取得
-        const res = await conn.query(`SELECT * FROM search WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' ${orderByClause} LIMIT ${pageSize} OFFSET ${offset}`);
+        const res = await conn.query(`SELECT * FROM search ${searchCondition} ${orderByClause} LIMIT ${pageSize} OFFSET ${offset}`);
         await conn.close();
         
         this.searchResults.metadata.query = query;
@@ -156,11 +171,11 @@ export class LightSearchHandler {
         const conn = await this.db.connect();
         const isQueryEmpty = this.isQueryEmpty(query);
         const sql = isQueryEmpty 
-        ? `SELECT tagName, COUNT(*) as count 
+        ? `SELECT JSON_EXTRACT_STRING(tagName, '$.unnest') as tagName, COUNT(*) as count 
             FROM search, UNNEST(tagNames) as tagName 
             GROUP BY tagName 
             ORDER BY count DESC` 
-        : `SELECT tagName, COUNT(*) as count 
+        : `SELECT JSON_EXTRACT_STRING(tagName, '$.unnest') as tagName, COUNT(*) as count 
             FROM search, UNNEST(tagNames) as tagName 
             WHERE postTitle LIKE '%${query}%' OR postContent LIKE '%${query}%' 
             GROUP BY tagName 
@@ -168,7 +183,7 @@ export class LightSearchHandler {
         const countRes = await conn.query(sql);
         await conn.close();
         return countRes.toArray().map((row) => ({
-            tagName: row.tagName,
+            tagName: String(row.tagName),
             count: Number(row.count)
         }));
     }

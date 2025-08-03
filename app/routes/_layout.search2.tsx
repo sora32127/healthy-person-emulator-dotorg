@@ -155,11 +155,7 @@ const [isAccordionOpen, setIsAccordionOpen] = useState(false);
                 <Accordion>
                     <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
                         <TagSelectionBox
-                            allTagsOnlyForSearch={[
-                                {tagName: "test", count: 10},
-                                {tagName: "test2", count: 20},
-                                {tagName: "test3", count: 30},
-                            ]}
+                            allTagsOnlyForSearch={searchResults.tagCounts}
                             onTagsSelected={handleTagsSelected}
                             parentComponentStateValues={selectedTags}
                         />
