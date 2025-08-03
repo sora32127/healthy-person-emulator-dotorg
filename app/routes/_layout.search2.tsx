@@ -7,15 +7,13 @@ import { useSearchParams } from "@remix-run/react";
 
 export async function loader() {
     const searchAssetURL = process.env.SEARCH_PARQUET_FILE_PATH
-    const tagsAssetURL = process.env.TAGS_PARQUET_FILE_PATH
     return {
         searchAssetURL,
-        tagsAssetURL
     };
 }
 
 export default function LightSearch() {
-    const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
+    const { searchAssetURL } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
     const [searchResults, setSearchResults] = useState<SearchResult>({
@@ -39,13 +37,10 @@ export default function LightSearch() {
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
-    if (!tagsAssetURL) {
-        throw new Error("Tags asset URL is not set");
-    }
     
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL);
+            const handler = getOrCreateHandler(searchAssetURL);
             setLightSearchHandler(handler);
             // 初期化完了を待つ
             await handler.waitForInitialization();
@@ -53,7 +48,7 @@ export default function LightSearch() {
         };
         
         initializeHandler();
-    }, [searchAssetURL, tagsAssetURL]);
+    }, [searchAssetURL]);
     
     // 初回レンダリング時の検索実行
     useEffect(() => {
