@@ -156,6 +156,8 @@ export default function LightSearch() {
     const debouncedSearch = useCallback(
         debounce((searchQuery: string) => {
             updateSearchParams(searchQuery, orderby, 1, selectedTags);
+            // 検索実行時もページトップにスクロール
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 1000),
         [updateSearchParams, orderby, selectedTags]
     );
@@ -168,15 +170,21 @@ export default function LightSearch() {
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         updateSearchParams(query, newOrderby, 1, selectedTags);
+        // 並び順変更時もページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePageChange = (newPage: number) => {
         console.log("ページ変更:", newPage);
         updateSearchParams(query, orderby, newPage, selectedTags);
+        // ページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleTagsSelected = (newTags: string[]) => {
         updateSearchParams(query, orderby, 1, newTags);
+        // タグ変更時もページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     
     return (
