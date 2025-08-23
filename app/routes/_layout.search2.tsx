@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler, type SearchResult, type OrderBy } from "~/modules/lightSearch.client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
@@ -132,17 +132,17 @@ export default function LightSearch() {
     }, [setSearchParams, pageSize]);
     
     // デバウンス検索
-    const debouncedSearch = useCallback(
-        debounce((searchQuery: string) => {
-            updateSearchParams(searchQuery, orderby, 1, selectedTags);
+    const debouncedSearch = useMemo(() => 
+        debounce((searchQuery: string, currentOrderby: OrderBy, currentSelectedTags: string[]) => {
+            updateSearchParams(searchQuery, currentOrderby, 1, currentSelectedTags);
         }, 1000),
-        [updateSearchParams, orderby, selectedTags]
+        [updateSearchParams] // updateSearchParams関数のみ依存
     );
     
     // ハンドラー関数
     const handleSearch = (value: string) => {
         setInputValue(value);
-        debouncedSearch(value);
+        debouncedSearch(value, orderby, selectedTags);
     };
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
