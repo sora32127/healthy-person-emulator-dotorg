@@ -7,47 +7,11 @@ import { useSearchParams } from "@remix-run/react";
 import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { H1 } from "~/components/Headings";
-import { Storage } from '@google-cloud/storage';
 import { useAtom } from "jotai";
 import {
     searchResultsAtom,
 } from "~/stores/search";
-
-/**
- * ファイルの署名付きダウンロードURLを生成
- * @param fileName ファイル名
- * @param expirationMinutes 有効期限（分）
- * @returns 署名付きURL
- */
-async function generateDownloadSignedUrl(
-  fileName: string,
-  expirationMinutes: number = 15
-): Promise<string> {
-  try {
-    const bucket = new Storage({
-        keyFilename: "./hpe-temp-downloader-key.json"
-    }).bucket("hpe-temp");
-    const file = bucket.file(fileName);
-
-    // ファイルの存在確認
-    const [exists] = await file.exists();
-    if (!exists) {
-      throw new Error(`File ${fileName} does not exist in bucket hpe-temp`);
-    }
-
-    // 署名付きURLを生成
-    const [signedUrl] = await file.getSignedUrl({
-      version: 'v4',
-      action: 'read',
-      expires: Date.now() + expirationMinutes * 60 * 1000,
-    });
-
-    return signedUrl;
-  } catch (error) {
-    console.error('Error generating signed URL:', error);
-    throw new Error(`Failed to generate signed URL for ${fileName}`);
-  }
-}
+import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
 
 
 export async function loader() {
