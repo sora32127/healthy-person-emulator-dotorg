@@ -92,7 +92,6 @@ export default function LightSearch() {
             }
             
             try {
-                console.log("検索実行:", { query, orderby, currentPage, selectedTags });
                 const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags, pageSize);
                 setSearchResults(results);
                 setLastSearchParams(currentSearchParams);

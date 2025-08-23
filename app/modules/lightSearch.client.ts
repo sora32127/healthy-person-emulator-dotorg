@@ -55,9 +55,6 @@ export class LightSearchHandler {
     }
 
     async initialize(searchAssetURL: string, tagsAssetURL1: string, tagsAssetURL2: string) {
-        console.log("searchAssetURL", searchAssetURL);
-        console.log("tagsAssetURL1", tagsAssetURL1);
-        console.log("tagsAssetURL2", tagsAssetURL2);
         const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
         const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
         const worker_url = URL.createObjectURL(
@@ -158,7 +155,6 @@ export class LightSearchHandler {
                 countComments: obj.countComments,
             } as PostCardProps
         });
-        console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;
     }
 
@@ -181,8 +177,6 @@ export class LightSearchHandler {
         const conn = await this.db.connect();
         const isQueryEmpty = this.isQueryEmpty(query);
         const isTagsEmpty = tags.length === 0;
-        console.log("isQueryEmpty", isQueryEmpty);
-        console.log("isTagsEmpty", isTagsEmpty);
        
         let sql: string;
         
@@ -280,8 +274,6 @@ export class LightSearchHandler {
                 `;
             }
         }
-        
-        console.log("sql", sql);
         const countRes = await conn.query(sql);
         await conn.close();
         return countRes.toArray().map((row) => ({
