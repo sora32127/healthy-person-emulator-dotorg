@@ -12,6 +12,17 @@ import {
     searchResultsAtom,
 } from "~/stores/search";
 import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
+import type { MetaFunction } from "@remix-run/node";
+
+export const meta: MetaFunction = () => {
+    return [
+        { title: "検索 | 健常者エミュレータ事例集" },
+        { name: "description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
+        { property: "og:title", content: "検索 | 健常者エミュレータ事例集" },
+        { property: "og:description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
+        { property: "og:type", content: "website" },
+    ];
+};
 
 
 export async function loader() {
