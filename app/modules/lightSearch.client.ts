@@ -77,8 +77,8 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = []): Promise<SearchResult> {
-        const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags);
+    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = [], pageSize: number = 10): Promise<SearchResult> {
+        const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags, pageSize);
         const tagCounts = await this.getTagCounts(query, tags);
         return {
             ...searchResult,
@@ -86,7 +86,7 @@ export class LightSearchHandler {
         };
     }
 
-    private async searchByQueryAndTagsWithSort(query: string, orderby: OrderBy, page: number = 1, tags: string[] = []) {
+    private async searchByQueryAndTagsWithSort(query: string, orderby: OrderBy, page: number = 1, tags: string[] = [], pageSize: number = 10) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
@@ -112,7 +112,6 @@ export class LightSearchHandler {
             ? `WHERE ${tagFilterClause.substring(4)}` // "AND "を除去
             : "";
 
-        const pageSize = 10;
         const offset = (page - 1) * pageSize;
         
         // 総件数を取得

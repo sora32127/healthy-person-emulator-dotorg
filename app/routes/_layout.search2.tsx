@@ -45,6 +45,7 @@ export default function LightSearch() {
     const currentPage = Number(searchParams.get("p")) || 1;
     const orderby = (searchParams.get("orderby") as OrderBy) || "timeDesc";
     const selectedTags = searchParams.get("tags")?.split(" ").filter(Boolean) || [];
+    const pageSize = Number(searchParams.get("pageSize")) || 10;
     
     // UI用の状態（デバウンス検索用）
     const [inputValue, setInputValue] = useState(query);
@@ -80,14 +81,14 @@ export default function LightSearch() {
     useEffect(() => {
         if (!isInitialized || !lightSearchHandler || isSearching) return;
         
-        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags });
+        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags, pageSize });
         if (currentSearchParams === lastSearchParams) return; // 前回と同じなら実行しない
         
         const executeSearch = async () => {
             setIsSearching(true);
             try {
                 console.log("検索実行:", { query, orderby, currentPage, selectedTags });
-                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags);
+                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags, pageSize);
                 setSearchResults(results);
                 setLastSearchParams(currentSearchParams);
             } catch (error) {
@@ -98,17 +99,18 @@ export default function LightSearch() {
         };
         
         executeSearch();
-    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), lastSearchParams]);
+    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), pageSize, lastSearchParams]);
     
     // URL更新関数
-    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[]) => {
+    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[], newPageSize?: number) => {
         const params = new URLSearchParams();
         if (newQuery) params.set("q", newQuery);
         if (newOrderby !== "timeDesc") params.set("orderby", newOrderby);
         if (newPage !== 1) params.set("p", newPage.toString());
         if (newTags.length > 0) params.set("tags", newTags.join(" "));
+        if ((newPageSize || pageSize) !== 10) params.set("pageSize", (newPageSize || pageSize).toString());
         setSearchParams(params, { preventScrollReset: true });
-    }, [setSearchParams]);
+    }, [setSearchParams, pageSize]);
     
     // デバウンス検索
     const debouncedSearch = useCallback(
@@ -127,6 +129,12 @@ export default function LightSearch() {
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         updateSearchParams(query, newOrderby, 1, selectedTags);
         // 並び順変更時もページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageSizeChange = (newPageSize: number) => {
+        updateSearchParams(query, orderby, 1, selectedTags, newPageSize);
+        // 表示数変更時もページトップにスクロール
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -192,17 +200,29 @@ export default function LightSearch() {
                             </div>
                         )}
                     </div>
-                    <div className="search-sort-order py-2">
+                    <div className="search-sort-order py-2 flex gap-2 items-center">
                         {searchResults.metadata.count > 0 && (
-                            <select 
-                                value={orderby} 
-                                onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
-                                className="select select-bordered select-sm"
-                            >
-                                <option value="timeDesc">新着順</option>
-                                <option value="timeAsc">古い順</option>
-                                <option value="like">いいね順</option>
-                            </select>
+                            <>
+                                <select 
+                                    value={orderby} 
+                                    onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
+                                    className="select select-bordered select-sm"
+                                >
+                                    <option value="timeDesc">新着順</option>
+                                    <option value="timeAsc">古い順</option>
+                                    <option value="like">いいね順</option>
+                                </select>
+                                <select 
+                                    value={pageSize} 
+                                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                    className="select select-bordered select-sm"
+                                >
+                                    <option value={10}>10件</option>
+                                    <option value={20}>20件</option>
+                                    <option value={50}>50件</option>
+                                    <option value={100}>100件</option>
+                                </select>
+                            </>
                         )}
                     </div>
                     <SearchResults searchResults={searchResults} />
