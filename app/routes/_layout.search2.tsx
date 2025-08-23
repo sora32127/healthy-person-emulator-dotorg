@@ -136,20 +136,14 @@ export default function LightSearch() {
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         updateSearchParams(query, newOrderby, 1, selectedTags);
-        // 並び順変更時もページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePageSizeChange = (newPageSize: number) => {
         updateSearchParams(query, orderby, 1, selectedTags, newPageSize);
-        // 表示数変更時もページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePageChange = (newPage: number) => {
         updateSearchParams(query, orderby, newPage, selectedTags);
-        // ページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleTagsSelected = (newTags: string[]) => {
