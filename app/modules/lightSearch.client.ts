@@ -17,19 +17,22 @@ export type SearchResult = {
 
 const handlerCache = new Map<string, LightSearchHandler>();
 
-export function getOrCreateHandler(searchAssetURL: string, tagsAssetURL: string): LightSearchHandler {
+export async function getOrCreateHandler(searchAssetURL: string, tagsAssetURL: string): Promise<LightSearchHandler> {
     const cacheKey = `${searchAssetURL}-${tagsAssetURL}`;
     if (!handlerCache.has(cacheKey)) {
         const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
         handlerCache.set(cacheKey, handler);
     }
     
-    return handlerCache.get(cacheKey)!;
+    const handler = handlerCache.get(cacheKey)!;
+    await handler.waitForInitialization();
+    return handler;
 }
 
 export class LightSearchHandler {
     private db: duckdb.AsyncDuckDB | null = null;
     private initializationPromise: Promise<void> | null = null;
+    private isInitialized: boolean = false;
     private searchResults: SearchResult = {
         metadata: {
             query: "",
@@ -48,7 +51,7 @@ export class LightSearchHandler {
 
     // 初期化完了を待つメソッド
     async waitForInitialization() {
-        if (this.initializationPromise) {
+        if (!this.isInitialized && this.initializationPromise) {
             await this.initializationPromise;
         }
     }
@@ -71,6 +74,10 @@ export class LightSearchHandler {
         await conn.query(`CREATE TABLE search AS SELECT * FROM read_parquet('${searchAssetURL}')`);
         await conn.query(`CREATE TABLE tags AS SELECT * FROM read_parquet('${tagsAssetURL}')`);
         await conn.close();
+        
+        // 初期化完了を記録
+        this.isInitialized = true;
+        this.initializationPromise = null;
     }
 
     async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = [], pageSize: number = 10): Promise<SearchResult> {

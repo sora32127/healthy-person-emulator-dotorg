@@ -61,9 +61,8 @@ export default function LightSearch() {
     // 初期化処理
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL);
+            const handler = await getOrCreateHandler(searchAssetURL, tagsAssetURL);
             setLightSearchHandler(handler);
-            await handler.waitForInitialization();
             setIsInitialized(true);
         };
         
