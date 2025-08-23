@@ -10,13 +10,7 @@ import { H1 } from "~/components/Headings";
 import { Storage } from '@google-cloud/storage';
 import { useAtom } from "jotai";
 import {
-    searchQueryAtom,
-    currentPageAtom,
-    orderByAtom,
-    selectedTagsAtom,
     searchResultsAtom,
-    isSearchInitializedAtom,
-    searchInputValueAtom
 } from "~/stores/search";
 
 /**
