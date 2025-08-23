@@ -17,11 +17,10 @@ export type SearchResult = {
 
 const handlerCache = new Map<string, LightSearchHandler>();
 
-export function getOrCreateHandler(searchAssetURL: string, tagsAssetURL1: string, tagsAssetURL2: string): LightSearchHandler {
-    const cacheKey = `${searchAssetURL}-${tagsAssetURL1}-${tagsAssetURL2}`;
-    
+export function getOrCreateHandler(searchAssetURL: string, tagsAssetURL: string): LightSearchHandler {
+    const cacheKey = `${searchAssetURL}-${tagsAssetURL}`;
     if (!handlerCache.has(cacheKey)) {
-        const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
+        const handler = new LightSearchHandler(searchAssetURL, tagsAssetURL);
         handlerCache.set(cacheKey, handler);
     }
     
@@ -43,8 +42,8 @@ export class LightSearchHandler {
         results: []
     };
 
-    constructor(searchAssetURL: string, tagsAssetURL1: string, tagsAssetURL2: string) {
-        this.initializationPromise = this.initialize(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
+    constructor(searchAssetURL: string, tagsAssetURL: string) {
+        this.initializationPromise = this.initialize(searchAssetURL, tagsAssetURL);
     }
 
     // 初期化完了を待つメソッド
@@ -54,7 +53,7 @@ export class LightSearchHandler {
         }
     }
 
-    async initialize(searchAssetURL: string, tagsAssetURL1: string, tagsAssetURL2: string) {
+    async initialize(searchAssetURL: string, tagsAssetURL: string) {
         const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
         const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
         const worker_url = URL.createObjectURL(
@@ -70,7 +69,7 @@ export class LightSearchHandler {
         await conn.query("INSTALL parquet");
         await conn.query("LOAD 'parquet'");
         await conn.query(`CREATE TABLE search AS SELECT * FROM read_parquet('${searchAssetURL}')`);
-        await conn.query(`CREATE TABLE tags AS SELECT * FROM read_parquet(['${tagsAssetURL1}', '${tagsAssetURL2}'])`);
+        await conn.query(`CREATE TABLE tags AS SELECT * FROM read_parquet('${tagsAssetURL}')`);
         await conn.close();
     }
 

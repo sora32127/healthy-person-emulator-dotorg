@@ -16,23 +16,20 @@ import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
 
 export async function loader() {
     const SEARCH_PARQUET_FILE_NAME = process.env.SEARCH_PARQUET_FILE_NAME;
-    const TAGS_PARQUET_FILE_NAME_1 = process.env.TAGS_PARQUET_FILE_NAME_1;
-    const TAGS_PARQUET_FILE_NAME_2 = process.env.TAGS_PARQUET_FILE_NAME_2;
-    if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME_1 || !TAGS_PARQUET_FILE_NAME_2) {
+    const TAGS_PARQUET_FILE_NAME = process.env.TAGS_PARQUET_FILE_NAME
+    if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME) {
         throw new Error("Search or tags parquet file name is not set");
     }
     const searchAssetURL = await generateDownloadSignedUrl(SEARCH_PARQUET_FILE_NAME);
-    const tagsAssetURL1 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_1);
-    const tagsAssetURL2 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_2);
+    const tagsAssetURL = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME);
     return {
         searchAssetURL,
-        tagsAssetURL1,
-        tagsAssetURL2
+        tagsAssetURL,
     };
 }
 
 export default function LightSearch() {
-    const { searchAssetURL, tagsAssetURL1, tagsAssetURL2 } = useLoaderData<typeof loader>();
+    const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const [isInitialized, setIsInitialized] = useState(false);
@@ -57,14 +54,14 @@ export default function LightSearch() {
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
-    if (!tagsAssetURL1 || !tagsAssetURL2) {
+    if (!tagsAssetURL) {
         throw new Error("Tags asset URL is not set : ");
     }
     
     // 初期化処理
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
+            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL);
             setLightSearchHandler(handler);
             await handler.waitForInitialization();
             setIsInitialized(true);
