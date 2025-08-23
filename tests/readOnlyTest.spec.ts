@@ -5,7 +5,7 @@ const testURL = process.env.TEST_URL;
 // トップページのテスト
 test.describe('トップページ', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(testURL);
+    await page.goto(testURL!);
   });
 
   test('ページタイトルが正しく表示されている', async ({ page }) => {
@@ -38,7 +38,7 @@ test.describe('トップページ', () => {
 // フィードページのテスト
 test.describe("フィードページ", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(testURL);
+    await page.goto(testURL!);
   });
 
   test("新着順フィードページを閲覧できる", async ({ page }) => {
@@ -154,7 +154,8 @@ async function verifyElementMinCount(page: Page, selector: string, minCount: num
 async function verifyPostCard(postCard: Locator) {
   await verifyElementTextMatch(postCard, ".post-timestamp", /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   await verifyElementTextNotEmpty(postCard, ".post-title");
-  await verifyElementMinCount(postCard, ".post-tag", 1);
+  const postTagCount = await postCard.locator(".post-tag").count();
+  expect(postTagCount).toBeGreaterThanOrEqual(1);
 }
 
 async function verifyComment(comment: Locator) {

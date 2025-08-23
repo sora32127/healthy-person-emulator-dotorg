@@ -55,9 +55,6 @@ export class LightSearchHandler {
     }
 
     async initialize(searchAssetURL: string, tagsAssetURL1: string, tagsAssetURL2: string) {
-        console.log("searchAssetURL", searchAssetURL);
-        console.log("tagsAssetURL1", tagsAssetURL1);
-        console.log("tagsAssetURL2", tagsAssetURL2);
         const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
         const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
         const worker_url = URL.createObjectURL(
@@ -77,8 +74,8 @@ export class LightSearchHandler {
         await conn.close();
     }
 
-    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = []): Promise<SearchResult> {
-        const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags);
+    async search(query: string, orderby: OrderBy = "timeDesc", page: number = 1, tags: string[] = [], pageSize: number = 10): Promise<SearchResult> {
+        const searchResult = await this.searchByQueryAndTagsWithSort(query, orderby, page, tags, pageSize);
         const tagCounts = await this.getTagCounts(query, tags);
         return {
             ...searchResult,
@@ -86,7 +83,7 @@ export class LightSearchHandler {
         };
     }
 
-    private async searchByQueryAndTagsWithSort(query: string, orderby: OrderBy, page: number = 1, tags: string[] = []) {
+    private async searchByQueryAndTagsWithSort(query: string, orderby: OrderBy, page: number = 1, tags: string[] = [], pageSize: number = 10) {
         if (!this.db) {
             throw new Error("Database not initialized");
         }
@@ -112,7 +109,6 @@ export class LightSearchHandler {
             ? `WHERE ${tagFilterClause.substring(4)}` // "AND "を除去
             : "";
 
-        const pageSize = 10;
         const offset = (page - 1) * pageSize;
         
         // 総件数を取得
@@ -125,7 +121,7 @@ export class LightSearchHandler {
         await conn.close();
         
         this.searchResults.metadata.query = query;
-        this.searchResults.metadata.count = res.numRows;
+        this.searchResults.metadata.count = totalCount;
         this.searchResults.metadata.page = page;
         this.searchResults.metadata.totalPages = this.calculateTotalPages(totalCount, pageSize);
         this.searchResults.metadata.orderby = orderby;
@@ -159,7 +155,6 @@ export class LightSearchHandler {
                 countComments: obj.countComments,
             } as PostCardProps
         });
-        console.log("this.searchResults.results", this.searchResults.results);
         return this.searchResults;
     }
 
@@ -182,8 +177,6 @@ export class LightSearchHandler {
         const conn = await this.db.connect();
         const isQueryEmpty = this.isQueryEmpty(query);
         const isTagsEmpty = tags.length === 0;
-        console.log("isQueryEmpty", isQueryEmpty);
-        console.log("isTagsEmpty", isTagsEmpty);
        
         let sql: string;
         
@@ -281,8 +274,6 @@ export class LightSearchHandler {
                 `;
             }
         }
-        
-        console.log("sql", sql);
         const countRes = await conn.query(sql);
         await conn.close();
         return countRes.toArray().map((row) => ({

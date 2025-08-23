@@ -6,7 +6,7 @@ interface CommonMetaFunctionProps {
 }
 
 export function commonMetaFunction({ title, description, url, image }: CommonMetaFunctionProps) {
-    const commonTitle = `${title} - 健常者エミュレータ事例集` ?? "健常者エミュレータ事例集"
+    const commonTitle = title ? `${title} - 健常者エミュレータ事例集` : "健常者エミュレータ事例集"
     const commonDescription = description ?? "現実世界のために"
     const commonImage = image ?? "https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png"
     return [

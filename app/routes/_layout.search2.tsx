@@ -38,6 +38,7 @@ export default function LightSearch() {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+    const [hasInitialSearchCompleted, setHasInitialSearchCompleted] = useState(false);
     const [lastSearchParams, setLastSearchParams] = useState<string>("");
     
     // URL から現在の状態を取得
@@ -45,6 +46,7 @@ export default function LightSearch() {
     const currentPage = Number(searchParams.get("p")) || 1;
     const orderby = (searchParams.get("orderby") as OrderBy) || "timeDesc";
     const selectedTags = searchParams.get("tags")?.split(" ").filter(Boolean) || [];
+    const pageSize = Number(searchParams.get("pageSize")) || 10;
     
     // UI用の状態（デバウンス検索用）
     const [inputValue, setInputValue] = useState(query);
@@ -78,44 +80,54 @@ export default function LightSearch() {
     
     // URLパラメータ変更時に検索実行
     useEffect(() => {
-        if (!isInitialized || !lightSearchHandler || isSearching) return;
+        if (!isInitialized || !lightSearchHandler) return;
         
-        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags });
+        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags, pageSize });
         if (currentSearchParams === lastSearchParams) return; // 前回と同じなら実行しない
         
         const executeSearch = async () => {
-            setIsSearching(true);
+            // 初回検索が完了している場合のみ検索中表示を行う
+            if (hasInitialSearchCompleted) {
+                setIsSearching(true);
+            }
+            
             try {
-                console.log("検索実行:", { query, orderby, currentPage, selectedTags });
-                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags);
+                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags, pageSize);
                 setSearchResults(results);
                 setLastSearchParams(currentSearchParams);
+                
+                // 初回検索完了フラグを設定
+                if (!hasInitialSearchCompleted) {
+                    setHasInitialSearchCompleted(true);
+                }
             } catch (error) {
                 console.error("Search error:", error);
             } finally {
-                setIsSearching(false);
+                // 初回検索が完了している場合のみ検索中状態を解除
+                if (hasInitialSearchCompleted) {
+                    setIsSearching(false);
+                }
             }
         };
         
         executeSearch();
-    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), lastSearchParams]);
+    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), pageSize, lastSearchParams, hasInitialSearchCompleted]);
     
     // URL更新関数
-    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[]) => {
+    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[], newPageSize?: number) => {
         const params = new URLSearchParams();
         if (newQuery) params.set("q", newQuery);
         if (newOrderby !== "timeDesc") params.set("orderby", newOrderby);
         if (newPage !== 1) params.set("p", newPage.toString());
         if (newTags.length > 0) params.set("tags", newTags.join(" "));
+        if ((newPageSize || pageSize) !== 10) params.set("pageSize", (newPageSize || pageSize).toString());
         setSearchParams(params, { preventScrollReset: true });
-    }, [setSearchParams]);
+    }, [setSearchParams, pageSize]);
     
     // デバウンス検索
     const debouncedSearch = useCallback(
         debounce((searchQuery: string) => {
             updateSearchParams(searchQuery, orderby, 1, selectedTags);
-            // 検索実行時もページトップにスクロール
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 1000),
         [updateSearchParams, orderby, selectedTags]
     );
@@ -132,8 +144,13 @@ export default function LightSearch() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handlePageSizeChange = (newPageSize: number) => {
+        updateSearchParams(query, orderby, 1, selectedTags, newPageSize);
+        // 表示数変更時もページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handlePageChange = (newPage: number) => {
-        console.log("ページ変更:", newPage);
         updateSearchParams(query, orderby, newPage, selectedTags);
         // ページトップにスクロール
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -141,15 +158,21 @@ export default function LightSearch() {
 
     const handleTagsSelected = (newTags: string[]) => {
         updateSearchParams(query, orderby, 1, newTags);
-        // タグ変更時もページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     
     return (
         <div>
             <H1>検索</H1>
             <div className="container">
-                <div className="search-input">
+                <div className="search-input" style={{ minHeight: hasInitialSearchCompleted ? 'auto' : '300px', display: 'flex', alignItems: hasInitialSearchCompleted ? 'stretch' : 'center', justifyContent: hasInitialSearchCompleted ? 'stretch' : 'center' }}>
+                    {!hasInitialSearchCompleted ? (
+                        <div className="search-initialization text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"/>
+                            <span className="text-lg block">検索システムを初期化中...</span>
+                            <p className="text-sm text-gray-500 mt-2">初期化完了まで少々お待ちください</p>
+                        </div>
+                    ) : (
+                        <div className="search-input-form w-full">
                     <form onSubmit={(e) => e.preventDefault()}>
                         <input
                             type="text"
@@ -170,9 +193,12 @@ export default function LightSearch() {
                                 </AccordionItem>
                             </Accordion>
                         </div>
-                    </form>
+                        </form>
+                        </div>
+                    )}
                 </div>
-                <div className="search-results">
+                {hasInitialSearchCompleted && (
+                    <div className="search-results">
                     <div className="search-meta-data my-3 min-h-[80px]">
                         {!isInitialized ? (
                             <div className="flex justify-center items-center h-full">
@@ -197,17 +223,29 @@ export default function LightSearch() {
                             </div>
                         )}
                     </div>
-                    <div className="search-sort-order py-2">
+                    <div className="search-sort-order py-2 flex gap-2 items-center">
                         {searchResults.metadata.count > 0 && (
-                            <select 
-                                value={orderby} 
-                                onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
-                                className="select select-bordered select-sm"
-                            >
-                                <option value="timeDesc">新着順</option>
-                                <option value="timeAsc">古い順</option>
-                                <option value="like">いいね順</option>
-                            </select>
+                            <>
+                                <select 
+                                    value={orderby} 
+                                    onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
+                                    className="select select-bordered select-sm"
+                                >
+                                    <option value="timeDesc">新着順</option>
+                                    <option value="timeAsc">古い順</option>
+                                    <option value="like">いいね順</option>
+                                </select>
+                                <select 
+                                    value={pageSize} 
+                                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                    className="select select-bordered select-sm"
+                                >
+                                    <option value={10}>10件</option>
+                                    <option value={20}>20件</option>
+                                    <option value={50}>50件</option>
+                                    <option value={100}>100件</option>
+                                </select>
+                            </>
                         )}
                     </div>
                     <SearchResults searchResults={searchResults} />
@@ -217,7 +255,8 @@ export default function LightSearch() {
                         onPageChange={handlePageChange}
                         totalCount={searchResults.metadata.count}
                     />
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );
