@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler, type SearchResult, type OrderBy } from "~/modules/lightSearch.client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
@@ -12,27 +12,35 @@ import {
     searchResultsAtom,
 } from "~/stores/search";
 import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
+import type { MetaFunction } from "@remix-run/node";
+
+export const meta: MetaFunction = () => {
+    return [
+        { title: "検索 | 健常者エミュレータ事例集" },
+        { name: "description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
+        { property: "og:title", content: "検索 | 健常者エミュレータ事例集" },
+        { property: "og:description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
+        { property: "og:type", content: "website" },
+    ];
+};
 
 
 export async function loader() {
     const SEARCH_PARQUET_FILE_NAME = process.env.SEARCH_PARQUET_FILE_NAME;
-    const TAGS_PARQUET_FILE_NAME_1 = process.env.TAGS_PARQUET_FILE_NAME_1;
-    const TAGS_PARQUET_FILE_NAME_2 = process.env.TAGS_PARQUET_FILE_NAME_2;
-    if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME_1 || !TAGS_PARQUET_FILE_NAME_2) {
+    const TAGS_PARQUET_FILE_NAME = process.env.TAGS_PARQUET_FILE_NAME
+    if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME) {
         throw new Error("Search or tags parquet file name is not set");
     }
     const searchAssetURL = await generateDownloadSignedUrl(SEARCH_PARQUET_FILE_NAME);
-    const tagsAssetURL1 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_1);
-    const tagsAssetURL2 = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME_2);
+    const tagsAssetURL = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME);
     return {
         searchAssetURL,
-        tagsAssetURL1,
-        tagsAssetURL2
+        tagsAssetURL,
     };
 }
 
 export default function LightSearch() {
-    const { searchAssetURL, tagsAssetURL1, tagsAssetURL2 } = useLoaderData<typeof loader>();
+    const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const [isInitialized, setIsInitialized] = useState(false);
@@ -57,16 +65,15 @@ export default function LightSearch() {
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
     }
-    if (!tagsAssetURL1 || !tagsAssetURL2) {
+    if (!tagsAssetURL) {
         throw new Error("Tags asset URL is not set : ");
     }
     
     // 初期化処理
     useEffect(() => {
         const initializeHandler = async () => {
-            const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
+            const handler = await getOrCreateHandler(searchAssetURL, tagsAssetURL);
             setLightSearchHandler(handler);
-            await handler.waitForInitialization();
             setIsInitialized(true);
         };
         
@@ -125,35 +132,29 @@ export default function LightSearch() {
     }, [setSearchParams, pageSize]);
     
     // デバウンス検索
-    const debouncedSearch = useCallback(
-        debounce((searchQuery: string) => {
-            updateSearchParams(searchQuery, orderby, 1, selectedTags);
+    const debouncedSearch = useMemo(() => 
+        debounce((searchQuery: string, currentOrderby: OrderBy, currentSelectedTags: string[]) => {
+            updateSearchParams(searchQuery, currentOrderby, 1, currentSelectedTags);
         }, 1000),
-        [updateSearchParams, orderby, selectedTags]
+        [updateSearchParams] // updateSearchParams関数のみ依存
     );
     
     // ハンドラー関数
     const handleSearch = (value: string) => {
         setInputValue(value);
-        debouncedSearch(value);
+        debouncedSearch(value, orderby, selectedTags);
     };
     
     const handleSortOrderChange = (newOrderby: OrderBy) => {
         updateSearchParams(query, newOrderby, 1, selectedTags);
-        // 並び順変更時もページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePageSizeChange = (newPageSize: number) => {
         updateSearchParams(query, orderby, 1, selectedTags, newPageSize);
-        // 表示数変更時もページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handlePageChange = (newPage: number) => {
         updateSearchParams(query, orderby, newPage, selectedTags);
-        // ページトップにスクロール
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleTagsSelected = (newTags: string[]) => {
