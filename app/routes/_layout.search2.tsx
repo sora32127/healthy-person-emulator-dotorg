@@ -6,6 +6,7 @@ import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
 import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
+import { H1 } from "~/components/Headings";
 import { Storage } from '@google-cloud/storage';
 
 /**
@@ -193,99 +194,92 @@ export default function LightSearch() {
     
     return (
         <div>
-            <h1>Light Search</h1>
-            <input
-                type="text"
-                onChange={(e) => {
-                    setInputValue(e.target.value);
-                    handleSearch(e.target.value, currentOrderby);
-                }}
-                value={inputValue}
-            ></input>
-            <div className="my-4">
-                <Accordion>
-                    <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
-                        <TagSelectionBox
-                            allTagsOnlyForSearch={searchResults.tagCounts}
-                            onTagsSelected={handleTagsSelected}
-                            parentComponentStateValues={selectedTags}
+            <H1>検索</H1>
+            <div className="container">
+                <div className="search-input">
+                    <form onSubmit={(e) => e.preventDefault()}>
+                        <input
+                            type="text"
+                            name="q"
+                            placeholder="テキストを入力..."
+                            className="input input-bordered w-full placeholder-slate-500"
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                handleSearch(e.target.value, currentOrderby);
+                            }}
+                            value={inputValue}
                         />
-                    </AccordionItem>
-                </Accordion>
-            </div>
-            {searchResults.metadata.count > 0 && (
-                <div className="search-sort-order py-2">
-                    <select 
-                        value={currentOrderby} 
-                        onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
-                        className="select select-bordered select-sm"
-                    >
-                        <option value="timeDesc">新着順</option>
-                        <option value="timeAsc">古い順</option>
-                        <option value="like">いいね順</option>
-                    </select>
+                        <div className="my-4">
+                            <Accordion>
+                                <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
+                                    <TagSelectionBox
+                                        allTagsOnlyForSearch={searchResults.tagCounts}
+                                        onTagsSelected={handleTagsSelected}
+                                        parentComponentStateValues={selectedTags}
+                                    />
+                                </AccordionItem>
+                            </Accordion>
+                        </div>
+                    </form>
                 </div>
-            )}
-            {!isInitialized && <p>初期化中...</p>}
-            <SearchResults searchResults={searchResults} />
-            <Pagination 
-                currentPage={searchResults.metadata.page}
-                totalPages={searchResults.metadata.totalPages}
-                onPageChange={handlePageChange}
-                totalCount={searchResults.metadata.count}
-            />
+                <div className="search-results">
+                    <div className="search-meta-data my-3 min-h-[80px]">
+                        {!isInitialized ? (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+                                <span className="ml-2">初期化中...</span>
+                            </div>
+                        ) : (searchResults.metadata.query !== "" || selectedTags.length > 0) ? (
+                            <div className="h-full flex flex-col justify-center">
+                                <p>検索結果: {searchResults.metadata.count}件</p>
+                                {searchResults.metadata.query && <p className="truncate">キーワード: {searchResults.metadata.query}</p>}
+                                {selectedTags.length > 0 && <p className="truncate">タグ: {selectedTags.join(", ")}</p>}
+                                {searchResults.metadata.count === 0 && <p>検索結果がありません</p>}
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col justify-center">
+                                <p>検索キーワードを入力してください</p>
+                            </div>
+                        )}
+                    </div>
+                    <div className="search-sort-order py-2">
+                        {searchResults.metadata.count > 0 && (
+                            <select 
+                                value={currentOrderby} 
+                                onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
+                                className="select select-bordered select-sm"
+                            >
+                                <option value="timeDesc">新着順</option>
+                                <option value="timeAsc">古い順</option>
+                                <option value="like">いいね順</option>
+                            </select>
+                        )}
+                    </div>
+                    <SearchResults searchResults={searchResults} />
+                    <Pagination 
+                        currentPage={searchResults.metadata.page}
+                        totalPages={searchResults.metadata.totalPages}
+                        onPageChange={handlePageChange}
+                        totalCount={searchResults.metadata.count}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
 
 function SearchResults({ searchResults }: { searchResults: SearchResult }) {
-    function convertOrderBy(orderby: OrderBy) {
-        switch (orderby) {
-            case "timeDesc": return "新着順";
-            case "timeAsc": return "古い順";
-            case "like": return "いいね順";
-        }
-    }
-
-    // 検索が実行されていない場合
-    if (!searchResults.metadata.query && searchResults.metadata.count === 0) {
-        return (
-            <div className="search-results">
-                <p>検索キーワードを入力してください</p>
-            </div>
-        );
-    }
-
-    // 検索結果が0件の場合
-    if (searchResults.metadata.query && searchResults.metadata.count === 0) {
-        return (
-            <div className="search-results">
-                <div className="search-meta-data my-3 min-h-[80px]">
-                    <div className="h-full flex flex-col justify-center">
-                        <p>検索結果: 0件</p>
-                        <p className="truncate">キーワード: {searchResults.metadata.query}</p>
-                        <p>検索結果がありません</p>
-                    </div>
-                </div>
-            </div>
-        );
+    // 検索結果の表示は親コンポーネントのメタデータ部分で処理されるため、
+    // ここでは結果リストのみを表示
+    if (searchResults.metadata.count === 0) {
+        return null;
     }
 
     return (
-        <div className="search-results">
-            <div className="search-meta-data my-3 min-h-[80px]">
-                <div className="h-full flex flex-col justify-center">
-                    <p>検索結果: {searchResults.metadata.count}件</p>
-                    <p className="truncate">キーワード: {searchResults.metadata.query}</p>
-                    <p>ページ: {searchResults.metadata.page} / {searchResults.metadata.totalPages}</p>
-                    <p>並び順: {convertOrderBy(searchResults.metadata.orderby)}</p>
-                </div>
-            </div>
-            <div className="search-results-container">
-                {searchResults.results.map((result) => (
-                    <PostCard key={result.postId} {...result} />
-                ))}
-            </div>
+        <div className="search-results-container">
+            {searchResults.results.map((result) => (
+                <PostCard key={result.postId} {...result} />
+            ))}
         </div>
     );
 }
