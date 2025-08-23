@@ -8,6 +8,16 @@ import { Accordion, AccordionItem } from "~/components/Accordion";
 import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import { H1 } from "~/components/Headings";
 import { Storage } from '@google-cloud/storage';
+import { useAtom } from "jotai";
+import {
+    searchQueryAtom,
+    currentPageAtom,
+    orderByAtom,
+    selectedTagsAtom,
+    searchResultsAtom,
+    isSearchInitializedAtom,
+    searchInputValueAtom
+} from "~/stores/search";
 
 /**
  * ファイルの署名付きダウンロードURLを生成
@@ -66,28 +76,23 @@ export async function loader() {
 export default function LightSearch() {
     const { searchAssetURL, tagsAssetURL1, tagsAssetURL2 } = useLoaderData<typeof loader>();
     const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const [searchResults, setSearchResults] = useState<SearchResult>({
-        metadata: {
-            query: "",
-            count: 0,
-            page: 1,
-            totalPages: 0,
-            orderby: "timeDesc"
-        },
-        tagCounts: [],
-        results: []
-    });
     const [searchParams, setSearchParams] = useSearchParams();
-    const query = searchParams.get("q") || "";
-    const orderby = searchParams.get("orderby") as OrderBy || "timeDesc";
-    const page = Number(searchParams.get("p")) || 1;
-    const tags = searchParams.get("tags")?.split(" ") || [];
-    const [inputValue, setInputValue] = useState(query);
-    const [currentOrderby, setCurrentOrderby] = useState<OrderBy>(orderby);
-    const [currentPage, setCurrentPage] = useState(page);
-    const [selectedTags, setSelectedTags] = useState<string[]>(tags);
+    const [isInitialized, setIsInitialized] = useState(false);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [lastSearchParams, setLastSearchParams] = useState<string>("");
+    
+    // URL から現在の状態を取得
+    const query = searchParams.get("q") || "";
+    const currentPage = Number(searchParams.get("p")) || 1;
+    const orderby = (searchParams.get("orderby") as OrderBy) || "timeDesc";
+    const selectedTags = searchParams.get("tags")?.split(" ").filter(Boolean) || [];
+    
+    // UI用の状態（デバウンス検索用）
+    const [inputValue, setInputValue] = useState(query);
+    
+    // 検索結果
+    const [searchResults, setSearchResults] = useAtom(searchResultsAtom);
 
     if (!searchAssetURL) {
         throw new Error("Search asset URL is not set");
@@ -96,11 +101,11 @@ export default function LightSearch() {
         throw new Error("Tags asset URL is not set : ");
     }
     
+    // 初期化処理
     useEffect(() => {
         const initializeHandler = async () => {
             const handler = getOrCreateHandler(searchAssetURL, tagsAssetURL1, tagsAssetURL2);
             setLightSearchHandler(handler);
-            // 初期化完了を待つ
             await handler.waitForInitialization();
             setIsInitialized(true);
         };
@@ -108,88 +113,70 @@ export default function LightSearch() {
         initializeHandler();
     }, [searchAssetURL]);
     
-    // 初回レンダリング時の検索実行
+    // URLパラメータが変更された時に入力フィールドを同期
     useEffect(() => {
-        if (isInitialized && lightSearchHandler && query) {
-            executeSearch(query, currentOrderby, currentPage, selectedTags);
-        }
-    }, [isInitialized, lightSearchHandler, query, currentOrderby, currentPage]);
+        setInputValue(query);
+    }, [query]);
     
-    // URL パラメータの管理
-    const updateSearchParams = (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
-        const params = new URLSearchParams();
-        if (query) params.set("q", query);
-        params.set("orderby", orderby);
-        params.set("p", page.toString());
-        if (tags.length > 0) {
-            params.set("tags", tags.join(" "));
-        }
-        setSearchParams(params, { preventScrollReset: true });
-    };
-    
+    // URLパラメータ変更時に検索実行
     useEffect(() => {
-        if (orderby !== currentOrderby) {
-            setCurrentOrderby(orderby);
-        }
-        if (page !== currentPage) {
-            setCurrentPage(page);
-        }
-        // タグ状態の復元 - URLパラメータが変更された場合のみ
-        if (tags.length !== selectedTags.length || 
-            tags.some((tag, index) => tag !== selectedTags[index])) {
-            setSelectedTags(tags);
-        }
-    }, [orderby, page, tags]);
-    
-    // executeSearch関数を修正
-    const executeSearch = useCallback(async (query: string, orderby: OrderBy, page: number, tags: string[] = []) => {
-        if (lightSearchHandler && isInitialized) {
+        if (!isInitialized || !lightSearchHandler || isSearching) return;
+        
+        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags });
+        if (currentSearchParams === lastSearchParams) return; // 前回と同じなら実行しない
+        
+        const executeSearch = async () => {
+            setIsSearching(true);
             try {
-                const results = await lightSearchHandler.search(query, orderby, page, tags);
-                setSearchResults({
-                    metadata: {
-                        query: results.metadata.query,
-                        count: results.metadata.count,
-                        page: results.metadata.page,
-                        totalPages: results.metadata.totalPages,
-                        orderby: results.metadata.orderby
-                    },
-                    tagCounts: results.tagCounts,
-                    results: results.results
-                });
-                updateSearchParams(query, orderby, page, tags); // タグパラメータを追加
+                console.log("検索実行:", { query, orderby, currentPage, selectedTags });
+                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags);
+                setSearchResults(results);
+                setLastSearchParams(currentSearchParams);
             } catch (error) {
                 console.error("Search error:", error);
+            } finally {
+                setIsSearching(false);
             }
-        }
-    }, [lightSearchHandler, isInitialized]);
+        };
+        
+        executeSearch();
+    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), lastSearchParams]);
     
-    // handleSearch関数を修正
-    const handleSearch = useCallback(
-        debounce(async (query: string, orderby: OrderBy) => {
-            await executeSearch(query, orderby, 1, selectedTags);
+    // URL更新関数
+    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[]) => {
+        const params = new URLSearchParams();
+        if (newQuery) params.set("q", newQuery);
+        if (newOrderby !== "timeDesc") params.set("orderby", newOrderby);
+        if (newPage !== 1) params.set("p", newPage.toString());
+        if (newTags.length > 0) params.set("tags", newTags.join(" "));
+        setSearchParams(params, { preventScrollReset: true });
+    }, [setSearchParams]);
+    
+    // デバウンス検索
+    const debouncedSearch = useCallback(
+        debounce((searchQuery: string) => {
+            updateSearchParams(searchQuery, orderby, 1, selectedTags);
         }, 1000),
-        [executeSearch]
+        [updateSearchParams, orderby, selectedTags]
     );
     
-    // handleSortOrderChange関数を修正
+    // ハンドラー関数
+    const handleSearch = (value: string) => {
+        setInputValue(value);
+        debouncedSearch(value);
+    };
+    
     const handleSortOrderChange = (newOrderby: OrderBy) => {
-        setCurrentOrderby(newOrderby);
-        // 並び順変更時は1ページ目に戻る
-        executeSearch(inputValue, newOrderby, 1, selectedTags); // タグパラメータを追加
+        updateSearchParams(query, newOrderby, 1, selectedTags);
     };
 
-    // handlePageChange関数を修正
     const handlePageChange = (newPage: number) => {
-        setCurrentPage(newPage);
-        executeSearch(inputValue, currentOrderby, newPage, selectedTags); // タグパラメータを追加
+        console.log("ページ変更:", newPage);
+        updateSearchParams(query, orderby, newPage, selectedTags);
     };
 
-    // handleTagsSelected関数を修正
     const handleTagsSelected = (newTags: string[]) => {
-        setSelectedTags(newTags);
-        // タグが変更されたら検索を実行し、URLパラメータも更新
-        executeSearch(inputValue, currentOrderby, 1, newTags);
+        updateSearchParams(query, orderby, 1, newTags);
     };
     
     return (
@@ -203,10 +190,7 @@ export default function LightSearch() {
                             name="q"
                             placeholder="テキストを入力..."
                             className="input input-bordered w-full placeholder-slate-500"
-                            onChange={(e) => {
-                                setInputValue(e.target.value);
-                                handleSearch(e.target.value, currentOrderby);
-                            }}
+                            onChange={(e) => handleSearch(e.target.value)}
                             value={inputValue}
                         />
                         <div className="my-4">
@@ -229,6 +213,11 @@ export default function LightSearch() {
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
                                 <span className="ml-2">初期化中...</span>
                             </div>
+                        ) : isSearching ? (
+                            <div className="flex justify-center items-center h-full">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+                                <span className="ml-2">検索中...</span>
+                            </div>
                         ) : (searchResults.metadata.query !== "" || selectedTags.length > 0) ? (
                             <div className="h-full flex flex-col justify-center">
                                 <p>検索結果: {searchResults.metadata.count}件</p>
@@ -245,7 +234,7 @@ export default function LightSearch() {
                     <div className="search-sort-order py-2">
                         {searchResults.metadata.count > 0 && (
                             <select 
-                                value={currentOrderby} 
+                                value={orderby} 
                                 onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
                                 className="select select-bordered select-sm"
                             >
@@ -257,7 +246,7 @@ export default function LightSearch() {
                     </div>
                     <SearchResults searchResults={searchResults} />
                     <Pagination 
-                        currentPage={searchResults.metadata.page}
+                        currentPage={currentPage}
                         totalPages={searchResults.metadata.totalPages}
                         onPageChange={handlePageChange}
                         totalCount={searchResults.metadata.count}
