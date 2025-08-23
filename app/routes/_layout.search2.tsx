@@ -38,6 +38,7 @@ export default function LightSearch() {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+    const [hasInitialSearchCompleted, setHasInitialSearchCompleted] = useState(false);
     const [lastSearchParams, setLastSearchParams] = useState<string>("");
     
     // URL から現在の状態を取得
@@ -79,27 +80,39 @@ export default function LightSearch() {
     
     // URLパラメータ変更時に検索実行
     useEffect(() => {
-        if (!isInitialized || !lightSearchHandler || isSearching) return;
+        if (!isInitialized || !lightSearchHandler) return;
         
         const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags, pageSize });
         if (currentSearchParams === lastSearchParams) return; // 前回と同じなら実行しない
         
         const executeSearch = async () => {
-            setIsSearching(true);
+            // 初回検索が完了している場合のみ検索中表示を行う
+            if (hasInitialSearchCompleted) {
+                setIsSearching(true);
+            }
+            
             try {
                 console.log("検索実行:", { query, orderby, currentPage, selectedTags });
                 const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags, pageSize);
                 setSearchResults(results);
                 setLastSearchParams(currentSearchParams);
+                
+                // 初回検索完了フラグを設定
+                if (!hasInitialSearchCompleted) {
+                    setHasInitialSearchCompleted(true);
+                }
             } catch (error) {
                 console.error("Search error:", error);
             } finally {
-                setIsSearching(false);
+                // 初回検索が完了している場合のみ検索中状態を解除
+                if (hasInitialSearchCompleted) {
+                    setIsSearching(false);
+                }
             }
         };
         
         executeSearch();
-    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), pageSize, lastSearchParams]);
+    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), pageSize, lastSearchParams, hasInitialSearchCompleted]);
     
     // URL更新関数
     const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[], newPageSize?: number) => {
@@ -152,7 +165,15 @@ export default function LightSearch() {
         <div>
             <H1>検索</H1>
             <div className="container">
-                <div className="search-input">
+                <div className="search-input" style={{ minHeight: hasInitialSearchCompleted ? 'auto' : '300px', display: 'flex', alignItems: hasInitialSearchCompleted ? 'stretch' : 'center', justifyContent: hasInitialSearchCompleted ? 'stretch' : 'center' }}>
+                    {!hasInitialSearchCompleted ? (
+                        <div className="search-initialization text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"/>
+                            <span className="text-lg block">検索システムを初期化中...</span>
+                            <p className="text-sm text-gray-500 mt-2">初期化完了まで少々お待ちください</p>
+                        </div>
+                    ) : (
+                        <div className="search-input-form w-full">
                     <form onSubmit={(e) => e.preventDefault()}>
                         <input
                             type="text"
@@ -173,9 +194,12 @@ export default function LightSearch() {
                                 </AccordionItem>
                             </Accordion>
                         </div>
-                    </form>
+                        </form>
+                        </div>
+                    )}
                 </div>
-                <div className="search-results">
+                {hasInitialSearchCompleted && (
+                    <div className="search-results">
                     <div className="search-meta-data my-3 min-h-[80px]">
                         {!isInitialized ? (
                             <div className="flex justify-center items-center h-full">
@@ -232,7 +256,8 @@ export default function LightSearch() {
                         onPageChange={handlePageChange}
                         totalCount={searchResults.metadata.count}
                     />
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );
