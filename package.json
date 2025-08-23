@@ -16,6 +16,8 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "1.29.1-dev132.0",
+    "@google-cloud/storage": "^7.16.0",
     "@google/generative-ai": "^0.21.0",
     "@hookform/resolvers": "^3.9.1",
     "@marsidev/react-turnstile": "^1.1.0",
@@ -33,6 +35,7 @@
     "csv-parse": "^5.6.0",
     "date-fns": "^4.1.0",
     "diff": "^7.0.0",
+    "es-toolkit": "^1.39.8",
     "framer-motion": "^11.15.0",
     "happy-dom": "^16.7.2",
     "html-react-parser": "^5.2.2",

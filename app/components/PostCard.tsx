@@ -80,9 +80,11 @@ export default function PostCard({
                     </div>
                     <div className="flex flex-wrap gap-y-3 my-2">
                         {displayedTags.map((tag, index) => (
+                            tag && (
                             <span key={`${tag}-${postId}-${identifier}`} className="inline-block mr-1 mb-1">
                                 <TagCard tagName={tag} />
                             </span>
+                            )
                         ))}
                         {hiddenTagsCount > 0 && (
                             <span className="inline-block text-base-content">
