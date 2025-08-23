@@ -125,7 +125,7 @@ export class LightSearchHandler {
         await conn.close();
         
         this.searchResults.metadata.query = query;
-        this.searchResults.metadata.count = res.numRows;
+        this.searchResults.metadata.count = totalCount;
         this.searchResults.metadata.page = page;
         this.searchResults.metadata.totalPages = this.calculateTotalPages(totalCount, pageSize);
         this.searchResults.metadata.orderby = orderby;
