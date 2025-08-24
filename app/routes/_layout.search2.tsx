@@ -257,7 +257,7 @@ export default function LightSearch() {
     return (
         <div className="md:flex md:h-screen">
             {/* 検索結果パネル */}
-            <div className={`${isPostSelected ? 'md:w-1/2 hidden md:block' : 'w-full'} transition-all duration-300 overflow-y-auto`}>
+            <div className={`${isPostSelected ? 'md:w-1/2 hidden md:block' : 'w-full'} transition-all duration-300 overflow-y-auto pr-2`}>
                 <div>
                     <H1>検索</H1>
                     <div className="container">
