@@ -14,7 +14,8 @@ export const searchResultsAtom = atom<SearchResult>({
     count: 0,
     page: 1,
     totalPages: 0,
-    orderby: "timeDesc"
+    orderby: "timeDesc",
+    hasMore: false
   },
   tagCounts: [],
   results: []
