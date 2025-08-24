@@ -238,9 +238,9 @@ export default function LightSearch() {
     const isPostSelected = location.pathname.includes("/search2/");
     
     return (
-        <div className="flex h-screen">
+        <div className="md:flex md:h-screen">
             {/* 検索結果パネル */}
-            <div className={`${isPostSelected ? 'w-1/2' : 'w-full'} transition-all duration-300 overflow-y-auto`}>
+            <div className={`${isPostSelected ? 'md:w-1/2 hidden md:block' : 'w-full'} transition-all duration-300 overflow-y-auto`}>
                 <div>
                     <H1>検索</H1>
                     <div className="container">
@@ -332,9 +332,9 @@ export default function LightSearch() {
 
             {/* 記事表示パネル（Outlet使用） */}
             {isPostSelected && (
-                <div className="w-1/2 border-l border-neutral overflow-y-auto relative">
-                    {/* 戻るボタン */}
-                    <div className="absolute top-4 left-4 z-10">
+                <div className="w-full md:w-1/2 md:border-l border-neutral overflow-y-auto relative">
+                    {/* 戻るボタン - モバイルでは通常位置、デスクトップでは絶対位置 */}
+                    <div className="md:absolute md:top-4 md:left-4 md:z-10 block md:block p-4 md:p-0">
                         <button 
                             onClick={handleBackToSearch}
                             className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-white px-3 py-1 rounded-full shadow-md"
@@ -345,7 +345,9 @@ export default function LightSearch() {
                             検索に戻る
                         </button>
                     </div>
-                    <Outlet />
+                    <div className="p-4 md:pt-4">
+                        <Outlet />
+                    </div>
                 </div>
             )}
         </div>
