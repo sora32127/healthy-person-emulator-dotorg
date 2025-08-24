@@ -213,7 +213,7 @@ export default function LightSearch() {
         debounce((searchQuery: string, currentOrderby: OrderBy, currentSelectedTags: string[]) => {
             updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
         }, 1000),
-        [updateSearchParams]
+        []
     );
     
     // ハンドラー関数
