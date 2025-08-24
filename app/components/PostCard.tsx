@@ -1,8 +1,6 @@
 import { NavLink } from "@remix-run/react";
 import TagCard from "./TagCard";
 import RelativeDate from "./RelativeDate";
-import { LiaThumbsUpSolid, LiaThumbsDownSolid } from "react-icons/lia";
-import { FaRegComments } from "react-icons/fa6";
 import CommentIcon from "./icons/CommentIcon";
 import ThumbsDownIcon from "./icons/ThumbsDownIcon";
 import ThumbsUpIcon from "./icons/ThumbsUpIcon";
@@ -42,10 +40,10 @@ export default function PostCard({
     const hiddenTagsCount = tagNames.length - displayedTags.length;
 
     return (
-        <div className="bg-base-100 p-4 my-2 border-b border-neutral">
+        <div className="bg-base-100 p-4 my-1 border-b border-neutral">
             <div className="mx-2">
-                <div className="flex flex-row my-2 justify-start gap-x-4">
-                    <div className="flex my-1">
+                <div className="flex flex-row my-1 justify-start gap-x-4">
+                    <div className="flex">
                         <div className="pr-2">
                             <ClockIcon/>
                         </div>

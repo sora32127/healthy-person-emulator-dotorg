@@ -10,6 +10,7 @@ export type SearchResult = {
         page: number;
         totalPages: number;
         orderby: OrderBy;
+        hasMore: boolean;
     },
     tagCounts: Array<{tagName: string, count: number}>,
     results: PostCardProps[]
@@ -39,7 +40,8 @@ export class LightSearchHandler {
             count: 0,
             page: 1,
             totalPages: 0,
-            orderby: "timeDesc"
+            orderby: "timeDesc",
+            hasMore: false
         },
         tagCounts: [],
         results: []
@@ -125,12 +127,16 @@ export class LightSearchHandler {
         // ページング付きで検索結果を取得
         const res = await conn.query(`SELECT * FROM search ${searchCondition} ${orderByClause} LIMIT ${pageSize} OFFSET ${offset}`);
         await conn.close();
+
+        // さらに検索結果が存在する場合、hasMoreをtrueにする
+        const hasMore = totalCount > page * pageSize;
         
         this.searchResults.metadata.query = query;
         this.searchResults.metadata.count = totalCount;
         this.searchResults.metadata.page = page;
         this.searchResults.metadata.totalPages = this.calculateTotalPages(totalCount, pageSize);
         this.searchResults.metadata.orderby = orderby;
+        this.searchResults.metadata.hasMore = hasMore;
         this.searchResults.results = res.toArray().map((row) => {
             const obj = Object.fromEntries(row);
             // BigIntを通常の数値に変換
