@@ -40,7 +40,8 @@ export class LightSearchHandler {
             count: 0,
             page: 1,
             totalPages: 0,
-            orderby: "timeDesc"
+            orderby: "timeDesc",
+            hasMore: false
         },
         tagCounts: [],
         results: []

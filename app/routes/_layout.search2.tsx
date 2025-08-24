@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler, type SearchResult, type OrderBy } from "~/modules/lightSearch.client";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { debounce } from "es-toolkit";
 import PostCard from "~/components/PostCard";
 import { useSearchParams } from "@remix-run/react";
@@ -24,7 +24,6 @@ export const meta: MetaFunction = () => {
     ];
 };
 
-
 export async function loader() {
     const SEARCH_PARQUET_FILE_NAME = process.env.SEARCH_PARQUET_FILE_NAME;
     const TAGS_PARQUET_FILE_NAME = process.env.TAGS_PARQUET_FILE_NAME
@@ -47,11 +46,10 @@ export default function LightSearch() {
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [hasInitialSearchCompleted, setHasInitialSearchCompleted] = useState(false);
-    const [lastSearchParams, setLastSearchParams] = useState<string>("");
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     
     // URL から現在の状態を取得
     const query = searchParams.get("q") || "";
-    const currentPage = Number(searchParams.get("p")) || 1;
     const orderby = (searchParams.get("orderby") as OrderBy) || "timeDesc";
     const selectedTags = searchParams.get("tags")?.split(" ").filter(Boolean) || [];
     const pageSize = Number(searchParams.get("pageSize")) || 10;
@@ -59,14 +57,15 @@ export default function LightSearch() {
     // UI用の状態（デバウンス検索用）
     const [inputValue, setInputValue] = useState(query);
     
-    // 検索結果
+    // 検索結果と無限スクロール状態
     const [searchResults, setSearchResults] = useAtom(searchResultsAtom);
+    const [allResults, setAllResults] = useState<SearchResult["results"]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const [searchKey, setSearchKey] = useState("");
 
-    if (!searchAssetURL) {
-        throw new Error("Search asset URL is not set");
-    }
-    if (!tagsAssetURL) {
-        throw new Error("Tags asset URL is not set : ");
+    if (!searchAssetURL || !tagsAssetURL) {
+        throw new Error("Search or tags asset URL is not set");
     }
     
     // 初期化処理
@@ -78,88 +77,137 @@ export default function LightSearch() {
         };
         
         initializeHandler();
-    }, [searchAssetURL]);
+    }, [searchAssetURL, tagsAssetURL]);
     
     // URLパラメータが変更された時に入力フィールドを同期
     useEffect(() => {
         setInputValue(query);
     }, [query]);
     
-    // URLパラメータ変更時に検索実行
+    // 検索キーの生成（検索条件が変わったかを判定）
+    const newSearchKey = useMemo(() => 
+        JSON.stringify({ query, orderby, selectedTags: selectedTags.sort(), pageSize })
+    , [query, orderby, selectedTags, pageSize]);
+    
+    // 検索実行関数
+    const performSearch = useCallback(async (page: number, isNewSearch: boolean = false) => {
+        if (!lightSearchHandler) return null;
+        
+        try {
+            console.log(`Searching: page=${page}, isNewSearch=${isNewSearch}, query="${query}"`);
+            const results = await lightSearchHandler.search(query, orderby, page, selectedTags, pageSize);
+            console.log(`Search results:`, results);
+            return results;
+        } catch (error) {
+            console.error("Search error:", error);
+            throw error;
+        }
+    }, [lightSearchHandler, query, orderby, selectedTags, pageSize]);
+    
+    // 検索条件変更時の初期検索
     useEffect(() => {
         if (!isInitialized || !lightSearchHandler) return;
         
-        const currentSearchParams = JSON.stringify({ query, orderby, currentPage, selectedTags, pageSize });
-        if (currentSearchParams === lastSearchParams) return; // 前回と同じなら実行しない
-        
-        const executeSearch = async () => {
-            // 初回検索が完了している場合のみ検索中表示を行う
-            if (hasInitialSearchCompleted) {
-                setIsSearching(true);
-            }
+        // 検索条件が変わった場合
+        if (newSearchKey !== searchKey) {
+            console.log("New search detected");
+            setIsSearching(true);
+            setAllResults([]);
+            setCurrentPage(1);
+            setSearchKey(newSearchKey);
             
-            try {
-                const results = await lightSearchHandler.search(query, orderby, currentPage, selectedTags, pageSize);
-                setSearchResults(results);
-                setLastSearchParams(currentSearchParams);
-                
-                // 初回検索完了フラグを設定
-                if (!hasInitialSearchCompleted) {
-                    setHasInitialSearchCompleted(true);
-                }
-            } catch (error) {
-                console.error("Search error:", error);
-            } finally {
-                // 初回検索が完了している場合のみ検索中状態を解除
-                if (hasInitialSearchCompleted) {
+            performSearch(1, true)
+                .then(results => {
+                    if (results) {
+                        setAllResults(results.results);
+                        setSearchResults(results);
+                        setHasMore(results.metadata.totalPages > 1);
+                        setCurrentPage(1);
+                        
+                        if (!hasInitialSearchCompleted) {
+                            setHasInitialSearchCompleted(true);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Initial search failed:", error);
+                })
+                .finally(() => {
                     setIsSearching(false);
-                }
-            }
-        };
+                });
+        }
+    }, [isInitialized, lightSearchHandler, newSearchKey, searchKey, performSearch, hasInitialSearchCompleted, setSearchResults]);
+    
+    // 次のページを読み込む
+    const loadMore = useCallback(async () => {
+        if (isLoadingMore || !hasMore || !lightSearchHandler) return;
         
-        executeSearch();
-    }, [isInitialized, lightSearchHandler, query, orderby, currentPage, JSON.stringify(selectedTags), pageSize, lastSearchParams, hasInitialSearchCompleted]);
+        const nextPage = currentPage + 1;
+        console.log(`Loading more: page=${nextPage}`);
+        
+        setIsLoadingMore(true);
+        
+        try {
+            const results = await performSearch(nextPage);
+            if (results && results.results.length > 0) {
+                // 重複を防いで結果を追加
+                setAllResults(prev => {
+                    const existingIds = new Set(prev.map(r => r.postId));
+                    const newResults = results.results.filter(r => !existingIds.has(r.postId));
+                    return [...prev, ...newResults];
+                });
+                
+                // searchResultsも更新（現在の全結果を反映）
+                setSearchResults(prev => ({
+                    ...results,
+                    results: prev ? [...prev.results.filter(r => 
+                        !results.results.some(newR => newR.postId === r.postId)
+                    ), ...results.results] : results.results
+                }));
+                
+                setCurrentPage(nextPage);
+                setHasMore(nextPage < results.metadata.totalPages);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error("Load more failed:", error);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [isLoadingMore, hasMore, lightSearchHandler, currentPage, performSearch, setSearchResults]);
     
     // URL更新関数
-    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newPage: number, newTags: string[], newPageSize?: number) => {
+    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newTags: string[]) => {
         const params = new URLSearchParams();
         if (newQuery) params.set("q", newQuery);
         if (newOrderby !== "timeDesc") params.set("orderby", newOrderby);
-        if (newPage !== 1) params.set("p", newPage.toString());
         if (newTags.length > 0) params.set("tags", newTags.join(" "));
-        if ((newPageSize || pageSize) !== 10) params.set("pageSize", (newPageSize || pageSize).toString());
         setSearchParams(params, { preventScrollReset: true });
-    }, [setSearchParams, pageSize]);
+    }, [setSearchParams]);
     
     // デバウンス検索
     const debouncedSearch = useMemo(() => 
         debounce((searchQuery: string, currentOrderby: OrderBy, currentSelectedTags: string[]) => {
-            updateSearchParams(searchQuery, currentOrderby, 1, currentSelectedTags);
+            updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
         }, 1000),
-        [updateSearchParams] // updateSearchParams関数のみ依存
+        [updateSearchParams]
     );
     
     // ハンドラー関数
-    const handleSearch = (value: string) => {
+    const handleSearch = useCallback((value: string) => {
         setInputValue(value);
         debouncedSearch(value, orderby, selectedTags);
-    };
+    }, [debouncedSearch, orderby, selectedTags]);
     
-    const handleSortOrderChange = (newOrderby: OrderBy) => {
-        updateSearchParams(query, newOrderby, 1, selectedTags);
-    };
+    const handleSortOrderChange = useCallback((newOrderby: OrderBy) => {
+        updateSearchParams(query, newOrderby, selectedTags);
+    }, [updateSearchParams, query, selectedTags]);
 
-    const handlePageSizeChange = (newPageSize: number) => {
-        updateSearchParams(query, orderby, 1, selectedTags, newPageSize);
-    };
 
-    const handlePageChange = (newPage: number) => {
-        updateSearchParams(query, orderby, newPage, selectedTags);
-    };
-
-    const handleTagsSelected = (newTags: string[]) => {
-        updateSearchParams(query, orderby, 1, newTags);
-    };
+    const handleTagsSelected = useCallback((newTags: string[]) => {
+        updateSearchParams(query, orderby, newTags);
+    }, [updateSearchParams, query, orderby]);
     
     return (
         <div>
@@ -213,7 +261,7 @@ export default function LightSearch() {
                             </div>
                         ) : (searchResults.metadata.query !== "" || selectedTags.length > 0) ? (
                             <div className="h-full flex flex-col justify-center">
-                                <p>検索結果: {searchResults.metadata.count}件</p>
+                                <p>検索結果: {searchResults.metadata.count}件 (表示中: {allResults.length}件)</p>
                                 {searchResults.metadata.query && <p className="truncate">キーワード: {searchResults.metadata.query}</p>}
                                 {selectedTags.length > 0 && <p className="truncate">タグ: {selectedTags.join(", ")}</p>}
                                 {searchResults.metadata.count === 0 && <p>検索結果がありません</p>}
@@ -226,35 +274,22 @@ export default function LightSearch() {
                     </div>
                     <div className="search-sort-order py-2 flex gap-2 items-center">
                         {searchResults.metadata.count > 0 && (
-                            <>
-                                <select 
-                                    value={orderby} 
-                                    onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
-                                    className="select select-bordered select-sm"
-                                >
-                                    <option value="timeDesc">新着順</option>
-                                    <option value="timeAsc">古い順</option>
-                                    <option value="like">いいね順</option>
-                                </select>
-                                <select 
-                                    value={pageSize} 
-                                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                                    className="select select-bordered select-sm"
-                                >
-                                    <option value={10}>10件</option>
-                                    <option value={20}>20件</option>
-                                    <option value={50}>50件</option>
-                                    <option value={100}>100件</option>
-                                </select>
-                            </>
+                            <select 
+                                value={orderby} 
+                                onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
+                                className="select select-bordered select-sm"
+                            >
+                                <option value="timeDesc">新着順</option>
+                                <option value="timeAsc">古い順</option>
+                                <option value="like">いいね順</option>
+                            </select>
                         )}
                     </div>
-                    <SearchResults searchResults={searchResults} />
-                    <Pagination 
-                        currentPage={currentPage}
-                        totalPages={searchResults.metadata.totalPages}
-                        onPageChange={handlePageChange}
-                        totalCount={searchResults.metadata.count}
+                    <InfiniteScrollResults 
+                        allResults={allResults} 
+                        hasMore={hasMore}
+                        isLoading={isLoadingMore}
+                        onLoadMore={loadMore}
                     />
                     </div>
                 )}
@@ -263,74 +298,84 @@ export default function LightSearch() {
     );
 }
 
-function SearchResults({ searchResults }: { searchResults: SearchResult }) {
-    // 検索結果の表示は親コンポーネントのメタデータ部分で処理されるため、
-    // ここでは結果リストのみを表示
-    if (searchResults.metadata.count === 0) {
+function InfiniteScrollResults({ 
+    allResults, 
+    hasMore, 
+    isLoading, 
+    onLoadMore 
+}: { 
+    allResults: SearchResult["results"];
+    hasMore: boolean;
+    isLoading: boolean;
+    onLoadMore: () => void;
+}) {
+    const observerRef = useRef<IntersectionObserver>();
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+    
+    // IntersectionObserver の設定
+    useEffect(() => {
+        if (!loadMoreRef.current || isLoading || !hasMore) return;
+        
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    console.log("Intersection detected, loading more...");
+                    onLoadMore();
+                }
+            },
+            {
+                threshold: 0,
+                rootMargin: '100px'
+            }
+        );
+        
+        observer.observe(loadMoreRef.current);
+        observerRef.current = observer;
+        
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+        };
+    }, [onLoadMore, isLoading, hasMore]);
+
+    if (allResults.length === 0) {
         return null;
     }
 
     return (
-        <div className="search-results-container">
-            {searchResults.results.map((result) => (
-                <PostCard key={result.postId} {...result} />
-            ))}
-        </div>
-    );
-}
-
-function Pagination({ 
-    currentPage, 
-    totalPages, 
-    onPageChange, 
-    totalCount 
-}: { 
-    currentPage: number; 
-    totalPages: number; 
-    onPageChange: (page: number) => void;
-    totalCount: number;
-}) {
-    if (totalCount === 0) return null;
-
-    return (
-        <div className="search-navigation flex justify-center my-4">
-            {totalPages >= 1 && (
-                <div className="join">
-                    <button
-                        className="join-item btn btn-lg"
-                        onClick={() => onPageChange(1)}
-                        disabled={currentPage === 1}
-                        type="button"
-                    >
-                        «
-                    </button>
-                    <button
-                        className="join-item btn btn-lg"
-                        onClick={() => onPageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        type="button"
-                    >
-                        ‹
-                    </button>
-                    <div className="join-item bg-base-200 font-bold text-lg flex items-center justify-center min-w-[100px]">
-                        {currentPage} / {totalPages}
-                    </div>
-                    <button
-                        className="join-item btn btn-lg"
-                        onClick={() => onPageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        type="button"
-                    >
-                        ›
-                    </button>
-                    <button
-                        className="join-item btn btn-lg"
-                        onClick={() => onPageChange(totalPages)}
-                        disabled={currentPage === totalPages}
-                        type="button"
-                    >
-                        »
-                    </button>
+        <div className="infinite-scroll-results">
+            {/* 検索結果のリスト */}
+            <div className="results-list">
+                {allResults.map((result) => (
+                    <PostCard key={result.postId} {...result} />
+                ))}
+            </div>
+            
+            {/* ローディングトリガー */}
+            {hasMore && (
+                <div 
+                    ref={loadMoreRef}
+                    className="loading-trigger flex justify-center py-8"
+                >
+                    {isLoading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"/>
+                            <span className="text-gray-600">読み込み中...</span>
+                        </div>
+                    ) : (
+                        <div className="text-gray-400">
+                            ここまで読み込みました
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {/* 読み込み完了メッセージ */}
+            {!hasMore && allResults.length > 0 && (
+                <div className="text-center py-8">
+                    <div className="text-gray-500">すべての結果を表示しました</div>
+                    <div className="text-sm text-gray-400 mt-1">({allResults.length}件)</div>
                 </div>
             )}
         </div>
