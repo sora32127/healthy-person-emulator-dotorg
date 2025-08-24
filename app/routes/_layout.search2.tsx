@@ -72,6 +72,18 @@ export default function LightSearch() {
         throw new Error("Search or tags asset URL is not set");
     }
 
+    // スクロール復元を有効にする
+    useEffect(() => {
+        if (history.scrollRestoration) {
+            history.scrollRestoration = 'manual';
+        }
+        return () => {
+            if (history.scrollRestoration) {
+                history.scrollRestoration = 'auto';
+            }
+        };
+    }, []);
+
     // URLのpostIdパラメータと状態を同期
     useEffect(() => {
         setSelectedPostId(postId);
@@ -231,7 +243,12 @@ export default function LightSearch() {
     const handleBackToSearch = useCallback(() => {
         const searchParamsObj = new URLSearchParams(location.search);
         searchParamsObj.delete("postId");
-        navigate(`/search2?${searchParamsObj.toString()}`);
+        // history.back()を使ってブラウザのスクロール復元機能を活用
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            navigate(`/search2?${searchParamsObj.toString()}`);
+        }
     }, [navigate, location.search]);
 
     // 現在記事が選択されているかどうか
