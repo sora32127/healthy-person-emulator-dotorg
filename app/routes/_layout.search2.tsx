@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Outlet, useNavigate, useLocation } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler, type SearchResult, type OrderBy } from "~/modules/lightSearch.client";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { debounce } from "es-toolkit";
@@ -48,11 +48,15 @@ export default function LightSearch() {
     const [hasInitialSearchCompleted, setHasInitialSearchCompleted] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     
+    // 記事表示用の状態
+    const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    
     // URL から現在の状態を取得
     const query = searchParams.get("q") || "";
     const orderby = (searchParams.get("orderby") as OrderBy) || "timeDesc";
     const selectedTags = searchParams.get("tags")?.split(" ").filter(Boolean) || [];
     const pageSize = Number(searchParams.get("pageSize")) || 10;
+    const postId = searchParams.get("postId") || null;
     
     // UI用の状態（デバウンス検索用）
     const [inputValue, setInputValue] = useState(query);
@@ -67,6 +71,11 @@ export default function LightSearch() {
     if (!searchAssetURL || !tagsAssetURL) {
         throw new Error("Search or tags asset URL is not set");
     }
+
+    // URLのpostIdパラメータと状態を同期
+    useEffect(() => {
+        setSelectedPostId(postId);
+    }, [postId]);
     
     // 初期化処理
     useEffect(() => {
@@ -178,11 +187,12 @@ export default function LightSearch() {
     }, [isLoadingMore, hasMore, lightSearchHandler, currentPage, performSearch, setSearchResults]);
     
     // URL更新関数
-    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newTags: string[]) => {
+    const updateSearchParams = useCallback((newQuery: string, newOrderby: OrderBy, newTags: string[], newPostId?: string | null) => {
         const params = new URLSearchParams();
         if (newQuery) params.set("q", newQuery);
         if (newOrderby !== "timeDesc") params.set("orderby", newOrderby);
         if (newTags.length > 0) params.set("tags", newTags.join(" "));
+        if (newPostId) params.set("postId", newPostId);
         setSearchParams(params, { preventScrollReset: true });
     }, [setSearchParams]);
     
@@ -204,96 +214,140 @@ export default function LightSearch() {
         updateSearchParams(query, newOrderby, selectedTags);
     }, [updateSearchParams, query, selectedTags]);
 
-
     const handleTagsSelected = useCallback((newTags: string[]) => {
         updateSearchParams(query, orderby, newTags);
     }, [updateSearchParams, query, orderby]);
+
+    // 記事選択ハンドラー（ナビゲーションを使用）
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const handlePostSelect = useCallback((postId: string) => {
+        const searchParamsObj = new URLSearchParams(location.search);
+        navigate(`/search2/${postId}?${searchParamsObj.toString()}`);
+    }, [navigate, location.search]);
+
+    // 検索画面に戻るハンドラー
+    const handleBackToSearch = useCallback(() => {
+        const searchParamsObj = new URLSearchParams(location.search);
+        searchParamsObj.delete("postId");
+        navigate(`/search2?${searchParamsObj.toString()}`);
+    }, [navigate, location.search]);
+
+    // 現在記事が選択されているかどうか
+    const isPostSelected = location.pathname.includes("/search2/");
     
     return (
-        <div>
-            <H1>検索</H1>
-            <div className="container">
-                <div className="search-input" style={{ minHeight: hasInitialSearchCompleted ? 'auto' : '300px', display: 'flex', alignItems: hasInitialSearchCompleted ? 'stretch' : 'center', justifyContent: hasInitialSearchCompleted ? 'stretch' : 'center' }}>
-                    {!hasInitialSearchCompleted ? (
-                        <div className="search-initialization text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"/>
-                            <span className="text-lg block">検索システムを初期化中...</span>
-                            <p className="text-sm text-gray-500 mt-2">初期化完了まで少々お待ちください</p>
+        <div className="flex h-screen">
+            {/* 検索結果パネル */}
+            <div className={`${isPostSelected ? 'w-1/2' : 'w-full'} transition-all duration-300 overflow-y-auto`}>
+                <div>
+                    <H1>検索</H1>
+                    <div className="container">
+                        <div className="search-input" style={{ minHeight: hasInitialSearchCompleted ? 'auto' : '300px', display: 'flex', alignItems: hasInitialSearchCompleted ? 'stretch' : 'center', justifyContent: hasInitialSearchCompleted ? 'stretch' : 'center' }}>
+                            {!hasInitialSearchCompleted ? (
+                                <div className="search-initialization text-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"/>
+                                    <span className="text-lg block">検索システムを初期化中...</span>
+                                    <p className="text-sm text-gray-500 mt-2">初期化完了まで少々お待ちください</p>
+                                </div>
+                            ) : (
+                                <div className="search-input-form w-full">
+                            <form onSubmit={(e) => e.preventDefault()}>
+                                <input
+                                    type="text"
+                                    name="q"
+                                    placeholder="テキストを入力..."
+                                    className="input input-bordered w-full placeholder-slate-500"
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={inputValue}
+                                />
+                                <div className="my-4">
+                                    <Accordion>
+                                        <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
+                                            <TagSelectionBox
+                                                allTagsOnlyForSearch={searchResults.tagCounts}
+                                                onTagsSelected={handleTagsSelected}
+                                                parentComponentStateValues={selectedTags}
+                                            />
+                                        </AccordionItem>
+                                    </Accordion>
+                                </div>
+                                </form>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="search-input-form w-full">
-                    <form onSubmit={(e) => e.preventDefault()}>
-                        <input
-                            type="text"
-                            name="q"
-                            placeholder="テキストを入力..."
-                            className="input input-bordered w-full placeholder-slate-500"
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={inputValue}
-                        />
-                        <div className="my-4">
-                            <Accordion>
-                                <AccordionItem title="タグ選択" isOpen={isAccordionOpen} setIsOpen={setIsAccordionOpen}>
-                                    <TagSelectionBox
-                                        allTagsOnlyForSearch={searchResults.tagCounts}
-                                        onTagsSelected={handleTagsSelected}
-                                        parentComponentStateValues={selectedTags}
-                                    />
-                                </AccordionItem>
-                            </Accordion>
-                        </div>
-                        </form>
-                        </div>
-                    )}
+                        {hasInitialSearchCompleted && (
+                            <div className="search-results">
+                            <div className="search-meta-data my-3 min-h-[80px]">
+                                {!isInitialized ? (
+                                    <div className="flex justify-center items-center h-full">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+                                        <span className="ml-2">初期化中...</span>
+                                    </div>
+                                ) : isSearching ? (
+                                    <div className="flex justify-center items-center h-full">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
+                                        <span className="ml-2">検索中...</span>
+                                    </div>
+                                ) : (searchResults.metadata.query !== "" || selectedTags.length > 0) ? (
+                                    <div className="h-full flex flex-col justify-center">
+                                        <p>検索結果: {searchResults.metadata.count}件 (表示中: {allResults.length}件)</p>
+                                        {searchResults.metadata.query && <p className="truncate">キーワード: {searchResults.metadata.query}</p>}
+                                        {selectedTags.length > 0 && <p className="truncate">タグ: {selectedTags.join(", ")}</p>}
+                                        {searchResults.metadata.count === 0 && <p>検索結果がありません</p>}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col justify-center">
+                                        <p>検索キーワードを入力してください</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="search-sort-order py-2 flex gap-2 items-center">
+                                {searchResults.metadata.count > 0 && (
+                                    <select 
+                                        value={orderby} 
+                                        onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
+                                        className="select select-bordered select-sm"
+                                    >
+                                        <option value="timeDesc">新着順</option>
+                                        <option value="timeAsc">古い順</option>
+                                        <option value="like">いいね順</option>
+                                    </select>
+                                )}
+                            </div>
+                            <InfiniteScrollResults 
+                                allResults={allResults} 
+                                hasMore={hasMore}
+                                isLoading={isLoadingMore}
+                                onLoadMore={loadMore}
+                                onPostSelect={handlePostSelect}
+                                selectedPostId={selectedPostId}
+                            />
+                            </div>
+                        )}
+                    </div>
                 </div>
-                {hasInitialSearchCompleted && (
-                    <div className="search-results">
-                    <div className="search-meta-data my-3 min-h-[80px]">
-                        {!isInitialized ? (
-                            <div className="flex justify-center items-center h-full">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                                <span className="ml-2">初期化中...</span>
-                            </div>
-                        ) : isSearching ? (
-                            <div className="flex justify-center items-center h-full">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"/>
-                                <span className="ml-2">検索中...</span>
-                            </div>
-                        ) : (searchResults.metadata.query !== "" || selectedTags.length > 0) ? (
-                            <div className="h-full flex flex-col justify-center">
-                                <p>検索結果: {searchResults.metadata.count}件 (表示中: {allResults.length}件)</p>
-                                {searchResults.metadata.query && <p className="truncate">キーワード: {searchResults.metadata.query}</p>}
-                                {selectedTags.length > 0 && <p className="truncate">タグ: {selectedTags.join(", ")}</p>}
-                                {searchResults.metadata.count === 0 && <p>検索結果がありません</p>}
-                            </div>
-                        ) : (
-                            <div className="h-full flex flex-col justify-center">
-                                <p>検索キーワードを入力してください</p>
-                            </div>
-                        )}
-                    </div>
-                    <div className="search-sort-order py-2 flex gap-2 items-center">
-                        {searchResults.metadata.count > 0 && (
-                            <select 
-                                value={orderby} 
-                                onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
-                                className="select select-bordered select-sm"
-                            >
-                                <option value="timeDesc">新着順</option>
-                                <option value="timeAsc">古い順</option>
-                                <option value="like">いいね順</option>
-                            </select>
-                        )}
-                    </div>
-                    <InfiniteScrollResults 
-                        allResults={allResults} 
-                        hasMore={hasMore}
-                        isLoading={isLoadingMore}
-                        onLoadMore={loadMore}
-                    />
-                    </div>
-                )}
             </div>
+
+            {/* 記事表示パネル（Outlet使用） */}
+            {isPostSelected && (
+                <div className="w-1/2 border-l border-neutral overflow-y-auto relative">
+                    {/* 戻るボタン */}
+                    <div className="absolute top-4 left-4 z-10">
+                        <button 
+                            onClick={handleBackToSearch}
+                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-white px-3 py-1 rounded-full shadow-md"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            検索に戻る
+                        </button>
+                    </div>
+                    <Outlet />
+                </div>
+            )}
         </div>
     );
 }
@@ -302,12 +356,16 @@ function InfiniteScrollResults({
     allResults, 
     hasMore, 
     isLoading, 
-    onLoadMore 
+    onLoadMore,
+    onPostSelect,
+    selectedPostId
 }: { 
     allResults: SearchResult["results"];
     hasMore: boolean;
     isLoading: boolean;
     onLoadMore: () => void;
+    onPostSelect: (postId: string) => void;
+    selectedPostId: string | null;
 }) {
     const observerRef = useRef<IntersectionObserver>();
     const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -348,7 +406,13 @@ function InfiniteScrollResults({
             {/* 検索結果のリスト */}
             <div className="results-list">
                 {allResults.map((result) => (
-                    <PostCard key={result.postId} {...result} />
+                    <div key={result.postId} 
+                         className={`cursor-pointer transition-colors ${
+                             selectedPostId === result.postId.toString() ? 'bg-blue-50' : 'hover:bg-gray-50'
+                         }`}
+                         onClick={() => onPostSelect(result.postId.toString())}>
+                        <PostCard {...result} />
+                    </div>
                 ))}
             </div>
             
