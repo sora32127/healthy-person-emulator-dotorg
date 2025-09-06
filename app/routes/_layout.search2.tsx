@@ -115,9 +115,7 @@ export default function LightSearch() {
         if (!lightSearchHandler) return null;
         
         try {
-            console.log(`Searching: page=${page}, isNewSearch=${isNewSearch}, query="${query}"`);
             const results = await lightSearchHandler.search(query, orderby, page, selectedTags, pageSize);
-            console.log(`Search results:`, results);
             return results;
         } catch (error) {
             console.error("Search error:", error);
@@ -131,7 +129,6 @@ export default function LightSearch() {
         
         // 検索条件が変わった場合
         if (newSearchKey !== searchKey) {
-            console.log("New search detected");
             setIsSearching(true);
             setAllResults([]);
             setCurrentPage(1);
@@ -164,7 +161,6 @@ export default function LightSearch() {
         if (isLoadingMore || !hasMore || !lightSearchHandler) return;
         
         const nextPage = currentPage + 1;
-        console.log(`Loading more: page=${nextPage}`);
         
         setIsLoadingMore(true);
         
@@ -396,7 +392,6 @@ function InfiniteScrollResults({
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    console.log("Intersection detected, loading more...");
                     onLoadMore();
                 }
             },
