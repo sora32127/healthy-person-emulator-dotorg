@@ -231,9 +231,9 @@ export default function LightSearch() {
     const location = useLocation();
 
     const handlePostSelect = useCallback((postId: string) => {
-        const searchParamsObj = new URLSearchParams(location.search);
-        navigate(`/search2/${postId}?${searchParamsObj.toString()}`);
-    }, [navigate, location.search]);
+        const url = `/archives/${postId}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }, []);
 
     // 検索画面に戻るハンドラー
     const handleBackToSearch = useCallback(() => {
@@ -420,11 +420,27 @@ function InfiniteScrollResults({
             {/* 検索結果のリスト */}
             <div className="results-list">
                 {allResults.map((result) => (
-                    <div key={result.postId} 
-                         className={`cursor-pointer transition-colors ${
-                             selectedPostId === result.postId.toString() ? 'bg-blue-50' : 'hover:bg-gray-50'
-                         }`}
-                         onClick={() => onPostSelect(result.postId.toString())}>
+                    <div
+                        key={result.postId}
+                        className={`cursor-pointer transition-colors ${
+                            selectedPostId === result.postId.toString() ? 'bg-blue-50' : 'hover:bg-gray-50'
+                        }`}
+                        onClickCapture={(e) => {
+                            const target = e.target as HTMLElement | null;
+                            const anchor = target && 'closest' in target ? (target.closest('a') as HTMLAnchorElement | null) : null;
+                            if (anchor) {
+                                const href = anchor.getAttribute('href') || '';
+                                if (href.startsWith('/archives/')) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onPostSelect(result.postId.toString());
+                                    return;
+                                }
+                                return; // allow other links (e.g., tags) to work normally
+                            }
+                            onPostSelect(result.postId.toString());
+                        }}
+                    >
                         <PostCard {...result} />
                     </div>
                 ))}
