@@ -6,7 +6,7 @@ test.describe('検索ボックスのレスポンシブネステスト', () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${testURL}/search2`);
+    await page.goto(`${testURL}/search`);
     await expect(page).toHaveTitle(/検索/);
     
     // 検索システムの初期化を待つ
