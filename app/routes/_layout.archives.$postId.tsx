@@ -3,7 +3,15 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import type { MetaFunction } from "@remix-run/react";
 import parser from "html-react-parser";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { prisma, ArchiveDataEntry, getUserId, addOrRemoveBookmark, judgeIsBookmarked } from "~/modules/db.server";
+import {
+  ArchiveDataEntry,
+  getUserId,
+  addOrRemoveBookmark,
+  judgeIsBookmarked,
+  recordPostVote,
+  recordCommentVote,
+  createPostComment,
+} from "~/modules/db.server";
 import CommentCard from "~/components/CommentCard";
 import TagCard from "~/components/TagCard";
 import { useEffect, useState } from "react";
@@ -520,22 +528,7 @@ async function handleVotePost(
     if (voteType !== "like" && voteType !== "dislike") {
       return data({ message: "Invalid vote type", success: false }, { status: 400 });
     }
-    await prisma.$transaction(async (prisma) => {
-      await prisma.fctPostVoteHistory.create({
-        data: {
-          voteUserIpHash: userIpHashString,
-          postId,
-          voteTypeInt: voteType === "like" ? 1 : -1,
-        },
-      });
-      const updateData = voteType === "like" 
-        ? { countLikes: { increment: 1 } }
-        : { countDislikes: { increment: 1 } };
-      await prisma.dimPosts.update({
-        where: { postId },
-        data: updateData,
-      });
-    });
+    await recordPostVote(postId, voteType, userIpHashString);
     const session = await getSession(request.headers.get("Cookie"));
     if (voteType === "like") {
       session.set("likedPages", [...(session.get("likedPages") || []), postId]);
@@ -565,16 +558,7 @@ async function handleVoteComment(
   try {
     const voteType = formData.get("voteType")?.toString();
     const commentId = Number(formData.get("commentId"));
-    await prisma.$transaction(async (prisma) => {
-      await prisma.fctCommentVoteHistory.create({
-        data: {
-          voteUserIpHash: userIpHashString,
-          commentId,
-          postId,
-          voteType: voteType === "like" ? 1 : -1,
-        },
-      });
-    });
+    await recordCommentVote(postId, commentId, voteType as "like" | "dislike", userIpHashString);
     const session = await getSession(request.headers.get("Cookie"));
     if (voteType === "like") {
       session.set("likedComments", [...(session.get("likedComments") || []), commentId]);
@@ -600,14 +584,12 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
     const commentAuthor = formData.get("commentAuthor")?.toString();
     const commentContent = formData.get("commentContent")?.toString() || "";
     const commentParent = Number(formData.get("commentParentId")) || 0;
-    await prisma.dimComments.create({
-      data: {
-        postId: Number(postId),
-        commentAuthor,
-        commentContent,
-        commentParent,
-        commentAuthorIpHash: userIpHashString
-      },
+    await createPostComment({
+      postId: Number(postId),
+      commentAuthor,
+      commentContent,
+      commentParent,
+      commentAuthorIpHash: userIpHashString,
     });
     return data({ message: "コメントを投稿しました", success: true });
   }

@@ -2,7 +2,7 @@ import { Authenticator } from "remix-auth";
 import { sessionStorage } from "./session.server";
 import { FormStrategy } from "remix-auth-form";
 import type { ExposedUser } from "./auth.google.server";
-import { prisma } from "./db.server";
+import { findEmailUser, getEmailUserEncryptedPassword } from "./db.server";
 import bcrypt from "bcrypt";
 
 export const authenticator = new Authenticator<ExposedUser>(sessionStorage);
@@ -38,27 +38,19 @@ authenticator.use(
 )
 
 async function judgeIsUserExists(email: string) {
-    const user = await prisma.dimUsers.findUnique({
-        where: { email, userAuthType: "Email" }
-    });
+    const user = await findEmailUser(email);
     return user !== null;
 }
 
 async function getUser(email: string) {
-    const user = await prisma.dimUsers.findUnique({
-        where: { email, userAuthType: "Email" }
-    });
-    return user;
+    return findEmailUser(email);
 }
 
 async function judgeIsPasswordCorrect(email: string, password: string) {
-    const encryptedPassword = await prisma.dimUsers.findUnique({
-        select: { encryptedPassword: true },
-        where: { email, userAuthType: "Email" }
-    });
-    if (!encryptedPassword?.encryptedPassword) {
+    const encryptedPassword = await getEmailUserEncryptedPassword(email);
+    if (!encryptedPassword) {
         throw new Error("User not found");
     }
-    const isPasswordCorrect = await bcrypt.compare(password, encryptedPassword.encryptedPassword);
+    const isPasswordCorrect = await bcrypt.compare(password, encryptedPassword);
     return isPasswordCorrect;
 }

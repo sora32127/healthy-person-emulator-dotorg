@@ -23,8 +23,8 @@ import TagSelectionBox from "~/components/SubmitFormComponents/TagSelectionBox";
 import {
   getStopWords,
   getTagsCounts,
-  prisma,
   updatePostWelcomed,
+  createPostWithTags,
 } from "~/modules/db.server";
 import TagCreateBox from "~/components/SubmitFormComponents/TagCreateBox";
 import TagPreviewBox from "~/components/SubmitFormComponents/TagPreviewBox";
@@ -910,45 +910,12 @@ export async function action({ request }: ActionFunctionArgs) {
           data: undefined,
         }, { status: 400 });
       }
-      const newPost = await prisma.$transaction(async (prisma) => {
-        const newPost = await prisma.dimPosts.create({
-          data: {
-            postAuthorIPHash: hashedUserIpAddress,
-            postContent: wikifyResult,
-            postTitle: postTitle,
-            countLikes: 0,
-            countDislikes: 0,
-            commentStatus: "open",
-          },
-        });
-        const uniqueTags = [
-          ...new Set([...(selectedTags || []), ...(createdTags || [])]),
-        ];
-        const existingTags = await prisma.dimTags.findMany({
-          where: {
-            tagName: {
-              in: uniqueTags,
-            },
-          },
-        });
-        const existingTagNames = existingTags.map((tag) => tag.tagName);
-        const newTagNames = uniqueTags.filter(
-          (tag) => !existingTagNames.includes(tag)
-        );
-        const newTags = await Promise.all(
-          newTagNames.map(async (tagName) => {
-            return await prisma.dimTags.create({ data: { tagName } });
-          })
-        );
-        const allTags = [...existingTags, ...newTags];
-        await Promise.all(
-          allTags.map(async (tag) => {
-            return await prisma.relPostTags.create({
-              data: { postId: newPost.postId, tagId: tag.tagId },
-            });
-          })
-        );
-        return newPost;
+      const newPost = await createPostWithTags({
+        postContent: wikifyResult,
+        postTitle,
+        hashedUserIpAddress,
+        selectedTags,
+        createdTags,
       });
 
       await createEmbedding({

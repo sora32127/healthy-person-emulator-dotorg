@@ -1,7 +1,7 @@
 import { Authenticator } from "remix-auth";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import { sessionStorage } from "./session.server";
-import { prisma } from "./db.server";
+import { findUserByEmail, createGoogleUser } from "./db.server";
 import { z } from "zod";
 /*
 ブラウザ側に露出しうるユーザーのデータのスキーマ
@@ -63,33 +63,14 @@ function getUserEmail(profile: GoogleProfile) {
 }
 
 async function judgeIsUserExists(email: string) {
-  try {
-    await prisma.dimUsers.findUniqueOrThrow({
-      where: {
-        email: email,
-      },
-    });
-    return true;
-  } catch (error) {
-    return false;
-  }
+  const user = await findUserByEmail(email);
+  return user !== null;
 }
 
 async function createUser(email: string) {
-  const user = await prisma.dimUsers.create({
-    data: {
-      email: email,
-      userAuthType: "Google",
-    },
-  });
-  return user;
+  return createGoogleUser(email);
 }
 
 async function getUser(email: string) {
-  const user = await prisma.dimUsers.findUnique({
-    where: {
-      email: email,
-    },
-  });
-  return user;
+  return findUserByEmail(email);
 }
