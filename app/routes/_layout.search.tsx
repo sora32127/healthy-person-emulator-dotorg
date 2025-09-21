@@ -13,15 +13,48 @@ import {
 } from "~/stores/search";
 import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
 import type { MetaFunction } from "@remix-run/node";
+import { commonMetaFunction } from "~/utils/commonMetafunction";
 
-export const meta: MetaFunction = () => {
-    return [
-        { title: "検索 | 健常者エミュレータ事例集" },
-        { name: "description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
-        { property: "og:title", content: "検索 | 健常者エミュレータ事例集" },
-        { property: "og:description", content: "健常者エミュレータ事例集での記事検索ページです。キーワードやタグで記事を検索できます。" },
-        { property: "og:type", content: "website" },
-    ];
+export const meta: MetaFunction = ({ location }) => {
+    const searchParams = new URLSearchParams(location.search);
+    const query = searchParams.get("q") ?? "";
+    const tags = searchParams.get("tags")?.split(" ").filter(Boolean) ?? [];
+    const orderby = (searchParams.get("orderby") as OrderBy | null) ?? "timeDesc";
+
+    const convertOrderBy = (value: OrderBy) => {
+        switch (value) {
+            case "timeDesc":
+                return "新着順";
+            case "timeAsc":
+                return "古い順";
+            case "like":
+                return "いいね順";
+            default:
+                return "新着順";
+        }
+    };
+
+    let pageTitle = "検索結果";
+    if (query) {
+        pageTitle += ` キーワード: ${query}`;
+    }
+    if (tags.length > 0) {
+        pageTitle += " タグ";
+        pageTitle += `: ${tags.join(", ")}`;
+    }
+    if (orderby) {
+        pageTitle += ` ${convertOrderBy(orderby)}`;
+    }
+    if (query === "" && tags.length === 0) {
+        pageTitle = "検索する";
+    }
+
+    return commonMetaFunction({
+        title: pageTitle,
+        description: "検索",
+        url: `https://healthy-person-emulator.org/search${location.search}`,
+        image: null,
+    });
 };
 
 export async function loader() {
