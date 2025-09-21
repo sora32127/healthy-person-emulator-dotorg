@@ -25,7 +25,7 @@ function getPrismaClient(): PrismaClient {
 }
 
 
-export let prisma = getPrismaClient();
+let prisma = getPrismaClient();
 
 if (process.env.NODE_ENV !== "production" && global.__prisma) {
     prisma = global.__prisma;
