@@ -25,7 +25,7 @@ function getPrismaClient(): PrismaClient {
 }
 
 
-export let prisma = getPrismaClient();
+let prisma = getPrismaClient();
 
 if (process.env.NODE_ENV !== "production" && global.__prisma) {
     prisma = global.__prisma;
@@ -43,6 +43,97 @@ export async function getPostDataForSitemap() {
             loc: `https://healthy-person-emulator.org/archives/${post.postId}`
         }
     })
+}
+
+export async function getTagNamesByPostId(postId: number): Promise<string[]> {
+    const tags = await prisma.relPostTags.findMany({
+        where: { postId },
+        select: {
+            dimTag: {
+                select: {
+                    tagName: true,
+                }
+            }
+        }
+    })
+
+    return tags.map((tag) => tag.dimTag.tagName);
+}
+
+export async function updatePostEmbedding(postId: number, embedding: number[], tokenCount: number): Promise<void> {
+    await prisma.$queryRaw`
+        UPDATE dim_posts
+        SET content_embedding = ${embedding}, token_count = ${tokenCount}
+        WHERE post_id = ${postId}
+    `;
+    // Prisma cannot handle the column type directly, and the Supabase client intermittently fails, so raw SQL is safer here.
+}
+
+type CreatePostWithTagsInput = {
+    postContent: string;
+    postTitle: string;
+    hashedUserIpAddress: string;
+    selectedTags?: string[];
+    createdTags?: string[];
+};
+
+type CreatedPostSummary = {
+    postId: number;
+    postTitle: string;
+    postContent: string;
+};
+
+export async function createPostWithTags({ postContent, postTitle, hashedUserIpAddress, selectedTags = [], createdTags = [] }: CreatePostWithTagsInput): Promise<CreatedPostSummary> {
+    const uniqueTags = Array.from(new Set([...(selectedTags ?? []), ...(createdTags ?? [])]));
+
+    return prisma.$transaction(async (tx) => {
+        const newPost = await tx.dimPosts.create({
+            data: {
+                postAuthorIPHash: hashedUserIpAddress,
+                postContent,
+                postTitle,
+                countLikes: 0,
+                countDislikes: 0,
+                commentStatus: "open",
+            },
+            select: {
+                postId: true,
+                postTitle: true,
+                postContent: true,
+            },
+        });
+
+        if (uniqueTags.length > 0) {
+            const existingTags = await tx.dimTags.findMany({
+                where: {
+                    tagName: {
+                        in: uniqueTags,
+                    },
+                },
+            });
+
+            const existingTagNames = existingTags.map((tag) => tag.tagName);
+            const newTagNames = uniqueTags.filter((tag) => !existingTagNames.includes(tag));
+
+            const newTags = await Promise.all(
+                newTagNames.map(async (tagName) => {
+                    return tx.dimTags.create({ data: { tagName } });
+                })
+            );
+
+            const allTags = [...existingTags, ...newTags];
+
+            await Promise.all(
+                allTags.map(async (tag) => {
+                    await tx.relPostTags.create({
+                        data: { postId: newPost.postId, tagId: tag.tagId },
+                    });
+                })
+            );
+        }
+
+        return newPost;
+    });
 }
 
 export const PostDataSchema = z.object({
@@ -380,6 +471,56 @@ export async function addOrRemoveBookmark(postId: number, userId: number){
     }
     await prisma.fctUserBookmarkActivity.create({ data: { postId, userId } });
     return { message: "ブックマークしました", success: true }
+}
+
+export async function recordPostVote(postId: number, voteType: "like" | "dislike", voteUserIpHash: string): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+        await tx.fctPostVoteHistory.create({
+            data: {
+                voteUserIpHash,
+                postId,
+                voteTypeInt: voteType === "like" ? 1 : -1,
+            },
+        });
+        const updateData = voteType === "like"
+            ? { countLikes: { increment: 1 } }
+            : { countDislikes: { increment: 1 } };
+        await tx.dimPosts.update({
+            where: { postId },
+            data: updateData,
+        });
+    });
+}
+
+export async function recordCommentVote(postId: number, commentId: number, voteType: "like" | "dislike", voteUserIpHash: string): Promise<void> {
+    await prisma.fctCommentVoteHistory.create({
+        data: {
+            voteUserIpHash,
+            commentId,
+            postId,
+            voteType: voteType === "like" ? 1 : -1,
+        },
+    });
+}
+
+type CreateCommentInput = {
+    postId: number;
+    commentAuthor?: string;
+    commentContent: string;
+    commentParent?: number;
+    commentAuthorIpHash: string;
+};
+
+export async function createPostComment({ postId, commentAuthor, commentContent, commentParent = 0, commentAuthorIpHash }: CreateCommentInput): Promise<void> {
+    await prisma.dimComments.create({
+        data: {
+            postId,
+            commentAuthor,
+            commentContent,
+            commentParent,
+            commentAuthorIpHash,
+        },
+    });
 }
 
 export const PostCardDataSchema = z.object({
@@ -1113,4 +1254,217 @@ export async function getUserEditHistory(userUuid: string){
         }
     })
     return userEditHistory;
+}
+
+export type NowEditingInfo = {
+    postId: number;
+    userId: string;
+    lastHeartBeatAtUTC: Date;
+};
+
+export async function getNowEditingInfo(postId: number): Promise<NowEditingInfo | null> {
+    const info = await prisma.nowEditingPages.findUnique({
+        where: { postId },
+        select: {
+            postId: true,
+            userId: true,
+            lastHeartBeatAtUTC: true,
+        },
+    });
+    return info;
+}
+
+export async function clearNowEditingInfo(postId: number): Promise<void> {
+    await prisma.nowEditingPages.delete({
+        where: { postId },
+    });
+}
+
+export async function setNowEditingInfo(postId: number, userId: string): Promise<void> {
+    await prisma.nowEditingPages.create({
+        data: {
+            postId,
+            userId,
+        },
+    });
+}
+
+type PostForEditing = {
+    postId: number;
+    postTitle: string;
+    postContent: string;
+    tagNames: string[];
+};
+
+export async function getPostForEditing(postId: number): Promise<PostForEditing | null> {
+    const post = await prisma.dimPosts.findUnique({
+        where: { postId },
+        select: {
+            postId: true,
+            postTitle: true,
+            postContent: true,
+            rel_post_tags: {
+                select: {
+                    dimTag: {
+                        select: {
+                            tagName: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!post) {
+        return null;
+    }
+
+    return {
+        postId: post.postId,
+        postTitle: post.postTitle,
+        postContent: post.postContent,
+        tagNames: post.rel_post_tags.map((rel) => rel.dimTag.tagName),
+    };
+}
+
+type PostEditHistoryEntry = {
+    postRevisionNumber: number;
+    postEditDateJst: Date;
+    editorUserId: string;
+    postTitleBeforeEdit: string;
+    postTitleAfterEdit: string;
+    postContentBeforeEdit: string;
+    postContentAfterEdit: string;
+};
+
+export async function getPostEditHistory(postId: number): Promise<PostEditHistoryEntry[]> {
+    const history = await prisma.fctPostEditHistory.findMany({
+        select: {
+            postRevisionNumber: true,
+            postEditDateJst: true,
+            editorUserId: true,
+            postTitleBeforeEdit: true,
+            postTitleAfterEdit: true,
+            postContentBeforeEdit: true,
+            postContentAfterEdit: true,
+        },
+        where: { postId },
+        orderBy: { postRevisionNumber: "desc" },
+    });
+    return history;
+}
+
+type UpdatePostWithTagsInput = {
+    postId: number;
+    postTitle: string;
+    postContentHtml: string;
+    tags: string[];
+    editorUserId: string;
+};
+
+export async function updatePostWithTagsAndHistory({ postId, postTitle, postContentHtml, tags, editorUserId }: UpdatePostWithTagsInput): Promise<CreatedPostSummary> {
+    return prisma.$transaction(async (tx) => {
+        const latestPost = await tx.dimPosts.findUnique({
+            where: { postId },
+        });
+
+        if (!latestPost) {
+            throw new Error("Post not found");
+        }
+
+        const latestRevision = await tx.fctPostEditHistory.findFirst({
+            select: { postRevisionNumber: true },
+            where: { postId },
+            orderBy: { postRevisionNumber: "desc" },
+        });
+        const newRevisionNumber = latestRevision ? latestRevision.postRevisionNumber + 1 : 1;
+
+        const updatedPost = await tx.dimPosts.update({
+            where: { postId },
+            data: {
+                postTitle,
+                postContent: postContentHtml,
+            },
+            select: {
+                postId: true,
+                postTitle: true,
+                postContent: true,
+            },
+        });
+
+        await tx.relPostTags.deleteMany({ where: { postId } });
+
+        for (const tag of tags) {
+            const existingTag = await tx.dimTags.findFirst({
+                where: { tagName: tag },
+                orderBy: { tagId: "desc" },
+            });
+
+            await tx.relPostTags.create({
+                data: {
+                    postId,
+                    tagId: existingTag?.tagId || 0,
+                },
+            });
+        }
+
+        await tx.fctPostEditHistory.create({
+            data: {
+                postId,
+                postRevisionNumber: newRevisionNumber,
+                editorUserId,
+                postTitleBeforeEdit: latestPost.postTitle,
+                postTitleAfterEdit: postTitle,
+                postContentBeforeEdit: latestPost.postContent,
+                postContentAfterEdit: postContentHtml,
+            },
+        });
+
+        return updatedPost;
+    }, {
+        timeout: 20000,
+    });
+}
+
+export async function upsertNowEditingInfo(postId: number, userId: string): Promise<void> {
+    await prisma.nowEditingPages.upsert({
+        where: { postId },
+        update: {
+            userId,
+            lastHeartBeatAtUTC: new Date(),
+        },
+        create: {
+            postId,
+            userId,
+        },
+    });
+}
+
+export async function findEmailUser(email: string) {
+    return prisma.dimUsers.findUnique({
+        where: { email, userAuthType: "Email" },
+    });
+}
+
+export async function getEmailUserEncryptedPassword(email: string): Promise<string | null> {
+    const encryptedPassword = await prisma.dimUsers.findUnique({
+        select: { encryptedPassword: true },
+        where: { email, userAuthType: "Email" },
+    });
+    return encryptedPassword?.encryptedPassword ?? null;
+}
+
+export async function findUserByEmail(email: string) {
+    return prisma.dimUsers.findUnique({
+        where: { email },
+    });
+}
+
+export async function createGoogleUser(email: string) {
+    return prisma.dimUsers.create({
+        data: {
+            email,
+            userAuthType: "Google",
+        },
+    });
 }

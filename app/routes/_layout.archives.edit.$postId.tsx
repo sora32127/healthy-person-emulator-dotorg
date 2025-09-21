@@ -7,7 +7,14 @@ import { marked } from 'marked';
 import type { ActionFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import type { Tokens } from 'marked';
 
-import { prisma } from "~/modules/db.server";
+import {
+  getNowEditingInfo,
+  upsertNowEditingInfo,
+  getPostForEditing,
+  getTagsCounts,
+  getPostEditHistory,
+  updatePostWithTagsAndHistory,
+} from "~/modules/db.server";
 import { H1, H2 } from "~/components/Headings";
 import { MarkdownEditor } from "~/components/MarkdownEditor";
 import * as diff from 'diff';
@@ -32,21 +39,20 @@ const postEditSchema = z.object({
 
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
   const userObject = await authenticator.isAuthenticated(request);
   const userUuid = userObject?.userUuid;
   if (!userUuid) {
     throw redirect("/");
   }
-  const postId = params.postId;
-  const nowEditingInfo = await prisma.nowEditingPages.findUnique({
-    where : { postId: Number(postId) },
-    select : {
-      postId: true,
-      userId: true,
-      lastHeartBeatAtUTC: true
-    },
-  });
+
+  const postIdParam = params.postId;
+  const postId = Number(postIdParam);
+  if (Number.isNaN(postId)) {
+    throw new Response("Invalid post id", { status: 400 });
+  }
+
+  const nowEditingInfo = await getNowEditingInfo(postId);
 
   /*
   記事が編集中かどうか判断するロジックは以下の通り
@@ -56,11 +62,11 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   - それ以外の場合は編集中と判断する。つまりは以下の場合：
     - nowEditingInfoが存在する
     - なおかつ、自分以外のユーザーIDが格納されている
-    - なおかつ、lasteHeartBeatAtUTCから30分以内である
+    - なおかつ、lastHeartBeatAtUTCから30分以内である
   */
   const isEditing = nowEditingInfo && nowEditingInfo.userId !== userUuid && (new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime()) < 30 * 60 * 1000;
 
-  if (isEditing && nowEditingInfo){
+  if (isEditing && nowEditingInfo) {
     // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
     // 「戻る」を押してredirect(`/archives/${postId}`)する
     return {
@@ -69,85 +75,26 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       tagNames: null,
       allTagsForSearch: null,
       userUuid,
-      postId,
+      postId: postIdParam,
       isEditing: true,
       editHistory: null,
     };
   }
-    
 
-  // 以下は編集中ではないことを前提とするロジック
-  if (nowEditingInfo){
-    await prisma.nowEditingPages.delete({
-      where: { postId: Number(postId) },
-    });
-  }
-  await prisma.nowEditingPages.create({
-    data: {
-      postId: Number(postId),
-      userId: userUuid,
-    },
-  });
+  await upsertNowEditingInfo(postId, userUuid);
 
-  const postData = await prisma.dimPosts.findUnique({
-    where: {
-      postId: Number(postId),
-    },
-    select: {
-      postId: true,
-      postTitle: true,
-      postContent: true,
-      rel_post_tags: {
-        select: {
-          dimTag: {
-            select: {
-              tagName: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const postForEdit = await getPostForEditing(postId);
 
-  if (!postData) {
+  if (!postForEdit) {
     throw new Response("Post not found", { status: 404 });
   }
 
-  const tagNames = postData.rel_post_tags.map((rel) => rel.dimTag.tagName);
-  
-  
-  const tags = await prisma.dimTags.findMany({
-    select: {
-      tagName: true,
-      _count: {
-        select: { relPostTags: true },
-      },
-    },
-    orderBy: {
-      relPostTags: {
-        _count: "desc",
-      },
-    },
-  });
+  const { tagNames, ...postData } = postForEdit;
 
-  const allTagsForSearch = tags.map((tag) => {
-    return { tagName: tag.tagName, count: tag._count.relPostTags };
-  });
+  const allTagsForSearch = await getTagsCounts();
 
   const postMarkdown = NodeHtmlMarkdown.translate(postData.postContent);
-  const editHistory = await prisma.fctPostEditHistory.findMany({
-    select: {
-      postRevisionNumber: true,
-      postEditDateJst: true,
-      editorUserId: true,
-      postTitleBeforeEdit: true,
-      postTitleAfterEdit: true,
-      postContentBeforeEdit: true,
-      postContentAfterEdit: true,
-    },
-    where : { postId: Number(postId) },
-    orderBy : { postRevisionNumber: 'desc' },
-  });
+  const editHistory = await getPostEditHistory(postId);
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
   return {
@@ -157,8 +104,8 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     allTagsForSearch,
     userUuid,
     CF_TURNSTILE_SITEKEY,
-    isEditing:false,
-    postId,
+    isEditing: false,
+    postId: postIdParam,
     editHistory,
   };
 }
@@ -418,26 +365,8 @@ export const action: ActionFunction = async (args) => {
   }
 
   const postId = Number(args.params.postId);
-
-  const latestPost = await prisma.dimPosts.findUnique({
-    where: { postId },
-  });
-
-  if (!latestPost) {
-    return ({ message: "投稿履歴が見つかりません", success: false });
-  }
-
-  let newRevisionNumber: number;
-
-  try {
-    const latestRevisionNumber = await prisma.fctPostEditHistory.findFirstOrThrow({
-    select: { postRevisionNumber: true },
-    where: { postId },
-    orderBy: { postRevisionNumber: 'desc' },
-    })
-    newRevisionNumber = latestRevisionNumber.postRevisionNumber + 1;
-  } catch (e) {
-    newRevisionNumber = 1;
+  if (Number.isNaN(postId)) {
+    return ({ message: "無効な投稿IDです", success: false });
   }
 
   /*
@@ -455,49 +384,21 @@ export const action: ActionFunction = async (args) => {
 
   marked.use({ renderer });
 
-  const updatedPost = await prisma.$transaction(async (prisma) => {
-    const updatedPost = await prisma.dimPosts.update({
-      where: { postId },
-      data: {
-        postTitle: parsedData.postTitle,
-        postContent: await marked(parsedData.postContent as string),
-      }
-    })
-    
-    await prisma.relPostTags.deleteMany({ where: { postId } });
-  
-    for (const tag of parsedData.tags) {
-      const existingTag = await prisma.dimTags.findFirst({
-        where: { tagName: tag },
-        orderBy: { tagId: 'desc' },
-      });
+  const postContentHtml = await marked(parsedData.postContent as string);
 
-      await prisma.relPostTags.create({
-        data: {
-          postId,
-          tagId: existingTag?.tagId || 0
-        }
-        },
-      );
-    }
-
-    await prisma.fctPostEditHistory.create({
-      data: {
-        postId,
-        postRevisionNumber: newRevisionNumber,
-        editorUserId: parsedData.userId,
-        postTitleBeforeEdit: latestPost.postTitle,
-        postTitleAfterEdit: parsedData.postTitle,
-        postContentBeforeEdit: latestPost.postContent,
-        postContentAfterEdit: await marked(parsedData.postContent as string),
-      },
+  let updatedPost;
+  try {
+    updatedPost = await updatePostWithTagsAndHistory({
+      postId,
+      postTitle: parsedData.postTitle,
+      postContentHtml,
+      tags: parsedData.tags,
+      editorUserId: parsedData.userId,
     });
-  
-    return updatedPost;
-  },
-  {
-    timeout : 20000,
-  });
+  } catch (error) {
+    console.error(error);
+    return ({ message: "投稿履歴が見つかりません", success: false });
+  }
 
   await createEmbedding({ postId: Number(updatedPost.postId), postContent: updatedPost.postContent, postTitle: updatedPost.postTitle});
   return ({ success: true, message: "投稿を編集しました。" });

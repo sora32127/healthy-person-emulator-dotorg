@@ -1,5 +1,5 @@
 import { OpenAI } from "openai";
-import { prisma } from "./db.server";
+import { getTagNamesByPostId, updatePostEmbedding } from "./db.server";
 
 interface CreateEmbeddingInput {
     postId : number;
@@ -15,17 +15,7 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
     if (!OpenAIAPIKey) {
         throw new Error("OPENAI_API_KEY is not set");
     }
-    const allTags = await prisma.relPostTags.findMany({
-        where: { postId },
-        select: {
-            dimTag: {
-                select: {
-                    tagName: true
-                }
-            }
-        }
-    })
-    const allTagNames = allTags.map(tag => tag.dimTag.tagName)
+    const allTagNames = await getTagNamesByPostId(postId)
 
     const inputText = await getEmbeddingInputText(postContent, postTitle, allTagNames)
     const openAI = new OpenAI({apiKey: OpenAIAPIKey})
@@ -37,14 +27,7 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
     const embedding = Array.from(response.data[0].embedding)
     const tokenCount = response.usage.total_tokens
     try {
-        await prisma.$queryRaw`
-            UPDATE dim_posts
-            SET content_embedding = ${embedding}, token_count = ${tokenCount}
-            WHERE post_id = ${postId}
-        `;
-        // prismaクライアントを利用すると、unsporttedなデータ型を扱うことができない
-        // そのため、queryRawを利用する
-        // Supabaseのクライアントを利用してembeddingを更新する際、たまに`permission denied for schema public`が出現するため、supabaseクライアントを利用しない
+        await updatePostEmbedding(postId, embedding, tokenCount);
     }
     catch (error) {
         throw new Error(`Failed to update embedding: ${error}`);
