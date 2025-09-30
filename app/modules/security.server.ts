@@ -84,7 +84,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
 
   const generativeAi = new GoogleGenerativeAI(GOOGLE_GENERATIVE_API_KEY);
   const model = generativeAi.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash-lite",
       generationConfig: {
           responseMimeType: "application/json",
           responseSchema: schema,
