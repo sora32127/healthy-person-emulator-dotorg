@@ -1,4 +1,4 @@
-import { useLoaderData, Outlet, useNavigate, useLocation } from "@remix-run/react";
+import { useLoaderData, Outlet, useNavigate, useLocation, redirect } from "@remix-run/react";
 import { getOrCreateHandler, LightSearchHandler, type SearchResult, type OrderBy } from "~/modules/lightSearch.client";
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { debounce } from "es-toolkit";
@@ -12,7 +12,7 @@ import {
     searchResultsAtom,
 } from "~/stores/search";
 import { generateDownloadSignedUrl } from "~/modules/gcloud.server";
-import type { MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 
 export const meta: MetaFunction = ({ location }) => {
@@ -69,6 +69,16 @@ export async function loader() {
         searchAssetURL,
         tagsAssetURL,
     };
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const body = await request.formData();
+  const action = body.get("action");
+  if (action === "firstSearch") {
+    const query = body.get("query") as string || "";
+    return redirect(`/search?q=${encodeURIComponent(query)}`);
+  }
+  return null;
 }
 
 export default function LightSearch() {
