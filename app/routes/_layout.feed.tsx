@@ -32,7 +32,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const currentPage = Number.parseInt(formData.get("currentPage") as string || "1");
   const likeFrom = url.searchParams.get("likeFrom") || "";
   const likeTo = url.searchParams.get("likeTo") || "";
-  const type = url.searchParams.get("type") || "";
+  const type = url.searchParams.get("type") || "unboundedLikes";
 
   if (action === "firstPage"){
     return redirect(`/feed?p=1&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
