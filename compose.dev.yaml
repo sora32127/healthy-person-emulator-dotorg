@@ -58,6 +58,12 @@ services:
       sh -c "
         set -eux
         pnpm prisma db push --accept-data-loss || echo 'Warning: prisma db push failed'
+        (
+          while true; do
+            pnpm run generate:parquet
+            sleep 600
+          done
+        ) &
         pnpm dev
       "
     depends_on:

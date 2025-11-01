@@ -12,9 +12,13 @@ export async function generateDownloadSignedUrl(
   fileName: string,
   expirationMinutes: number = 15
 ): Promise<string> {
+  if (fileName.startsWith('gcs-demo-')) {
+    return `http://localhost:3000/parquet/${fileName}`;
+  }
+
   try {
     // Cloud Run環境ではApplication Default Credentialsを使用
-      // ローカル環境では環境変数またはキーファイルで認証
+    // ローカル環境では環境変数またはキーファイルで認証
     const env = getEnvironment();
     const storage = env === 'production' 
       ? new Storage() // ADCを使用（Cloud Run環境）
