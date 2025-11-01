@@ -1,0 +1,65 @@
+# Dependencies
+node_modules
+.pnpm-store
+npm-debug.log*
+pnpm-debug.log*
+
+# Build outputs
+build
+dist
+.cache
+.next
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# Test coverage
+coverage
+.nyc_output
+
+# Temporary files
+tmp
+temp
+*.log
+
+# Docker
+compose.*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation
+*.md
+docs
+
+# Tests
+tests
+test
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Config files (except necessary ones)
+.prettierrc
+.eslintrc
+.editorconfig
+
+# Prisma generated files (will be regenerated in container)
+prisma/migrations
