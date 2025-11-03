@@ -6,14 +6,16 @@ import { getFeedPosts } from "~/modules/db.server";
 import PostSection from "~/components/PostSection";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
 
+type FeedPostType = "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const pagingNumber = Number.parseInt(url.searchParams.get("p") || "1");
   const likeFromHour = Number.parseInt(url.searchParams.get("likeFrom") || "48");
   const likeToHour = Number.parseInt(url.searchParams.get("likeTo") || "0");
-  const type = url.searchParams.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
+  const type = url.searchParams.get("type") || "unboundedLikes" as FeedPostType;
   const chunkSize = 12;
-  const postData = await getFeedPosts(pagingNumber, type, chunkSize, likeFromHour, likeToHour);
+  const postData = await getFeedPosts(pagingNumber, type as FeedPostType, chunkSize, likeFromHour, likeToHour);
   return postData;
 }
 
@@ -24,7 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
   // フィードページ内部でのアクションはタイプ変更かページネーションのみ
 
   if (action === "feedTypeChange") {
-    const type = formData.get("type") as "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
+    const type = formData.get("type") as FeedPostType;
     const pagingNumber = 1;
     return redirect(`/feed?p=${pagingNumber}&type=${type}`);
   }
@@ -32,7 +34,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const currentPage = Number.parseInt(formData.get("currentPage") as string || "1");
   const likeFrom = url.searchParams.get("likeFrom") || "";
   const likeTo = url.searchParams.get("likeTo") || "";
-  const type = url.searchParams.get("type") || "";
+  const type = url.searchParams.get("type");
 
   if (action === "firstPage"){
     return redirect(`/feed?p=1&type=${type}${likeFrom ? `&likeFrom=${likeFrom}` : ""}${likeTo ? `&likeTo=${likeTo}` : ""}`);
