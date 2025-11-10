@@ -1,0 +1,76 @@
+services:
+  # PostgreSQL Database with pgvector
+  db:
+    image: ankane/pgvector:v0.5.1
+    container_name: healthy-person-db
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "54322:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/00-init.sql
+      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/01-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Supabase Studio
+  studio:
+    image: supabase/studio:latest
+    container_name: healthy-person-studio
+    environment:
+      SUPABASE_URL: http://kong:8000
+      STUDIO_PG_META_URL: http://meta:8080
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+    ports:
+      - "54323:3000"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # Remix Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: healthy-person-app
+    environment:
+      NODE_ENV: development
+      SUPABASE_CONNECTION_STRING: postgresql://postgres:postgres@db:5432/postgres?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres?schema=public
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.pnpm-store
+    working_dir: /app
+    command: >
+      sh -c "
+        set -eux
+        pnpm prisma db push --accept-data-loss || echo 'Warning: prisma db push failed'
+        pnpm dev
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

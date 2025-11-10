@@ -126,12 +126,22 @@ cd healthy-person-emulator-dotorg
 ```
 2. docker compose upを実行
 ```bash
-touch .env
-docker compose up
+cp .env.example .env
+docker compose -f compose.dev.yaml up
 ```
 
-3. `http://localhost:3000/`にアクセス
+3. アクセス
+- Web: http://localhost:3000
+- Supabase Studio: http://localhost:54323
 
+4. (Optional) 作成した環境でCLI操作を行う
+```bash
+# シェルにアタッチして操作する
+docker compose -f compose.dev.yaml exec app bash
+
+# pnpm コマンドを実行する
+docker compose -f compose.dev.yaml exec app pnpm ...
+```
 
 ## 活用したアセット
 - [Google Fonts](https://fonts.google.com/)
