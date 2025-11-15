@@ -2,13 +2,16 @@
 CREATE EXTENSION IF NOT EXISTS "vector";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Prisma互換性のため supabase_admin ロールを作成
+-- Prisma互換性のため supabase_admin ユーザーを作成
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'supabase_admin') THEN
-    CREATE ROLE supabase_admin WITH SUPERUSER;
-  END IF;
-END
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_roles WHERE rolname = 'supabase_admin'
+    ) THEN
+        CREATE ROLE supabase_admin WITH LOGIN PASSWORD 'supabase_admin_password';
+        ALTER ROLE supabase_admin WITH SUPERUSER;
+    END IF;
+END;
 $$;
 
 -- Supabase Database Functions で定義されている関数を作成
