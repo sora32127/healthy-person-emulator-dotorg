@@ -1,20 +1,39 @@
+# Dependencies
 node_modules
 
+# Build outputs
 /.cache
 /build
+
+# Environment and secrets
 .env
+hpe-temp-downloader-key.json
+/docs/secretvariables.md
+
+# Deployment
 .vercel
+
+# Testing
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+coverage
+
+# IDE
 .vscode
+
+# Local development certificates
 localhost-key.pem
 localhost.pem
-/app/embeddingBatch.ts
-/docs/secretvariables.md
-memo.md
-coverage
-hpe-temp-downloader-key.json
-.serena
+
+# Generated files (local development)
+/public/parquet
+
+# Temporary files
 tmp
+memo.md
+.serena
+
+# Experimental/deprecated files
+/app/embeddingBatch.ts

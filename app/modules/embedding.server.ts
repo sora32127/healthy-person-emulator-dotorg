@@ -18,14 +18,7 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
     const allTagNames = await getTagNamesByPostId(postId)
 
     const inputText = await getEmbeddingInputText(postContent, postTitle, allTagNames)
-    const openAI = new OpenAI({apiKey: OpenAIAPIKey})
-    const response = await openAI.embeddings.create({
-        model: OpenAIEmbeddingModel,
-        input: inputText,
-    })
-    
-    const embedding = Array.from(response.data[0].embedding)
-    const tokenCount = response.usage.total_tokens
+    const { embedding, tokenCount } = await getEmbeddingResponse(inputText)
     try {
         await updatePostEmbedding(postId, embedding, tokenCount);
     }
@@ -36,6 +29,25 @@ export async function createEmbedding({ postId, postContent, postTitle } : Creat
         status: 200,
         message: "Embedding created successfully"
     });
+}
+
+async function getEmbeddingResponse(inputText: string) {
+    if (OpenAIAPIKey === 'openai-demo-key') {
+        return {
+            embedding: [0.1, 0.2, 0.3],
+            tokenCount: 10,
+        }
+    }
+    const openAI = new OpenAI({apiKey: OpenAIAPIKey})
+    const response = await openAI.embeddings.create({
+        model: OpenAIEmbeddingModel,
+        input: inputText,
+    })
+
+    return {
+        embedding: response.data[0].embedding,
+        tokenCount: response.usage.total_tokens,
+    }
 }
 
 async function getEmbeddingInputText(postContent: string, postTitle: string, allTagNames: string[]) {

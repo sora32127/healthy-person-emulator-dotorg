@@ -7,9 +7,9 @@
     "preinstall": "npx only-allow pnpm",
     "build": "prisma generate && remix vite:build",
     "dev": "remix vite:dev --host 0.0.0.0 --port 3000",
-
     "lint": "biome lint .",
     "format": "biome format --write .",
+    "generate:parquet": "npx tsx scripts/generateParquetFiles.ts",
     "start": "remix-serve ./build/server/index.js",
     "seed": "npx tsx prisma/seed.ts",
     "reset:db": "npx prisma migrate reset -f && npx prisma db push",
@@ -67,6 +67,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
     "@biomejs/biome": "^2.3.2",
+    "@duckdb/node-api": "^1.4.1-r.4",
     "@playwright/test": "^1.49.1",
     "@remix-run/dev": "^2.15.2",
     "@remix-run/fs-routes": "^2.15.2",
