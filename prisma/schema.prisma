@@ -110,6 +110,7 @@ model DimPosts {
   countDislikes             Int                       @default(0) @map("count_dislikes")
   uuid                      String                    @default(dbgenerated("uuid_generate_v4()")) @map("uuid") @db.Uuid
   content_embedding         Unsupported("vector")?
+  tokenCount                Int                       @default(0) @map("token_count")
   ogpImageUrl               String?                   @map("ogp_image_url")
   tweetIdOfFirstTweet       String?                   @map("tweet_id_of_first_tweet")
   blueskyPostUriOfFirstPost String?                   @map("bluesky_post_uri_of_first_post")
