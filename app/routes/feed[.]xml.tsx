@@ -41,7 +41,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           ? `健常者エミュレータ事例集の過去${likeFromHour}時間のいいね順投稿を配信`
           : '健常者エミュレータ事例集の投稿を古い順で配信';
 
-  const baseUrl = 'https://healthy-person-emulator.org';
+  const baseUrl = url.origin;
   const feedUrl = `${baseUrl}/feed.xml?p=${pagingNumber}&type=${type}${type === 'likes' ? `&likeFrom=${likeFromHour}&likeTo=${likeToHour}` : ''}`;
 
   const feed = new RSS({
