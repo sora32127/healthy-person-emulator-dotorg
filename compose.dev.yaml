@@ -21,19 +21,40 @@ services:
     networks:
       - app-network
 
+  meta:
+    image: ghcr.io/supabase/postgres-meta:v0.93.1
+    container_name: healthy-person-meta
+    environment:
+      POSTGRES_PASSWORD: postgres
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: postgres
+      PG_META_DB_NAME: postgres
+    ports:
+      - "54324:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
   # Supabase Studio
   studio:
     image: supabase/studio:latest
     container_name: healthy-person-studio
     environment:
-      SUPABASE_URL: http://kong:8000
-      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: supabase_admin_password
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
       SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      SUPABASE_URL: http://db:5432
+      SUPABASE_PUBLIC_URL: http://localhost:54323
+      STUDIO_PG_META_URL: http://meta:8080
     ports:
       - "54323:3000"
     depends_on:
       - db
+      - meta
     networks:
       - app-network
 
