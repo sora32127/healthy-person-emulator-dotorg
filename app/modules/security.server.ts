@@ -58,6 +58,10 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
     throw new Error("GOOGLE_GENERATIVE_API_KEY is not set");
   }
 
+  if (GOOGLE_GENERATIVE_API_KEY === "google-generative-api-demo-key") {
+    return {isWelcomed: true, explanation: "テスト投稿です"};
+  }
+
   const schema = {
     description: "歓迎される投稿かどうかを判断した結果",
     type: SchemaType.OBJECT,

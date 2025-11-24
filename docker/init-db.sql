@@ -19,13 +19,13 @@ $$;
 -- search_similar_content - 類似した記事を検索
 --
 CREATE OR REPLACE FUNCTION search_similar_content(
-    query_post_id UUID,
-    match_threshold FLOAT,
-    match_count INT
+    query_post_id BIGINT,
+    match_threshold INTEGER,
+    match_count INTEGER
 )
 RETURNS TABLE (
-    post_id UUID,
-    post_title TEXT,
+    post_id INT,
+    post_title VARCHAR(255),
     similarity FLOAT
 ) AS $$
 BEGIN
@@ -37,8 +37,8 @@ BEGIN
     FROM dim_posts p
     CROSS JOIN (
         SELECT content_embedding 
-        FROM dim_posts
-        WHERE post_id = query_post_id
+        FROM dim_posts d
+        WHERE d.post_id = query_post_id
     ) q
     WHERE (p.content_embedding <#> q.content_embedding) * -1 > match_threshold
     ORDER BY similarity DESC
