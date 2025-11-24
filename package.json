@@ -38,6 +38,7 @@
     "date-fns": "^4.1.0",
     "diff": "^7.0.0",
     "es-toolkit": "^1.39.8",
+    "feed": "^5.1.0",
     "framer-motion": "^11.15.0",
     "happy-dom": "^16.7.2",
     "html-react-parser": "^5.2.2",
@@ -61,7 +62,6 @@
     "remix-auth-form": "1.5.0",
     "remix-auth-google": "2.0.0",
     "remix-flat-routes": "^0.6.5",
-    "rss": "^1.2.2",
     "use-debounce": "^10.0.4",
     "zod": "^3.24.1"
   },
@@ -84,7 +84,6 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/react-transition-group": "^4.4.12",
-    "@types/rss": "^0.0.32",
     "@types/testing-library__user-event": "^4.2.0",
     "@vitest/coverage-v8": "2.1.8",
     "@vitest/ui": "^3.0.4",

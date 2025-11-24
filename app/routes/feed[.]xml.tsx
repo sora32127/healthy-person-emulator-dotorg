@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { getFeedPosts } from '~/modules/db.server';
-import RSS from 'rss';
+import { type Category, Feed } from "feed";
 
 type FeedPostType = 'unboundedLikes' | 'timeDesc' | 'likes' | 'timeAsc';
 
@@ -44,32 +44,43 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const baseUrl = url.origin;
   const feedUrl = `${baseUrl}/feed.xml?p=${pagingNumber}&type=${type}${type === 'likes' ? `&likeFrom=${likeFromHour}&likeTo=${likeToHour}` : ''}`;
 
-  const feed = new RSS({
+  const feed = new Feed({
     title: feedTitle,
     description: feedDescription,
-    feed_url: feedUrl,
-    site_url: baseUrl,
+    id: feedUrl,
+    link: feedUrl,
     language: 'ja',
-    pubDate: new Date(),
+    favicon: `${baseUrl}/favicon.ico`,
+    updated: new Date(),
+    copyright: `© ${new Date().getFullYear()} All rights reserved.`,
+    feedLinks: {
+      rss: feedUrl,
+    },
+    author: {
+      name: '健常者エミュレータ事例集',
+      link: baseUrl,
+    },
   });
 
   for (const post of postData.result) {
     const postUrl = `${baseUrl}/archives/${post.postId}`;
-    const categories = post.tags.map((tag) => tag.tagName);
+    const categories: Category[] = post.tags.map((tag) => ({
+      name: tag.tagName,
+      domain: `${baseUrl}/search?tags=${tag.tagName}`,
+    }));
 
-    feed.item({
+    feed.addItem({
       title: post.postTitle,
       description: `いいね: ${post.countLikes} | よくないね: ${post.countDislikes} | コメント: ${post.countComments}`,
-      url: postUrl,
-      guid: postUrl,
-      categories: categories,
+      id: postUrl,
+      link: postUrl,
+      category: categories,
       date: post.postDateGmt,
+      image: post.ogpImageUrl ?? undefined,
     });
   }
 
-  const rssXml = feed.xml({ indent: true });
-
-  return new Response(rssXml, {
+  return new Response(feed.rss2(), {
     headers: {
       'Content-Type': 'application/rss+xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
