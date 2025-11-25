@@ -1,11 +1,12 @@
-import { Authenticator } from "remix-auth";
+import { Authenticator, Strategy } from "remix-auth";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import { sessionStorage } from "./session.server";
 import { findUserByEmail, createGoogleUser } from "./db.server";
 import { z } from "zod";
-/*
-ブラウザ側に露出しうるユーザーのデータのスキーマ
-*/
+import { redirect, type SessionStorage } from "@remix-run/node";
+/**
+ * ブラウザ側に露出しうるユーザーのデータのスキーマ
+ */
 export const exposedUserSchema = z.object({
   userUuid: z.string(),
   email: z.string(),
@@ -26,6 +27,57 @@ if (!SESSION_SECRET) {
 
 export const authenticator = new Authenticator<ExposedUser>(sessionStorage);
 
+/**
+ * デモ用のGoogle認証ストラテジー
+ */
+class MockGoogleStrategy extends Strategy<ExposedUser, never> {
+  name = "google";
+  private demoEmail = "demo@example.com";
+
+  constructor() {
+    super(async () => await this.getExposedUserByEmail(this.demoEmail));
+  }
+
+  async authenticate(
+    request: Request,
+    sessionStorage: SessionStorage,
+    options: any
+  ): Promise<ExposedUser> {
+    const url = new URL(request.url);
+
+    if (url.pathname.includes("/auth/google/callback")) {
+      const exposedUser = await this.getExposedUserByEmail(this.demoEmail);
+      return this.success(exposedUser, request, sessionStorage, options);
+    }
+
+    throw redirect(`${process.env.CLIENT_URL}/auth/google/callback`);
+  }
+
+  private async getExposedUserByEmail(email: string): Promise<ExposedUser> {
+    const isUserExists = await judgeIsUserExists(email);
+    if (!isUserExists) {
+      const user = await createUser(email);
+      return {
+        userUuid: user.userUuid,
+        email: user.email,
+        userAuthType: user.userAuthType,
+      };
+    }
+    const user = await getUser(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return {
+      userUuid: user.userUuid,
+      email: user.email,
+      userAuthType: user.userAuthType,
+    };
+  }
+}
+
+/**
+ * Google認証ストラテジー
+ */
 const googleStrategy = new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -55,8 +107,11 @@ const googleStrategy = new GoogleStrategy({
   },
 );
 
-
-authenticator.use(googleStrategy, "google");
+if (process.env.GOOGLE_CLIENT_ID === "google-client-demo-id") {
+  authenticator.use(new MockGoogleStrategy(), "google");
+} else {
+  authenticator.use(googleStrategy, "google");
+}
 
 function getUserEmail(profile: GoogleProfile) {
   return profile.emails?.[0]?.value
