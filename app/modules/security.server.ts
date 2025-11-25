@@ -1,33 +1,39 @@
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
-
-const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+const CF_TURNSTILE_VERIFY_ENDPOINT =
+  'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
 const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
-const GOOGLE_GENERATIVE_API_KEY = process.env.NODE_ENV === "test" ?
-  process.env.VITE_GOOGLE_GENERATIVE_API_KEY :
-  process.env.GOOGLE_GENERATIVE_API_KEY;
+const GOOGLE_GENERATIVE_API_KEY =
+  process.env.NODE_ENV === 'test'
+    ? process.env.VITE_GOOGLE_GENERATIVE_API_KEY
+    : process.env.GOOGLE_GENERATIVE_API_KEY;
 
 export async function validateRequest(token: string, ipAddress: string) {
   if (!CF_TURNSTILE_SECRET_KEY) {
-    throw new Error("CF_TURNSTILE_SECRET_KEY is not set");
+    throw new Error('CF_TURNSTILE_SECRET_KEY is not set');
   }
   const formData = new FormData();
   const idempotencyKey = crypto.randomUUID();
-  formData.append('secret', process.env.NODE_ENV === "development" ? "1x0000000000000000000000000000000AA" : CF_TURNSTILE_SECRET_KEY);
-  formData.append('response', token || "");
-  formData.append("remoteip", ipAddress);
-  formData.append("idempotency_key", idempotencyKey);
+  formData.append(
+    'secret',
+    process.env.NODE_ENV === 'development'
+      ? '1x0000000000000000000000000000000AA'
+      : CF_TURNSTILE_SECRET_KEY,
+  );
+  formData.append('response', token || '');
+  formData.append('remoteip', ipAddress);
+  formData.append('idempotency_key', idempotencyKey);
   for (const [key, value] of formData.entries()) {
     console.log(key, value);
   }
-  
+
   const res = await fetch(CF_TURNSTILE_VERIFY_ENDPOINT, {
     method: 'POST',
     body: formData,
   });
   const outCome = await res.json();
-  console.log("outCome", outCome);
+  console.log('outCome', outCome);
   if (outCome.success) {
     return true;
   }
@@ -36,63 +42,66 @@ export async function validateRequest(token: string, ipAddress: string) {
 
 export async function getTurnStileSiteKey() {
   if (!CF_TURNSTILE_SITEKEY) {
-    throw new Error("CF_TURNSTILE_SITEKEY is not set");
+    throw new Error('CF_TURNSTILE_SITEKEY is not set');
   }
-  if (process.env.NODE_ENV === "development") {
-    return "1x00000000000000000000AA";  // Always return true
+  if (process.env.NODE_ENV === 'development') {
+    return '1x00000000000000000000AA'; // Always return true
   }
-  return CF_TURNSTILE_SITEKEY; 
+  return CF_TURNSTILE_SITEKEY;
 }
 
-
-export async function getHashedUserIPAddress(request: Request){
+export async function getHashedUserIPAddress(request: Request) {
   const headers = request.headers;
-  const ipAddressFromXForwardedFor = headers.get("X-Forwarded-For");
-  const ipAddressFromCFConnectingIp = headers.get("CF-Connecting-IP");
-  const ipAddress = ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || "";
+  const ipAddressFromXForwardedFor = headers.get('X-Forwarded-For');
+  const ipAddressFromCFConnectingIp = headers.get('CF-Connecting-IP');
+  const ipAddress =
+    ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || '';
   return ipAddress;
 }
 
-export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string){
+export async function getJudgeWelcomedByGenerativeAI(
+  postContent: string,
+  postTitle: string,
+) {
   if (!GOOGLE_GENERATIVE_API_KEY) {
-    throw new Error("GOOGLE_GENERATIVE_API_KEY is not set");
+    throw new Error('GOOGLE_GENERATIVE_API_KEY is not set');
   }
 
-  if (GOOGLE_GENERATIVE_API_KEY === "google-generative-api-demo-key") {
-    return {isWelcomed: true, explanation: "テスト投稿です"};
+  if (GOOGLE_GENERATIVE_API_KEY === 'google-generative-api-demo-key') {
+    return { isWelcomed: true, explanation: 'テスト投稿です' };
   }
 
   const schema = {
-    description: "歓迎される投稿かどうかを判断した結果",
+    description: '歓迎される投稿かどうかを判断した結果',
     type: SchemaType.OBJECT,
     properties: {
-        isWelcomed: {
-            description: "歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse",
-            type: SchemaType.BOOLEAN,
-        },
-        explanation: {
-            description: "判断した理由のカテゴリ",
-            type: SchemaType.STRING,
-            enum: [
-              "テスト投稿です",
-              "スパム投稿です",
-              "基本的人権を侵害する行為が奨励されています",
-              "違法な行為を奨励する内容を含みます",
-              "ガイドラインに準拠した投稿です"
-            ],
-        },
+      isWelcomed: {
+        description:
+          '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
+        type: SchemaType.BOOLEAN,
+      },
+      explanation: {
+        description: '判断した理由のカテゴリ',
+        type: SchemaType.STRING,
+        enum: [
+          'テスト投稿です',
+          'スパム投稿です',
+          '基本的人権を侵害する行為が奨励されています',
+          '違法な行為を奨励する内容を含みます',
+          'ガイドラインに準拠した投稿です',
+        ],
+      },
     },
-    required: ["isWelcomed", "explanation"],
-  }
-
+    required: ['isWelcomed', 'explanation'],
+  };
 
   const generativeAi = new GoogleGenerativeAI(GOOGLE_GENERATIVE_API_KEY);
   const model = generativeAi.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
-      generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: schema,
-      },
+    model: 'gemini-2.5-flash-lite',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: schema,
+    },
   });
 
   const prompt = `
@@ -121,6 +130,12 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
   `;
 
   const result = await model.generateContent(prompt);
-  const parsedResult = JSON.parse(result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') || {};
-  return {isWelcomed: parsedResult.isWelcomed, explanation: parsedResult.explanation};
+  const parsedResult =
+    JSON.parse(
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
+    ) || {};
+  return {
+    isWelcomed: parsedResult.isWelcomed,
+    explanation: parsedResult.explanation,
+  };
 }

@@ -1,17 +1,15 @@
-import { vitePlugin as remix } from "@remix-run/dev";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { type ConfigEnv, defineConfig, loadEnv } from "vite";
+import { vitePlugin as remix } from '@remix-run/dev';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { type ConfigEnv, defineConfig, loadEnv } from 'vite';
 
-
-declare module "@remix-run/node" {
+declare module '@remix-run/node' {
   interface Future {
     v3_singleFetch: true;
   }
 }
 
-
 export default defineConfig(({ mode }: ConfigEnv) => {
-  process.env = {...process.env, ...loadEnv(mode, process.cwd())};
+  process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
   return defineConfig({
     plugins: [
       remix({
@@ -26,6 +24,5 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       }),
       tsconfigPaths(),
     ],
-  })
-})
-
+  });
+});

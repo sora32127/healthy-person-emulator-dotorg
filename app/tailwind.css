@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'Noto Sans JP';
-  src: url('/fonts/NotoSansJP-Medium.ttf') format('truetype');
+  font-family: "Noto Sans JP";
+  src: url("/fonts/NotoSansJP-Medium.ttf") format("truetype");
   font-weight: 400;
   font-display: optional;
 }
@@ -9,74 +9,76 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 h1 {
   @apply text-4xl font-bold;
 }
 
-.postContent h3, .markdownEditorPreview h3 {
+.postContent h3,
+.markdownEditorPreview h3 {
   @apply text-xl font-bold mb-6 mt-10 border-b border-base-content pb-2;
 }
 
-.postContent h4, .markdownEditorPreview h4 {
+.postContent h4,
+.markdownEditorPreview h4 {
   @apply text-lg font-bold mb-4 mt-10 border-b border-base-content pb-2;
 }
 
-.postContent h5, .markdownEditorPreview h5 {
-  @apply text-lg font-bold mb-4 mt-10 border-b border-base-content pb-2; 
+.postContent h5,
+.markdownEditorPreview h5 {
+  @apply text-lg font-bold mb-4 mt-10 border-b border-base-content pb-2;
 }
 
-.postContent table, .markdownEditorPreview table {
+.postContent table,
+.markdownEditorPreview table {
   @apply w-full border-collapse mb-4;
 }
 
-.postContent table td, .markdownEditorPreview table td {
+.postContent table td,
+.markdownEditorPreview table td {
   @apply border border-gray-300 px-4 py-2;
 }
 
-.postContent table td:first-child, .markdownEditorPreview table td:first-child {
+.postContent table td:first-child,
+.markdownEditorPreview table td:first-child {
   @apply font-bold;
 }
 
-.postContent ul, .markdownEditorPreview ul, .templateSubmitForm ul{
+.postContent ul,
+.markdownEditorPreview ul,
+.templateSubmitForm ul {
   @apply list-disc list-outside mb-4 ml-8;
 }
 
-.postContent li, .markdownEditorPreview li, .templateSubmitForm li {
+.postContent li,
+.markdownEditorPreview li,
+.templateSubmitForm li {
   @apply mb-1;
 }
 
-.postContent ol, .markdownEditorPreview ol {
+.postContent ol,
+.markdownEditorPreview ol {
   @apply list-decimal list-outside mb-4 ml-8;
 }
 
-.postContent, .markdownEditorPreview {
+.postContent,
+.markdownEditorPreview {
   @apply text-lg;
 }
 
-.postContent a, .markdownEditorPreview a{
+.postContent a,
+.markdownEditorPreview a {
   @apply text-info underline underline-offset-4;
 }
 
 .markdownEditorPreview th {
-  @apply bg-inherit text-left font-normal 
-
-}
-
-svg {
-  @apply fill-current;
+  @apply bg-inherit text-left font-normal } svg { @apply fill-current;
 }
 
 .btn-primary {
   @apply bg-primary;
   @apply text-slate-950;
   @apply hover:bg-teal-100;
-  @apply font-bold
-}
-
-.btn-secondary {
-  @apply bg-base-200;
+  @apply font-bold } .btn-secondary { @apply bg-base-200;
   @apply text-base-content;
   @apply hover:bg-base-300;
   @apply font-bold;
@@ -92,9 +94,10 @@ svg {
   opacity: 1;
   transform: translateY(0);
   max-height: 500px;
-  transition: opacity 300ms ease-in-out, 
-              transform 300ms ease-in-out,
-              max-height 300ms ease-in-out;
+  transition:
+    opacity 300ms ease-in-out,
+    transform 300ms ease-in-out,
+    max-height 300ms ease-in-out;
 }
 
 /* 非表示時のアニメーション */
@@ -108,9 +111,10 @@ svg {
   opacity: 0;
   transform: translateY(-10px);
   max-height: 0;
-  transition: opacity 300ms ease-in-out,
-              transform 300ms ease-in-out,
-              max-height 300ms ease-in-out;
+  transition:
+    opacity 300ms ease-in-out,
+    transform 300ms ease-in-out,
+    max-height 300ms ease-in-out;
 }
 
 .theme-transition {
@@ -118,5 +122,7 @@ svg {
 }
 
 .theme-transition * {
-  transition: background-color 0.5s ease, border-color 0.5s ease;
+  transition:
+    background-color 0.5s ease,
+    border-color 0.5s ease;
 }

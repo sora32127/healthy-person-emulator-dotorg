@@ -10,7 +10,7 @@ type Environment = 'production' | 'development';
  */
 export async function generateDownloadSignedUrl(
   fileName: string,
-  expirationMinutes: number = 15
+  expirationMinutes: number = 15,
 ): Promise<string> {
   if (fileName.startsWith('gcs-demo-')) {
     return `http://localhost:3000/parquet/${fileName}`;
@@ -20,13 +20,14 @@ export async function generateDownloadSignedUrl(
     // Cloud Run環境ではApplication Default Credentialsを使用
     // ローカル環境では環境変数またはキーファイルで認証
     const env = getEnvironment();
-    const storage = env === 'production' 
-      ? new Storage() // ADCを使用（Cloud Run環境）
-      : new Storage({
-          keyFilename: "./hpe-temp-downloader-key.json"
-        }); // ローカル環境用
-    
-    const bucket = storage.bucket("hpe-temp");
+    const storage =
+      env === 'production'
+        ? new Storage() // ADCを使用（Cloud Run環境）
+        : new Storage({
+            keyFilename: './hpe-temp-downloader-key.json',
+          }); // ローカル環境用
+
+    const bucket = storage.bucket('hpe-temp');
     const file = bucket.file(fileName);
 
     // ファイルの存在確認
@@ -51,4 +52,4 @@ export async function generateDownloadSignedUrl(
 
 function getEnvironment(): Environment {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development';
-}   
+}

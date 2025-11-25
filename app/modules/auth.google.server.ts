@@ -1,28 +1,32 @@
-import { Authenticator, Strategy } from "remix-auth";
-import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
-import { sessionStorage } from "./session.server";
-import { findUserByEmail, createGoogleUser } from "./db.server";
-import { z } from "zod";
-import { redirect, type SessionStorage } from "@remix-run/node";
+import { Authenticator, Strategy } from 'remix-auth';
+import { GoogleStrategy, type GoogleProfile } from 'remix-auth-google';
+import { sessionStorage } from './session.server';
+import { findUserByEmail, createGoogleUser } from './db.server';
+import { z } from 'zod';
+import { redirect, type SessionStorage } from '@remix-run/node';
 /**
  * ブラウザ側に露出しうるユーザーのデータのスキーマ
  */
 export const exposedUserSchema = z.object({
   userUuid: z.string(),
   email: z.string(),
-  userAuthType: z.enum(["Email", "Google"]),
-  photoUrl: z.string().optional()
+  userAuthType: z.enum(['Email', 'Google']),
+  photoUrl: z.string().optional(),
 });
 
 export type ExposedUser = z.infer<typeof exposedUserSchema>;
 
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.CLIENT_URL) {
-  throw new Error("Missing environment variables");
+if (
+  !process.env.GOOGLE_CLIENT_ID ||
+  !process.env.GOOGLE_CLIENT_SECRET ||
+  !process.env.CLIENT_URL
+) {
+  throw new Error('Missing environment variables');
 }
 
 const SESSION_SECRET = process.env.HPE_SESSION_SECRET;
 if (!SESSION_SECRET) {
-  throw new Error("Missing SESSION_SECRET environment variable");
+  throw new Error('Missing SESSION_SECRET environment variable');
 }
 
 export const authenticator = new Authenticator<ExposedUser>(sessionStorage);
@@ -31,8 +35,8 @@ export const authenticator = new Authenticator<ExposedUser>(sessionStorage);
  * デモ用のGoogle認証ストラテジー
  */
 class MockGoogleStrategy extends Strategy<ExposedUser, never> {
-  name = "google";
-  private demoEmail = "demo@example.com";
+  name = 'google';
+  private demoEmail = 'demo@example.com';
 
   constructor() {
     super(async () => await this.getExposedUserByEmail(this.demoEmail));
@@ -41,11 +45,11 @@ class MockGoogleStrategy extends Strategy<ExposedUser, never> {
   async authenticate(
     request: Request,
     sessionStorage: SessionStorage,
-    options: any
+    options: any,
   ): Promise<ExposedUser> {
     const url = new URL(request.url);
 
-    if (url.pathname.includes("/auth/google/callback")) {
+    if (url.pathname.includes('/auth/google/callback')) {
       const exposedUser = await this.getExposedUserByEmail(this.demoEmail);
       return this.success(exposedUser, request, sessionStorage, options);
     }
@@ -65,7 +69,7 @@ class MockGoogleStrategy extends Strategy<ExposedUser, never> {
     }
     const user = await getUser(email);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
     return {
       userUuid: user.userUuid,
@@ -78,11 +82,12 @@ class MockGoogleStrategy extends Strategy<ExposedUser, never> {
 /**
  * Google認証ストラテジー
  */
-const googleStrategy = new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
-},
+const googleStrategy = new GoogleStrategy(
+  {
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
+  },
   async ({ profile }: { profile: GoogleProfile }) => {
     const email = getUserEmail(profile);
     const isUserExists = await judgeIsUserExists(email);
@@ -96,7 +101,7 @@ const googleStrategy = new GoogleStrategy({
     }
     const user = await getUser(email);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
     return {
       userUuid: user.userUuid,
@@ -107,14 +112,14 @@ const googleStrategy = new GoogleStrategy({
   },
 );
 
-if (process.env.GOOGLE_CLIENT_ID === "google-client-demo-id") {
-  authenticator.use(new MockGoogleStrategy(), "google");
+if (process.env.GOOGLE_CLIENT_ID === 'google-client-demo-id') {
+  authenticator.use(new MockGoogleStrategy(), 'google');
 } else {
-  authenticator.use(googleStrategy, "google");
+  authenticator.use(googleStrategy, 'google');
 }
 
 function getUserEmail(profile: GoogleProfile) {
-  return profile.emails?.[0]?.value
+  return profile.emails?.[0]?.value;
 }
 
 async function judgeIsUserExists(email: string) {

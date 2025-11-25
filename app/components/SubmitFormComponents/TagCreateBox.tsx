@@ -6,7 +6,11 @@ interface TagCreateBoxProps {
   parentComponentStateValues: string[];
 }
 
-export default function TagCreateBox({ handleTagCreated, handleTagRemoved, parentComponentStateValues }: TagCreateBoxProps) {
+export default function TagCreateBox({
+  handleTagCreated,
+  handleTagRemoved,
+  parentComponentStateValues,
+}: TagCreateBoxProps) {
   const [tagInput, setTagInput] = useState('');
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,6 +84,4 @@ export default function TagCreateBox({ handleTagCreated, handleTagRemoved, paren
       </div>
     </div>
   );
-};
-
-
+}

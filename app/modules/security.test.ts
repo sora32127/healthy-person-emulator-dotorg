@@ -1,33 +1,47 @@
-import { getJudgeWelcomedByGenerativeAI } from "./security.server";
-import { describe, it, expect } from "vitest";
+import { getJudgeWelcomedByGenerativeAI } from './security.server';
+import { describe, it, expect } from 'vitest';
 
 describe('security.server', () => {
   it('明らかにテスト投稿の場合は歓迎されない投稿と判断される', async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(testPostHtml, 'プログラムテスト投稿');
+    const result = await getJudgeWelcomedByGenerativeAI(
+      testPostHtml,
+      'プログラムテスト投稿',
+    );
     expect(result.isWelcomed).toBe(false);
   });
 
-  it("明らかにスパム投稿の場合は歓迎されない投稿と判断される", async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(spamPostHtml, 'スパム投稿');
+  it('明らかにスパム投稿の場合は歓迎されない投稿と判断される', async () => {
+    const result = await getJudgeWelcomedByGenerativeAI(
+      spamPostHtml,
+      'スパム投稿',
+    );
     expect(result.isWelcomed).toBe(false);
   });
 
-  it("基本的人権を侵害する行為が奨励されている場合は歓迎されない投稿と判断される", async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(basicHumanRightViolationPostHtml, '困った時の神頼みは意外と有効');
+  it('基本的人権を侵害する行為が奨励されている場合は歓迎されない投稿と判断される', async () => {
+    const result = await getJudgeWelcomedByGenerativeAI(
+      basicHumanRightViolationPostHtml,
+      '困った時の神頼みは意外と有効',
+    );
     expect(result.isWelcomed).toBe(false);
   });
 
-  it("違法な行為を奨励する内容を含む投稿は歓迎されない投稿と判断される", async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(illegalPostHtml, '違法な行為を奨励する内容を含む投稿');
+  it('違法な行為を奨励する内容を含む投稿は歓迎されない投稿と判断される', async () => {
+    const result = await getJudgeWelcomedByGenerativeAI(
+      illegalPostHtml,
+      '違法な行為を奨励する内容を含む投稿',
+    );
     expect(result.isWelcomed).toBe(false);
   });
-  
-  it("通常の投稿は歓迎される投稿と判断される", async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(normalPostHtml, '実家の風呂場で北朝鮮の曲を歌ってはいけない');
+
+  it('通常の投稿は歓迎される投稿と判断される', async () => {
+    const result = await getJudgeWelcomedByGenerativeAI(
+      normalPostHtml,
+      '実家の風呂場で北朝鮮の曲を歌ってはいけない',
+    );
     expect(result.isWelcomed).toBe(true);
   });
 });
-
 
 const testPostHtml = `
 <h3>5W1H+Then状況説明</h3>
@@ -53,7 +67,7 @@ const testPostHtml = `
 <ul>
   <li>黙っているべきだった</li>
 </ul>
-`
+`;
 
 const spamPostHtml = `
 <h3>5W1H+Then状況説明</h3>
@@ -78,7 +92,7 @@ const spamPostHtml = `
 <ul>
   <li>うんこ</li>
 </ul>
-`
+`;
 
 const basicHumanRightViolationPostHtml = `
 <h3>5W1H+Then状況説明</h3>
@@ -112,7 +126,7 @@ const basicHumanRightViolationPostHtml = `
 
   <h3>備考</h3>
   <li>平将門さんありがとう</li>
-`
+`;
 
 const illegalPostHtml = `
 <h3>5W1H+Then状況説明</h3>
@@ -146,7 +160,7 @@ const illegalPostHtml = `
 
   <h3>備考</h3>
   <li>銀行強盗は違法です</li>
-`
+`;
 
 const normalPostHtml = `
 <h3>5W1H+Then状況説明</h3>
@@ -169,4 +183,4 @@ const normalPostHtml = `
 <h3>どうすればよかったか</h3>
 <ul><li>大人しく当時流行っていた菅田将暉や星野源の楽曲をチョイスするべきであった。</li></ul>
 <h3>備考</h3><ul><li>結局最近流行ってる徴兵上がりの人たちのグループだと誤魔化した。</li></ul>
-`
+`;

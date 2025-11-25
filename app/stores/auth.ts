@@ -1,5 +1,5 @@
-import { atom } from "jotai";
-import { z } from "zod";
+import { atom } from 'jotai';
+import { z } from 'zod';
 
 const authStateSchema = z.object({
   isSignedIn: z.boolean(),

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { getFeedPosts } from '~/modules/db.server';
-import { type Category, Feed } from "feed";
+import { type Category, Feed } from 'feed';
 
 type FeedPostType = 'unboundedLikes' | 'timeDesc' | 'likes' | 'timeAsc';
 
