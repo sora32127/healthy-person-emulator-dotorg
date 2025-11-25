@@ -38,6 +38,7 @@
     "date-fns": "^4.1.0",
     "diff": "^7.0.0",
     "es-toolkit": "^1.39.8",
+    "feed": "^5.1.0",
     "framer-motion": "^11.15.0",
     "happy-dom": "^16.7.2",
     "html-react-parser": "^5.2.2",

@@ -1,10 +1,11 @@
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit, Link, useLocation } from "@remix-run/react";
 import { H1 } from "~/components/Headings";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction} from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { getFeedPosts } from "~/modules/db.server";
 import PostSection from "~/components/PostSection";
 import { commonMetaFunction } from "~/utils/commonMetafunction";
+import { Rss } from "lucide-react";
 
 type FeedPostType = "unboundedLikes" | "timeDesc" | "likes" | "timeAsc";
 
@@ -82,17 +83,26 @@ export default function Feed() {
     submit(formData, { method: "post" });
   }
 
+  const location = useLocation();
 
   return (
     <div>
       <H1>フィード</H1>
-      <div className="feed-type-select">
+      <div className="feed-type-select flex items-center">
         <select onChange={(e) => handleFeedTypeChange(e.target.value)} className="select select-bordered select-sm">
           <option value="unboundedLikes" className="select-option" selected={type === "unboundedLikes"}>無期限いいね順</option>
           <option value="timeDesc" className="select-option" selected={type === "timeDesc"}>新着順</option>
           <option value="likes" className="select-option" selected={type === "likes"}>いいね順</option>
           <option value="timeAsc" className="select-option" selected={type === "timeAsc"}>古い順</option>
         </select>
+        <Link
+          to={`/feed.xml?${new URLSearchParams(location.search).toString()}`}
+          reloadDocument
+        >
+          <button type="button" className="btn btn-ghost h-9 w-9 p-0 ml-2">
+            <Rss className="fill-none stroke-current" />
+          </button>
+        </Link>
       </div>
       <div className="feed-posts">
         <PostSection posts={postData.result} title="" identifier="" />
