@@ -1,7 +1,23 @@
 import { getJudgeWelcomedByGenerativeAI } from './security.server';
 import { describe, it, expect } from 'vitest';
 
-describe('security.server', () => {
+const shouldSkip =
+  process.env.VITE_GOOGLE_GENERATIVE_API_KEY ===
+  'google-generative-api-demo-key';
+
+// demo keyの場合は実行
+describe.skipIf(!shouldSkip)('security.server', () => {
+  it('デモキーであればテスト投稿と判断される', async () => {
+    const result = await getJudgeWelcomedByGenerativeAI(
+      testPostHtml,
+      'プログラムテスト投稿',
+    );
+    expect(result.isWelcomed).toBe(true);
+  });
+});
+
+// demo keyの場合はスキップ
+describe.skipIf(shouldSkip)('security.server', () => {
   it('明らかにテスト投稿の場合は歓迎されない投稿と判断される', async () => {
     const result = await getJudgeWelcomedByGenerativeAI(
       testPostHtml,
