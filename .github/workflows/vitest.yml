@@ -31,8 +31,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.1.0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -50,7 +48,7 @@ jobs:
           pwd
           ls
           pnpm exec vitest --coverage
-          
+
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
         if: always()
