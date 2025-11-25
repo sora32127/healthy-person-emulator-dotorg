@@ -78,21 +78,11 @@ model FctCommentVoteHistory {
   @@map("fct_comment_vote_history")
 }
 
-model userProfiles {
-  userId            String            @id @map("user_id") @db.Uuid
-  userCreatedAt     DateTime          @default(now()) @map("user_created_at") @db.Timestamptz(6)
-  userEmail         String            @unique @map("user_email")
-  now_editing_pages nowEditingPages[]
-
-  @@map("user_profiles")
-}
-
 model nowEditingPages {
   postId             Int          @id @unique @default(autoincrement()) @map("post_id")
   userId             String       @map("user_id") @db.Uuid
   lastHeartBeatAtUTC DateTime     @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("last_heart_beat_at_utc") @db.Timestamptz(6)
   dim_posts          DimPosts     @relation(fields: [postId], references: [postId], onDelete: Cascade, onUpdate: Cascade, map: "public_now_editing_pages_post_id_fkey")
-  user_profiles      userProfiles @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "public_now_editing_pages_user_id_fkey")
 
   @@map("now_editing_pages")
 }
