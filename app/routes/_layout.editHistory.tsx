@@ -53,7 +53,10 @@ function EditHistoryItem({ editHistory }: { editHistory: EditHistory }) {
 }
 
 export default function MyPageLayout() {
-  const { userEditHistory } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData?.userEditHistory) return null;
+
+  const { userEditHistory } = loaderData;
   return (
     <div className="flex flex-col gap-4">
       <H1>編集履歴</H1>

@@ -45,6 +45,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Feed() {
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData) return null;
+
   const {
     tab,
     mostRecentPosts,
@@ -54,7 +57,7 @@ export default function Feed() {
     mostRecentComments,
     randomPosts,
     randomComments,
-  } = useLoaderData<typeof loader>();
+  } = loaderData;
   return (
     <div>
       <div>

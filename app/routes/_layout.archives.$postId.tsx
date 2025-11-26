@@ -88,6 +88,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Component() {
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData?.data) return null;
+
   const {
     data,
     likedPages,
@@ -97,7 +100,7 @@ export default function Component() {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
-  } = useLoaderData<typeof loader>();
+  } = loaderData;
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] =
     useState(false);

@@ -93,7 +93,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function LightSearch() {
-  const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData) return null;
+
+  const { searchAssetURL, tagsAssetURL } = loaderData;
   const [lightSearchHandler, setLightSearchHandler] =
     useState<LightSearchHandler | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();

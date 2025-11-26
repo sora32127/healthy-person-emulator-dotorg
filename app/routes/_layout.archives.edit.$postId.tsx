@@ -131,6 +131,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function EditPost() {
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData) return null;
+
   const {
     postData,
     postMarkdown,
@@ -141,7 +144,7 @@ export default function EditPost() {
     userUuid,
     editHistory,
     CF_TURNSTILE_SITEKEY,
-  } = useLoaderData<typeof loader>();
+  } = loaderData;
   const [selectedTags, setSelectedTags] = useState<string[] | null>(tagNames);
   const [isSubmitButtonOpen, setIsSubmitButtonOpen] = useState(false);
 

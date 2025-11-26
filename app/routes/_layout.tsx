@@ -8,7 +8,6 @@ import {
 } from '@remix-run/react';
 import PostIcon from '~/components/icons/PostIcon';
 import SearchIcon from '~/components/icons/SearchIcon';
-import LogoutIcon from '~/components/icons/LogoutIcon';
 import MenuIcon from '~/components/icons/MenuIcon';
 import ThemeSwitcher from '~/components/ThemeSwitcher';
 import { Footer } from '~/components/Footer';
@@ -223,7 +222,10 @@ export default function Component() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [_, setAuthState] = useAtom(setAuthStateAtom);
-  const { userObject } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData) return null;
+
+  const { userObject } = loaderData;
   const isLoginModalOpen = useAtomValue(getIsLoginModalOpenAtom);
   const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
 

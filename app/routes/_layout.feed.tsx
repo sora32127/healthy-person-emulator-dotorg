@@ -83,6 +83,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Feed() {
   const postData = useLoaderData<typeof loader>();
+  if (!postData?.meta) return null;
+
   const chunkSize = postData.meta.chunkSize;
   const totalPages = Math.ceil(postData.meta.totalCount / chunkSize);
   const type = postData.meta.type;

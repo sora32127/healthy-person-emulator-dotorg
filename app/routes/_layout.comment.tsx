@@ -31,6 +31,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Comment() {
   const commentFeedData = useLoaderData<typeof loader>();
+  if (!commentFeedData?.meta) return null;
+
   const submit = useSubmit();
   const currentPage = commentFeedData.meta.currentPage;
   const totalCount = commentFeedData.meta.totalCount;

@@ -34,8 +34,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function BookmarkLayout() {
-  const { bookmarkPosts, email, pageNumber, pageSize } =
-    useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData?.bookmarkPosts) return null;
+
+  const { bookmarkPosts, email, pageNumber, pageSize } = loaderData;
   return (
     <div>
       <H1>ブックマーク</H1>

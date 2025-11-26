@@ -58,7 +58,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function App() {
-  const { tags, stopWords, turnStileSiteKey } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData) return null;
+
+  const { tags, stopWords, turnStileSiteKey } = loaderData;
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
