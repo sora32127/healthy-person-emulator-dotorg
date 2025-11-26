@@ -7,14 +7,14 @@ import { redirect, type SessionStorage } from '@remix-run/node';
 /**
  * ブラウザ側に露出しうるユーザーのデータのスキーマ
  */
-export const exposedUserSchema = z.object({
+const exposedUserSchema = z.object({
   userUuid: z.string(),
   email: z.string(),
   userAuthType: z.enum(['Email', 'Google']),
   photoUrl: z.string().optional(),
 });
 
-export type ExposedUser = z.infer<typeof exposedUserSchema>;
+type ExposedUser = z.infer<typeof exposedUserSchema>;
 
 if (
   !process.env.GOOGLE_CLIENT_ID ||

@@ -12,7 +12,7 @@ export const sessionStorage = createCookieSessionStorage({
   },
 });
 
-export const { getSession, commitSession, destroySession } = sessionStorage;
+export const { getSession, commitSession } = sessionStorage;
 
 export async function getUserActivityData(request: Request) {
   const session = await getSession(request.headers.get('Cookie'));
