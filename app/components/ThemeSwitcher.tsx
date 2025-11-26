@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Sun, Moon, Loader } from "lucide-react";
-import { useAtomValue, useSetAtom } from "jotai";
-import { getThemeAtom, toggleThemeAtom } from "../stores/theme";
+import { useState, useEffect } from 'react';
+import { Sun, Moon, Loader } from 'lucide-react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { getThemeAtom, toggleThemeAtom } from '../stores/theme';
 
 export default function ThemeSwitcher() {
   const nowTheme = useAtomValue(getThemeAtom);
@@ -30,7 +30,7 @@ export default function ThemeSwitcher() {
     >
       {isChanging ? (
         <Loader className="w-5 h-5 animate-spin" />
-      ) : nowTheme === "dark" ? (
+      ) : nowTheme === 'dark' ? (
         <Sun className="w-5 h-5" />
       ) : (
         <Moon className="w-5 h-5" />

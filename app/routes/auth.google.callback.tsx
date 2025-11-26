@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from '@remix-run/node'
-import { authenticator } from '~/modules/auth.google.server'
+import type { LoaderFunctionArgs } from '@remix-run/node';
+import { authenticator } from '~/modules/auth.google.server';
 import { getVisitorCookieURL } from '~/modules/visitor.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -7,5 +7,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return authenticator.authenticate('google', request, {
     successRedirect: `${visitorRedirectUrl ?? '/'}?loginSuccess=true`,
     failureRedirect: '/login',
-  })
-}
+  });
+};

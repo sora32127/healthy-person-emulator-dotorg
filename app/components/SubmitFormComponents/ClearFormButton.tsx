@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal } from "../Modal";
+import { Modal } from '../Modal';
 
 interface ClearFormButtonProps {
   clearInputs: () => void;
@@ -15,7 +15,13 @@ export default function ClearFormButton({ clearInputs }: ClearFormButtonProps) {
 
   return (
     <>
-      <button type="button" className="btn btn-secondary" onClick={() => setShowModal(true)}>入力内容をリセット</button>
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={() => setShowModal(true)}
+      >
+        入力内容をリセット
+      </button>
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -24,8 +30,20 @@ export default function ClearFormButton({ clearInputs }: ClearFormButtonProps) {
       >
         <p>入力内容をリセットしますか？</p>
         <div className="modal-action flex justify-between">
-          <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>戻る</button>
-          <button type="button" className="btn btn-warning" onClick={handleClearLocalStorage}>リセットする</button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setShowModal(false)}
+          >
+            戻る
+          </button>
+          <button
+            type="button"
+            className="btn btn-warning"
+            onClick={handleClearLocalStorage}
+          >
+            リセットする
+          </button>
         </div>
       </Modal>
     </>

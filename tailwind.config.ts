@@ -1,10 +1,10 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 export default {
   content: ['./app/**/*.tsx'],
   theme: {
     fontFamily: {
-      "noto-sans" : ["Noto Sans JP"],
+      'noto-sans': ['Noto Sans JP'],
     },
     extend: {
       keyframes: {
@@ -21,7 +21,7 @@ export default {
         voteSpin: {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
-        }
+        },
       },
       animation: {
         spin: 'spin 1s linear',
@@ -31,38 +31,38 @@ export default {
       },
     },
     fontSize: {
-      "4xl" : "32px",
-      "3xl" : "28px",
-      "2xl" : "24px",
-      "xl" : "20px",
-      "lg" : "16px",
-    }
+      '4xl': '32px',
+      '3xl': '28px',
+      '2xl': '24px',
+      xl: '20px',
+      lg: '16px',
+    },
   },
-  plugins: [require("daisyui")],
+  plugins: [require('daisyui')],
   daisyui: {
     themes: [
       {
         light: {
-          ...require("daisyui/src/theming/themes").light,
-          primary: "#99D9EA",
-          secondary: "#264AF4",
-          tertiary: "#00118F",
-          info: "#00118F",
-          error: "#B91C1C",
-          "base-100": "#f5f5f5",
-          "base-200": "#e5e5e5",
-          "base-300": "#d4d4d4",
+          ...require('daisyui/src/theming/themes').light,
+          primary: '#99D9EA',
+          secondary: '#264AF4',
+          tertiary: '#00118F',
+          info: '#00118F',
+          error: '#B91C1C',
+          'base-100': '#f5f5f5',
+          'base-200': '#e5e5e5',
+          'base-300': '#d4d4d4',
         },
       },
       {
         dark: {
-          ...require("daisyui/src/theming/themes").dark,
-          primary: "#99D9EA",
-          secondary: "#264AF4",
-          tertiary: "#00118F",
-          "base-100": "#0F0F0F",
+          ...require('daisyui/src/theming/themes').dark,
+          primary: '#99D9EA',
+          secondary: '#264AF4',
+          tertiary: '#00118F',
+          'base-100': '#0F0F0F',
         },
       },
     ],
-  }
-} satisfies Config
+  },
+} satisfies Config;

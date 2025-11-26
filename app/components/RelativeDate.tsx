@@ -3,7 +3,7 @@ type RelativeDateProps = {
 };
 
 const RelativeDate = ({ targetDate }: RelativeDateProps) => {
-  const getRelativeTime = (targetDate:Date) => {
+  const getRelativeTime = (targetDate: Date) => {
     const now = new Date();
     const diffInSeconds = (now.getTime() - targetDate.getTime()) / 1000;
 
@@ -29,21 +29,23 @@ const RelativeDate = ({ targetDate }: RelativeDateProps) => {
   };
 
   const formatTime = (targetDate: Date) => {
-    return targetDate.toLocaleString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).replace(/\//g, "-");
-  }
+    return targetDate
+      .toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+      .replace(/\//g, '-');
+  };
 
   return (
     <div className="tooltip tooltip-right" data-tip={formatTime(targetDate)}>
-        <span>{getRelativeTime(targetDate)}</span>
+      <span>{getRelativeTime(targetDate)}</span>
     </div>
-);
+  );
 };
 
 export default RelativeDate;

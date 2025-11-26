@@ -1,12 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
 
 const commentFormSchema = z.object({
-  commentAuthor: z.string().min(1, { message: "名前は必須です" }),
-  commentContent: z.string().min(1, { message: "コメントを入力してください" }),
+  commentAuthor: z.string().min(1, { message: '名前は必須です' }),
+  commentContent: z.string().min(1, { message: 'コメントを入力してください' }),
   commentParentId: z.number().optional(),
-  postId: z.number().optional()
+  postId: z.number().optional(),
 });
 
 export type CommentFormInputs = z.infer<typeof commentFormSchema>;
@@ -27,18 +27,18 @@ export default function CommentInputBox({
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
   } = useForm<CommentFormInputs>({
     resolver: zodResolver(commentFormSchema),
     defaultValues: {
-      commentAuthor: "Anonymous",
-      commentContent: "",
-      commentParentId: commentParentId ?? 0
-    }
+      commentAuthor: 'Anonymous',
+      commentContent: '',
+      commentParentId: commentParentId ?? 0,
+    },
   });
 
   const handleCommentSubmit = async (data: CommentFormInputs) => {
-    setValue("commentParentId", commentParentId)
+    setValue('commentParentId', commentParentId);
     onSubmit(data);
     reset();
   };
@@ -51,7 +51,7 @@ export default function CommentInputBox({
     <form onSubmit={handleSubmit(handleCommentSubmit)} className="space-y-4">
       <div>
         <input
-          {...register("commentAuthor")}
+          {...register('commentAuthor')}
           placeholder="名前"
           className="input input-bordered w-full"
           defaultValue="Anonymous"
@@ -62,13 +62,15 @@ export default function CommentInputBox({
       </div>
       <div>
         <textarea
-          {...register("commentContent")}
+          {...register('commentContent')}
           placeholder="コメントを入力"
           className="textarea textarea-bordered w-full"
           rows={4}
         />
         {errors.commentContent && (
-          <p className="text-red-500 text-sm">{errors.commentContent.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.commentContent.message}
+          </p>
         )}
       </div>
       <button type="submit" className="btn w-full btn-primary">
