@@ -149,7 +149,7 @@ export async function createPostWithTags({
   });
 }
 
-export const PostDataSchema = z.object({
+const PostDataSchema = z.object({
   postId: z.number(),
   postTitle: z.string(),
   postContent: z.string(),
@@ -1446,7 +1446,7 @@ export async function getUserEditHistory(userUuid: string) {
   return userEditHistory;
 }
 
-export type NowEditingInfo = {
+type NowEditingInfo = {
   postId: number;
   userId: string;
   lastHeartBeatAtUTC: Date;
@@ -1464,24 +1464,6 @@ export async function getNowEditingInfo(
     },
   });
   return info;
-}
-
-export async function clearNowEditingInfo(postId: number): Promise<void> {
-  await prisma.nowEditingPages.delete({
-    where: { postId },
-  });
-}
-
-export async function setNowEditingInfo(
-  postId: number,
-  userId: string,
-): Promise<void> {
-  await prisma.nowEditingPages.create({
-    data: {
-      postId,
-      userId,
-    },
-  });
 }
 
 type PostForEditing = {
@@ -1651,22 +1633,6 @@ export async function upsertNowEditingInfo(
       userId,
     },
   });
-}
-
-export async function findEmailUser(email: string) {
-  return prisma.dimUsers.findUnique({
-    where: { email, userAuthType: 'Email' },
-  });
-}
-
-export async function getEmailUserEncryptedPassword(
-  email: string,
-): Promise<string | null> {
-  const encryptedPassword = await prisma.dimUsers.findUnique({
-    select: { encryptedPassword: true },
-    where: { email, userAuthType: 'Email' },
-  });
-  return encryptedPassword?.encryptedPassword ?? null;
 }
 
 export async function findUserByEmail(email: string) {

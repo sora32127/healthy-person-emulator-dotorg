@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignore": ["app/routes.ts", "app/test/globalsetup.ts"],
+  "ignoreDependencies": [
+    "@remix-run/route-config",
+    "@remix-run/routes-option-adapter",
+    "remix-flat-routes"
+  ],
+  "tags": ["-lintignore"]
+}
