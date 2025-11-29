@@ -1,8 +1,16 @@
+import { useState, useEffect } from 'react';
+
 type RelativeDateProps = {
   targetDate: Date;
 };
 
 const RelativeDate = ({ targetDate }: RelativeDateProps) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const getRelativeTime = (targetDate: Date) => {
     const now = new Date();
     const diffInSeconds = (now.getTime() - targetDate.getTime()) / 1000;
@@ -42,7 +50,7 @@ const RelativeDate = ({ targetDate }: RelativeDateProps) => {
   };
 
   return (
-    <div className="tooltip tooltip-right" data-tip={formatTime(targetDate)}>
+    <div className="tooltip tooltip-right" data-tip={isClient ? formatTime(targetDate) : ''}>
       <span>{getRelativeTime(targetDate)}</span>
     </div>
   );
