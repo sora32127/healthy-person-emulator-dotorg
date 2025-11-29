@@ -25,7 +25,7 @@ import { H1, H2 } from '~/components/Headings';
 import CommentInputBox, {
   type CommentFormInputs,
 } from '~/components/CommentInputBox';
-import ShareButtons from '~/components/ShareButtons';
+import PostShareButtonGroup from '~/components/PostShareButtonGroup';
 import ArrowBackIcon from '~/components/icons/ArrowBackIcon';
 import ClockIcon from '~/components/icons/ClockIcon';
 import TagIcon from '~/components/icons/TagIcon';
@@ -485,7 +485,10 @@ export default function Component() {
           )}
         </div>
         <div className="my-8">
-          <ShareButtons currentURL={data.postURL} postTitle={data.postTitle} />
+          <PostShareButtonGroup
+            currentURL={data.postURL}
+            postTitle={data.postTitle}
+          />
         </div>
         <div>
           <SNSLinks

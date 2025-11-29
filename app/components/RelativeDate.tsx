@@ -42,7 +42,7 @@ const RelativeDate = ({ targetDate }: RelativeDateProps) => {
   };
 
   return (
-    <div className="tooltip tooltip-right" data-tip={formatTime(targetDate)}>
+    <div className="tooltip" data-tip={formatTime(targetDate)}>
       <span>{getRelativeTime(targetDate)}</span>
     </div>
   );
