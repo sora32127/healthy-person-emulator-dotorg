@@ -1,4 +1,4 @@
-export default function ShareButtonAPI() {
+export default function ShareIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
