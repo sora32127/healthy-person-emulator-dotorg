@@ -117,28 +117,16 @@ export default function Feed() {
           className="select select-bordered select-sm"
           value={type}
         >
-          <option
-            value="unboundedLikes"
-            className="select-option"
-          >
+          <option value="unboundedLikes" className="select-option">
             無期限いいね順
           </option>
-          <option
-            value="timeDesc"
-            className="select-option"
-          >
+          <option value="timeDesc" className="select-option">
             新着順
           </option>
-          <option
-            value="likes"
-            className="select-option"
-          >
+          <option value="likes" className="select-option">
             いいね順
           </option>
-          <option
-            value="timeAsc"
-            className="select-option"
-          >
+          <option value="timeAsc" className="select-option">
             古い順
           </option>
         </select>

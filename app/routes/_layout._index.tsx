@@ -131,7 +131,11 @@ export default function Feed() {
           className="tab-content"
           style={{ display: tab === 'random' ? 'block' : 'none' }}
         >
-          <PostSection title="ランダム投稿" posts={randomPosts} identifier="random">
+          <PostSection
+            title="ランダム投稿"
+            posts={randomPosts}
+            identifier="random"
+          >
             <div className="flex justify-center">
               <ReloadButton />
             </div>

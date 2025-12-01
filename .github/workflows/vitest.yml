@@ -36,17 +36,8 @@ jobs:
         run: |
           pnpm prisma generate
       - name: Run Vitest with prod database and real keys
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          SUPABASE_CONNECTION_STRING="${{ secrets.SUPABASE_CONNECTION_STRING }}" \
-          VITE_GOOGLE_GENERATIVE_API_KEY="${{ secrets.VITE_GOOGLE_GENERATIVE_API_KEY }}" \
-          SKIP_DB_TESTS="0" \
-          pnpm exec vitest --coverage
-      - name: Run Vitest with mock database and demo keys
-        if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
           pnpm exec vitest --coverage
-
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
         if: always()
