@@ -115,32 +115,29 @@ export default function Feed() {
         <select
           onChange={(e) => handleFeedTypeChange(e.target.value)}
           className="select select-bordered select-sm"
+          value={type}
         >
           <option
             value="unboundedLikes"
             className="select-option"
-            selected={type === 'unboundedLikes'}
           >
             無期限いいね順
           </option>
           <option
             value="timeDesc"
             className="select-option"
-            selected={type === 'timeDesc'}
           >
             新着順
           </option>
           <option
             value="likes"
             className="select-option"
-            selected={type === 'likes'}
           >
             いいね順
           </option>
           <option
             value="timeAsc"
             className="select-option"
-            selected={type === 'timeAsc'}
           >
             古い順
           </option>
