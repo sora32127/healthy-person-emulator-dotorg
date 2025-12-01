@@ -19,7 +19,7 @@ const initialAuthState: AuthState = {
   photoUrl: null,
 };
 
-export const authStateAtom = atom<AuthState>(initialAuthState);
+const authStateAtom = atom<AuthState>(initialAuthState);
 
 export const getAuthStateAtom = atom((get) => get(authStateAtom));
 

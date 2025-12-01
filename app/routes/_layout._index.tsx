@@ -69,7 +69,7 @@ export default function Feed() {
             identifier="latest"
           >
             <button
-              className="rounded-md block w-full max-w-[800px] px-10 py-2 text-center my-4 bg-base-200 hover:bg-base-300 mx-auto"
+              className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
               type="button"
             >
               <NavLink
@@ -131,12 +131,12 @@ export default function Feed() {
           className="tab-content"
           style={{ display: tab === 'random' ? 'block' : 'none' }}
         >
-          <PostSection title="ランダム" posts={randomPosts} identifier="random">
+          <PostSection title="ランダム投稿" posts={randomPosts} identifier="random">
             <div className="flex justify-center">
               <ReloadButton />
             </div>
           </PostSection>
-          <CommentSection title="ランダム" comments={randomComments}>
+          <CommentSection title="ランダムコメント" comments={randomComments}>
             <div className="flex justify-center">
               <ReloadButton />
             </div>

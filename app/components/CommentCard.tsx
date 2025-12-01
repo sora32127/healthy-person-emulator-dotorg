@@ -17,7 +17,7 @@ const commentVoteSchema = z.object({
   voteType: z.enum(['like', 'dislike']),
 });
 
-export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
+type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
 
 interface CommentCardProps {
   commentId: number;

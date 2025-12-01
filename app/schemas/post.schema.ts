@@ -118,5 +118,3 @@ export const createPostFormSchema = (stopWords: string[]) => {
     }),
   });
 };
-
-export type PostFormInputs = z.infer<ReturnType<typeof createPostFormSchema>>;
