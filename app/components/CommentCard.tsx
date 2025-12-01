@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import CommentInputBox from './CommentInputBox';
 import ClockIcon from './icons/ClockIcon';
 import { VoteButton } from './VoteButton';
@@ -7,8 +7,10 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { CommentFormInputs } from './CommentInputBox';
-import { Share } from 'lucide-react';
 import { CSSTransition } from 'react-transition-group';
+import { CopyToClipboardButton } from './CopyToClipboardButton';
+import { ShareApiButton } from './ShareApiButton';
+import { use } from 'marked';
 
 const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -96,15 +98,15 @@ export default function CommentCard({
     setIsReplyBoxShown(false);
   };
 
-  const invokeShareAPI = async () => {
-    const currentURL = `${window.location.href.split('#')[0]}#comment-${commentId}`;
-    const shareTitle = `${commentAuthor}のコメント ${postTitle} - 健常者エミュレータ事例集`;
-    try {
-      await navigator.share({ url: currentURL, title: shareTitle });
-    } catch (error) {
-      console.error('シェアAPIが使えませんでした', error);
-    }
-  };
+  const currentURL = useMemo(
+    () =>
+      `${typeof window !== 'undefined' ? window.location.href.split('#')[0] : ''}#comment-${commentId}`,
+    [commentId],
+  );
+  const shareTitle = useMemo(
+    () => `${commentAuthor}のコメント ${postTitle} - 健常者エミュレータ事例集`,
+    [commentAuthor, postTitle],
+  );
 
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
@@ -114,19 +116,17 @@ export default function CommentCard({
           <ClockIcon />
         </div>
         <RelativeDate targetDate={commentDateGmt} />
-        <div>
-          <button
-            type="button"
-            className="btn btn-circle btn-sm btn-ghost"
-            onClick={() => invokeShareAPI()}
-          >
-            <Share className="fill-none stroke-current w-4 h-4" />
-          </button>
+        <div className="flex items-center">
+          <CopyToClipboardButton textToCopy={currentURL} variant="comment" />
+          <ShareApiButton
+            url={currentURL}
+            title={shareTitle}
+            variant="comment"
+          />
         </div>
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
       <div className="flex items-center mt-4">
-        　　　　　　
         <VoteButton
           type="like"
           count={likesCount}
