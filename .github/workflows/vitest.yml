@@ -21,18 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Load .env from secrets
-        run: |
-          pwd
-          ls
-          touch .env
-          echo "SUPABASE_CONNECTION_STRING=${{ secrets.SUPABASE_CONNECTION_STRING }}" >> .env
-          echo "VITE_GOOGLE_GENERATIVE_API_KEY=${{ secrets.VITE_GOOGLE_GENERATIVE_API_KEY }}" >> .env
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.1.0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -47,10 +37,7 @@ jobs:
           pnpm prisma generate
       - name: Run Vitest
         run: |
-          pwd
-          ls
           pnpm exec vitest --coverage
-          
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
         if: always()
