@@ -35,7 +35,7 @@ jobs:
       - name: prisma generate
         run: |
           pnpm prisma generate
-      - name: Run Vitest with prod database and real keys
+      - name: Run Vitest
         run: |
           pnpm exec vitest --coverage
       - name: Show coverage
