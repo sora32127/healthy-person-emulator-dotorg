@@ -1,0 +1,48 @@
+name: バグ報告
+description: バグ報告
+labels: []
+assignees: []
+body:
+  - type: textarea
+    attributes:
+      label: 再現手順
+      description: バグが発生したとき、どのように操作しましたか？
+      value: |
+        (記入例)
+        1. PCを開く
+        2. 健常者エミュレータ事例集にアクセスする
+        3. 502という数字を含んだエラーが表示される
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: 期待する動作
+      description: どのように実現/改善されると良いですか？
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: 実際の動作
+      description: 実際には何が起きましたか？
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 補足説明
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: OS/ブラウザの種類・バージョン
+      description: |
+        できるだけ詳しく書いてください
+      placeholder: |
+        (記入例)
+        Windows 11 Chrome vX.Y.Z
+        Windows 11 Pro Vivaldi vX.Y.Z
+
+        ---
+        iOS26 Safari
+        Android11 Chrome vX.Y.Z
+    validations:
+      required: true
