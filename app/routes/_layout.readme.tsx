@@ -52,7 +52,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: '投稿したページを削除したいです。',
-    answer: '管理人のTwitterのDMにご一報ください。',
+    answer: '管理人のXのDMにご一報ください。',
   },
   {
     question:
@@ -127,7 +127,7 @@ export default function Component() {
         </li>
         <li>
           問い合わせは管理人
-          <a href="https://www.twitter.com/messages/compose?recipient_id=1249916069344473088">
+          <a href="https://x.com/messages/compose?recipient_id=1249916069344473088">
             @contradiction29のXのDM
           </a>
           までお願いします
@@ -210,7 +210,7 @@ export default function Component() {
           健常者エミュレータ事例集に投稿された記事は、以下の経路でSNSにも自動投稿されます
           <ul>
             <li>
-              <a href="https://twitter.com/helthypersonemu">Twitter/X</a>
+              <a href="https://x.com/helthypersonemu">X</a>
             </li>
             <li>
               <a href="https://bsky.app/profile/helthypersonemu.bsky.social">

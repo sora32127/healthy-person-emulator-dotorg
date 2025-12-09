@@ -8,7 +8,7 @@ import { SiGithub } from 'react-icons/si';
 const footerItems = [
   {
     title: '管理人に連絡',
-    url: 'https://www.twitter.com/messages/compose?recipient_id=1249916069344473088',
+    url: 'https://x.com/messages/compose?recipient_id=1249916069344473088',
   },
   {
     title: 'サイト説明',
