@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 質問は 健常者エミュレータ Discord コミュニティ でお願いします
+    url: https://healthy-person-emulator.org/readme
+    about: 判断に迷う場合は上記リンクよりDiscord招待を受け、Discordで質問してください
