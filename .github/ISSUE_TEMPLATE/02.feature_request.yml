@@ -1,7 +1,7 @@
 name: 機能要望 or 改善提案
 description: 機能要望 or 改善提案
 labels: []
-assignees:
+assignees: []
 body:
   - type: textarea
     attributes:
