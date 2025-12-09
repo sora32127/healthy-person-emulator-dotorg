@@ -30,12 +30,12 @@ export function SNSLinks({
         <div className="grid gap-3 py-2">
           {tweetIdOfFirstTweet && (
             <a
-              href={`https://twitter.com/x/status/${tweetIdOfFirstTweet}`}
+              href={`https://x.com/x/status/${tweetIdOfFirstTweet}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-info flex items-center gap-2 hover:gap-3 hover:underline hover:underline-offset-4 transition-all duration-200"
             >
-              Twitterでの反応を見る
+              Xでの反応を見る
               <ExternalLink className="h-4 w-4 md:h-5 md:w-5 fill-none stroke-current" />
             </a>
           )}
