@@ -28,11 +28,11 @@ export function Modal({
           </div>
         )}
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button type="button" onClick={onClose}>
+      <div className="modal-backdrop">
+        <button type="button" onClick={onClose} aria-label="close">
           close
         </button>
-      </form>
+      </div>
     </dialog>
   );
 }
