@@ -69,9 +69,10 @@ export async function updatePostEmbedding(
   embedding: number[],
   tokenCount: number,
 ): Promise<void> {
+  const embeddingStr = `[${embedding.join(',')}]`;
   await prisma.$queryRaw`
         UPDATE dim_posts
-        SET content_embedding = ${embedding}, token_count = ${tokenCount}
+        SET content_embedding = ${embeddingStr}::vector, token_count = ${tokenCount}
         WHERE post_id = ${postId}
     `;
   // Prisma cannot handle the column type directly, and the Supabase client intermittently fails, so raw SQL is safer here.
