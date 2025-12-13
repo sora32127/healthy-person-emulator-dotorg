@@ -1003,7 +1003,7 @@ async function Wikify(
     return data(
       {
         success: false,
-        error: validationResult.error.errors,
+        error: validationResult.error,
         data: undefined,
       },
       { status: 400 },

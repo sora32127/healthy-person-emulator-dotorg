@@ -1,12 +1,10 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions", "fullTextSearch", "fullTextIndex"]
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("SUPABASE_CONNECTION_STRING")
-  extensions = [vector(map: "vector", schema: "public"), uuidOssp(map: "uuid-ossp", schema: "public")]
+  provider = "postgresql"
 }
 
 model DimTags {

@@ -1,5 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
+  "files": {
+    "includes": ["app/generated"]
+  },
   "linter": {
     "enabled": true,
     "rules": {

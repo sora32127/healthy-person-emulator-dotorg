@@ -39,7 +39,9 @@ export default function CommentShowCard({
         <div className="w-6 h-6">
           <CommentIcon />
         </div>
-        <p className="text-base-content comment-content line-clamp-2">{commentContent}</p>
+        <p className="text-base-content comment-content line-clamp-2">
+          {commentContent}
+        </p>
       </div>
       <div className="grid grid-cols-[auto_1fr] gap-2 items-center">
         <div className="w-6 h-6">
