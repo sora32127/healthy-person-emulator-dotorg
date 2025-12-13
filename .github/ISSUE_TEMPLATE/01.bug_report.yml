@@ -1,6 +1,7 @@
 name: Bug Report
 description: バグ・不具合報告を行うテンプレートです。
 labels: []
+type: bug
 assignees: []
 body:
   - type: textarea
