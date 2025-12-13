@@ -70,7 +70,7 @@
 </table>
 
 <div align="center">
- <a href="https://twitter.com/helthypersonemu">
+ <a href="https://x.com/helthypersonemu">
    <img src="https://img.shields.io/badge/-x-EEE.svg?logo=x&style=flat&label=Follow">
  </a>
  <a href="https://bsky.app/profile/helthypersonemu.bsky.social">
