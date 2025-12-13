@@ -4,3 +4,8 @@ onlyBuiltDependencies:
   - bcrypt
   - esbuild
   - prisma
+
+updateConfig:
+  ignoreDependencies:
+    - remix-auth
+    - remix-auth-google
