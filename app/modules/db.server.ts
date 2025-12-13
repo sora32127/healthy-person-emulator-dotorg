@@ -1,6 +1,7 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '~/generated/prisma/client';
 import { z } from 'zod';
 import { formatDate } from './util.server';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
   var __prisma: PrismaClient | undefined;
@@ -14,7 +15,11 @@ function getPrismaClient(): PrismaClient {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
-  prismaInstance = new PrismaClient();
+
+  const adapter = new PrismaPg({
+    connectionString: process.env.SUPABASE_CONNECTION_STRING!,
+  });
+  prismaInstance = new PrismaClient({ adapter });
 
   // 開発環境でのホットリロード対策
   if (!isProduction) {

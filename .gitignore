@@ -27,8 +27,9 @@ coverage
 localhost-key.pem
 localhost.pem
 
-# Generated files (local development)
+# Generated files
 /public/parquet
+app/generated/
 
 # Temporary files
 tmp
