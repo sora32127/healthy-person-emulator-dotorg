@@ -5,6 +5,8 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
 
+minimumReleaseAge: 10080
+
 updateConfig:
   ignoreDependencies:
     - remix-auth
