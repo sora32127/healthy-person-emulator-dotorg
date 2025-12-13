@@ -1,6 +1,6 @@
 import { vitePlugin as remix } from '@remix-run/dev';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { type ConfigEnv, defineConfig, loadEnv } from 'vite';
+import { type ConfigEnv, type UserConfig, defineConfig, loadEnv } from 'vite';
 
 declare module '@remix-run/node' {
   interface Future {
@@ -8,9 +8,9 @@ declare module '@remix-run/node' {
   }
 }
 
-export default defineConfig(({ mode }: ConfigEnv) => {
+export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
-  return defineConfig({
+  return {
     plugins: [
       remix({
         future: {
@@ -24,5 +24,5 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       }),
       tsconfigPaths(),
     ],
-  });
+  };
 });
