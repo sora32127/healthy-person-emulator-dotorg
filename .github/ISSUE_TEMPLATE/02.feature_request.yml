@@ -1,0 +1,30 @@
+name: Feature Request
+description: 機能要望・改善提案を行うテンプレートです。
+labels: []
+type: feature
+assignees: []
+body:
+  - type: textarea
+    attributes:
+      label: 内容
+      description: 機能のアイデアを説明してください。以前に提案/実装/却下されていないことを確認してください。
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: メリット
+      description: この要望/提案が受理された場合のメリットを詳細に書いてください。
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: デメリット
+      description: 無いことが望ましいですが、この要望/提案が受理された場合のデメリットを詳細に書いてください。
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 実現方法
+      description: もしも具体的に実現方法が分かっている場合は書いてください。
+    validations:
+      required: false
