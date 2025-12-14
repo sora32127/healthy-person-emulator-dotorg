@@ -30,4 +30,5 @@ jobs:
           --timeout=300 \
           --project=healthy-person-emulator \
           --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com \
-          --verbosity=debug
+          --verbosity=debug \
+          --base-image nodejs22
