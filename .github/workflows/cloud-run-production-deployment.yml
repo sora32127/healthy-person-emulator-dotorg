@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-
 jobs:
   gsls:
     runs-on: ubuntu-latest
