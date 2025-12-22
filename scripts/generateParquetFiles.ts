@@ -1,13 +1,18 @@
-import { PrismaClient } from '@prisma/client';
 import { DuckDBInstance } from '@duckdb/node-api';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PrismaClient } from '~/generated/prisma/client';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.SUPABASE_CONNECTION_STRING!,
+});
+
+const prisma = new PrismaClient({ adapter });
 
 type SearchRecord = {
   postId: number;
