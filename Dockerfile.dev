@@ -21,6 +21,9 @@ RUN pnpm install --frozen-lockfile
 # Copy application files
 COPY . .
 
+# Generate Prisma Client
+RUN pnpm prisma generate
+
 # Expose port
 EXPOSE 3000
 

@@ -78,7 +78,6 @@ services:
     command: >
       sh -c "
         set -eux
-        pnpm prisma generate
         pnpm prisma db push --accept-data-loss || echo 'Warning: prisma db push failed'
         (
           while true; do
