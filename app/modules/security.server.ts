@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 const CF_TURNSTILE_VERIFY_ENDPOINT =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -71,7 +71,38 @@ export async function getJudgeWelcomedByGenerativeAI(
     return { isWelcomed: true, explanation: 'テスト投稿です' };
   }
 
-  const client = new GoogleGenAI({ apiKey: GOOGLE_GENERATIVE_API_KEY });
+  const schema = {
+    description: '歓迎される投稿かどうかを判断した結果',
+    type: SchemaType.OBJECT,
+    properties: {
+      isWelcomed: {
+        description:
+          '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
+        type: SchemaType.BOOLEAN,
+      },
+      explanation: {
+        description: '判断した理由のカテゴリ',
+        type: SchemaType.STRING,
+        enum: [
+          'テスト投稿です',
+          'スパム投稿です',
+          '基本的人権を侵害する行為が奨励されています',
+          '違法な行為を奨励する内容を含みます',
+          'ガイドラインに準拠した投稿です',
+        ],
+      },
+    },
+    required: ['isWelcomed', 'explanation'],
+  };
+
+  const generativeAi = new GoogleGenerativeAI(GOOGLE_GENERATIVE_API_KEY);
+  const model = generativeAi.getGenerativeModel({
+    model: 'gemini-2.5-flash-lite',
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: schema,
+    },
+  });
 
   const prompt = `
   # 指示
@@ -98,39 +129,11 @@ export async function getJudgeWelcomedByGenerativeAI(
   ${postContent}
   `;
 
-  const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          isWelcomed: {
-            description:
-              '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
-            type: 'boolean',
-          },
-          explanation: {
-            description: '判断した理由のカテゴリ',
-            type: 'string',
-            enum: [
-              'テスト投稿です',
-              'スパム投稿です',
-              '基本的人権を侵害する行為が奨励されています',
-              '違法な行為を奨励する内容を含みます',
-              'ガイドラインに準拠した投稿です',
-            ],
-          },
-        },
-        required: ['isWelcomed', 'explanation'],
-      },
-    },
-  });
-
+  const result = await model.generateContent(prompt);
   const parsedResult =
-    JSON.parse(response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') ||
-    {};
+    JSON.parse(
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
+    ) || {};
   return {
     isWelcomed: parsedResult.isWelcomed,
     explanation: parsedResult.explanation,

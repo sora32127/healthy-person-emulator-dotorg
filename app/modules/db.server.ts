@@ -1,7 +1,6 @@
-import { Prisma, PrismaClient } from '~/generated/prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { formatDate } from './util.server';
-import { PrismaPg } from '@prisma/adapter-pg';
 
 declare global {
   var __prisma: PrismaClient | undefined;
@@ -15,11 +14,7 @@ function getPrismaClient(): PrismaClient {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
-
-  const adapter = new PrismaPg({
-    connectionString: process.env.SUPABASE_CONNECTION_STRING!,
-  });
-  prismaInstance = new PrismaClient({ adapter });
+  prismaInstance = new PrismaClient();
 
   // 開発環境でのホットリロード対策
   if (!isProduction) {
@@ -69,10 +64,9 @@ export async function updatePostEmbedding(
   embedding: number[],
   tokenCount: number,
 ): Promise<void> {
-  const embeddingStr = `[${embedding.join(',')}]`;
   await prisma.$queryRaw`
         UPDATE dim_posts
-        SET content_embedding = ${embeddingStr}::vector, token_count = ${tokenCount}
+        SET content_embedding = ${embedding}, token_count = ${tokenCount}
         WHERE post_id = ${postId}
     `;
   // Prisma cannot handle the column type directly, and the Supabase client intermittently fails, so raw SQL is safer here.

@@ -11,9 +11,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json'],
+      all: true,
       reportOnFailure: true,
-      include: ['app/**.{js,ts,tsx}'],
-      exclude: ['**/node_modules/**'],
     },
     environment: 'happy-dom',
     testTimeout: 60000,

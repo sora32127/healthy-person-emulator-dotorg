@@ -35,7 +35,6 @@ jobs:
           pnpm install
       - name: prisma generate
         run: |
-          cp .env.example .env
           pnpm prisma generate
       - name: Run Vitest
         run: |
