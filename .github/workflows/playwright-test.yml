@@ -1,22 +1,25 @@
-name : Playwright E2E Test
+name: Playwright E2E Test
 on: workflow_dispatch
 
 jobs:
   playwright-e2e-test:
     runs-on: ubuntu-latest
     steps:
-      - name : Waiting for Vercel Preview Deployment to be ready
-        uses : patrickedqvist/wait-for-vercel-preview@06c79330064b0e6ef7a2574603b62d3c98789125 # v1.3.2
-        id : waitFor200
-        with :
-          token : ${{ secrets.SECRET_GITHUB_TOKEN }}
+      - name: Waiting for Vercel Preview Deployment to be ready
+        uses: patrickedqvist/wait-for-vercel-preview@06c79330064b0e6ef7a2574603b62d3c98789125 # v1.3.2
+        id: waitFor200
+        with:
+          token: ${{ secrets.SECRET_GITHUB_TOKEN }}
           max_timeout: 600
 
-      - name : Check if the url is valid
-        run : echo "::set-output name=url::${{ steps.waitFor200.outputs.url }}"
+      - name: Check if the url is valid
+        run: echo "url=${{ steps.waitFor200.outputs.url }}" >> "$GITHUB_OUTPUT"
 
-      - name : Checkout
-        uses : actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -25,23 +28,23 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'pnpm-lock.yaml'
 
-      - name : Install dependencies
-        run : npm install
+      - name: Install dependencies
+        run: pnpm install
 
-      - name : Install Playwright with dependencies
-        run : sudo apt update && npx playwright install --with-deps chromium
+      - name: Install Playwright with dependencies
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name : Run Playwright tests
-        run : npx playwright test
-        env :
-          TEST_URL : ${{ steps.waitFor200.outputs.url }}
-          LOGIN_TEST_EMAIL : ${{ secrets.LOGIN_TEST_EMAIL }}
-          LOGIN_TEST_PASSWORD : ${{ secrets.LOGIN_TEST_PASSWORD }}
+      - name: Run Playwright tests
+        run: pnpm exec playwright test
+        env:
+          TEST_URL: ${{ steps.waitFor200.outputs.url }}
+          LOGIN_TEST_EMAIL: ${{ secrets.LOGIN_TEST_EMAIL }}
+          LOGIN_TEST_PASSWORD: ${{ secrets.LOGIN_TEST_PASSWORD }}
 
-      - name : Upload Playwright report
-        uses : actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        if : always()
-        with :
-          name : playwright-report
-          path : playwright-report/
-          retention-days : 30
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
