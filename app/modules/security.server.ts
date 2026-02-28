@@ -9,43 +9,44 @@ const GOOGLE_GENERATIVE_API_KEY =
     ? process.env.VITE_GOOGLE_GENERATIVE_API_KEY
     : process.env.GOOGLE_GENERATIVE_API_KEY;
 
-export async function validateRequest(token: string, ipAddress: string) {
-  if (!CF_TURNSTILE_SECRET_KEY) {
-    throw new Error('CF_TURNSTILE_SECRET_KEY is not set');
-  }
+async function sendTurnstileRequest(
+  secret: string,
+  token: string,
+  ipAddress: string,
+): Promise<boolean> {
   const formData = new FormData();
-  const idempotencyKey = crypto.randomUUID();
-  formData.append(
-    'secret',
-    process.env.NODE_ENV === 'development'
-      ? '1x0000000000000000000000000000000AA'
-      : CF_TURNSTILE_SECRET_KEY,
-  );
+  formData.append('secret', secret);
   formData.append('response', token || '');
   formData.append('remoteip', ipAddress);
-  formData.append('idempotency_key', idempotencyKey);
-  for (const [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
-
+  formData.append('idempotency_key', crypto.randomUUID());
   const res = await fetch(CF_TURNSTILE_VERIFY_ENDPOINT, {
     method: 'POST',
     body: formData,
   });
   const outCome = await res.json();
-  console.log('outCome', outCome);
-  if (outCome.success) {
-    return true;
+  return outCome.success === true;
+}
+
+export async function validateRequest(token: string, ipAddress: string) {
+  if (process.env.NODE_ENV === 'development') {
+    return sendTurnstileRequest(
+      '1x0000000000000000000000000000000AA',
+      token,
+      ipAddress,
+    );
   }
-  return false;
+  if (!CF_TURNSTILE_SECRET_KEY) {
+    throw new Error('CF_TURNSTILE_SECRET_KEY is not set');
+  }
+  return sendTurnstileRequest(CF_TURNSTILE_SECRET_KEY, token, ipAddress);
 }
 
 export async function getTurnStileSiteKey() {
-  if (!CF_TURNSTILE_SITEKEY) {
-    throw new Error('CF_TURNSTILE_SITEKEY is not set');
-  }
   if (process.env.NODE_ENV === 'development') {
     return '1x00000000000000000000AA'; // Always return true
+  }
+  if (!CF_TURNSTILE_SITEKEY) {
+    throw new Error('CF_TURNSTILE_SITEKEY is not set');
   }
   return CF_TURNSTILE_SITEKEY;
 }
