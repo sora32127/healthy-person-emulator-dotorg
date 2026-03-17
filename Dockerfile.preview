@@ -28,4 +28,4 @@ ENV NODE_ENV=production
 ENV PORT=8080
 EXPOSE 8080
 USER appuser
-CMD ["npx", "react-router-serve", "./build/server/index.js"]
+CMD ["npm", "start"]
