@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__onboarding",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_file",
+      "mcp__serena__write_memory",
+      "mcp__serena__think_about_whether_you_are_done",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__find_symbol",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__search_for_pattern",
+      "Bash(npm run typecheck:*)",
+      "Bash(git checkout:*)",
+      "Bash(mkdir:*)",
+      "mcp__serena__insert_after_symbol",
+      "Bash(npx eslint:*)",
+      "mcp__serena__think_about_task_adherence",
+      "Bash(npx tsc:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

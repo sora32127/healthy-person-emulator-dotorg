@@ -1,4 +1,4 @@
-import { NavLink } from '@remix-run/react';
+import { NavLink } from 'react-router';
 import TagCard from './TagCard';
 import RelativeDate from './RelativeDate';
 import CommentIcon from './icons/CommentIcon';

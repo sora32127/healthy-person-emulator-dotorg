@@ -1,5 +1,5 @@
-import { NavLink, useLoaderData } from '@remix-run/react';
-import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
+import { NavLink, useLoaderData } from 'react-router';
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
 import {
   getFeedComments,
   getFeedPosts,

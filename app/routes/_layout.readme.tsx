@@ -1,5 +1,5 @@
-import type { MetaFunction } from '@remix-run/node';
-import { NavLink } from '@remix-run/react';
+import type { MetaFunction } from 'react-router';
+import { NavLink } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import { H1, H2, H3 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';

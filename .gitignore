@@ -35,5 +35,8 @@ tmp
 memo.md
 .serena
 
+# React Router generated types
+.react-router/
+
 # Experimental/deprecated files
 /app/embeddingBatch.ts

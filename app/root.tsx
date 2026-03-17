@@ -8,9 +8,9 @@ import {
   isRouteErrorResponse,
   useNavigate,
   useRouteError,
-} from '@remix-run/react';
+} from 'react-router';
 
-import type { LinksFunction, LoaderFunction } from '@remix-run/node';
+import type { LinksFunction, LoaderFunction } from 'react-router';
 import stylesheet from '~/tailwind.css?url';
 import { PageTransitionProgressBar } from './components/PageTransitionProgressBar';
 import { useCallback, useEffect } from 'react';

@@ -1,5 +1,5 @@
-import type { MetaFunction } from '@remix-run/node';
-import { NavLink } from '@remix-run/react';
+import type { MetaFunction } from 'react-router';
+import { NavLink } from 'react-router';
 import { H1 } from '~/components/Headings';
 import fanboxQRCode from '~/src/assets/fanbox_qr_code.png';
 import { commonMetaFunction } from '~/utils/commonMetafunction';

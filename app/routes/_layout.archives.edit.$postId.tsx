@@ -1,10 +1,10 @@
-import { redirect } from '@remix-run/node';
+import { redirect } from 'react-router';
 import {
   NavLink,
   useFetcher,
   useLoaderData,
   useNavigate,
-} from '@remix-run/react';
+} from 'react-router';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
 import { useEffect, useState } from 'react';
 import { marked } from 'marked';
@@ -13,7 +13,7 @@ import type {
   ActionFunction,
   LoaderFunctionArgs,
   MetaFunction,
-} from '@remix-run/node';
+} from 'react-router';
 import type { Tokens } from 'marked';
 
 import {
@@ -40,7 +40,7 @@ import {
 } from '~/modules/security.server';
 import toast, { Toaster } from 'react-hot-toast';
 import { MakeToastMessage } from '~/utils/makeToastMessage';
-import { authenticator } from '~/modules/auth.google.server';
+import { getAuthenticatedUser } from '~/modules/auth.google.server';
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, 'タイトルが必要です'),
@@ -55,7 +55,7 @@ const postEditSchema = z.object({
 export type PostEditSchema = z.infer<typeof postEditSchema>;
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const userObject = await authenticator.isAuthenticated(request);
+  const userObject = await getAuthenticatedUser(request);
   const userUuid = userObject?.userUuid;
   if (!userUuid) {
     throw redirect('/');

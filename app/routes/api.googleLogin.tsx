@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from 'react-router';
 import { authenticator } from '../modules/auth.google.server';
 
 export async function action({ request }: ActionFunctionArgs) {

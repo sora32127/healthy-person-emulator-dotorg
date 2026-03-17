@@ -1,4 +1,4 @@
-import { createCookieSessionStorage, redirect } from '@remix-run/node';
+import { createCookieSessionStorage } from 'react-router';
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -12,7 +12,7 @@ export const sessionStorage = createCookieSessionStorage({
   },
 });
 
-export const { getSession, commitSession } = sessionStorage;
+export const { getSession, commitSession, destroySession } = sessionStorage;
 
 export async function getUserActivityData(request: Request) {
   const session = await getSession(request.headers.get('Cookie'));

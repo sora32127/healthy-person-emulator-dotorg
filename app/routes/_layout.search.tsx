@@ -4,7 +4,7 @@ import {
   useNavigate,
   useLocation,
   redirect,
-} from '@remix-run/react';
+} from 'react-router';
 import {
   getOrCreateHandler,
   LightSearchHandler,
@@ -14,14 +14,14 @@ import {
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'es-toolkit';
 import PostCard from '~/components/PostCard';
-import { useSearchParams } from '@remix-run/react';
+import { useSearchParams } from 'react-router';
 import { Accordion, AccordionItem } from '~/components/Accordion';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import { H1 } from '~/components/Headings';
 import { useAtom } from 'jotai';
 import { searchResultsAtom } from '~/stores/search';
 import { generateDownloadSignedUrl } from '~/modules/gcloud.server';
-import type { ActionFunctionArgs, MetaFunction } from '@remix-run/node';
+import type { ActionFunctionArgs, MetaFunction } from 'react-router';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 
 export const meta: MetaFunction = ({ location }) => {
