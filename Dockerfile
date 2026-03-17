@@ -10,6 +10,7 @@ FROM deps AS build
 COPY . .
 RUN pnpm run build
 RUN pnpm prune --prod
+RUN pnpm exec prisma generate
 
 # Stage 3: Runtime
 FROM node:22.12.0-slim AS runtime
