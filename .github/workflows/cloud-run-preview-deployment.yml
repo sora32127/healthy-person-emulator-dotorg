@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.preview
+          file: Dockerfile
           push: true
           tags: asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.event.pull_request.head.sha }}
           cache-from: type=gha

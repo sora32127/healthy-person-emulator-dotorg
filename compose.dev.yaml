@@ -60,9 +60,7 @@ services:
 
   # Remix Application
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: node:22.12.0-slim
     container_name: healthy-person-app
     environment:
       NODE_ENV: development
@@ -78,6 +76,10 @@ services:
     command: >
       sh -c "
         set -eux
+        apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+        npm install -g pnpm@10.24.0
+        pnpm install --frozen-lockfile
+        pnpm prisma generate
         pnpm prisma db push --accept-data-loss || echo 'Warning: prisma db push failed'
         (
           while true; do

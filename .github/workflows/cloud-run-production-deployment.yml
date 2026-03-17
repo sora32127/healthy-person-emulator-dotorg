@@ -4,30 +4,40 @@ on:
   push:
     branches:
       - main
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
-  gsls:
+  deploy:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - name: Get PR head SHA
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          HEAD_SHA=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/pulls --jq '.[0].head.sha')
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool-3/providers/github-actions-provider-3'
           service_account: 'github-actions@healthy-person-emulator.iam.gserviceaccount.com'
 
-      - name: Deploy
+      - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy healthy-person-emulator-dotorg --source . \
-           --region=asia-northeast1 \
-           --concurrency=1 \
-           --memory=2Gi \
-           --cpu=2 \
-           --timeout=300 \
-           --project=healthy-person-emulator \
-           --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com \
-           --verbosity=debug \
-           --base-image nodejs22
+          gcloud run deploy healthy-person-emulator-dotorg \
+            --image asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ steps.pr.outputs.head_sha }} \
+            --region=asia-northeast1 \
+            --concurrency=1 \
+            --memory=2Gi \
+            --cpu=2 \
+            --timeout=300 \
+            --project=healthy-person-emulator \
+            --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com
