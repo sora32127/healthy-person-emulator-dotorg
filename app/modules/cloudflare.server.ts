@@ -133,7 +133,7 @@ export async function getVectorsByIds(
   ids: string[],
 ): Promise<VectorizeMatch[]> {
   const data = await cfFetch<VectorizeGetByIdsResponse>(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/get-by-ids`,
+    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/get_by_ids`,
     { ids },
   );
 
@@ -145,7 +145,7 @@ export async function getVectorsByIds(
 
 export async function deleteVectors(ids: string[]): Promise<void> {
   await cfFetch(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/delete-by-ids`,
+    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/delete_by_ids`,
     { ids },
   );
 }
