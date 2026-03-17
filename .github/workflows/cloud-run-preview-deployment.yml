@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  gsls:
+  deploy:
     runs-on: ubuntu-latest
     environment: preview
     permissions:
@@ -23,15 +23,21 @@ jobs:
           workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool-3/providers/github-actions-provider-3'
           service_account: 'github-actions@healthy-person-emulator.iam.gserviceaccount.com'
 
-      - name: Deploy
+      - name: Build and push image
         run: |
-          gcloud run deploy preview-healthy-person-emulator-dotorg --source . \
-           --region=asia-northeast1 \
-           --concurrency=1 \
-           --memory=2Gi \
-           --cpu=2 \
-           --timeout=300 \
-           --project=healthy-person-emulator \
-           --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com \
-           --verbosity=debug \
-           --base-image nodejs22
+          gcloud builds submit \
+            --tag asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.event.pull_request.head.sha }} \
+            --project=healthy-person-emulator \
+            --region=asia-northeast1
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy preview-healthy-person-emulator-dotorg \
+            --image asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.event.pull_request.head.sha }} \
+            --region=asia-northeast1 \
+            --concurrency=1 \
+            --memory=2Gi \
+            --cpu=2 \
+            --timeout=300 \
+            --project=healthy-person-emulator \
+            --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com

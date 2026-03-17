@@ -41,20 +41,21 @@ temp
 
 # Docker
 compose.*.yml
-Dockerfile*
 .dockerignore
 
 # Documentation
-*.md
 docs
 
 # Tests
+__tests__
 tests
 test
 *.test.ts
 *.test.tsx
 *.spec.ts
 *.spec.tsx
+playwright.config.ts
+playwright-report
 
 # Config files (except necessary ones)
 .prettierrc
@@ -63,3 +64,8 @@ test
 
 # Prisma generated files (will be regenerated in container)
 prisma/migrations
+
+# Claude / Agent
+.claude/
+.agent/
+CLAUDE.md
