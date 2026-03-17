@@ -78,12 +78,8 @@ export class LightSearchHandler {
     const conn = await this.db.connect();
     await conn.query('INSTALL parquet');
     await conn.query("LOAD 'parquet'");
-    await conn.query(
-      `CREATE TABLE search AS SELECT * FROM read_parquet('${searchAssetURL}')`,
-    );
-    await conn.query(
-      `CREATE TABLE tags AS SELECT * FROM read_parquet('${tagsAssetURL}')`,
-    );
+    await conn.query(`CREATE TABLE search AS SELECT * FROM read_parquet('${searchAssetURL}')`);
+    await conn.query(`CREATE TABLE tags AS SELECT * FROM read_parquet('${tagsAssetURL}')`);
     await conn.close();
 
     // 初期化完了を記録
@@ -166,10 +162,7 @@ export class LightSearchHandler {
     this.searchResults.metadata.query = query;
     this.searchResults.metadata.count = totalCount;
     this.searchResults.metadata.page = page;
-    this.searchResults.metadata.totalPages = this.calculateTotalPages(
-      totalCount,
-      pageSize,
-    );
+    this.searchResults.metadata.totalPages = this.calculateTotalPages(totalCount, pageSize);
     this.searchResults.metadata.orderby = orderby;
     this.searchResults.metadata.hasMore = hasMore;
     this.searchResults.results = res.toArray().map((row) => {
@@ -338,10 +331,7 @@ export class LightSearchHandler {
   }
 
   // totalPages計算ロジック
-  private calculateTotalPages(
-    totalCount: number,
-    pageSize: number = 10,
-  ): number {
+  private calculateTotalPages(totalCount: number, pageSize: number = 10): number {
     return Math.ceil(totalCount / pageSize);
   }
 

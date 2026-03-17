@@ -32,10 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="ja" className="font-noto-sans" data-theme="light">
       <head>
         <meta charSet="utf-8" />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta property="og:site_name" content="健常者エミュレータ事例集" />
         <Meta />
         <Links />
@@ -71,9 +68,7 @@ export function ErrorBoundary() {
 
     return (
       <div className="container mx-auto px-4 text-center">
-        <h1 className="text-4xl font-bold mt-32 mb-8">
-          お探しのページは見つかりませんでした
-        </h1>
+        <h1 className="text-4xl font-bold mt-32 mb-8">お探しのページは見つかりませんでした</h1>
         <div>
           <div className="flex items-center justify-center">
             <FaSpinner className="animate-spin text-green-300 mr-2" />
@@ -93,9 +88,7 @@ export function ErrorBoundary() {
 
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-4xl font-bold text-center mt-32 mb-8">
-        不明なエラーが発生しました
-      </h1>
+      <h1 className="text-4xl font-bold text-center mt-32 mb-8">不明なエラーが発生しました</h1>
       <pre className="bg-red-100 p-4 mb-8 overflow-auto">
         {error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}
       </pre>

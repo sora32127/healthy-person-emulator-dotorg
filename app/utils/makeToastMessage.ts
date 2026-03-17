@@ -1,4 +1,3 @@
-// biome-ignore lint/style/useImportType: <explanation>
 import { z } from 'zod';
 
 export function MakeToastMessage(errors: z.ZodIssue[]): string {

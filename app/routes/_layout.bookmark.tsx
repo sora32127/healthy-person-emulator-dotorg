@@ -1,9 +1,4 @@
-import {
-  type MetaFunction,
-  redirect,
-  type LoaderFunctionArgs,
-  useLoaderData,
-} from 'react-router';
+import { type MetaFunction, redirect, type LoaderFunctionArgs, useLoaderData } from 'react-router';
 import { CommonNavLink } from '~/components/CommonNavLink';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import {
@@ -25,17 +20,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const pageSize = Number.parseInt(url.searchParams.get('pageSize') || '10');
 
   const userId = await getUserId(isAuthenticated.userUuid);
-  const bookmarkPosts = await getBookmarkPostsByPagenation(
-    userId,
-    Number(pageNumber),
-    pageSize,
-  );
+  const bookmarkPosts = await getBookmarkPostsByPagenation(userId, Number(pageNumber), pageSize);
   return { bookmarkPosts, email: isAuthenticated.email, pageNumber, pageSize };
 }
 
 export default function BookmarkLayout() {
-  const { bookmarkPosts, email, pageNumber, pageSize } =
-    useLoaderData<typeof loader>();
+  const { bookmarkPosts, email, pageNumber, pageSize } = useLoaderData<typeof loader>();
   return (
     <div>
       <H1>ブックマーク</H1>
@@ -45,11 +35,7 @@ export default function BookmarkLayout() {
   );
 }
 
-function BookMarkView({
-  bookmarkPosts,
-}: {
-  bookmarkPosts: BookmarkPostCardData[];
-}) {
+function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[] }) {
   return (
     <ul className="space-y-4">
       {bookmarkPosts.map((post) => (
@@ -59,9 +45,7 @@ function BookMarkView({
         >
           <div className="flex flex-col gap-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 sm:gap-x-3">
-              <time className="text-sm text-gray-500">
-                {post.bookmarkDateJST}
-              </time>
+              <time className="text-sm text-gray-500">{post.bookmarkDateJST}</time>
               <CommonNavLink
                 to={`/archives/${post.postId}`}
                 className="text-base sm:text-lg font-medium hover:text-blue-600"

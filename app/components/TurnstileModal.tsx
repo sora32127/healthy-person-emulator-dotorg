@@ -9,12 +9,7 @@ interface TurnstileModalProps {
   onSuccess: (token: string) => void;
 }
 
-export function TurnstileModal({
-  isOpen,
-  onClose,
-  siteKey,
-  onSuccess,
-}: TurnstileModalProps) {
+export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: TurnstileModalProps) {
   if (!isOpen) return null;
 
   return (

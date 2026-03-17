@@ -7,10 +7,7 @@ export default function SignupVerified() {
       <H1>ユーザー登録が完了しました</H1>
       <ul>
         <li>
-          <NavLink
-            to="/login"
-            className="text-info underline underline-offset-4"
-          >
+          <NavLink to="/login" className="text-info underline underline-offset-4">
             ログイン
           </NavLink>
           してください

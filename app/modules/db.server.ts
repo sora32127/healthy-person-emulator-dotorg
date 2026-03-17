@@ -93,9 +93,7 @@ export async function createPostWithTags({
   selectedTags = [],
   createdTags = [],
 }: CreatePostWithTagsInput): Promise<CreatedPostSummary> {
-  const uniqueTags = Array.from(
-    new Set([...(selectedTags ?? []), ...(createdTags ?? [])]),
-  );
+  const uniqueTags = Array.from(new Set([...(selectedTags ?? []), ...(createdTags ?? [])]));
 
   return prisma.$transaction(async (tx) => {
     const newPost = await tx.dimPosts.create({
@@ -124,9 +122,7 @@ export async function createPostWithTags({
       });
 
       const existingTagNames = existingTags.map((tag) => tag.tagName);
-      const newTagNames = uniqueTags.filter(
-        (tag) => !existingTagNames.includes(tag),
-      );
+      const newTagNames = uniqueTags.filter((tag) => !existingTagNames.includes(tag));
 
       const newTags = await Promise.all(
         newTagNames.map(async (tagName) => {
@@ -261,13 +257,11 @@ async function getCommentsByPostId(postId: number): Promise<CommentData[]> {
 
   const commentsWithVoteCount = comments.map((comment) => {
     const likesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === 1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count
+        .commentVoteId || 0;
     const dislikesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === -1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count
+        .commentVoteId || 0;
     return {
       ...comment,
       likesCount,
@@ -300,9 +294,7 @@ async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
     return [];
   }
 
-  const similarPosts: SimilarPostsData[] = JSON.parse(
-    similarPostsRaw[0].result,
-  ).slice(1); // 0番目のエントリはその記事自身を指すため除外する
+  const similarPosts: SimilarPostsData[] = JSON.parse(similarPostsRaw[0].result).slice(1); // 0番目のエントリはその記事自身を指すため除外する
   return similarPosts;
 }
 
@@ -313,9 +305,7 @@ const PreviousOrNextPostSchema = z.object({
 
 type PreviousOrNextPostData = z.infer<typeof PreviousOrNextPostSchema>;
 
-async function getPreviousPost(
-  postId: number,
-): Promise<PreviousOrNextPostData> {
+async function getPreviousPost(postId: number): Promise<PreviousOrNextPostData> {
   const previousPost = (await prisma.dimPosts.findFirst({
     where: {
       postId: { lt: postId },
@@ -486,17 +476,14 @@ export async function getBookmarkPostsByPagenation(
   });
   const bookmarkPostsWithCountComments = bookmarkPosts
     .map((post) => {
-      const count =
-        commentCount.find((c) => c.postId === post.postId)?._count.commentId ||
-        0;
+      const count = commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
       return {
         ...post,
         countComments: count,
         tags: post.rel_post_tags.map((tag) => tag.dimTag),
         bookmarkDateJST: formatDate(
-          bookmarkPostIdsAndDate.find(
-            (bookmark) => bookmark.postId === post.postId,
-          )?.bookmarkDateJST ?? new Date(),
+          bookmarkPostIdsAndDate.find((bookmark) => bookmark.postId === post.postId)
+            ?.bookmarkDateJST ?? new Date(),
         ),
       };
     })
@@ -535,9 +522,7 @@ export async function recordPostVote(
       },
     });
     const updateData =
-      voteType === 'like'
-        ? { countLikes: { increment: 1 } }
-        : { countDislikes: { increment: 1 } };
+      voteType === 'like' ? { countLikes: { increment: 1 } } : { countDislikes: { increment: 1 } };
     await tx.dimPosts.update({
       where: { postId },
       data: updateData,
@@ -622,9 +607,7 @@ export async function judgeIsBookmarked(
   return bookmarkCount > 0;
 }
 
-export async function getRecentPostsByTagId(
-  tagId: number,
-): Promise<PostCardData[]> {
+export async function getRecentPostsByTagId(tagId: number): Promise<PostCardData[]> {
   const recentPosts = await prisma.relPostTags
     .findMany({
       where: { tagId },
@@ -674,9 +657,7 @@ export async function getRecentPostsByTagId(
   });
 
   const recentPostsWithCountComments = recentPosts.map((post) => {
-    const count =
-      countComments.find((c) => c.postId === post.postId)?._count.commentId ||
-      0;
+    const count = countComments.find((c) => c.postId === post.postId)?._count.commentId || 0;
     return {
       ...post,
       countComments: count,
@@ -739,13 +720,11 @@ export async function getRecentComments(
   });
   const recentCommentsWithVoteCount = recentComments.map((comment) => {
     const likesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === 1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count
+        .commentVoteId || 0;
     const dislikesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === -1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count
+        .commentVoteId || 0;
     return {
       ...comment,
       postTitle: comment.dimPosts.postTitle,
@@ -762,10 +741,7 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
     prisma.dimPosts.findManyRandomを利用してもランダムな記事を取得することは可能であるが、タイムアウトしてしまうため、インデックスを作成したuuidを使って疑似的にランダムな記事を取得している
     */
   const postCount = await prisma.dimPosts.count();
-  const randomPostOffset = Math.max(
-    Math.floor(Math.random() * postCount) - 12,
-    0,
-  );
+  const randomPostOffset = Math.max(Math.floor(Math.random() * postCount) - 12, 0);
 
   const randomPostsRaw = await prisma.dimPosts.findMany({
     select: {
@@ -801,8 +777,7 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
     where: { postId: { in: randomPostsRaw.map((post) => post.postId) } },
   });
   const randomPosts = randomPostsRaw.map((post) => {
-    const count =
-      commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
+    const count = commentCount.find((c) => c.postId === post.postId)?._count.commentId || 0;
     return {
       ...post,
       countComments: count,
@@ -812,14 +787,9 @@ export async function getRandomPosts(): Promise<PostCardData[]> {
   return randomPosts;
 }
 
-export async function getRandomComments(
-  chunkSize = 12,
-): Promise<CommentShowCardData[]> {
+export async function getRandomComments(chunkSize = 12): Promise<CommentShowCardData[]> {
   const commentCount = await prisma.dimComments.count();
-  const randomCommentOffset = Math.max(
-    Math.floor(Math.random() * commentCount) - chunkSize,
-    0,
-  );
+  const randomCommentOffset = Math.max(Math.floor(Math.random() * commentCount) - chunkSize, 0);
 
   const randomComments = await prisma.dimComments.findMany({
     select: {
@@ -843,13 +813,11 @@ export async function getRandomComments(
   });
   const randomCommentsWithVoteCount = randomComments.map((comment) => {
     const likesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === 1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)?._count
+        .commentVoteId || 0;
     const dislikesCount =
-      voteCount.find(
-        (vote) => vote.commentId === comment.commentId && vote.voteType === -1,
-      )?._count.commentVoteId || 0;
+      voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)?._count
+        .commentVoteId || 0;
     return {
       ...comment,
       countLikes: likesCount,
@@ -930,12 +898,8 @@ export async function getFeedPosts(
         countLikes: post.count_likes,
         countDislikes: post.count_dislikes,
         ogpImageUrl: post.ogp_image_url,
-        tags: tagNames
-          .filter((tag) => tag.postId === post.post_id)
-          .map((tag) => tag.dimTag),
-        countComments:
-          commentCount.find((c) => c.postId === post.post_id)?._count
-            .commentId || 0,
+        tags: tagNames.filter((tag) => tag.postId === post.post_id).map((tag) => tag.dimTag),
+        countComments: commentCount.find((c) => c.postId === post.post_id)?._count.commentId || 0,
       };
     });
     return {
@@ -1005,9 +969,7 @@ export async function getFeedPosts(
     const postData = posts.map((post) => {
       return {
         ...post,
-        countComments:
-          countComments.find((c) => c.postId === post.postId)?._count
-            .commentId || 0,
+        countComments: countComments.find((c) => c.postId === post.postId)?._count.commentId || 0,
         tags: post.rel_post_tags.map((tag) => tag.dimTag),
       };
     });
@@ -1109,14 +1071,11 @@ export async function getFeedComments(
     });
     const commentData = comments.map((comment) => {
       const likesCount =
-        voteCount.find(
-          (vote) => vote.commentId === comment.commentId && vote.voteType === 1,
-        )?._count.commentVoteId || 0;
+        voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)
+          ?._count.commentVoteId || 0;
       const dislikesCount =
-        voteCount.find(
-          (vote) =>
-            vote.commentId === comment.commentId && vote.voteType === -1,
-        )?._count.commentVoteId || 0;
+        voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)
+          ?._count.commentVoteId || 0;
       return {
         ...comment,
         countLikes: likesCount,
@@ -1193,15 +1152,11 @@ export async function getFeedComments(
         ...comment,
         postTitle: comment.dimPosts.postTitle,
         countLikes:
-          voteCount.find(
-            (vote) =>
-              vote.commentId === comment.commentId && vote.voteType === 1,
-          )?._count.commentVoteId || 0,
+          voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)
+            ?._count.commentVoteId || 0,
         countDislikes:
-          voteCount.find(
-            (vote) =>
-              vote.commentId === comment.commentId && vote.voteType === -1,
-          )?._count.commentVoteId || 0,
+          voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)
+            ?._count.commentVoteId || 0,
       };
     });
     return {
@@ -1282,15 +1237,11 @@ export async function getFeedComments(
         ...comment,
         postTitle: comment.dimPosts.postTitle,
         countLikes:
-          voteCount.find(
-            (vote) =>
-              vote.commentId === comment.commentId && vote.voteType === 1,
-          )?._count.commentVoteId || 0,
+          voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === 1)
+            ?._count.commentVoteId || 0,
         countDislikes:
-          voteCount.find(
-            (vote) =>
-              vote.commentId === comment.commentId && vote.voteType === -1,
-          )?._count.commentVoteId || 0,
+          voteCount.find((vote) => vote.commentId === comment.commentId && vote.voteType === -1)
+            ?._count.commentVoteId || 0,
       };
     });
     return {
@@ -1350,11 +1301,7 @@ export async function getUnboundedLikesCommentIdsForTest(chunkSize = 12) {
   return comments.map((comment) => comment.commentId);
 }
 
-export async function getLikedCommentsForTest(
-  chunkSize = 12,
-  likeFromHour = 48,
-  likeToHour = 0,
-) {
+export async function getLikedCommentsForTest(chunkSize = 12, likeFromHour = 48, likeToHour = 0) {
   const commentIds = await prisma.fctCommentVoteHistory.groupBy({
     by: ['commentId'],
     _count: { commentVoteId: true },
@@ -1413,11 +1360,7 @@ export async function getStopWords(): Promise<string[]> {
   return [...new Set(stopWords.map((stopWord) => stopWord.stopWord))];
 }
 
-export async function updatePostWelcomed(
-  postId: number,
-  isWelcomed: boolean,
-  explanation: string,
-) {
+export async function updatePostWelcomed(postId: number, isWelcomed: boolean, explanation: string) {
   await prisma.dimPosts.update({
     where: { postId },
     data: { isWelcomed: isWelcomed, isWelcomedExplanation: explanation },
@@ -1452,9 +1395,7 @@ type NowEditingInfo = {
   lastHeartBeatAtUTC: Date;
 };
 
-export async function getNowEditingInfo(
-  postId: number,
-): Promise<NowEditingInfo | null> {
+export async function getNowEditingInfo(postId: number): Promise<NowEditingInfo | null> {
   const info = await prisma.nowEditingPages.findUnique({
     where: { postId },
     select: {
@@ -1473,9 +1414,7 @@ type PostForEditing = {
   tagNames: string[];
 };
 
-export async function getPostForEditing(
-  postId: number,
-): Promise<PostForEditing | null> {
+export async function getPostForEditing(postId: number): Promise<PostForEditing | null> {
   const post = await prisma.dimPosts.findUnique({
     where: { postId },
     select: {
@@ -1516,9 +1455,7 @@ type PostEditHistoryEntry = {
   postContentAfterEdit: string;
 };
 
-export async function getPostEditHistory(
-  postId: number,
-): Promise<PostEditHistoryEntry[]> {
+export async function getPostEditHistory(postId: number): Promise<PostEditHistoryEntry[]> {
   const history = await prisma.fctPostEditHistory.findMany({
     select: {
       postRevisionNumber: true,
@@ -1565,9 +1502,7 @@ export async function updatePostWithTagsAndHistory({
         where: { postId },
         orderBy: { postRevisionNumber: 'desc' },
       });
-      const newRevisionNumber = latestRevision
-        ? latestRevision.postRevisionNumber + 1
-        : 1;
+      const newRevisionNumber = latestRevision ? latestRevision.postRevisionNumber + 1 : 1;
 
       const updatedPost = await tx.dimPosts.update({
         where: { postId },
@@ -1618,10 +1553,7 @@ export async function updatePostWithTagsAndHistory({
   );
 }
 
-export async function upsertNowEditingInfo(
-  postId: number,
-  userId: string,
-): Promise<void> {
+export async function upsertNowEditingInfo(postId: number, userId: string): Promise<void> {
   await prisma.nowEditingPages.upsert({
     where: { postId },
     update: {

@@ -9,12 +9,7 @@ type PostSectionProps = {
   children?: React.ReactNode;
 };
 
-export default function PostSection({
-  title,
-  posts,
-  identifier,
-  children,
-}: PostSectionProps) {
+export default function PostSection({ title, posts, identifier, children }: PostSectionProps) {
   return (
     <section className={`${identifier}-posts`}>
       <H2>{title}</H2>

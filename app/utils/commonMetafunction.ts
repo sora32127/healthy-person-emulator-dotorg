@@ -5,15 +5,8 @@ interface CommonMetaFunctionProps {
   image: string | null;
 }
 
-export function commonMetaFunction({
-  title,
-  description,
-  url,
-  image,
-}: CommonMetaFunctionProps) {
-  const commonTitle = title
-    ? `${title} - 健常者エミュレータ事例集`
-    : '健常者エミュレータ事例集';
+export function commonMetaFunction({ title, description, url, image }: CommonMetaFunctionProps) {
+  const commonTitle = title ? `${title} - 健常者エミュレータ事例集` : '健常者エミュレータ事例集';
   const commonDescription = description ?? '現実世界のために';
   const commonImage =
     image ??

@@ -10,21 +10,13 @@ interface CreateEmbeddingInput {
 const OpenAIAPIKey = process.env.OPENAI_API_KEY;
 const OpenAIEmbeddingModel = 'text-embedding-3-small';
 
-export async function createEmbedding({
-  postId,
-  postContent,
-  postTitle,
-}: CreateEmbeddingInput) {
+export async function createEmbedding({ postId, postContent, postTitle }: CreateEmbeddingInput) {
   if (!OpenAIAPIKey) {
     throw new Error('OPENAI_API_KEY is not set');
   }
   const allTagNames = await getTagNamesByPostId(postId);
 
-  const inputText = await getEmbeddingInputText(
-    postContent,
-    postTitle,
-    allTagNames,
-  );
+  const inputText = await getEmbeddingInputText(postContent, postTitle, allTagNames);
   const { embedding, tokenCount } = await getEmbeddingResponse(inputText);
   try {
     await updatePostEmbedding(postId, embedding, tokenCount);

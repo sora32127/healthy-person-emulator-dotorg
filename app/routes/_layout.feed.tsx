@@ -1,10 +1,6 @@
 import { useLoaderData, useSubmit, Link, useLocation } from 'react-router';
 import { H1 } from '~/components/Headings';
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from 'react-router';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { redirect } from 'react-router';
 import { getFeedPosts } from '~/modules/db.server';
 import PostSection from '~/components/PostSection';
@@ -16,12 +12,9 @@ type FeedPostType = 'unboundedLikes' | 'timeDesc' | 'likes' | 'timeAsc';
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const pagingNumber = Number.parseInt(url.searchParams.get('p') || '1');
-  const likeFromHour = Number.parseInt(
-    url.searchParams.get('likeFrom') || '48',
-  );
+  const likeFromHour = Number.parseInt(url.searchParams.get('likeFrom') || '48');
   const likeToHour = Number.parseInt(url.searchParams.get('likeTo') || '0');
-  const type =
-    url.searchParams.get('type') || ('unboundedLikes' as FeedPostType);
+  const type = url.searchParams.get('type') || ('unboundedLikes' as FeedPostType);
   const chunkSize = 12;
   const postData = await getFeedPosts(
     pagingNumber,
@@ -45,9 +38,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return redirect(`/feed?p=${pagingNumber}&type=${type}`);
   }
   const url = new URL(request.url);
-  const currentPage = Number.parseInt(
-    (formData.get('currentPage') as string) || '1',
-  );
+  const currentPage = Number.parseInt((formData.get('currentPage') as string) || '1');
   const likeFrom = url.searchParams.get('likeFrom') || '';
   const likeTo = url.searchParams.get('likeTo') || '';
   const type = url.searchParams.get('type');
@@ -130,10 +121,7 @@ export default function Feed() {
             古い順
           </option>
         </select>
-        <Link
-          to={`/feed.xml?${new URLSearchParams(location.search).toString()}`}
-          reloadDocument
-        >
+        <Link to={`/feed.xml?${new URLSearchParams(location.search).toString()}`} reloadDocument>
           <button type="button" className="btn btn-ghost h-9 w-9 p-0 ml-2">
             <Rss className="fill-none stroke-current" />
           </button>

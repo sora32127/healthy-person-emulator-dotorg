@@ -1,19 +1,10 @@
 import { redirect } from 'react-router';
-import {
-  NavLink,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-} from 'react-router';
+import { NavLink, useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
 import { useEffect, useState } from 'react';
 import { marked } from 'marked';
 
-import type {
-  ActionFunction,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from 'react-router';
+import type { ActionFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import type { Tokens } from 'marked';
 
 import {
@@ -47,9 +38,7 @@ const postEditSchema = z.object({
   postContent: z.string().min(10, '本文が短すぎます。'),
   tags: z.array(z.string()).min(1, 'タグが必要です'),
   userId: z.string().min(1, '無効なリクエスト：ユーザーIDが必要です'),
-  turnstileToken: z
-    .string()
-    .min(1, '認証に失敗しました。時間をおいて再度試してください。'),
+  turnstileToken: z.string().min(1, '認証に失敗しました。時間をおいて再度試してください。'),
 });
 
 export type PostEditSchema = z.infer<typeof postEditSchema>;
@@ -82,9 +71,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const isEditing =
     nowEditingInfo &&
     nowEditingInfo.userId !== userUuid &&
-    new Date().getTime() -
-      new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime() <
-      30 * 60 * 1000;
+    new Date().getTime() - new Date(nowEditingInfo.lastHeartBeatAtUTC).getTime() < 30 * 60 * 1000;
 
   if (isEditing && nowEditingInfo) {
     // モーダルを表示する：${nowEditingInfo.userId}さんが編集中です。
@@ -256,9 +243,7 @@ export default function EditPost() {
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 edit-post-title"
             {...register('postTitle')}
           />
-          {errors.postTitle && (
-            <p className="text-error">{errors.postTitle.message}</p>
-          )}
+          {errors.postTitle && <p className="text-error">{errors.postTitle.message}</p>}
         </div>
         <div className="mb-4">
           <H2>タグを編集する</H2>
@@ -287,10 +272,7 @@ export default function EditPost() {
             <p className="my-4">変更後：</p>
             <div className="flex flex-wrap">
               {selectedTags?.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2"
-                >
+                <span key={tag} className="bg-blue-500 text-white px-2 py-1 rounded-full mr-2 mb-2">
                   {tag}
                 </span>
               ))}
@@ -306,14 +288,9 @@ export default function EditPost() {
             name="postContent"
           />
         </div>
-        {errors.postContent && (
-          <p className="text-error">{errors.postContent.message}</p>
-        )}
+        {errors.postContent && <p className="text-error">{errors.postContent.message}</p>}
         <input type="hidden" name="userId" value={userUuid} />
-        <Turnstile
-          siteKey={CF_TURNSTILE_SITEKEY}
-          onSuccess={handleTurnstileSuccess}
-        />
+        <Turnstile siteKey={CF_TURNSTILE_SITEKEY} onSuccess={handleTurnstileSuccess} />
         <button
           type="submit"
           className="btn btn-primary disabled:btn-disabled"
@@ -323,9 +300,7 @@ export default function EditPost() {
           変更を保存する
         </button>
 
-        {errors.turnstileToken && (
-          <p className="text-error">{errors.turnstileToken.message}</p>
-        )}
+        {errors.turnstileToken && <p className="text-error">{errors.turnstileToken.message}</p>}
       </form>
       <div className="mb-4">
         <H2>編集履歴</H2>
@@ -351,38 +326,22 @@ export default function EditPost() {
                 postContentAfterEdit: string;
               }) => (
                 <tr key={edit.postRevisionNumber}>
-                  <td className="border px-2 py-2">
-                    {edit.postRevisionNumber}
-                  </td>
-                  <td className="border px-2 py-2">
-                    {edit.postEditDateJst.toLocaleString()}
-                  </td>
-                  <td className="border px-2 py-2">
-                    {edit.editorUserId.slice(0, 8)}
-                  </td>
+                  <td className="border px-2 py-2">{edit.postRevisionNumber}</td>
+                  <td className="border px-2 py-2">{edit.postEditDateJst.toLocaleString()}</td>
+                  <td className="border px-2 py-2">{edit.editorUserId.slice(0, 8)}</td>
                   <td className="border px-2 py-2">
                     {diff
-                      .diffChars(
-                        edit.postTitleBeforeEdit,
-                        edit.postTitleAfterEdit,
-                      )
+                      .diffChars(edit.postTitleBeforeEdit, edit.postTitleAfterEdit)
                       .map((part: diff.Change, index: number) => {
                         if (part.added || part.removed) {
-                          const start = Math.max(
-                            0,
-                            part.value.indexOf(part.value) - 50,
-                          );
+                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
                           const end = Math.min(
                             part.value.length,
                             part.value.indexOf(part.value) + 50,
                           );
                           const excerpt = part.value.slice(start, end);
                           return (
-                            <span
-                              className={
-                                part.added ? 'bg-green-200' : 'bg-red-200'
-                              }
-                            >
+                            <span className={part.added ? 'bg-green-200' : 'bg-red-200'}>
                               {excerpt}
                             </span>
                           );
@@ -392,27 +351,17 @@ export default function EditPost() {
                   </td>
                   <td className="border py-2">
                     {diff
-                      .diffLines(
-                        edit.postContentBeforeEdit,
-                        edit.postContentAfterEdit,
-                      )
+                      .diffLines(edit.postContentBeforeEdit, edit.postContentAfterEdit)
                       .map((part: diff.Change, index: number) => {
                         if (part.added || part.removed) {
-                          const start = Math.max(
-                            0,
-                            part.value.indexOf(part.value) - 50,
-                          );
+                          const start = Math.max(0, part.value.indexOf(part.value) - 50);
                           const end = Math.min(
                             part.value.length,
                             part.value.indexOf(part.value) + 50,
                           );
                           const excerpt = part.value.slice(start, end);
                           return (
-                            <span
-                              className={
-                                part.added ? 'bg-green-200' : 'bg-red-200'
-                              }
-                            >
+                            <span className={part.added ? 'bg-green-200' : 'bg-red-200'}>
                               {excerpt}
                             </span>
                           );
@@ -434,10 +383,7 @@ export const action: ActionFunction = async (args) => {
   const formData = await args.request.formData();
   const editData = Object.fromEntries(formData);
   const ipAddress = await getHashedUserIPAddress(args.request);
-  const isValidRequest = await validateRequest(
-    editData.turnstileToken as string,
-    ipAddress,
-  );
+  const isValidRequest = await validateRequest(editData.turnstileToken as string, ipAddress);
   if (!isValidRequest) {
     return {
       message: '認証に失敗しました。時間をおいて再度試してください。',
@@ -449,9 +395,7 @@ export const action: ActionFunction = async (args) => {
     postTitle: editData.postTitle.toString(),
     postContent: editData.postContent.toString(),
     tags:
-      typeof editData.tags === 'string'
-        ? editData.tags.split(',').map((tag) => tag.trim())
-        : [],
+      typeof editData.tags === 'string' ? editData.tags.split(',').map((tag) => tag.trim()) : [],
     userId: editData.userId.toString(),
     turnstileToken: editData.turnstileToken.toString(),
   } as unknown as PostEditSchema;
@@ -474,14 +418,9 @@ export const action: ActionFunction = async (args) => {
 
   const renderer = new marked.Renderer();
   renderer.table = (token: Tokens.Table) => {
-    const modifiedHeader = token.header
-      .map((cell) => `<td>${cell.text}</td>`)
-      .join('');
+    const modifiedHeader = token.header.map((cell) => `<td>${cell.text}</td>`).join('');
     const body = token.rows
-      .map(
-        (row) =>
-          `<tr>${row.map((cell) => `<td>${cell.text}</td>`).join('')}</tr>`,
-      )
+      .map((row) => `<tr>${row.map((cell) => `<td>${cell.text}</td>`).join('')}</tr>`)
       .join('');
     return `<table><tbody><tr>${modifiedHeader}</tr>${body}</tbody></table>`;
   };

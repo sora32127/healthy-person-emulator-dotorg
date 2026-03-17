@@ -32,11 +32,7 @@ export const CopyToClipboardButton = ({
 
   return (
     <div className="tooltip" data-tip="URLをクリップボードにコピー">
-      <button
-        type="button"
-        onClick={() => copy(textToCopy)}
-        className={buttonClass}
-      >
+      <button type="button" onClick={() => copy(textToCopy)} className={buttonClass}>
         <ClipboardIcon className={iconClass} />
       </button>
     </div>

@@ -1,9 +1,5 @@
 import { useLoaderData, NavLink, useFetcher } from 'react-router';
-import type {
-  LoaderFunctionArgs,
-  ActionFunctionArgs,
-  MetaFunction,
-} from 'react-router';
+import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from 'react-router';
 import parser from 'html-react-parser';
 import { Turnstile } from '@marsidev/react-turnstile';
 import {
@@ -25,9 +21,7 @@ import {
   isUserValid,
 } from '~/modules/session.server';
 import { H1, H2 } from '~/components/Headings';
-import CommentInputBox, {
-  type CommentFormInputs,
-} from '~/components/CommentInputBox';
+import CommentInputBox, { type CommentFormInputs } from '~/components/CommentInputBox';
 import PostShareButtonGroup from '~/components/PostShareButtonGroup';
 import ArrowBackIcon from '~/components/icons/ArrowBackIcon';
 import ClockIcon from '~/components/icons/ClockIcon';
@@ -72,10 +66,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { likedPages, dislikedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
   const isAuthenticated = await getAuthenticatedUser(request);
-  const isBookmarked = await judgeIsBookmarked(
-    postId,
-    isAuthenticated?.userUuid,
-  );
+  const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
 
   return {
@@ -102,8 +93,7 @@ export default function Component() {
     isBookmarked,
   } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
-  const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] =
-    useState(false);
+  const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [isDislikeAnimating, setIsDislikeAnimating] = useState(false);
   const isUserAuthenticated = isAuthenticated !== null;
@@ -304,17 +294,11 @@ export default function Component() {
     });
   };
   useEffect(() => {
-    if (
-      (bookmarkFetcher.data as { success: boolean; message: string })
-        ?.success === true
-    ) {
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === true) {
       setIsBookmarkSubmitting(false);
       toast.success((bookmarkFetcher.data as { message: string })?.message);
     }
-    if (
-      (bookmarkFetcher.data as { success: boolean; message: string })
-        ?.success === false
-    ) {
+    if ((bookmarkFetcher.data as { success: boolean; message: string })?.success === false) {
       setIsBookmarkSubmitting(false);
       toast.error((bookmarkFetcher.data as { message: string })?.message);
     }
@@ -418,9 +402,7 @@ export default function Component() {
               count={data.countDislikes}
               isAnimating={isDislikeAnimating}
               isVoted={isDisliked}
-              disabled={
-                isPageDislikeButtonPushed || isDisliked || isDislikeAnimating
-              }
+              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
               onClick={() => handlePostVote({ voteType: 'dislike' })}
             />
             <button
@@ -458,9 +440,7 @@ export default function Component() {
           <ul className="list-disc list-outside mb-4 ml-4">
             {data.similarPosts.map((post) => (
               <li key={post.postId} className="my-2">
-                <CommonNavLink to={`/archives/${post.postId}`}>
-                  {post.postTitle}
-                </CommonNavLink>
+                <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
               </li>
             ))}
           </ul>
@@ -488,10 +468,7 @@ export default function Component() {
           )}
         </div>
         <div className="my-8">
-          <PostShareButtonGroup
-            currentURL={data.postURL}
-            postTitle={data.postTitle}
-          />
+          <PostShareButtonGroup currentURL={data.postURL} postTitle={data.postTitle} />
         </div>
         <div>
           <SNSLinks
@@ -558,8 +535,7 @@ async function handleBookmarkPost(request: Request, postId: number) {
   if (!isAuthenticated) {
     return data(
       {
-        message:
-          '記事をブックマークするにはログインが必要です。ログインしてください。',
+        message: '記事をブックマークするにはログインが必要です。ログインしてください。',
         success: false,
       },
       { status: 401 },
@@ -570,32 +546,18 @@ async function handleBookmarkPost(request: Request, postId: number) {
   return data({ message: result.message, success: result.success });
 }
 
-async function handleSetVisitorRedirectURL(
-  formData: FormData,
-  request: Request,
-  postId: number,
-) {
+async function handleSetVisitorRedirectURL(formData: FormData, request: Request, postId: number) {
   const redirectURL = `/archives/${postId}`;
   const headers = await setVisitorCookieData(request, redirectURL);
-  return data(
-    { message: 'リダイレクトURLを設定しました', success: true },
-    { headers },
-  );
+  return data({ message: 'リダイレクトURLを設定しました', success: true }, { headers });
 }
 
-async function handleSetTurnstileToken(
-  formData: FormData,
-  request: Request,
-  ipAddress: string,
-) {
+async function handleSetTurnstileToken(formData: FormData, request: Request, ipAddress: string) {
   const token = formData.get('token')?.toString() || '';
   const isValidRequest = await validateRequest(token, ipAddress);
   if (!isValidRequest) {
     console.log('User validation failed');
-    return data(
-      { message: 'ユーザー検証に失敗しました', success: false },
-      { status: 400 },
-    );
+    return data({ message: 'ユーザー検証に失敗しました', success: false }, { status: 400 });
   }
   const session = await getSession(request.headers.get('Cookie'));
   session.set('isValidUser', true);
@@ -619,20 +581,14 @@ async function handleVotePost(
   try {
     const voteType = formData.get('voteType')?.toString();
     if (voteType !== 'like' && voteType !== 'dislike') {
-      return data(
-        { message: 'Invalid vote type', success: false },
-        { status: 400 },
-      );
+      return data({ message: 'Invalid vote type', success: false }, { status: 400 });
     }
     await recordPostVote(postId, voteType, userIpHashString);
     const session = await getSession(request.headers.get('Cookie'));
     if (voteType === 'like') {
       session.set('likedPages', [...(session.get('likedPages') || []), postId]);
     } else if (voteType === 'dislike') {
-      session.set('dislikedPages', [
-        ...(session.get('dislikedPages') || []),
-        postId,
-      ]);
+      session.set('dislikedPages', [...(session.get('dislikedPages') || []), postId]);
     }
     return data(
       { message: '投稿を評価しました', success: true },
@@ -644,10 +600,7 @@ async function handleVotePost(
     );
   } catch (error) {
     console.error(error);
-    return data(
-      { message: 'Internal Server Error', success: false },
-      { status: 500 },
-    );
+    return data({ message: 'Internal Server Error', success: false }, { status: 500 });
   }
 }
 
@@ -660,23 +613,12 @@ async function handleVoteComment(
   try {
     const voteType = formData.get('voteType')?.toString();
     const commentId = Number(formData.get('commentId'));
-    await recordCommentVote(
-      postId,
-      commentId,
-      voteType as 'like' | 'dislike',
-      userIpHashString,
-    );
+    await recordCommentVote(postId, commentId, voteType as 'like' | 'dislike', userIpHashString);
     const session = await getSession(request.headers.get('Cookie'));
     if (voteType === 'like') {
-      session.set('likedComments', [
-        ...(session.get('likedComments') || []),
-        commentId,
-      ]);
+      session.set('likedComments', [...(session.get('likedComments') || []), commentId]);
     } else if (voteType === 'dislike') {
-      session.set('dislikedComments', [
-        ...(session.get('dislikedComments') || []),
-        commentId,
-      ]);
+      session.set('dislikedComments', [...(session.get('dislikedComments') || []), commentId]);
     }
     return data(
       { message: 'コメントを評価しました', success: true },
@@ -688,18 +630,11 @@ async function handleVoteComment(
     );
   } catch (error) {
     console.error(error);
-    return data(
-      { message: 'Internal Server Error', success: false },
-      { status: 500 },
-    );
+    return data({ message: 'Internal Server Error', success: false }, { status: 500 });
   }
 }
 
-async function handleSubmitComment(
-  formData: FormData,
-  postId: number,
-  userIpHashString: string,
-) {
+async function handleSubmitComment(formData: FormData, postId: number, userIpHashString: string) {
   try {
     const commentAuthor = formData.get('commentAuthor')?.toString();
     const commentContent = formData.get('commentContent')?.toString() || '';
@@ -714,10 +649,7 @@ async function handleSubmitComment(
     return data({ message: 'コメントを投稿しました', success: true });
   } catch (e) {
     console.error(e);
-    return data(
-      { message: 'Internal Server Error', success: false },
-      { status: 500 },
-    );
+    return data({ message: 'Internal Server Error', success: false }, { status: 500 });
   }
 }
 

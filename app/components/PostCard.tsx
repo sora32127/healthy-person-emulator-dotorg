@@ -60,9 +60,7 @@ export default function PostCard({
             {countComments !== undefined && (
               <div className="flex items-center">
                 <CommentIcon />
-                <span className="text-sm text-base-content ml-1">
-                  {countComments}
-                </span>
+                <span className="text-sm text-base-content ml-1">{countComments}</span>
               </div>
             )}
           </div>
@@ -86,18 +84,13 @@ export default function PostCard({
             {displayedTags.map(
               (tag, index) =>
                 tag && (
-                  <span
-                    key={`${tag}-${postId}-${identifier}`}
-                    className="inline-block mr-1 mb-1"
-                  >
+                  <span key={`${tag}-${postId}-${identifier}`} className="inline-block mr-1 mb-1">
                     <TagCard tagName={tag} />
                   </span>
                 ),
             )}
             {hiddenTagsCount > 0 && (
-              <span className="inline-block text-base-content">
-                (+{hiddenTagsCount}タグ)
-              </span>
+              <span className="inline-block text-base-content">(+{hiddenTagsCount}タグ)</span>
             )}
           </div>
         </div>

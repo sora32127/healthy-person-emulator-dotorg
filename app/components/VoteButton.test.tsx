@@ -68,9 +68,7 @@ describe('VoteButton', () => {
         onClick={() => {}}
       />,
     );
-    expect(screen.getByRole('button')).toHaveClass(
-      'animate-voteSpin bg-base-300',
-    );
+    expect(screen.getByRole('button')).toHaveClass('animate-voteSpin bg-base-300');
   });
 
   it('投票済みの場合は適切なクラスが適用される', () => {
@@ -84,8 +82,6 @@ describe('VoteButton', () => {
         onClick={() => {}}
       />,
     );
-    expect(screen.getByRole('button')).toHaveClass(
-      'text-blue-500 font-bold bg-base-300',
-    );
+    expect(screen.getByRole('button')).toHaveClass('text-blue-500 font-bold bg-base-300');
   });
 });

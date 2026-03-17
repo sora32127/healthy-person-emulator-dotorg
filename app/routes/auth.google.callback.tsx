@@ -1,9 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
-import {
-  authenticator,
-  setAuthenticatedUser,
-} from '~/modules/auth.google.server';
+import { authenticator, setAuthenticatedUser } from '~/modules/auth.google.server';
 import { getVisitorCookieURL } from '~/modules/visitor.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

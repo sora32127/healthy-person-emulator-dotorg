@@ -20,19 +20,13 @@ export default function BeSponsor() {
       <br />
       <ul className="list-disc list-inside text-center">
         <li>
-          <a
-            href="https://supabase.com/pricing"
-            className="text-info underline underline-offset-4"
-          >
+          <a href="https://supabase.com/pricing" className="text-info underline underline-offset-4">
             Supabase Pro Plan
           </a>
           : $25/月
         </li>
         <li>
-          <a
-            href="https://vercel.com/pricing"
-            className="text-info underline underline-offset-4"
-          >
+          <a href="https://vercel.com/pricing" className="text-info underline underline-offset-4">
             Vercel Pro Plan
           </a>{' '}
           : $20/月
@@ -52,11 +46,7 @@ export default function BeSponsor() {
       </a>
       <div className="text-center mt-6">
         <p>以下のQRコードから支払うことも可能です。</p>
-        <img
-          src={fanboxQRCode}
-          alt="Stripe QR Code"
-          className="mx-auto md:h-96 mt-6"
-        />
+        <img src={fanboxQRCode} alt="Stripe QR Code" className="mx-auto md:h-96 mt-6" />
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
-const CF_TURNSTILE_VERIFY_ENDPOINT =
-  'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
 const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
 const GOOGLE_GENERATIVE_API_KEY =
@@ -54,15 +53,11 @@ export async function getHashedUserIPAddress(request: Request) {
   const headers = request.headers;
   const ipAddressFromXForwardedFor = headers.get('X-Forwarded-For');
   const ipAddressFromCFConnectingIp = headers.get('CF-Connecting-IP');
-  const ipAddress =
-    ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || '';
+  const ipAddress = ipAddressFromCFConnectingIp || ipAddressFromXForwardedFor || '';
   return ipAddress;
 }
 
-export async function getJudgeWelcomedByGenerativeAI(
-  postContent: string,
-  postTitle: string,
-) {
+export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string) {
   if (!GOOGLE_GENERATIVE_API_KEY) {
     throw new Error('GOOGLE_GENERATIVE_API_KEY is not set');
   }
@@ -76,8 +71,7 @@ export async function getJudgeWelcomedByGenerativeAI(
     type: SchemaType.OBJECT,
     properties: {
       isWelcomed: {
-        description:
-          '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
+        description: '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
         type: SchemaType.BOOLEAN,
       },
       explanation: {
@@ -131,9 +125,7 @@ export async function getJudgeWelcomedByGenerativeAI(
 
   const result = await model.generateContent(prompt);
   const parsedResult =
-    JSON.parse(
-      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '',
-    ) || {};
+    JSON.parse(result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') || {};
   return {
     isWelcomed: parsedResult.isWelcomed,
     explanation: parsedResult.explanation,

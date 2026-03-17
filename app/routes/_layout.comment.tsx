@@ -1,8 +1,4 @@
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from 'react-router';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { redirect } from 'react-router';
 import { useLoaderData, useSubmit } from 'react-router';
 import CommentSection from '~/components/CommentSection';
@@ -34,9 +30,7 @@ export default function Comment() {
   const submit = useSubmit();
   const currentPage = commentFeedData.meta.currentPage;
   const totalCount = commentFeedData.meta.totalCount;
-  const totalPages = Math.ceil(
-    commentFeedData.meta.totalCount / commentFeedData.meta.chunkSize,
-  );
+  const totalPages = Math.ceil(commentFeedData.meta.totalCount / commentFeedData.meta.chunkSize);
 
   const handleFeedTypeChange = (orderby: string) => {
     const formData = new FormData();

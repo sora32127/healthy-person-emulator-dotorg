@@ -8,11 +8,7 @@ type CommentSectionProps = {
   children?: React.ReactNode;
 };
 
-export default function CommentSection({
-  title,
-  comments,
-  children,
-}: CommentSectionProps) {
+export default function CommentSection({ title, comments, children }: CommentSectionProps) {
   return (
     <section className="recent-comments">
       <H2>{title}</H2>

@@ -1,6 +1,6 @@
 @font-face {
-  font-family: "Noto Sans JP";
-  src: url("/fonts/NotoSansJP-Medium.ttf") format("truetype");
+  font-family: 'Noto Sans JP';
+  src: url('/fonts/NotoSansJP-Medium.ttf') format('truetype');
   font-weight: 400;
   font-display: optional;
 }
@@ -71,14 +71,20 @@ h1 {
 }
 
 .markdownEditorPreview th {
-  @apply bg-inherit text-left font-normal } svg { @apply fill-current;
+  @apply bg-inherit text-left font-normal;
+}
+svg {
+  @apply fill-current;
 }
 
 .btn-primary {
   @apply bg-primary;
   @apply text-slate-950;
   @apply hover:bg-teal-100;
-  @apply font-bold } .btn-secondary { @apply bg-base-200;
+  @apply font-bold;
+}
+.btn-secondary {
+  @apply bg-base-200;
   @apply text-base-content;
   @apply hover:bg-base-300;
   @apply font-bold;

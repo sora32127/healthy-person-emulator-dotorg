@@ -19,7 +19,6 @@ import type { UseFormRegister } from 'react-hook-form';
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   register?: UseFormRegister<any>;
   name?: string;
 }
@@ -64,10 +63,7 @@ export function MarkdownEditor({
 
       onChange(newText);
       textarea.focus();
-      textarea.setSelectionRange(
-        selectionStart + prefix.length,
-        selectionEnd + prefix.length,
-      );
+      textarea.setSelectionRange(selectionStart + prefix.length, selectionEnd + prefix.length);
     },
     [value, onChange],
   );
@@ -96,21 +92,13 @@ export function MarkdownEditor({
 
   const renderToolbarButton = (item: ToolbarItem, index: number) => (
     <div key={index} className="tooltip" data-tip={item.label}>
-      <button
-        onClick={item.action}
-        type="button"
-        className="btn btn-sm btn-ghost"
-      >
+      <button onClick={item.action} type="button" className="btn btn-sm btn-ghost">
         <item.icon />
       </button>
     </div>
   );
 
-  const renderModeButton = (
-    modeType: 'edit' | 'preview',
-    icon: IconType,
-    tooltip: string,
-  ) => (
+  const renderModeButton = (modeType: 'edit' | 'preview', icon: IconType, tooltip: string) => (
     <div className="tooltip" data-tip={tooltip}>
       <button
         onClick={() => setMode(modeType)}
