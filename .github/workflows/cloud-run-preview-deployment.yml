@@ -2,11 +2,15 @@ name: Preview Deployment
 
 on:
   pull_request_target:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
-  gsls:
+  deploy:
     runs-on: ubuntu-latest
     environment: preview
     permissions:
@@ -18,20 +22,35 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+      - name: Auth to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
           workload_identity_provider: 'projects/793318155385/locations/global/workloadIdentityPools/github-actions-pool-3/providers/github-actions-provider-3'
           service_account: 'github-actions@healthy-person-emulator.iam.gserviceaccount.com'
 
-      - name: Deploy
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Build and push
+        uses: docker/build-push-action@14487ce63c7a62a4a0e84f15b657163f7fb78dd4 # v6.16.0
+        with:
+          context: .
+          push: true
+          tags: asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.event.pull_request.head.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy preview-healthy-person-emulator-dotorg --source . \
-           --region=asia-northeast1 \
-           --concurrency=1 \
-           --memory=2Gi \
-           --cpu=2 \
-           --timeout=300 \
-           --project=healthy-person-emulator \
-           --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com \
-           --verbosity=debug \
-           --base-image nodejs22
+          gcloud run deploy preview-healthy-person-emulator-dotorg \
+            --image asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.event.pull_request.head.sha }} \
+            --region=asia-northeast1 \
+            --concurrency=1 \
+            --memory=2Gi \
+            --cpu=2 \
+            --timeout=300 \
+            --project=healthy-person-emulator \
+            --service-account=github-actions@healthy-person-emulator.iam.gserviceaccount.com

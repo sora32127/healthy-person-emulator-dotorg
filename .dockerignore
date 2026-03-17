@@ -41,7 +41,6 @@ temp
 
 # Docker
 compose.*.yml
-Dockerfile*
 .dockerignore
 
 # Documentation
