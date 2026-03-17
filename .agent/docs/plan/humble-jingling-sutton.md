@@ -181,12 +181,19 @@ const repo = process.env.USE_D1 === 'true'
 - ✅ `app/drizzle/schema.ts` (248行) — 全13テーブルのDrizzle SQLiteスキーマ
 - ✅ `app/drizzle/utils.ts` (10行) — nowUTC/nowJSTヘルパー
 - ✅ `app/repositories/d1.server.ts` (1,300行) — D1/Drizzle実装（全39関数）
-- ✅ `scripts/migrate-pg-to-d1.ts` — データ移行スクリプト（260,601行のSQL生成済み）
-- ✅ `scripts/d1-migration/` — 11テーブルのINSERT SQLファイル（dim_posts: 146,591行等）
+- ✅ `scripts/migrate-pg-to-d1.ts` — データ移行スクリプト
+- ✅ D1データベース作成: `healthy-person-emulator-db` (APAC, ID: `1d5558b5-f0c7-4c13-9af9-82856367bfb9`)
+- ✅ スキーマ適用: Drizzle migration → D1に13テーブル作成
+- ✅ データ移行完了: 全11テーブル、260,601行、79.45MB
+  - dim_posts: 11,229行 / rel_post_tags: 42,428行 / dim_comments: 25,574行
+  - fct_post_vote_history: 61,742行 / fct_comment_vote_history: 116,051行
+  - その他: dim_tags(1,024), dim_users(505), fct_post_edit_history(450), etc.
+  - AI completion系2テーブルはDBに存在しないためスキップ
 - ✅ ビルド・テスト全パス
-- ⏳ Cloudflareリソース作成（D1, R2）は実環境セットアップ時に実施
-- ⏳ Parquetファイル移行（GCS→R2）は実環境セットアップ時に実施
-- ⏳ Cloud Run上でのD1検証（2.5）は実環境セットアップ後に実施
+- ✅ `drizzle-orm`, `drizzle-kit`, `@cloudflare/workers-types` を依存に追加
+- ⏭️ Parquetファイル移行（GCS→R2）はスコープ外（R2リソースは作成済み）
+- ⏭️ Cloud Run上でのD1検証（2.5）はPhase 3以降で実施
+- ⚠️ 移行時点のスナップショット。移行〜切替の間にPostgreSQL側で変更が発生する前提
 
 ---
 
