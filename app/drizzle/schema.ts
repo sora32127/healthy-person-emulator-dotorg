@@ -38,6 +38,8 @@ export const dimPosts = sqliteTable(
     misskeyNoteIdOfFirstNote: text("misskey_note_id_of_first_note"),
     isWelcomed: integer("is_welcomed", { mode: "boolean" }),
     isWelcomedExplanation: text("is_welcomed_explanation"),
+    isSnsPickuped: integer("is_sns_pickuped", { mode: "boolean" }).default(false),
+    isSnsShared: integer("is_sns_shared", { mode: "boolean" }).default(false),
   },
   (table) => [
     uniqueIndex("idx_dim_posts_uuid").on(table.uuid),

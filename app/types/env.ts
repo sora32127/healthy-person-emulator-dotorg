@@ -21,6 +21,7 @@ export interface CloudflareEnv {
   VECTORIZE_INDEX_NAME: string;
   GOOGLE_REDIRECT_URI: string;
   GCS_PARQUET_BASE_URL: string;
+  INTERNAL_API_KEY: string;
   // Optional
   NODE_ENV?: string;
 }
