@@ -48,6 +48,9 @@ Dockerfile*
 *.md
 docs
 
+# Agent files
+.agent
+
 # Tests
 tests
 test
