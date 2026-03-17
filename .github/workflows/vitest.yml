@@ -38,7 +38,7 @@ jobs:
           pnpm prisma generate
       - name: Run Vitest
         run: |
-          pnpm exec vitest --coverage
+          pnpm exec vp test --coverage
       - name: Show coverage
         uses: davelosert/vitest-coverage-report-action@v2
         if: always()
