@@ -24,7 +24,8 @@ jobs:
       - name: Build and push image
         run: |
           gcloud builds submit \
-            --tag asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.sha }} \
+            --config=cloudbuild.yaml \
+            --substitutions=_IMAGE=asia-northeast1-docker.pkg.dev/healthy-person-emulator/cloud-run-source-deploy/preview-healthy-person-emulator-dotorg:${{ github.sha }} \
             --project=healthy-person-emulator \
             --region=asia-northeast1
 
