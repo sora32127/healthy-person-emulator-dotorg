@@ -291,7 +291,10 @@ index_name = "embeddings-index"
 - ✅ `wrangler.toml`, `worker.ts` 新規作成
 - ✅ `@react-router/cloudflare` 追加、`@react-router/node`, `@react-router/serve`, `@google-cloud/storage` 削除
 - ✅ ビルド・テスト全パス（7テスト）
-- ⏳ ローカル動作確認（`wrangler dev`）は未実施
+- ✅ ローカル動作確認（`wrangler dev --local`）成功 — トップページ200 OK、記事詳細ページ表示
+- ✅ `globalThis.__cloudflareEnv`経由のauto-initで worker.ts/build間のモジュールスコープ分離問題を解決
+- ✅ `getSimilarPosts`, `createEmbedding` — AI/Vectorize未接続時にgraceful fallback
+- ✅ Parquet配信はGCSのまま維持（`gcloud.server.ts`をベースURL方式に変更）
 - ⚠️ cloudflare.server.tsはREST API版を維持（スクリプトとの互換性のため）。ネイティブバインディング切替は後日
 
 ---
@@ -313,8 +316,18 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - **この修正は本プラン外（別リポジトリ）だが、Phase 5の前提条件**
 
 ### 4.3 BigQuery ETL
-- `dlt`パイプラインのソースをPostgreSQL → 内部APIまたはD1 HTTP APIに変更
-- **または**: D1からのデータエクスポートをWorkers Cronで実行し、R2経由でBigQueryにロード
+- スコープ外
+
+### Phase 4 実施結果（2026-03-18）
+- ✅ `app/routes/api.internal.$.tsx` — 4つの内部APIエンドポイント（X-API-Key認証）
+  - `GET /api/internal/posts-for-pickup` — 未投稿&人気記事取得
+  - `POST /api/internal/mark-picked-up` — SNS投稿済みマーク
+  - `POST /api/internal/update-social-ids` — SNS投稿ID書き戻し
+  - `POST /api/internal/add-tag-to-post` — タグ追加（伝説記事用）
+- ✅ `is_sns_pickuped`, `is_sns_shared` カラムをDrizzleスキーマ + D1に追加
+- ✅ PostgreSQL → D1へフラグ値同期済み（pickuped: 1,617件、shared: 11,158件）
+- ✅ ビルド・テスト全パス
+- ⏭️ 自動化プログラム側の修正（別リポジトリ）は本プラン外
 
 ---
 
@@ -400,8 +413,8 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 | 1 | Repository層導入 | 3-4日 | ✅ 完了 |
 | 2 | Drizzle/D1実装 + データ移行 | 7-10日 | ✅ 完了 |
 | 3 | Workers ランタイム移行 | 4-5日 | ✅ 完了 |
-| 4 | 外部依存の切り離し | 2-3日 | ⬜ 次 |
-| 5 | デプロイパイプライン + カットオーバー | 2-3日 | ⬜ |
+| 4 | 外部依存の切り離し | 2-3日 | ✅ 完了 |
+| 5 | デプロイパイプライン + カットオーバー | 2-3日 | ⬜ 次 |
 | 6 | テスト・検証 | 3-4日 | ⬜ |
 | **合計** | | **23-32日** | |
 
