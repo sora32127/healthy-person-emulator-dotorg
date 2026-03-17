@@ -278,6 +278,22 @@ index_name = "embeddings-index"
 
 ### ロールバック: Cloud Run + PostgreSQL + GCSにDNS切り戻し
 
+### Phase 3 実施結果（2026-03-18）
+- ✅ `entry.server.tsx` — Node.js streams → Web Streams API (`renderToReadableStream`)
+- ✅ `vite.config.ts` — `cloudflareDevProxy()` 追加、`vite-plus` → 標準 `vite`
+- ✅ 全6サーバーモジュールをlazy initパターンに変更（`process.env`除去）
+  - `session.server.ts`, `auth.google.server.ts`, `security.server.ts`
+  - `cloudflare.server.ts`, `visitor.server.ts`, `db.server.ts`
+- ✅ `load-context.ts` — 全モジュール初期化の統合ポイント（`initializeApp`）
+- ✅ `types/env.ts` — `CloudflareEnv` 型定義
+- ✅ `db.server.ts` — Prisma → D1 Repository 切替
+- ✅ `gcloud.server.ts` → `r2.server.ts` + `api.parquet.$.tsx` (R2 Parquet配信)
+- ✅ `wrangler.toml`, `worker.ts` 新規作成
+- ✅ `@react-router/cloudflare` 追加、`@react-router/node`, `@react-router/serve`, `@google-cloud/storage` 削除
+- ✅ ビルド・テスト全パス（7テスト）
+- ⏳ ローカル動作確認（`wrangler dev`）は未実施
+- ⚠️ cloudflare.server.tsはREST API版を維持（スクリプトとの互換性のため）。ネイティブバインディング切替は後日
+
 ---
 
 ## Phase 4: 外部依存の切り離し
@@ -383,8 +399,8 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 | 0 | D1適合性PoC | 2-3日 | ✅ 完了 |
 | 1 | Repository層導入 | 3-4日 | ✅ 完了 |
 | 2 | Drizzle/D1実装 + データ移行 | 7-10日 | ✅ 完了 |
-| 3 | Workers ランタイム移行 | 4-5日 | ⬜ 次 |
-| 4 | 外部依存の切り離し | 2-3日 | ⬜ |
+| 3 | Workers ランタイム移行 | 4-5日 | ✅ 完了 |
+| 4 | 外部依存の切り離し | 2-3日 | ⬜ 次 |
 | 5 | デプロイパイプライン + カットオーバー | 2-3日 | ⬜ |
 | 6 | テスト・検証 | 3-4日 | ⬜ |
 | **合計** | | **23-32日** | |
