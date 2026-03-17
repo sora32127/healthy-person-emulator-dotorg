@@ -93,22 +93,28 @@ export const getLikedCommentsForTest = (...args: Parameters<DatabaseRepository['
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 
 async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
-  const { getVectorsByIds, querySimilar } = await import('./cloudflare.server');
+  try {
+    const { getVectorsByIds, querySimilar } = await import('./cloudflare.server');
 
-  const vectors = await getVectorsByIds([String(postId)]);
-  if (vectors.length === 0 || !vectors[0].values) {
+    const vectors = await getVectorsByIds([String(postId)]);
+    if (vectors.length === 0 || !vectors[0].values) {
+      return [];
+    }
+
+    const matches = await querySimilar(vectors[0].values, 17);
+
+    return matches
+      .filter((m) => m.id !== String(postId))
+      .slice(0, 15)
+      .map((m) => ({
+        postId: Number(m.metadata?.postId ?? m.id),
+        postTitle: String(m.metadata?.postTitle ?? ''),
+      }));
+  } catch (error) {
+    // Vectorize/AI unavailable (e.g. local dev) — return empty
+    console.warn('getSimilarPosts failed, returning empty:', (error as Error).message);
     return [];
   }
-
-  const matches = await querySimilar(vectors[0].values, 17);
-
-  return matches
-    .filter((m) => m.id !== String(postId))
-    .slice(0, 15)
-    .map((m) => ({
-      postId: Number(m.metadata?.postId ?? m.id),
-      postTitle: String(m.metadata?.postTitle ?? ''),
-    }));
 }
 
 // --- ArchiveDataEntry: orchestrator combining repo + getSimilarPosts ---
