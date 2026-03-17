@@ -1,12 +1,11 @@
+import { cloudflareDevProxy } from '@react-router/dev/vite/cloudflare';
 import { reactRouter } from '@react-router/dev/vite';
-import { type ConfigEnv, defineConfig, loadEnv } from 'vite-plus';
+import { defineConfig } from 'vite';
+import { getLoadContext } from './app/load-context';
 
-export default defineConfig(({ mode }: ConfigEnv) => {
-  process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
-  return defineConfig({
-    resolve: {
-      tsconfigPaths: true,
-    },
-    plugins: [reactRouter()],
-  });
+export default defineConfig({
+  plugins: [
+    cloudflareDevProxy({ getLoadContext }),
+    reactRouter(),
+  ],
 });

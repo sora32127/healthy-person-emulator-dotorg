@@ -1,0 +1,24 @@
+name = "healthy-person-emulator-dotorg"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+main = "worker.ts"
+assets = { directory = "build/client" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "healthy-person-emulator-db"
+database_id = "1d5558b5-f0c7-4c13-9af9-82856367bfb9"
+
+[[r2_buckets]]
+binding = "PARQUET_BUCKET"
+bucket_name = "hpe-parquet"
+
+[ai]
+binding = "AI"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "embeddings-index"
+
+[vars]
+BASE_URL = "https://healthy-person-emulator.org"

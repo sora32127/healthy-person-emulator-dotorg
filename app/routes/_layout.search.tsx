@@ -14,8 +14,8 @@ import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import { H1 } from '~/components/Headings';
 import { useAtom } from 'jotai';
 import { searchResultsAtom } from '~/stores/search';
-import { generateDownloadSignedUrl } from '~/modules/gcloud.server';
-import type { ActionFunctionArgs, MetaFunction } from 'react-router';
+import { generateDownloadSignedUrl } from '~/modules/r2.server';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 
 export const meta: MetaFunction = ({ location }) => {
@@ -60,9 +60,10 @@ export const meta: MetaFunction = ({ location }) => {
   });
 };
 
-export async function loader() {
-  const SEARCH_PARQUET_FILE_NAME = process.env.SEARCH_PARQUET_FILE_NAME;
-  const TAGS_PARQUET_FILE_NAME = process.env.TAGS_PARQUET_FILE_NAME;
+export async function loader({ context }: LoaderFunctionArgs) {
+  const env = (context as any).cloudflare.env;
+  const SEARCH_PARQUET_FILE_NAME = env.SEARCH_PARQUET_FILE_NAME;
+  const TAGS_PARQUET_FILE_NAME = env.TAGS_PARQUET_FILE_NAME;
   if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME) {
     throw new Error('Search or tags parquet file name is not set');
   }

@@ -1,4 +1,5 @@
-import { createPrismaRepository } from '../repositories/prisma.server';
+import { createD1Repository } from '../repositories/d1.server';
+import type { DatabaseRepository } from '../repositories/types';
 import type {
   PostData,
   CommentData,
@@ -33,45 +34,55 @@ export type {
   CommentFeedData,
 } from '../repositories/types';
 
-const repo = createPrismaRepository();
+let _repo: DatabaseRepository | null = null;
+
+export function initDb(d1: D1Database) {
+  if (_repo) return;
+  _repo = createD1Repository(d1);
+}
+
+function getRepo(): DatabaseRepository {
+  if (!_repo) throw new Error('DB not initialized. Call initDb first.');
+  return _repo;
+}
 
 // Re-export all repository functions
-export const getPostDataForSitemap = repo.getPostDataForSitemap;
-export const getTagNamesByPostId = repo.getTagNamesByPostId;
-export const createPostWithTags = repo.createPostWithTags;
-export const getUserId = repo.getUserId;
-export const getBookmarkPostsByPagenation = repo.getBookmarkPostsByPagenation;
-export const addOrRemoveBookmark = repo.addOrRemoveBookmark;
-export const recordPostVote = repo.recordPostVote;
-export const recordCommentVote = repo.recordCommentVote;
-export const createPostComment = repo.createPostComment;
-export const judgeIsBookmarked = repo.judgeIsBookmarked;
-export const getRecentPostsByTagId = repo.getRecentPostsByTagId;
-export const getRecentComments = repo.getRecentComments;
-export const getRandomPosts = repo.getRandomPosts;
-export const getRandomComments = repo.getRandomComments;
-export const getFeedPosts = repo.getFeedPosts;
-export const getFeedComments = repo.getFeedComments;
-export const getTagsCounts = repo.getTagsCounts;
-export const getStopWords = repo.getStopWords;
-export const updatePostWelcomed = repo.updatePostWelcomed;
-export const getUserEditHistory = repo.getUserEditHistory;
-export const getNowEditingInfo = repo.getNowEditingInfo;
-export const getPostForEditing = repo.getPostForEditing;
-export const getPostEditHistory = repo.getPostEditHistory;
-export const updatePostWithTagsAndHistory = repo.updatePostWithTagsAndHistory;
-export const upsertNowEditingInfo = repo.upsertNowEditingInfo;
-export const findUserByEmail = repo.findUserByEmail;
-export const createGoogleUser = repo.createGoogleUser;
+export const getPostDataForSitemap = (...args: Parameters<DatabaseRepository['getPostDataForSitemap']>) => getRepo().getPostDataForSitemap(...args);
+export const getTagNamesByPostId = (...args: Parameters<DatabaseRepository['getTagNamesByPostId']>) => getRepo().getTagNamesByPostId(...args);
+export const createPostWithTags = (...args: Parameters<DatabaseRepository['createPostWithTags']>) => getRepo().createPostWithTags(...args);
+export const getUserId = (...args: Parameters<DatabaseRepository['getUserId']>) => getRepo().getUserId(...args);
+export const getBookmarkPostsByPagenation = (...args: Parameters<DatabaseRepository['getBookmarkPostsByPagenation']>) => getRepo().getBookmarkPostsByPagenation(...args);
+export const addOrRemoveBookmark = (...args: Parameters<DatabaseRepository['addOrRemoveBookmark']>) => getRepo().addOrRemoveBookmark(...args);
+export const recordPostVote = (...args: Parameters<DatabaseRepository['recordPostVote']>) => getRepo().recordPostVote(...args);
+export const recordCommentVote = (...args: Parameters<DatabaseRepository['recordCommentVote']>) => getRepo().recordCommentVote(...args);
+export const createPostComment = (...args: Parameters<DatabaseRepository['createPostComment']>) => getRepo().createPostComment(...args);
+export const judgeIsBookmarked = (...args: Parameters<DatabaseRepository['judgeIsBookmarked']>) => getRepo().judgeIsBookmarked(...args);
+export const getRecentPostsByTagId = (...args: Parameters<DatabaseRepository['getRecentPostsByTagId']>) => getRepo().getRecentPostsByTagId(...args);
+export const getRecentComments = (...args: Parameters<DatabaseRepository['getRecentComments']>) => getRepo().getRecentComments(...args);
+export const getRandomPosts = (...args: Parameters<DatabaseRepository['getRandomPosts']>) => getRepo().getRandomPosts(...args);
+export const getRandomComments = (...args: Parameters<DatabaseRepository['getRandomComments']>) => getRepo().getRandomComments(...args);
+export const getFeedPosts = (...args: Parameters<DatabaseRepository['getFeedPosts']>) => getRepo().getFeedPosts(...args);
+export const getFeedComments = (...args: Parameters<DatabaseRepository['getFeedComments']>) => getRepo().getFeedComments(...args);
+export const getTagsCounts = (...args: Parameters<DatabaseRepository['getTagsCounts']>) => getRepo().getTagsCounts(...args);
+export const getStopWords = (...args: Parameters<DatabaseRepository['getStopWords']>) => getRepo().getStopWords(...args);
+export const updatePostWelcomed = (...args: Parameters<DatabaseRepository['updatePostWelcomed']>) => getRepo().updatePostWelcomed(...args);
+export const getUserEditHistory = (...args: Parameters<DatabaseRepository['getUserEditHistory']>) => getRepo().getUserEditHistory(...args);
+export const getNowEditingInfo = (...args: Parameters<DatabaseRepository['getNowEditingInfo']>) => getRepo().getNowEditingInfo(...args);
+export const getPostForEditing = (...args: Parameters<DatabaseRepository['getPostForEditing']>) => getRepo().getPostForEditing(...args);
+export const getPostEditHistory = (...args: Parameters<DatabaseRepository['getPostEditHistory']>) => getRepo().getPostEditHistory(...args);
+export const updatePostWithTagsAndHistory = (...args: Parameters<DatabaseRepository['updatePostWithTagsAndHistory']>) => getRepo().updatePostWithTagsAndHistory(...args);
+export const upsertNowEditingInfo = (...args: Parameters<DatabaseRepository['upsertNowEditingInfo']>) => getRepo().upsertNowEditingInfo(...args);
+export const findUserByEmail = (...args: Parameters<DatabaseRepository['findUserByEmail']>) => getRepo().findUserByEmail(...args);
+export const createGoogleUser = (...args: Parameters<DatabaseRepository['createGoogleUser']>) => getRepo().createGoogleUser(...args);
 
 // Test helpers
-export const getOldestPostIdsForTest = repo.getOldestPostIdsForTest;
-export const getNewestPostIdsForTest = repo.getNewestPostIdsForTest;
-export const getUnboundedLikesPostIdsForTest = repo.getUnboundedLikesPostIdsForTest;
-export const getRecentCommentIdsForTest = repo.getRecentCommentIdsForTest;
-export const getOldestCommentIdsForTest = repo.getOldestCommentIdsForTest;
-export const getUnboundedLikesCommentIdsForTest = repo.getUnboundedLikesCommentIdsForTest;
-export const getLikedCommentsForTest = repo.getLikedCommentsForTest;
+export const getOldestPostIdsForTest = (...args: Parameters<DatabaseRepository['getOldestPostIdsForTest']>) => getRepo().getOldestPostIdsForTest(...args);
+export const getNewestPostIdsForTest = (...args: Parameters<DatabaseRepository['getNewestPostIdsForTest']>) => getRepo().getNewestPostIdsForTest(...args);
+export const getUnboundedLikesPostIdsForTest = (...args: Parameters<DatabaseRepository['getUnboundedLikesPostIdsForTest']>) => getRepo().getUnboundedLikesPostIdsForTest(...args);
+export const getRecentCommentIdsForTest = (...args: Parameters<DatabaseRepository['getRecentCommentIdsForTest']>) => getRepo().getRecentCommentIdsForTest(...args);
+export const getOldestCommentIdsForTest = (...args: Parameters<DatabaseRepository['getOldestCommentIdsForTest']>) => getRepo().getOldestCommentIdsForTest(...args);
+export const getUnboundedLikesCommentIdsForTest = (...args: Parameters<DatabaseRepository['getUnboundedLikesCommentIdsForTest']>) => getRepo().getUnboundedLikesCommentIdsForTest(...args);
+export const getLikedCommentsForTest = (...args: Parameters<DatabaseRepository['getLikedCommentsForTest']>) => getRepo().getLikedCommentsForTest(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 
@@ -117,10 +128,6 @@ export class ArchiveDataEntry {
   blueskyPostUriOfFirstPost: string | null;
   misskeyNoteIdOfFirstNote: string | null;
   countBookmarks: number;
-  /*
-    - TypeScript/JavaScriptの仕様上、constructorには非同期処理を利用できない
-    - 回避策として、初期化処理を通じてコンストラクタを呼び出している
-    */
 
   private constructor(
     postData: PostData,
@@ -153,6 +160,7 @@ export class ArchiveDataEntry {
   }
 
   static async getData(postId: number) {
+    const repo = getRepo();
     const postData = await repo.getPostByPostId(postId);
     const comments = await repo.getCommentsByPostId(postId);
     const similarPosts = await getSimilarPosts(postId);
