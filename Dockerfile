@@ -16,6 +16,7 @@ RUN vp exec prisma generate
 
 COPY . .
 RUN vp build
+RUN ls -la build/server/ && head -1 build/server/index.js && cat package.json | grep type
 
 ENV NODE_ENV=production
 EXPOSE 8080
