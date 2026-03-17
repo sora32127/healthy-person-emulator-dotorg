@@ -59,18 +59,7 @@ export async function getTagNamesByPostId(postId: number): Promise<string[]> {
   return tags.map((tag) => tag.dimTag.tagName);
 }
 
-export async function updatePostEmbedding(
-  postId: number,
-  embedding: number[],
-  tokenCount: number,
-): Promise<void> {
-  await prisma.$queryRaw`
-        UPDATE dim_posts
-        SET content_embedding = ${embedding}, token_count = ${tokenCount}
-        WHERE post_id = ${postId}
-    `;
-  // Prisma cannot handle the column type directly, and the Supabase client intermittently fails, so raw SQL is safer here.
-}
+// updatePostEmbedding は Cloudflare Vectorize に移行済み。cloudflare.server.ts の upsertVectors を使用。
 
 type CreatePostWithTagsInput = {
   postContent: string;
@@ -279,23 +268,22 @@ const similarPostsSchema = z.object({
 type SimilarPostsData = z.infer<typeof similarPostsSchema>;
 
 async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
-  const similarPostsRaw = (await prisma.$queryRaw`
-    select json_agg(
-        json_build_object(
-            'postId', post_id,
-            'postTitle', post_title,
-            'similarity', similarity
-        )
-    )::varchar as result
-    from search_similar_content(${postId}, 0, 16)
-    `) as { result: string }[];
+  const { getVectorsByIds, querySimilar } = await import('./cloudflare.server');
 
-  if (similarPostsRaw[0].result === null) {
+  const vectors = await getVectorsByIds([String(postId)]);
+  if (vectors.length === 0 || !vectors[0].values) {
     return [];
   }
 
-  const similarPosts: SimilarPostsData[] = JSON.parse(similarPostsRaw[0].result).slice(1); // 0番目のエントリはその記事自身を指すため除外する
-  return similarPosts;
+  const matches = await querySimilar(vectors[0].values, 17);
+
+  return matches
+    .filter((m) => m.id !== String(postId))
+    .slice(0, 15)
+    .map((m) => ({
+      postId: Number(m.metadata?.postId ?? m.id),
+      postTitle: String(m.metadata?.postTitle ?? ''),
+    }));
 }
 
 const PreviousOrNextPostSchema = z.object({
