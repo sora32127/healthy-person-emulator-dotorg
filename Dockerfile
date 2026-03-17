@@ -31,4 +31,4 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 
 EXPOSE 8080
-CMD ["node", "node_modules/.bin/react-router-serve", "./build/server/index.js"]
+CMD ["node", "node_modules/@react-router/serve/dist/cli.js", "./build/server/index.js"]
