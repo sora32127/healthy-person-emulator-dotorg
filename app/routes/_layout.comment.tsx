@@ -2,9 +2,9 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
-} from '@remix-run/node';
-import { redirect } from '@remix-run/node';
-import { useLoaderData, useSubmit } from '@remix-run/react';
+} from 'react-router';
+import { redirect } from 'react-router';
+import { useLoaderData, useSubmit } from 'react-router';
 import CommentSection from '~/components/CommentSection';
 import { H1 } from '~/components/Headings';
 import { getFeedComments, type FeedPostType } from '~/modules/db.server';

@@ -1,4 +1,4 @@
-import { NavLink } from '@remix-run/react';
+import { NavLink } from 'react-router';
 import { BsTwitterX } from 'react-icons/bs';
 import { SiMisskey } from 'react-icons/si';
 import { SiDiscord } from 'react-icons/si';

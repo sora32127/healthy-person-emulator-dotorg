@@ -1,4 +1,4 @@
-import type { MetaFunction } from '@remix-run/node';
+import type { MetaFunction } from 'react-router';
 import { H1 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 

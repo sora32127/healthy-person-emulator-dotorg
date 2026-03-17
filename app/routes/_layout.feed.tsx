@@ -1,11 +1,11 @@
-import { useLoaderData, useSubmit, Link, useLocation } from '@remix-run/react';
+import { useLoaderData, useSubmit, Link, useLocation } from 'react-router';
 import { H1 } from '~/components/Headings';
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
-} from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+} from 'react-router';
+import { redirect } from 'react-router';
 import { getFeedPosts } from '~/modules/db.server';
 import PostSection from '~/components/PostSection';
 import { commonMetaFunction } from '~/utils/commonMetafunction';

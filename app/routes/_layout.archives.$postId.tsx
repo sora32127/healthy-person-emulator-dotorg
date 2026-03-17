@@ -1,6 +1,9 @@
-import { useLoaderData, NavLink, useFetcher } from '@remix-run/react';
-import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
-import type { MetaFunction } from '@remix-run/react';
+import { useLoaderData, NavLink, useFetcher } from 'react-router';
+import type {
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
+  MetaFunction,
+} from 'react-router';
 import parser from 'html-react-parser';
 import { Turnstile } from '@marsidev/react-turnstile';
 import {
@@ -44,8 +47,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { VoteButton } from '~/components/VoteButton';
 import { SNSLinks } from '~/components/SNSLinks';
 import { CommonNavLink } from '~/components/CommonNavLink';
-import { data } from '@remix-run/node';
-import { authenticator } from '~/modules/auth.google.server';
+import { data } from 'react-router';
+import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import { useSetAtom } from 'jotai';
 import { setVisitorCookieData } from '~/modules/visitor.server';
@@ -68,7 +71,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const data = await ArchiveDataEntry.getData(postId);
   const { likedPages, dislikedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
-  const isAuthenticated = await authenticator.isAuthenticated(request);
+  const isAuthenticated = await getAuthenticatedUser(request);
   const isBookmarked = await judgeIsBookmarked(
     postId,
     isAuthenticated?.userUuid,
@@ -551,7 +554,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 async function handleBookmarkPost(request: Request, postId: number) {
-  const isAuthenticated = await authenticator.isAuthenticated(request);
+  const isAuthenticated = await getAuthenticatedUser(request);
   if (!isAuthenticated) {
     return data(
       {

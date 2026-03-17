@@ -1,4 +1,4 @@
-import { NavLink } from '@remix-run/react';
+import { NavLink } from 'react-router';
 import { H1 } from '~/components/Headings';
 
 export default function SignupVerified() {

@@ -9,8 +9,8 @@ import { useEffect, useState } from 'react';
 // biome-ignore lint/style/useImportType: <explanation>
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
-import { data } from '@remix-run/node';
+import { Form, useFetcher, useLoaderData, useNavigate } from 'react-router';
+import { data } from 'react-router';
 import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ClearFormButton from '~/components/SubmitFormComponents/ClearFormButton';
 import { H1, H3 } from '~/components/Headings';
@@ -28,7 +28,7 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   MetaFunction,
-} from '@remix-run/node';
+} from 'react-router';
 import { createEmbedding } from '~/modules/embedding.server';
 import { FaCopy } from 'react-icons/fa';
 import { NodeHtmlMarkdown } from 'node-html-markdown';

@@ -5,7 +5,7 @@ import {
   NavLink,
   useLocation,
   useLoaderData,
-} from '@remix-run/react';
+} from 'react-router';
 import PostIcon from '~/components/icons/PostIcon';
 import SearchIcon from '~/components/icons/SearchIcon';
 import LogoutIcon from '~/components/icons/LogoutIcon';
@@ -19,8 +19,8 @@ import {
   setAuthStateAtom,
 } from '~/stores/auth';
 import { getNavItems } from '~/utils/itemMenu';
-import type { LoaderFunctionArgs } from '@remix-run/node';
-import { authenticator } from '~/modules/auth.google.server';
+import type { LoaderFunctionArgs } from 'react-router';
+import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { Modal } from '~/components/Modal';
 import GoogleLoginButton from '~/components/GoogleAuthButton';
 import {
@@ -30,7 +30,7 @@ import {
 import toast, { Toaster } from 'react-hot-toast';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userObject = await authenticator.isAuthenticated(request);
+  const userObject = await getAuthenticatedUser(request);
   return { userObject };
 }
 

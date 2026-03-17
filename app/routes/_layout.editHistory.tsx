@@ -1,11 +1,11 @@
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData } from 'react-router';
 import { H1 } from '~/components/Headings';
-import { authenticator } from '~/modules/auth.google.server';
+import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import {
   type MetaFunction,
   redirect,
   type LoaderFunctionArgs,
-} from '@remix-run/node';
+} from 'react-router';
 import { getUserEditHistory } from '~/modules/db.server';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -24,7 +24,7 @@ type EditHistory = {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const isAuthenticated = await authenticator.isAuthenticated(request);
+  const isAuthenticated = await getAuthenticatedUser(request);
   if (!isAuthenticated) {
     return redirect('/?referrer=fromBookmark');
   }

@@ -1,4 +1,4 @@
-import { Link } from '@remix-run/react';
+import { Link } from 'react-router';
 import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
 export function SNSLinks({

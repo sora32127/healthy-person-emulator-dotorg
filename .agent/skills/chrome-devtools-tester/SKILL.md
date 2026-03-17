@@ -10,6 +10,7 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 ## 基本方針
 
 - 期待結果を先に短く言語化する。曖昧なら、ユーザーの依頼文と差分から妥当な期待値を置く。
+- Chrome DevTools MCP を起動・接続するときは `--autoConnect` オプションを使う。
 - まず `take_snapshot` で構造を把握し、必要なときだけ `take_screenshot` を使う。
 - 変更箇所だけでなく、その周辺の壊れやすい導線も確認する。
 - DOM の存在だけで合格にしない。見た目、操作、遷移、エラー有無まで見る。
@@ -55,6 +56,7 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 - JSエラー疑い: `list_console_messages` を確認する。
 - API失敗疑い: `list_network_requests` と `get_network_request` を確認する。
 - 再現が不安定: 同じ操作をもう一度行い、再現性を確かめる。
+- `TypeError: Cannot read properties of null (reading 'useContext')` が表示された場合は、まず同じページを一度リロードして回復するか確認する。リロード後も再現した場合だけ問題として報告する。
 
 ### 6. 証跡を残す
 

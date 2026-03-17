@@ -1,4 +1,4 @@
-import { NavLink } from '@remix-run/react';
+import { NavLink } from 'react-router';
 import { H1, H2 } from '../Headings';
 
 export default function UserExplanation() {

@@ -2,10 +2,10 @@ import {
   type MetaFunction,
   redirect,
   type LoaderFunctionArgs,
-} from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+  useLoaderData,
+} from 'react-router';
 import { CommonNavLink } from '~/components/CommonNavLink';
-import { authenticator } from '~/modules/auth.google.server';
+import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import {
   getBookmarkPostsByPagenation,
   getUserId,
@@ -16,7 +16,7 @@ import { ThumbsUp, ThumbsDown, MessageSquareText } from 'lucide-react';
 import { H1 } from '~/components/Headings';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const isAuthenticated = await authenticator.isAuthenticated(request);
+  const isAuthenticated = await getAuthenticatedUser(request);
   if (!isAuthenticated) {
     return redirect('/?referrer=fromBookmark');
   }
