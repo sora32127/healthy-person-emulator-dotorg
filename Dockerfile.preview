@@ -1,0 +1,31 @@
+# Stage 1: Dependencies
+FROM node:22.12.0-slim AS deps
+RUN npm install -g pnpm@10.24.0
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Stage 2: Build
+FROM deps AS build
+COPY prisma ./prisma
+RUN pnpm exec prisma generate
+COPY . .
+RUN pnpm run build
+RUN pnpm prune --prod
+
+# Stage 3: Runtime
+FROM node:22.12.0-slim AS runtime
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+WORKDIR /app
+COPY --from=build /app/build ./build
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
+COPY --from=build /app/public ./public
+ENV NODE_ENV=production
+ENV PORT=8080
+EXPOSE 8080
+USER appuser
+CMD ["node", "build/server/index.js"]
