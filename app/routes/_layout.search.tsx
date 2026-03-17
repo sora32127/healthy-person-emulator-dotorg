@@ -14,7 +14,7 @@ import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import { H1 } from '~/components/Headings';
 import { useAtom } from 'jotai';
 import { searchResultsAtom } from '~/stores/search';
-import { generateDownloadSignedUrl } from '~/modules/r2.server';
+import { generateDownloadSignedUrl } from '~/modules/gcloud.server';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 
