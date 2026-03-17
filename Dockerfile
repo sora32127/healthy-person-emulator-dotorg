@@ -7,6 +7,8 @@ RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
 FROM deps AS build
+COPY prisma ./prisma
+RUN pnpm exec prisma generate
 COPY . .
 RUN pnpm run build
 RUN pnpm prune --prod
