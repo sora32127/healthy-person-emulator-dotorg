@@ -105,11 +105,7 @@ async function generateTagsParquet() {
   return tagRecords;
 }
 
-async function writeSearchAsParquet(
-  data: SearchRecord[],
-  fileName: string,
-  outputDir: string,
-) {
+async function writeSearchAsParquet(data: SearchRecord[], fileName: string, outputDir: string) {
   const filePath = path.join(outputDir, fileName);
 
   try {
@@ -163,11 +159,7 @@ async function writeSearchAsParquet(
   }
 }
 
-async function writeTagsAsParquet(
-  data: TagRecord[],
-  fileName: string,
-  outputDir: string,
-) {
+async function writeTagsAsParquet(data: TagRecord[], fileName: string, outputDir: string) {
   const filePath = path.join(outputDir, fileName);
 
   try {
@@ -209,10 +201,8 @@ async function main() {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    const searchFileName =
-      process.env.SEARCH_PARQUET_FILE_NAME || 'gcs-demo-search.parquet';
-    const tagsFileName =
-      process.env.TAGS_PARQUET_FILE_NAME || 'gcs-demo-tags.parquet';
+    const searchFileName = process.env.SEARCH_PARQUET_FILE_NAME || 'gcs-demo-search.parquet';
+    const tagsFileName = process.env.TAGS_PARQUET_FILE_NAME || 'gcs-demo-tags.parquet';
 
     const searchRecords = await generateSearchParquet();
     await writeSearchAsParquet(searchRecords, searchFileName, outputDir);

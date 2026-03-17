@@ -15,11 +15,7 @@ export default function ClearFormButton({ clearInputs }: ClearFormButtonProps) {
 
   return (
     <>
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={() => setShowModal(true)}
-      >
+      <button type="button" className="btn btn-secondary" onClick={() => setShowModal(true)}>
         入力内容をリセット
       </button>
       <Modal
@@ -30,18 +26,10 @@ export default function ClearFormButton({ clearInputs }: ClearFormButtonProps) {
       >
         <p>入力内容をリセットしますか？</p>
         <div className="modal-action flex justify-between">
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={() => setShowModal(false)}
-          >
+          <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>
             戻る
           </button>
-          <button
-            type="button"
-            className="btn btn-warning"
-            onClick={handleClearLocalStorage}
-          >
+          <button type="button" className="btn btn-warning" onClick={handleClearLocalStorage}>
             リセットする
           </button>
         </div>

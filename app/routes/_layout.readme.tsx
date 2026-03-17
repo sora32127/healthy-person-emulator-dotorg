@@ -13,8 +13,7 @@ interface FAQItem {
 // FAQデータを配列として管理
 const faqData: FAQItem[] = [
   {
-    question:
-      '「健常者エミュレータ事例集」の取り組みの根底にある考え方を簡単に説明してください',
+    question: '「健常者エミュレータ事例集」の取り組みの根底にある考え方を簡単に説明してください',
     answer: `管理人(contradiction29)は以下のようなことを考えています。
 - 社会生活やコミュニケーションに関する知識など、暗黙知に分類される知識は、社会的な生活を送る上で重要です。これらの知識は障害の有無・経歴・職業・社会的なステータスに関わらず、すべての人間にとって必要な知識であり、知識に対するアクセスは幸福を追求する上で必要な権利です。
 - 一方、暗黙知は「暗黙の了解」に止まることが多いため言語化される機会が少なく、仮に言語化されたとしても、近い属性を持つ仲間内など、閉鎖的なコミュニティの中で共有されるに止まるため、全体的に見れば供給が不足しています。この状態は、知識が欠乏した状態を固定化する方向に作用し、個人がすでに受けている阻害や社会生活環境の悪化を促進させてしまいます。
@@ -38,8 +37,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: '言論の自由を否定する自由はありますか？',
-    answer:
-      'ありません。言論の自由を否定するような投稿は管理人により削除されます。',
+    answer: 'ありません。言論の自由を否定するような投稿は管理人により削除されます。',
   },
   {
     question: '人間から「健常性」を一つずつはぎ取っていくと何が残りますか？',
@@ -55,8 +53,7 @@ const faqData: FAQItem[] = [
     answer: '管理人のXのDMにご一報ください。',
   },
   {
-    question:
-      '経験をうまく整理できず、記事にできません。どうすればいいですか？',
+    question: '経験をうまく整理できず、記事にできません。どうすればいいですか？',
     answer:
       '一案ですが、コミュニティで相談してみてはいかがでしょうか。詳しくは当ガイドラインをご覧ください。または、投稿フォームから「知識募集」のフォーマットで投稿してみるといいかもしれません。',
   },
@@ -70,8 +67,7 @@ const faqData: FAQItem[] = [
 - リクエスト検証の実施：リクエストの正当性を確認するための検証を実施し、プログラマティックなPOSTリクエストを遮断します。`,
   },
   {
-    question:
-      'サイトの表示が崩れているのを発見しました。どこに連絡すればよいでしょうか？',
+    question: 'サイトの表示が崩れているのを発見しました。どこに連絡すればよいでしょうか？',
     answer:
       '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、[GitHub](https://github.com/sora32127/healthy-person-emulator-dotorg)上で直接Issueを立てていただけると助かります。',
   },
@@ -145,9 +141,7 @@ export default function Component() {
         <li>
           以下の要素を含む投稿を行ってはいけません。
           <ul>
-            <li>
-              基本的人権の否定や、誹謗中傷、暴言、プライバシー違反を含む投稿
-            </li>
+            <li>基本的人権の否定や、誹謗中傷、暴言、プライバシー違反を含む投稿</li>
             <li>経験知の集積そのものを否定する行為</li>
             <li>荒らし行為に該当する投稿</li>
             <li>
@@ -159,9 +153,7 @@ export default function Component() {
         <li>
           健常者エミュレータ事例集の理念にそぐわないと判断される場合、管理人の裁量に基づき、ページが削除されることがあります。
         </li>
-        <li>
-          悪質な投稿を行った場合、管理人の裁量に基づき、アクセスを遮断することがあります。
-        </li>
+        <li>悪質な投稿を行った場合、管理人の裁量に基づき、アクセスを遮断することがあります。</li>
         <li>
           ページ作成時は、以下の方針にのっとり記事を作成することを推奨します。
           <ul>
@@ -177,9 +169,7 @@ export default function Component() {
       </ul>
       <H3>コメントの投稿について</H3>
       <ul>
-        <li>
-          コメント投稿時のガイドラインは、投稿時のガイドラインに準ずるものとします
-        </li>
+        <li>コメント投稿時のガイドラインは、投稿時のガイドラインに準ずるものとします</li>
       </ul>
       <H3>記事の編集について</H3>
       <ul>
@@ -187,9 +177,7 @@ export default function Component() {
           記事を編集するためには<NavLink to="/signup">ユーザー登録</NavLink>
           および<NavLink to="/login">ログイン</NavLink>が必要です
         </li>
-        <li>
-          編集内容に議論がある場合、コメントで議論を行ってから編集をしてください
-        </li>
+        <li>編集内容に議論がある場合、コメントで議論を行ってから編集をしてください</li>
         <li>
           自分の主張を裏付けるための編集、荒らし、白紙化を行った場合はガイドライン違反とみなし、ユーザーが無効化されることがあります。
         </li>
@@ -213,20 +201,14 @@ export default function Component() {
               <a href="https://x.com/helthypersonemu">X</a>
             </li>
             <li>
-              <a href="https://bsky.app/profile/helthypersonemu.bsky.social">
-                Bluesky
-              </a>
+              <a href="https://bsky.app/profile/helthypersonemu.bsky.social">Bluesky</a>
             </li>
             <li>
-              <a href="https://misskey.io/@helthypersonemu">
-                Misskey.io(ActivityPub対応版)
-              </a>
+              <a href="https://misskey.io/@helthypersonemu">Misskey.io(ActivityPub対応版)</a>
             </li>
           </ul>
         </li>
-        <li>
-          SNSに投稿される際は、5W1H+Then状況説明の箇所が画像として表示されます
-        </li>
+        <li>SNSに投稿される際は、5W1H+Then状況説明の箇所が画像として表示されます</li>
         <li>10分に一回の頻度で更新されます</li>
       </ul>
 
@@ -237,9 +219,7 @@ export default function Component() {
         </li>
         <li>
           詳細は
-          <a href="https://github.com/sora32127/healthy-person-emulator-dotorg">
-            GitHub
-          </a>
+          <a href="https://github.com/sora32127/healthy-person-emulator-dotorg">GitHub</a>
           をご覧ください
         </li>
       </ul>

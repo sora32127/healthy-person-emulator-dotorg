@@ -1,12 +1,5 @@
-import {
-  useForm,
-  FormProvider,
-  useFormContext,
-  useWatch,
-  useFieldArray,
-} from 'react-hook-form';
+import { useForm, FormProvider, useFormContext, useWatch, useFieldArray } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-// biome-ignore lint/style/useImportType: <explanation>
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, useFetcher, useLoaderData, useNavigate } from 'react-router';
@@ -24,11 +17,7 @@ import {
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
 import { Modal } from '~/components/Modal';
-import type {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from 'react-router';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { createEmbedding } from '~/modules/embedding.server';
 import { FaCopy } from 'react-icons/fa';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
@@ -41,11 +30,7 @@ import {
   getTurnStileSiteKey,
   validateRequest,
 } from '~/modules/security.server';
-import {
-  commitSession,
-  getSession,
-  isUserValid,
-} from '~/modules/session.server';
+import { commitSession, getSession, isUserValid } from '~/modules/session.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { MakeToastMessage } from '~/utils/makeToastMessage';
 
@@ -72,10 +57,7 @@ export default function App() {
 
   const handleTagCreated = (tag: string) => {
     setCreatedTags([...createdTags, tag]);
-    window.localStorage.setItem(
-      'createdTags',
-      JSON.stringify([...createdTags, tag]),
-    );
+    window.localStorage.setItem('createdTags', JSON.stringify([...createdTags, tag]));
     methods.setValue('createdTags', [...createdTags, tag]);
   };
 
@@ -106,7 +88,7 @@ export default function App() {
           where: '',
           why: '',
           how: '',
-          // biome-ignore lint/suspicious/noThenProperty: <explanation>
+          // eslint-disable-next-line unicorn/no-thenable
           then: '',
         },
         reflection: [],
@@ -128,7 +110,7 @@ export default function App() {
             where: '',
             why: '',
             how: '',
-            // biome-ignore lint/suspicious/noThenProperty: <explanation>
+            // eslint-disable-next-line unicorn/no-thenable
             then: '',
           },
           reflection: [],
@@ -147,10 +129,7 @@ export default function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem(
-          formId,
-          JSON.stringify(methods.getValues()),
-        );
+        window.localStorage.setItem(formId, JSON.stringify(methods.getValues()));
       }
     }, 5000);
     return () => clearInterval(interval);
@@ -169,9 +148,7 @@ export default function App() {
   useEffect(() => {
     const response = turnstileFetcher.data as { success: boolean };
     if (response?.success === false) {
-      toast.error(
-        'リクエスト検証に失敗しました。時間をおいて再度お試しください。',
-      );
+      toast.error('リクエスト検証に失敗しました。時間をおいて再度お試しください。');
     }
     if (response?.success === true) {
       setIsFirstSubmitButtonOpen(true);
@@ -209,9 +186,7 @@ export default function App() {
       setIsPreviewModalOpen(true);
     }
     if (response?.success === false) {
-      toast.error(
-        'プレビューを取得できませんでした。時間をおいて再度試してください。',
-      );
+      toast.error('プレビューを取得できませんでした。時間をおいて再度試してください。');
     }
   }, [firstSubmitFetcher.data]);
 
@@ -254,8 +229,7 @@ export default function App() {
     }
     secondSubmitFetcher.submit(formData, { method: 'post', action: '/post' });
   };
-  const [isSecondSubmitButtonOpen, setIsSecondSubmitButtonOpen] =
-    useState(true);
+  const [isSecondSubmitButtonOpen, setIsSecondSubmitButtonOpen] = useState(true);
 
   useEffect(() => {
     if (secondSubmitFetcher.state === 'submitting') {
@@ -306,7 +280,7 @@ export default function App() {
         where: '',
         why: '',
         how: '',
-        // biome-ignore lint/suspicious/noThenProperty: <explanation>
+        // eslint-disable-next-line unicorn/no-thenable
         then: '',
       },
       reflection: ['', '', ''],
@@ -413,12 +387,8 @@ export default function App() {
               description="書ききれなかったことを書きます"
               placeholders={
                 postCategory === 'misDeed'
-                  ? [
-                      '友人が詠んだ句は「ため池や 水がいっぱい きれいだね」だった',
-                    ]
-                  : [
-                      '舌が過度に肥えてしまい、コンビニ弁当が食べられなくなった。',
-                    ]
+                  ? ['友人が詠んだ句は「ため池や 水がいっぱい きれいだね」だった']
+                  : ['舌が過度に肥えてしまい、コンビニ弁当が食べられなくなった。']
               }
               registerKey="note"
             />
@@ -432,10 +402,7 @@ export default function App() {
               handleTagRemoved={handleTagRemoved}
               parentComponentStateValues={createdTags}
             />
-            <TagPreviewBox
-              selectedTags={selectedTags}
-              createdTags={createdTags}
-            />
+            <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags} />
             <StaticTextInput
               rowNumber={1}
               title="タイトル"
@@ -445,10 +412,7 @@ export default function App() {
             />
             <div className="flex justify-end">
               <div className="flex flex-col items-center gap-1 p-2">
-                <Turnstile
-                  siteKey={turnStileSiteKey}
-                  onSuccess={handleTurnStileSuccess}
-                />
+                <Turnstile siteKey={turnStileSiteKey} onSuccess={handleTurnStileSuccess} />
                 <button
                   type="submit"
                   className="btn btn-primary disabled:btn-disabled"
@@ -465,13 +429,7 @@ export default function App() {
                 showCloseButton={false}
               >
                 <div className="postContent previewContainer">
-                  <H1>
-                    {
-                      (firstSubmitFetcher?.data as { data: { title: string } })
-                        ?.data?.title
-                    }
-                  </H1>
-                  {/* biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation> */}
+                  <H1>{(firstSubmitFetcher?.data as { data: { title: string } })?.data?.title}</H1>
                   <div
                     dangerouslySetInnerHTML={{
                       __html: (
@@ -491,11 +449,7 @@ export default function App() {
                     修正する
                   </button>
                   <div className="flex flex-row items-center gap-1 p-2">
-                    <button
-                      type="button"
-                      onClick={handleCopy}
-                      className="btn btn-circle"
-                    >
+                    <button type="button" onClick={handleCopy} className="btn btn-circle">
                       <FaCopy />
                     </button>
                   </div>
@@ -555,9 +509,7 @@ function TextTypeSwitcher() {
             className="radio radio-primary"
           />
           <label htmlFor="wanted">知識募集：</label>
-          <span className="text-sm">
-            知りたいこと、わからないこと、悩んでいること
-          </span>
+          <span className="text-sm">知りたいこと、わからないこと、悩んでいること</span>
         </div>
       </div>
     </div>
@@ -595,8 +547,7 @@ function SituationInput() {
           {
             key: 'why',
             description: 'なぜそのような行動をしたのですか？(Why)',
-            placeholder:
-              '「詠めそう」と言われたらそう返すのが自然な会話の流れだと思ったから',
+            placeholder: '「詠めそう」と言われたらそう返すのが自然な会話の流れだと思ったから',
             rows: 2,
           },
           {
@@ -659,8 +610,7 @@ function SituationInput() {
             {
               key: 'then',
               description: '行動の結果としてどうなりましたか？(Then)',
-              placeholder:
-                '相手の料理の腕が上がり、どんどん料理がおいしくなり、関係も改善された',
+              placeholder: '相手の料理の腕が上がり、どんどん料理がおいしくなり、関係も改善された',
               rows: 3,
             },
           ]
@@ -675,8 +625,7 @@ function SituationInput() {
               {
                 key: 'when',
                 description: 'いつ起こったことですか？(When)',
-                placeholder:
-                  '社会人なりたての現在、初対面の人にあいさつするとき',
+                placeholder: '社会人なりたての現在、初対面の人にあいさつするとき',
                 rows: 1,
               },
               {
@@ -693,8 +642,7 @@ function SituationInput() {
               },
               {
                 key: 'what',
-                description:
-                  'その主役は、何に対してはたらきかけましたか？(What)',
+                description: 'その主役は、何に対してはたらきかけましたか？(What)',
                 placeholder: '相手に対して',
                 rows: 1,
               },
@@ -707,8 +655,7 @@ function SituationInput() {
               {
                 key: 'then',
                 description: '行動の結果としてどうなりましたか？(Then)',
-                placeholder:
-                  '職場の人と仲良くなるきっかけがつかめず、孤独をもたらす一因となった',
+                placeholder: '職場の人と仲良くなるきっかけがつかめず、孤独をもたらす一因となった',
                 rows: 3,
               },
             ]
@@ -821,9 +768,7 @@ function StaticTextInput({
             {...register(`${registerKey}.${i}`)}
           />
           {errors[registerKey] && (
-            <ErrorMessageContainer
-              errormessage={errors[registerKey]?.root?.message as string}
-            />
+            <ErrorMessageContainer errormessage={errors[registerKey]?.root?.message as string} />
           )}
         </div>,
       );
@@ -834,9 +779,7 @@ function StaticTextInput({
     <div className="mb-8">
       <H3>{title}</H3>
       <p>{description}</p>
-      <div className="flex items-center space-x-2 mb-4 flex-col">
-        {renderTextInputs()}
-      </div>
+      <div className="flex items-center space-x-2 mb-4 flex-col">{renderTextInputs()}</div>
     </div>
   );
 }
@@ -857,10 +800,7 @@ export async function action({ request }: ActionFunctionArgs) {
   if (actionType === 'validateTurnstile') {
     console.log('validateTurnstile has been called');
     const ipAddress = await getHashedUserIPAddress(request);
-    const isValidatedByTurnstile = await validateRequest(
-      turnstileToken as string,
-      ipAddress,
-    );
+    const isValidatedByTurnstile = await validateRequest(turnstileToken as string, ipAddress);
     console.log('isValidatedByTurnstile', isValidatedByTurnstile);
     if (!isValidatedByTurnstile) {
       return data(
@@ -920,10 +860,7 @@ export async function action({ request }: ActionFunctionArgs) {
         data: {
           ...html.data,
           title: parsedData.title[0],
-          tags: [
-            ...(parsedData.createdTags || []),
-            ...(parsedData.selectedTags || []),
-          ],
+          tags: [...(parsedData.createdTags || []), ...(parsedData.selectedTags || [])],
         },
         error: undefined,
       });
@@ -986,10 +923,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    return data(
-      { success: false, error: 'Wikify failed', data: undefined },
-      { status: 400 },
-    );
+    return data({ success: false, error: 'Wikify failed', data: undefined }, { status: 400 });
   }
 }
 
@@ -1010,8 +944,7 @@ async function Wikify(
     );
   }
 
-  const { who, when, where, why, what, how, then, assumption } =
-    validationResult.data.situations;
+  const { who, when, where, why, what, how, then, assumption } = validationResult.data.situations;
   const { reflection, counterReflection } = validationResult.data;
   const { note, postCategory } = validationResult.data;
 

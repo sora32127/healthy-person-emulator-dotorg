@@ -50,10 +50,7 @@ const RelativeDate = ({ targetDate }: RelativeDateProps) => {
   };
 
   return (
-    <div
-      className="tooltip tooltip-right"
-      data-tip={isClient ? formatTime(targetDate) : ''}
-    >
+    <div className="tooltip tooltip-right" data-tip={isClient ? formatTime(targetDate) : ''}>
       <span>{getRelativeTime(targetDate)}</span>
     </div>
   );

@@ -1,7 +1,9 @@
 # 目的
+
 - 既存のWordpressサイトを新基盤にスムーズに移行すること
 
 # 移行対象
+
 - 既存のWordpressサイト
 - Twitter更新通知Bot
 - データ分析基盤については今回の移行対象外とする
@@ -9,6 +11,7 @@
 # やること
 
 ## ユーザー向け通知
+
 - 通知することは以下の通り
   - 既存サイトを一時的に閉鎖すること
   - 記事リンクはそのまま活きること
@@ -17,15 +20,15 @@
   - 場合によっては延長する必要があるかもしれない
 
 ## 既存Wordpressサイトの閉鎖
+
 - 投稿フォームの閉鎖も同時に行う
 - 実際の動作は以下の通り
   - LightSailのコンソールからインスタンスを停止する
     - 削除はしない
   - CloudflareのコンソールからPagesを削除する
 
-
-
 ## データ移行手順
+
 - ユーザー向け通知の実施
 - LightStartからメンテナンスモードに移行
 - Cloudflare Pagesから投稿フォームを削除
@@ -37,11 +40,13 @@
 - 直IPで接続し、問題なく動作することを確認
 
 ### 移行プロセス詳細
+
 - 既存データをSupabase内部に移動
 - 既存データを一度すべてTruncateする
 - bitnami_wordpressスキーマのデータをpublicスキーマに移行する
 
 #### 既存データのSupabaseへの移行
+
 - [Supabase移行用Google Colab](https://colab.research.google.com/github/mansueli/Supa-Migrate/blob/main/Amazon_RDS_to_Supabase.ipynb#scrollTo=76XQI9t3q6ut)を利用する
   - 移行用Google ColabのSet the environment variables設定を行う
   - 移行には時間がかかるので、並行してlikebtnデータの移行を実施
@@ -55,7 +60,9 @@
     - 作成後、プライマリーキーとしてpost_vote_idを追加する
 
 #### 既存データのTruncate
+
 - 外部キー制約を利用し、以下の順番でTruncateを実行する
+
 ```sql
 BEGIN;
 
@@ -72,6 +79,7 @@ COMMIT;
 ```
 
 #### bitnami_wordpressスキーマからpublicスキーマへのデータ移行
+
 - dim_tags
   ```sql
   insert into dim_tags (tag_id, tag_name)
@@ -81,6 +89,7 @@ COMMIT;
   from bitnami_wordpress.wp_terms;
   ```
 - dim_posts
+
   ```sql
   begin;
   insert into dim_posts (post_id, post_date_jst, post_date_gmt, post_content, post_title, comment_status, count_likes, count_dislikes, post_author_ip_hash)
@@ -114,7 +123,9 @@ COMMIT;
 
   commit;
   ```
+
 - dim_comments
+
   ```sql
   begin;
 
@@ -134,9 +145,11 @@ COMMIT;
   from bitnami_wordpress.wp_comments;
 
   commit;
-  
+
   ```
+
 - rel_post_tags
+
   ```sql
   begin;
 
@@ -151,7 +164,9 @@ COMMIT;
 
   commit;
   ```
+
 - fct_post_vote_history
+
   ```sql
   begin;
 
@@ -166,16 +181,18 @@ COMMIT;
     case
       when "Vote type" = 'dislike' then -1
       when "Vote type" = 'like' then 1
-      else null 
+      else null
     end as vote_type_int,
     "Date" as vote_date_jst,
     post_vote_id
   from bitnami_wordpress.fct_post_vote_history;
 
   commit;
-  
+
   ```
+
 - fct_comment_vote_history
+
   ```sql
   begin;
 
@@ -196,15 +213,19 @@ COMMIT;
   from bitnami_wordpress.wp_wc_users_voted;
 
   commit;
-  
+
   ```
+
 ## ドメインのVercelへの移行
+
 - Vercelのコンソールからドメインを追加する
 - CloudflareのコンソールからDNSの設定を変更する
 - [参考](https://zenn.dev/keitakn/articles/add-cloudflare-domain-to-vercel)
 
 ## Cloudflare TurnStyleのキー変更
+
 - Vercelの環境変数設定からやるだけ
 
 ## Twitter更新通知Botの取得元変更
+
 - あとは`sls deploy --stage prod`を実行するだけ

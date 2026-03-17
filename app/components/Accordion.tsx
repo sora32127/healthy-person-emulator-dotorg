@@ -13,12 +13,7 @@ interface AccordionItemProps {
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export function AccordionItem({
-  title,
-  children,
-  isOpen,
-  setIsOpen,
-}: AccordionItemProps) {
+export function AccordionItem({ title, children, isOpen, setIsOpen }: AccordionItemProps) {
   return (
     <div
       className={`collapse collapse-arrow join-item border border-base-300 ${isOpen ? 'collapse-open' : 'collapse-close'}`}

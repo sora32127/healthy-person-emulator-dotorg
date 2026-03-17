@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Form,
-  Outlet,
-  NavLink,
-  useLocation,
-  useLoaderData,
-} from 'react-router';
+import { Form, Outlet, NavLink, useLocation, useLoaderData } from 'react-router';
 import PostIcon from '~/components/icons/PostIcon';
 import SearchIcon from '~/components/icons/SearchIcon';
 import LogoutIcon from '~/components/icons/LogoutIcon';
@@ -13,20 +7,13 @@ import MenuIcon from '~/components/icons/MenuIcon';
 import ThemeSwitcher from '~/components/ThemeSwitcher';
 import { Footer } from '~/components/Footer';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import {
-  getAuthStateAtom,
-  isSignedInAtom,
-  setAuthStateAtom,
-} from '~/stores/auth';
+import { getAuthStateAtom, isSignedInAtom, setAuthStateAtom } from '~/stores/auth';
 import { getNavItems } from '~/utils/itemMenu';
 import type { LoaderFunctionArgs } from 'react-router';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { Modal } from '~/components/Modal';
 import GoogleLoginButton from '~/components/GoogleAuthButton';
-import {
-  getIsLoginModalOpenAtom,
-  setIsLoginModalOpenAtom,
-} from '~/stores/loginmodal';
+import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import toast, { Toaster } from 'react-hot-toast';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -139,11 +126,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
         </div>
         <div>
           <div className="drawer drawer-end">
-            <input
-              id="drawer-toggle"
-              type="checkbox"
-              className="drawer-toggle"
-            />
+            <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content flex justify-end">
               <label htmlFor="drawer-toggle" className="btn btn-ghost">
                 <MenuIcon />
@@ -293,9 +276,7 @@ export default function Component() {
     <div className="min-h-screen flex flex-col">
       <Toaster />
       <div className="hidden md:block">{renderDesktopHeader()}</div>
-      <div className="block md:hidden">
-        {renderMobileHeader(handleSearchModalOpen)}
-      </div>
+      <div className="block md:hidden">{renderMobileHeader(handleSearchModalOpen)}</div>
       <main
         className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}
       >
@@ -303,10 +284,7 @@ export default function Component() {
           <Outlet />
         </div>
       </main>
-      <div
-        className="tooltip tooltip-top fixed bottom-10 right-10"
-        data-tip="投稿する"
-      >
+      <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
         <NavLink to="/post" viewTransition>
           <button
             className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
@@ -317,10 +295,7 @@ export default function Component() {
         </NavLink>
       </div>
       <Footer />
-      <dialog
-        id="search-modal"
-        className={`modal ${isSearchModalOpen ? 'modal-open' : ''}`}
-      >
+      <dialog id="search-modal" className={`modal ${isSearchModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
           <div className="mt-6">
             <Form

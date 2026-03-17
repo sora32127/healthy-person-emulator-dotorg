@@ -3,10 +3,7 @@ import { describe, it, expect } from 'vitest';
 
 describe('security.server', () => {
   it('デモキーであればテスト投稿と判断される', async () => {
-    const result = await getJudgeWelcomedByGenerativeAI(
-      testPostHtml,
-      'プログラムテスト投稿',
-    );
+    const result = await getJudgeWelcomedByGenerativeAI(testPostHtml, 'プログラムテスト投稿');
     expect(result.isWelcomed).toBe(true);
   });
 });

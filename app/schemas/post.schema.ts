@@ -43,7 +43,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
         .refine(checkStopWords, {
           message: '利用できない単語が含まれています',
         }),
-      // biome-ignore lint/suspicious/noThenProperty: <explanation>
+      // eslint-disable-next-line unicorn/no-thenable
       then: z
         .string()
         .min(1, { message: '5W1H+Then状況説明>「どうなったか」は必須です' })

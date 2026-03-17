@@ -1,0 +1,24 @@
+{
+  "plugins": ["react", "typescript", "unicorn", "jsx-a11y"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/no-array-index-key": "warn",
+    "react/jsx-key": "warn",
+    "no-unused-vars": "warn",
+    "no-shadow": "allow",
+    "no-await-in-loop": "allow",
+    "preserve-caught-error": "allow",
+    "unicorn/no-array-sort": "allow",
+    "unicorn/prefer-set-has": "allow",
+    "unicorn/consistent-function-scoping": "warn",
+    "unicorn/no-empty-file": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "jsx-a11y/no-static-element-interactions": "warn"
+  },
+  "ignorePatterns": [".react-router/types/**", "build/**", "node_modules/**"]
+}

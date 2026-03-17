@@ -10,14 +10,8 @@ interface ShareButtonsProps {
   postTitle: string;
 }
 
-export default function PostShareButtonGroup({
-  currentURL,
-  postTitle,
-}: ShareButtonsProps) {
-  const socialShareText = useMemo(
-    () => `${postTitle} - 健常者エミュレータ事例集`,
-    [postTitle],
-  );
+export default function PostShareButtonGroup({ currentURL, postTitle }: ShareButtonsProps) {
+  const socialShareText = useMemo(() => `${postTitle} - 健常者エミュレータ事例集`, [postTitle]);
   const url = new URL(currentURL);
   const hatenaBlogUrl = url.hostname + url.pathname;
 

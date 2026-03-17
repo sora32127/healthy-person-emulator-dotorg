@@ -1,10 +1,4 @@
-import {
-  useLoaderData,
-  Outlet,
-  useNavigate,
-  useLocation,
-  redirect,
-} from 'react-router';
+import { useLoaderData, Outlet, useNavigate, useLocation, redirect } from 'react-router';
 import {
   getOrCreateHandler,
   LightSearchHandler,
@@ -72,9 +66,7 @@ export async function loader() {
   if (!SEARCH_PARQUET_FILE_NAME || !TAGS_PARQUET_FILE_NAME) {
     throw new Error('Search or tags parquet file name is not set');
   }
-  const searchAssetURL = await generateDownloadSignedUrl(
-    SEARCH_PARQUET_FILE_NAME,
-  );
+  const searchAssetURL = await generateDownloadSignedUrl(SEARCH_PARQUET_FILE_NAME);
   const tagsAssetURL = await generateDownloadSignedUrl(TAGS_PARQUET_FILE_NAME);
   return {
     searchAssetURL,
@@ -94,14 +86,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function LightSearch() {
   const { searchAssetURL, tagsAssetURL } = useLoaderData<typeof loader>();
-  const [lightSearchHandler, setLightSearchHandler] =
-    useState<LightSearchHandler | null>(null);
+  const [lightSearchHandler, setLightSearchHandler] = useState<LightSearchHandler | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasInitialSearchCompleted, setHasInitialSearchCompleted] =
-    useState(false);
+  const [hasInitialSearchCompleted, setHasInitialSearchCompleted] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // 記事表示用の状態
@@ -110,8 +100,7 @@ export default function LightSearch() {
   // URL から現在の状態を取得
   const query = searchParams.get('q') || '';
   const orderby = (searchParams.get('orderby') as OrderBy) || 'timeDesc';
-  const selectedTags =
-    searchParams.get('tags')?.split(' ').filter(Boolean) || [];
+  const selectedTags = searchParams.get('tags')?.split(' ').filter(Boolean) || [];
   const pageSize = Number(searchParams.get('pageSize')) || 10;
   const postId = searchParams.get('postId') || null;
 
@@ -251,9 +240,7 @@ export default function LightSearch() {
         // 重複を防いで結果を追加
         setAllResults((prev) => {
           const existingIds = new Set(prev.map((r) => r.postId));
-          const newResults = results.results.filter(
-            (r) => !existingIds.has(r.postId),
-          );
+          const newResults = results.results.filter((r) => !existingIds.has(r.postId));
           return [...prev, ...newResults];
         });
 
@@ -263,8 +250,7 @@ export default function LightSearch() {
           results: prev
             ? [
                 ...prev.results.filter(
-                  (r) =>
-                    !results.results.some((newR) => newR.postId === r.postId),
+                  (r) => !results.results.some((newR) => newR.postId === r.postId),
                 ),
                 ...results.results,
               ]
@@ -281,23 +267,11 @@ export default function LightSearch() {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [
-    isLoadingMore,
-    hasMore,
-    lightSearchHandler,
-    currentPage,
-    performSearch,
-    setSearchResults,
-  ]);
+  }, [isLoadingMore, hasMore, lightSearchHandler, currentPage, performSearch, setSearchResults]);
 
   // URL更新関数
   const updateSearchParams = useCallback(
-    (
-      newQuery: string,
-      newOrderby: OrderBy,
-      newTags: string[],
-      newPostId?: string | null,
-    ) => {
+    (newQuery: string, newOrderby: OrderBy, newTags: string[], newPostId?: string | null) => {
       const params = new URLSearchParams();
       if (newQuery) params.set('q', newQuery);
       if (newOrderby !== 'timeDesc') params.set('orderby', newOrderby);
@@ -311,16 +285,9 @@ export default function LightSearch() {
   // デバウンス検索
   const debouncedSearch = useMemo(
     () =>
-      debounce(
-        (
-          searchQuery: string,
-          currentOrderby: OrderBy,
-          currentSelectedTags: string[],
-        ) => {
-          updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
-        },
-        1000,
-      ),
+      debounce((searchQuery: string, currentOrderby: OrderBy, currentSelectedTags: string[]) => {
+        updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
+      }, 1000),
     [],
   );
 
@@ -386,20 +353,14 @@ export default function LightSearch() {
                 minHeight: hasInitialSearchCompleted ? 'auto' : '300px',
                 display: 'flex',
                 alignItems: hasInitialSearchCompleted ? 'stretch' : 'center',
-                justifyContent: hasInitialSearchCompleted
-                  ? 'stretch'
-                  : 'center',
+                justifyContent: hasInitialSearchCompleted ? 'stretch' : 'center',
               }}
             >
               {!hasInitialSearchCompleted ? (
                 <div className="search-initialization text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-                  <span className="text-lg block">
-                    検索システムを初期化中...
-                  </span>
-                  <p className="text-sm text-gray-500 mt-2">
-                    初期化完了まで少々お待ちください
-                  </p>
+                  <span className="text-lg block">検索システムを初期化中...</span>
+                  <p className="text-sm text-gray-500 mt-2">初期化完了まで少々お待ちください</p>
                 </div>
               ) : (
                 <div className="search-input-form w-full">
@@ -444,26 +405,18 @@ export default function LightSearch() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
                       <span className="ml-2">検索中...</span>
                     </div>
-                  ) : searchResults.metadata.query !== '' ||
-                    selectedTags.length > 0 ? (
+                  ) : searchResults.metadata.query !== '' || selectedTags.length > 0 ? (
                     <div className="h-full flex flex-col justify-center">
                       <p>
-                        検索結果: {searchResults.metadata.count}件 (表示中:{' '}
-                        {allResults.length}件)
+                        検索結果: {searchResults.metadata.count}件 (表示中: {allResults.length}件)
                       </p>
                       {searchResults.metadata.query && (
-                        <p className="truncate">
-                          キーワード: {searchResults.metadata.query}
-                        </p>
+                        <p className="truncate">キーワード: {searchResults.metadata.query}</p>
                       )}
                       {selectedTags.length > 0 && (
-                        <p className="truncate">
-                          タグ: {selectedTags.join(', ')}
-                        </p>
+                        <p className="truncate">タグ: {selectedTags.join(', ')}</p>
                       )}
-                      {searchResults.metadata.count === 0 && (
-                        <p>検索結果がありません</p>
-                      )}
+                      {searchResults.metadata.count === 0 && <p>検索結果がありません</p>}
                     </div>
                   ) : (
                     <div className="h-full flex flex-col justify-center">
@@ -475,9 +428,7 @@ export default function LightSearch() {
                   {searchResults.metadata.count > 0 && (
                     <select
                       value={orderby}
-                      onChange={(e) =>
-                        handleSortOrderChange(e.target.value as OrderBy)
-                      }
+                      onChange={(e) => handleSortOrderChange(e.target.value as OrderBy)}
                       className="select select-bordered select-sm"
                     >
                       <option value="timeDesc">新着順</option>
@@ -509,12 +460,7 @@ export default function LightSearch() {
               onClick={handleBackToSearch}
               className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-white px-3 py-1 rounded-full shadow-md"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -590,9 +536,7 @@ function InfiniteScrollResults({
           <div
             key={result.postId}
             className={`cursor-pointer transition-colors ${
-              selectedPostId === result.postId.toString()
-                ? 'bg-blue-50'
-                : 'hover:bg-gray-50'
+              selectedPostId === result.postId.toString() ? 'bg-blue-50' : 'hover:bg-gray-50'
             }`}
             onClickCapture={(e) => {
               const target = e.target as HTMLElement | null;
@@ -620,10 +564,7 @@ function InfiniteScrollResults({
 
       {/* ローディングトリガー */}
       {hasMore && (
-        <div
-          ref={loadMoreRef}
-          className="loading-trigger flex justify-center py-8"
-        >
+        <div ref={loadMoreRef} className="loading-trigger flex justify-center py-8">
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
@@ -639,9 +580,7 @@ function InfiniteScrollResults({
       {!hasMore && allResults.length > 0 && (
         <div className="text-center py-8">
           <div className="text-gray-500">すべての結果を表示しました</div>
-          <div className="text-sm text-gray-400 mt-1">
-            ({allResults.length}件)
-          </div>
+          <div className="text-sm text-gray-400 mt-1">({allResults.length}件)</div>
         </div>
       )}
     </div>

@@ -8,11 +8,7 @@ type ShareButtonProps = {
   variant?: 'comment' | 'post';
 };
 
-export const ShareApiButton = ({
-  url,
-  title,
-  variant = 'post',
-}: ShareButtonProps) => {
+export const ShareApiButton = ({ url, title, variant = 'post' }: ShareButtonProps) => {
   const share = async (url: string, title: string) => {
     try {
       await navigator.share({ url, title });
@@ -30,18 +26,11 @@ export const ShareApiButton = ({
     [variant],
   );
 
-  const iconClass = useMemo(
-    () => (variant === 'comment' ? 'w-4 h-4' : ''),
-    [variant],
-  );
+  const iconClass = useMemo(() => (variant === 'comment' ? 'w-4 h-4' : ''), [variant]);
 
   return (
     <div className="tooltip" data-tip="シェアする">
-      <button
-        type="button"
-        onClick={() => share(url, title)}
-        className={buttonClass}
-      >
+      <button type="button" onClick={() => share(url, title)} className={buttonClass}>
         <ShareIcon className={iconClass} />
       </button>
     </div>

@@ -10,11 +10,7 @@ export function SNSLinks({
   blueskyPostUriOfFirstPost: string | null;
   misskeyNoteIdOfFirstNote: string | null;
 }) {
-  if (
-    !tweetIdOfFirstTweet &&
-    !blueskyPostUriOfFirstPost &&
-    !misskeyNoteIdOfFirstNote
-  ) {
+  if (!tweetIdOfFirstTweet && !blueskyPostUriOfFirstPost && !misskeyNoteIdOfFirstNote) {
     return null;
   }
 

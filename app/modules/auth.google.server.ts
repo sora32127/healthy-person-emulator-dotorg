@@ -1,11 +1,6 @@
 import { Authenticator } from 'remix-auth';
 import { OAuth2Strategy } from 'remix-auth-oauth2';
-import {
-  sessionStorage,
-  getSession,
-  commitSession,
-  destroySession,
-} from './session.server';
+import { sessionStorage, getSession, commitSession, destroySession } from './session.server';
 import { findUserByEmail, createGoogleUser } from './db.server';
 import { z } from 'zod';
 import { redirect } from 'react-router';
@@ -22,11 +17,7 @@ const exposedUserSchema = z.object({
 
 type ExposedUser = z.infer<typeof exposedUserSchema>;
 
-if (
-  !process.env.GOOGLE_CLIENT_ID ||
-  !process.env.GOOGLE_CLIENT_SECRET ||
-  !process.env.CLIENT_URL
-) {
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.CLIENT_URL) {
   throw new Error('Missing environment variables');
 }
 
@@ -42,9 +33,7 @@ export const authenticator = new Authenticator<ExposedUser>();
 /**
  * セッションから認証済みユーザーを取得する（remix-auth v4 では isAuthenticated が廃止されたため）
  */
-export async function getAuthenticatedUser(
-  request: Request,
-): Promise<ExposedUser | null> {
+export async function getAuthenticatedUser(request: Request): Promise<ExposedUser | null> {
   const session = await getSession(request.headers.get('Cookie'));
   const user = session.get(SESSION_KEY) as ExposedUser | undefined;
   return user ?? null;
@@ -53,10 +42,7 @@ export async function getAuthenticatedUser(
 /**
  * 認証済みユーザーをセッションに保存する
  */
-export async function setAuthenticatedUser(
-  request: Request,
-  user: ExposedUser,
-): Promise<Headers> {
+export async function setAuthenticatedUser(request: Request, user: ExposedUser): Promise<Headers> {
   const session = await getSession(request.headers.get('Cookie'));
   session.set(SESSION_KEY, user);
   const headers = new Headers();
@@ -146,14 +132,11 @@ const googleStrategy = new OAuth2Strategy<ExposedUser>(
     scopes: ['openid', 'email', 'profile'],
   },
   async ({ tokens }) => {
-    const response = await fetch(
-      'https://www.googleapis.com/oauth2/v2/userinfo',
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken()}`,
-        },
+    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken()}`,
       },
-    );
+    });
     const profile = (await response.json()) as {
       email: string;
       picture?: string;

@@ -7,21 +7,12 @@ type FeedPostType = 'unboundedLikes' | 'timeDesc' | 'likes' | 'timeAsc';
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const pagingNumber = Number.parseInt(url.searchParams.get('p') || '1');
-  const likeFromHour = Number.parseInt(
-    url.searchParams.get('likeFrom') || '48',
-  );
+  const likeFromHour = Number.parseInt(url.searchParams.get('likeFrom') || '48');
   const likeToHour = Number.parseInt(url.searchParams.get('likeTo') || '0');
-  const type = (url.searchParams.get('type') ||
-    'unboundedLikes') as FeedPostType;
+  const type = (url.searchParams.get('type') || 'unboundedLikes') as FeedPostType;
   const chunkSize = 12;
 
-  const postData = await getFeedPosts(
-    pagingNumber,
-    type,
-    chunkSize,
-    likeFromHour,
-    likeToHour,
-  );
+  const postData = await getFeedPosts(pagingNumber, type, chunkSize, likeFromHour, likeToHour);
 
   const feedTitle =
     type === 'unboundedLikes'

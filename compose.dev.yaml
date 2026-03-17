@@ -8,13 +8,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "54322:5432"
+      - '54322:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sql:/docker-entrypoint-initdb.d/00-init.sql
       - ./supabase/seed.sql:/docker-entrypoint-initdb.d/01-seed.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +32,7 @@ services:
       PG_META_DB_PASSWORD: postgres
       PG_META_DB_NAME: postgres
     ports:
-      - "54324:3000"
+      - '54324:3000'
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +51,7 @@ services:
       SUPABASE_PUBLIC_URL: http://localhost:54323
       STUDIO_PG_META_URL: http://meta:8080
     ports:
-      - "54323:3000"
+      - '54323:3000'
     depends_on:
       - db
       - meta
@@ -69,7 +69,7 @@ services:
       SUPABASE_CONNECTION_STRING: postgresql://postgres:postgres@db:5432/postgres?schema=public
       DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres?schema=public
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - .:/app
       - /app/node_modules

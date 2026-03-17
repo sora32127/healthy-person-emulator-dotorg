@@ -1,11 +1,7 @@
 import { useLoaderData } from 'react-router';
 import { H1 } from '~/components/Headings';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
-import {
-  type MetaFunction,
-  redirect,
-  type LoaderFunctionArgs,
-} from 'react-router';
+import { type MetaFunction, redirect, type LoaderFunctionArgs } from 'react-router';
 import { getUserEditHistory } from '~/modules/db.server';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -42,9 +38,7 @@ function EditHistoryItem({ editHistory }: { editHistory: EditHistory }) {
     <li className="border-b border-gray-200 py-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <CommonNavLink to={postUrl}>
-            {editHistory.dim_posts.postTitle}
-          </CommonNavLink>
+          <CommonNavLink to={postUrl}>{editHistory.dim_posts.postTitle}</CommonNavLink>
         </div>
         <div className="text-sm text-gray-500 ml-1">{editDate}</div>
       </div>

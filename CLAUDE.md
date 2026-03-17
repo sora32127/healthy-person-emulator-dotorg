@@ -9,31 +9,38 @@
 ## 開発コマンド
 
 **基本開発**
+
 - `pnpm dev` - 開発サーバー起動 (localhost:3000)
 - `pnpm build` - 本番ビルド (prisma generate を含む)
 - `pnpm start` - 本番サーバー起動
 
 **コード品質 (変更後に実行)**
-- `pnpm lint` - Biome リンター (ESLint ではない)
+
+- `pnpm lint` - OxLint リンター (vite-plus 経由、`vp lint`)
+- `pnpm format` - OxFmt フォーマッター (vite-plus 経由、`vp fmt`)
 - `pnpm typecheck` - TypeScript 型チェック
 - `pnpm knip` - 未使用コード検出
 
 **テスト**
+
 - `pnpm test` - Vitest ユニットテスト (happy-dom, タイムアウト60秒)
 - `pnpm test -- --reporter=verbose path/to/file.test.ts` - 特定ファイルのみ実行
 - `npx playwright test` - E2E テスト
 
 **データベース**
+
 - `pnpm seed` - データベースのシード
 - `pnpm reset:db` - スキーマのリセット・プッシュ
 - `npx prisma generate` - スキーマ変更後にクライアント生成
 
 **検索データ**
+
 - `pnpm generate:parquet` - クライアントサイド DuckDB 検索用 Parquet ファイル生成
 
 ## アーキテクチャ
 
 **ファイル構成**
+
 - `app/routes/` - Remix flat-routes 規約 (remix-flat-routes 経由)
 - `app/modules/` - サーバーサイドビジネスロジック (`.server.ts` ファイル)
 - `app/components/` - 機能別に整理された React コンポーネント
@@ -42,6 +49,7 @@
 - `app/utils/` - ユーティリティ関数 (meta, menu, toast)
 
 **主要サーバーモジュール**
+
 - `modules/db.server.ts` - Prisma クライアントのシングルトン。全 DB 操作はここに集約
 - `modules/session.server.ts` - Cookie ベースのセッション管理 (`__healthy_person_emulator`、有効期限30日)。いいね/よくない/ブックマークをユーザーごとに追跡
 - `modules/auth.google.server.ts` - Google OAuth による Remix Auth。開発環境では `demo@example.com` のモック戦略を使用
@@ -50,18 +58,21 @@
 - `modules/lightSearch.client.ts` - GCS ホスト Parquet ファイルに対するクライアントサイド DuckDB-WASM 検索
 
 **データフローパターン**
+
 - サーバー状態: Remix loaders/actions → コンポーネント
 - クライアント状態: Jotai atoms (`app/stores/`)
 - フォームバリデーション: React Hook Form + Zod スキーマ、Remix actions 経由で送信
 - 検索: 3層構造 — サーバーサイド全文 DB 検索 + クライアント DuckDB-WASM (GCS の Parquet) + pgvector 埋め込み類似度
 
 **データベース**
+
 - PostgreSQL + Prisma ORM + pgvector 拡張
 - DB カラムは snake_case、コード内は camelCase でマッピング
 - モデル: `DimPosts`, `DimComments`, `DimTags`, `RelPostTags`, `DimUsers`, `FctPostVoteHistory`, `FctCommentVoteHistory`, `FctPostEditHistory`, `FctUserBookmarkActivity`, `nowEditingPages`
 - **ベクターカラムは Prisma で `Unsupported("vector")`** — ベクター操作はすべて `prisma.$queryRaw` で raw SQL が必要
 
 **主要ルートファイル**
+
 - `_layout.tsx` - サイドバー・テーマ切替・toast プロバイダーを含むルートレイアウト
 - `_layout._index.tsx` - トップページ (固定/ランダム/上限なしいいねタブ)
 - `_layout.post.tsx` - 投稿作成 (5W1H+Then 構成)
@@ -70,14 +81,18 @@
 - `feed[.]xml.tsx` / `sitemap[.]xml.tsx` - RSS と SEO サイトマップ
 
 **スタイリング**
+
 - TailwindCSS 3.4 + DaisyUI 4.12
 - カスタムテーマカラー: primary `#99D9EA`、secondary `#264AF4`、tertiary `#00118F`
 - tailwind config にカスタム投票アニメーション (`like`, `dislike`, `voteSpin`)
 - Noto Sans JP フォント
 
 **コードスタイル**
+
 - TypeScript strict モード、ES2022 ターゲット
-- リンターは **Biome** (ESLint ではない) — `biome.json` に設定 (シングルクォート、末尾カンマ)
+- リンターは **OxLint** (vite-plus 経由) — `.oxlintrc.json` に設定 (シングルクォート、末尾カンマ)
+- フォーマッターは **OxFmt** (vite-plus 経由) — `.oxfmtrc.json` に設定
+- ビルドツールは **vite-plus** — `vite` / `vitest` を pnpm overrides でグローバル差し替え (`vite-tsconfig-paths` は不要、`resolve.tsconfigPaths: true` を使用)
 - コンポーネントは PascalCase、ユーティリティは camelCase
 - サーバー専用コードには `.server.ts`、クライアント専用には `.client.ts` サフィックス
 - 内部インポートパスは `~/*` を使用
@@ -85,6 +100,7 @@
 ## 環境変数
 
 必要な変数は `.env.example` を参照:
+
 - `DATABASE_URL` / `SUPABASE_CONNECTION_STRING` - PostgreSQL
 - `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_KEY` - Supabase クライアント
 - `HPE_SESSION_SECRET` - セッション Cookie の署名

@@ -23,9 +23,7 @@ export default function TagSelectionBox({
 
   const handleTagClick = (tagName: string) => {
     if (parentComponentStateValues.includes(tagName)) {
-      onTagsSelected(
-        parentComponentStateValues.filter((tag) => tag !== tagName),
-      );
+      onTagsSelected(parentComponentStateValues.filter((tag) => tag !== tagName));
     } else {
       onTagsSelected([...parentComponentStateValues, tagName]);
     }
@@ -38,9 +36,7 @@ export default function TagSelectionBox({
   };
 
   const filteredTags = allTagsOnlyForSearch
-    .filter((tag) =>
-      tag.tagName.toLowerCase().includes(searchText.toLowerCase()),
-    )
+    .filter((tag) => tag.tagName.toLowerCase().includes(searchText.toLowerCase()))
     .sort((a, b) => {
       if (sortBy === 'count') {
         return b.count - a.count;

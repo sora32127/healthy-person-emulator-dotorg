@@ -63,19 +63,12 @@ export default function Feed() {
           className="tab-content"
           style={{ display: tab === 'trend' ? 'block' : 'none' }}
         >
-          <PostSection
-            title="最新の投稿"
-            posts={mostRecentPosts.result}
-            identifier="latest"
-          >
+          <PostSection title="最新の投稿" posts={mostRecentPosts.result} identifier="latest">
             <button
               className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
               type="button"
             >
-              <NavLink
-                to="/feed?p=2&type=timeDesc"
-                className="block w-full h-full"
-              >
+              <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
                 最新の投稿を見る
               </NavLink>
             </button>
@@ -97,18 +90,12 @@ export default function Feed() {
               </NavLink>
             </button>
           </PostSection>
-          <CommentSection
-            title="最近のコメント"
-            comments={mostRecentComments.result}
-          >
+          <CommentSection title="最近のコメント" comments={mostRecentComments.result}>
             <button
               className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
               type="button"
             >
-              <NavLink
-                to="/comment?p=2&type=timeDesc"
-                className="block w-full h-full"
-              >
+              <NavLink to="/comment?p=2&type=timeDesc" className="block w-full h-full">
                 最近のコメントを見る
               </NavLink>
             </button>
@@ -120,22 +107,14 @@ export default function Feed() {
           style={{ display: tab === 'fixed' ? 'block' : 'none' }}
         >
           <PostSection title="殿堂入り" posts={famedPosts} identifier="famed" />
-          <PostSection
-            title="コミュニティ選"
-            posts={communityPosts}
-            identifier="community"
-          />
+          <PostSection title="コミュニティ選" posts={communityPosts} identifier="community" />
         </div>
         <div
           role="tabpanel"
           className="tab-content"
           style={{ display: tab === 'random' ? 'block' : 'none' }}
         >
-          <PostSection
-            title="ランダム投稿"
-            posts={randomPosts}
-            identifier="random"
-          >
+          <PostSection title="ランダム投稿" posts={randomPosts} identifier="random">
             <div className="flex justify-center">
               <ReloadButton />
             </div>

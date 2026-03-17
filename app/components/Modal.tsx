@@ -6,13 +6,7 @@ interface ModalProps {
   showCloseButton?: boolean;
 }
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  showCloseButton = true,
-}: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, showCloseButton = true }: ModalProps) {
   if (!isOpen) return null;
 
   return (

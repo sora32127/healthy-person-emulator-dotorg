@@ -58,13 +58,10 @@ export default function CommentCard({
 
   const [isReplyBoxShown, setIsReplyBoxShown] = useState(false);
 
-  const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] =
-    useState(false);
-  const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] =
-    useState(false);
+  const [isCommentLikeButtonPushed, setIsCommentLikeButtonPushed] = useState(false);
+  const [isCommentDislikeButtonPushed, setIsCommentDislikeButtonPushed] = useState(false);
   const [isCommentLikeAnimating, setIsCommentLikeAnimating] = useState(false);
-  const [isCommentDislikeAnimating, setIsCommentDislikeAnimating] =
-    useState(false);
+  const [isCommentDislikeAnimating, setIsCommentDislikeAnimating] = useState(false);
 
   const { setValue, getValues } = useForm<CommentVoteSchema>({
     resolver: zodResolver(commentVoteSchema),
@@ -118,11 +115,7 @@ export default function CommentCard({
         <RelativeDate targetDate={commentDateGmt} />
         <div className="flex items-center">
           <CopyToClipboardButton textToCopy={currentURL} variant="comment" />
-          <ShareApiButton
-            url={currentURL}
-            title={shareTitle}
-            variant="comment"
-          />
+          <ShareApiButton url={currentURL} title={shareTitle} variant="comment" />
         </div>
       </div>
       <p className="whitespace-pre-wrap break-words">{commentContent}</p>
@@ -132,9 +125,7 @@ export default function CommentCard({
           count={likesCount}
           isAnimating={isCommentLikeAnimating}
           isVoted={isLiked}
-          disabled={
-            isCommentLikeButtonPushed || isLiked || isCommentLikeAnimating
-          }
+          disabled={isCommentLikeButtonPushed || isLiked || isCommentLikeAnimating}
           onClick={() => handleCommentVote('like')}
         />
         <VoteButton
@@ -142,11 +133,7 @@ export default function CommentCard({
           count={dislikesCount}
           isAnimating={isCommentDislikeAnimating}
           isVoted={isDisliked}
-          disabled={
-            isCommentDislikeButtonPushed ||
-            isDisliked ||
-            isCommentDislikeAnimating
-          }
+          disabled={isCommentDislikeButtonPushed || isDisliked || isCommentDislikeAnimating}
           onClick={() => handleCommentVote('dislike')}
         />
       </div>

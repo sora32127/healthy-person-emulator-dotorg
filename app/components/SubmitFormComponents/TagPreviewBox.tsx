@@ -3,10 +3,7 @@ interface TagPreviewBoxProps {
   createdTags: string[];
 }
 
-export default function TagPreviewBox({
-  selectedTags,
-  createdTags,
-}: TagPreviewBoxProps) {
+export default function TagPreviewBox({ selectedTags, createdTags }: TagPreviewBoxProps) {
   return (
     <div className="mb-8">
       <h3 className="text-2xl font-bold mb-4">選択したタグ</h3>
