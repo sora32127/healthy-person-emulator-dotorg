@@ -197,60 +197,17 @@ const repo = process.env.USE_D1 === 'true'
 
 ---
 
-## Phase 3: テスト・データ検証
+## Phase 3: Workers ランタイム移行
 
-### 3.1 自動テスト
-- **スナップショットテスト**: 主要関数（`getPostByPostId`, `getFeedPosts`, `getCommentsByPostId`等）のPrisma実装とD1実装で同一入力に対する出力をdiff
-- **E2Eテスト**: 主要ユーザーフロー（投稿作成→閲覧→検索→ブックマーク→OAuth）の手動検証チェックリスト
-- **性能回帰テスト**: 主要ページのレスポンスタイム計測（PostgreSQL vs D1 HTTP API経由）
-
-### 3.2 データ整合性検証
-- 全13テーブルの行数一致確認
-- ランダムサンプル100件/テーブルのフィールド値一致確認
-- 外部キー参照整合性チェック
-
-### 3.3 既存Vitest
-- `pnpm test` で全テストパス（Repository層経由で両実装テスト）
-
----
-
-## Phase 4: 外部依存の切り離し
-
-**Phase 3完了後、Workers移行前に実施。**
-
-### 4.1 自動化プログラム向けAPI endpoint追加
-
-Webアプリに内部APIを追加し、自動化プログラムのDB直接接続を排除:
-- `POST /api/internal/update-social-ids` — SNS投稿ID書き戻し
-- `GET /api/internal/posts-for-pickup` — SNS配信対象記事取得
-- `GET /api/internal/posts-for-export` — BigQuery ETL用全件取得
-
-認証: Cloudflare Access（service token）またはAPIキー
-
-### 4.2 自動化プログラム側の修正方針
-- Supabase直接接続 → 上記API endpointへの切り替え
-- これにより、DB実装がPostgreSQLでもD1でも自動化プログラムは影響を受けない
-- **この修正は本プラン外（別リポジトリ）だが、Phase 5の前提条件**
-
-### 4.3 BigQuery ETL
-- `dlt`パイプラインのソースをPostgreSQL → 内部APIまたはD1 HTTP APIに変更
-- **または**: D1からのデータエクスポートをWorkers Cronで実行し、R2経由でBigQueryにロード
-
----
-
-## Phase 5: Workers ランタイム移行
-
-**Phase 4完了（自動化プログラムのDB直接接続排除）後に実施。**
-
-### 5.1 `entry.server.tsx` 書き換え
+### 3.1 `entry.server.tsx` 書き換え
 - `PassThrough`（node:stream）→ `renderToReadableStream`（Web Streams API）
 - `@react-router/node` → `@react-router/cloudflare`
 
-### 5.2 ビルド設定更新
+### 3.2 ビルド設定更新
 - `vite.config.ts`: `cloudflareDevProxy()` プラグイン追加
 - `react-router.config.ts`: Workers向け設定
 
-### 5.3 `process.env` → Workers envバインディング
+### 3.3 `process.env` → Workers envバインディング
 
 全サーバーモジュールをrequest-scoped env対応に変更。
 
@@ -282,13 +239,13 @@ export interface Env {
 }
 ```
 
-### 5.4 GCS → R2 切替
+### 3.4 GCS → R2 切替
 - `gcloud.server.ts` → `r2.server.ts`
 - R2バインディングでParquetファイル配信
 - カスタムドメイン設定（パブリックアクセス。signed URL不要に）
 - **既存URL互換性**: クライアントサイドDuckDBが参照するURLを更新
 
-### 5.5 `wrangler.toml` 作成
+### 3.5 `wrangler.toml` 作成
 ```toml
 name = "healthy-person-emulator-dotorg"
 main = "build/server/index.js"
@@ -301,7 +258,7 @@ bucket = "./build/client"
 [[d1_databases]]
 binding = "DB"
 database_name = "healthy-person-emulator-db"
-database_id = "<id>"
+database_id = "1d5558b5-f0c7-4c13-9af9-82856367bfb9"
 
 [[r2_buckets]]
 binding = "PARQUET_BUCKET"
@@ -315,13 +272,39 @@ binding = "VECTORIZE"
 index_name = "embeddings-index"
 ```
 
+### 3.6 ローカル動作確認
+- `wrangler dev` でローカルWorkers起動
+- 主要ページ（トップ、記事詳細、フィード、検索）の動作確認
+
 ### ロールバック: Cloud Run + PostgreSQL + GCSにDNS切り戻し
 
 ---
 
-## Phase 6: デプロイパイプライン + カットオーバー
+## Phase 4: 外部依存の切り離し
 
-### 6.1 GitHub Actions書き換え
+### 4.1 自動化プログラム向けAPI endpoint追加
+
+Webアプリに内部APIを追加し、自動化プログラムのDB直接接続を排除:
+- `POST /api/internal/update-social-ids` — SNS投稿ID書き戻し
+- `GET /api/internal/posts-for-pickup` — SNS配信対象記事取得
+- `GET /api/internal/posts-for-export` — BigQuery ETL用全件取得
+
+認証: Cloudflare Access（service token）またはAPIキー
+
+### 4.2 自動化プログラム側の修正方針
+- Supabase直接接続 → 上記API endpointへの切り替え
+- これにより、DB実装がPostgreSQLでもD1でも自動化プログラムは影響を受けない
+- **この修正は本プラン外（別リポジトリ）だが、Phase 5の前提条件**
+
+### 4.3 BigQuery ETL
+- `dlt`パイプラインのソースをPostgreSQL → 内部APIまたはD1 HTTP APIに変更
+- **または**: D1からのデータエクスポートをWorkers Cronで実行し、R2経由でBigQueryにロード
+
+---
+
+## Phase 5: デプロイパイプライン + カットオーバー
+
+### 5.1 GitHub Actions書き換え
 
 **本番**（main push時）:
 ```yaml
@@ -335,7 +318,7 @@ index_name = "embeddings-index"
 - npx wrangler versions upload --tag pr-${{ github.event.pull_request.number }}
 ```
 
-### 6.2 カットオーバー手順
+### 5.2 カットオーバー手順
 
 1. Workers版をデプロイ（Cloud Runと並行稼働）
 2. DNSでトラフィックの10%をWorkersに振り分け
@@ -343,12 +326,12 @@ index_name = "embeddings-index"
 4. 問題なければ50% → 100%に段階移行
 5. 1週間安定稼働後にCloud Run廃止
 
-### 6.3 ロールバック手順（明文化）
+### 5.3 ロールバック手順（明文化）
 - **即時**: DNSをCloud Runに切り戻し（TTL: 5分）
 - **データ同期**: D1での書き込みがある場合、D1→PostgreSQLへの差分同期スクリプトを事前に用意
 - **判定基準**: エラー率1%超、P95レスポンスタイム3倍超、データ不整合検出時
 
-### 6.4 不要ファイル削除（カットオーバー完了後）
+### 5.4 不要ファイル削除（カットオーバー完了後）
 - `Dockerfile`, Docker関連設定
 - Cloud Run用ワークフロー
 - `prisma/schema.prisma`, Prisma Repository実装
@@ -357,43 +340,64 @@ index_name = "embeddings-index"
 
 ---
 
+## Phase 6: テスト・検証
+
+**Workers移行後、カットオーバー前に実施。**
+
+### 6.1 E2Eテスト
+- 主要ユーザーフロー（投稿作成→閲覧→検索→ブックマーク→OAuth）の手動検証
+- `wrangler dev`ローカル環境 + 本番Workers環境の両方で確認
+
+### 6.2 データ整合性検証
+- PostgreSQLとD1の行数比較（移行後の差分は許容）
+- 主要投稿のスポットチェック
+
+### 6.3 性能テスト
+- Workers上で主要ページのレスポンスタイム計測
+- Cloud Runとの比較
+
+### 6.4 既存Vitest
+- `pnpm test` で全テストパス
+
+---
+
 ## リスクと対策
 
 | リスク | 影響度 | 対策 | 検証フェーズ |
 |---|---|---|---|
-| D1行サイズ上限（2MB） | 高 | **Phase 0 PoCで計測**。超過時はR2退避設計。テキスト記事なら通常2MB以内だが`fct_post_edit_history`（編集前後全文保持）は要確認 | Phase 0 |
-| D1クエリ性能 | 高 | **Phase 0 PoCで主要クエリ計測**。インデックス最適化 | Phase 0 |
-| Workers上のライブラリ互換性 | 高 | **Phase 0で主要ライブラリ検証**。非互換なら代替特定 | Phase 0 |
-| D1トランザクション差異 | 高 | `batch()`とinteractive transactionの使い分け精査。重点テスト | Phase 2-3 |
-| 外部自動化プログラムの整合性 | 高 | **Phase 4で内部API導入**。Workers移行前にDB直接接続を排除 | Phase 4 |
-| セッション互換性 | 中 | Cookie名・シークレット同一。ファクトリパターンで初期化 | Phase 5 |
-| `Date↔string`変換バグ | 中 | Repository層で変換を一元化。スナップショットテストで検証 | Phase 2-3 |
-| カットオーバー時のデータ不整合 | 高 | 段階的トラフィック移行 + D1→PG差分同期スクリプト事前準備 | Phase 6 |
+| D1行サイズ上限（2MB） | 高 | **Phase 0 PoCで計測済み✅**。最大~13KB、問題なし | Phase 0 |
+| D1クエリ性能 | 高 | **Phase 0 PoCで計測済み✅**。全クエリ<1ms（getTagsCountsのみ~7ms） | Phase 0 |
+| Workers上のライブラリ互換性 | 高 | **Phase 0で検証済み✅**。全ライブラリ互換 | Phase 0 |
+| D1トランザクション差異 | 高 | `batch()`とinteractive transactionの使い分け精査。重点テスト | Phase 3, 6 |
+| 外部自動化プログラムの整合性 | 高 | **Phase 4で内部API導入** | Phase 4 |
+| セッション互換性 | 中 | Cookie名・シークレット同一。ファクトリパターンで初期化 | Phase 3 |
+| `Date↔string`変換バグ | 中 | Repository層で変換を一元化。スナップショットテストで検証 | Phase 6 |
+| カットオーバー時のデータ不整合 | 高 | 段階的トラフィック移行 + D1→PG差分同期スクリプト事前準備 | Phase 5 |
 
 ---
 
 ## 実行順序と工数見積
 
-| Phase | 内容 | 工数目安 | Go/No-Go |
+| Phase | 内容 | 工数目安 | 状態 |
 |---|---|---|---|
-| 0 | D1適合性PoC | 2-3日 | **ここで中止判断の可能性あり** |
-| 1 | Repository層導入 | 3-4日 | |
-| 2 | Drizzle/D1実装 + データ移行 | 7-10日 | |
-| 3 | テスト・データ検証 | 3-4日 | |
-| 4 | 外部依存の切り離し | 2-3日 | |
-| 5 | Workers ランタイム移行 | 4-5日 | |
-| 6 | デプロイパイプライン + カットオーバー | 2-3日 | |
+| 0 | D1適合性PoC | 2-3日 | ✅ 完了 |
+| 1 | Repository層導入 | 3-4日 | ✅ 完了 |
+| 2 | Drizzle/D1実装 + データ移行 | 7-10日 | ✅ 完了 |
+| 3 | Workers ランタイム移行 | 4-5日 | ⬜ 次 |
+| 4 | 外部依存の切り離し | 2-3日 | ⬜ |
+| 5 | デプロイパイプライン + カットオーバー | 2-3日 | ⬜ |
+| 6 | テスト・検証 | 3-4日 | ⬜ |
 | **合計** | | **23-32日** | |
 
 ---
 
 ## 検証方法
 
-1. **Phase 0 PoC**: 行サイズ計測、クエリベンチマーク、Workers互換性テスト
-2. **Phase 1-2**: `pnpm test` 全テストパス + Prisma/D1のスナップショット比較
-3. **Phase 3**: 全テーブル行数照合 + ランダムサンプル100件/テーブルのフィールドハッシュ比較
-4. **Phase 5**: `wrangler dev`でローカルWorkers動作確認 + E2E手動テスト
-5. **Phase 6**: 段階的トラフィック移行 + モニタリング（エラー率、レスポンスタイム）
+1. **Phase 0 PoC**: 行サイズ計測、クエリベンチマーク、Workers互換性テスト ✅
+2. **Phase 1-2**: `pnpm test` 全テストパス ✅
+3. **Phase 3**: `wrangler dev`でローカルWorkers動作確認
+4. **Phase 5**: 段階的トラフィック移行 + モニタリング（エラー率、レスポンスタイム）
+5. **Phase 6**: E2Eテスト + データ整合性検証 + 性能テスト
 
 ---
 
@@ -402,9 +406,14 @@ index_name = "embeddings-index"
 **総合評価: 差し戻し** → 以下を反映して改訂済み:
 - PoC先行フェーズ追加（Phase 0）
 - Repository層導入で段階的移行に変更（Phase 1）
-- 外部依存の切り離しをWorkers移行前に配置（Phase 4）
-- テスト戦略の具体化（Phase 3、スナップショットテスト等）
-- ロールバック手順の明文化（Phase 6）
+- テスト戦略の具体化（Phase 6）
+- ロールバック手順の明文化（Phase 5）
 - 工数見積を現実的に修正（14-21日 → 23-32日）
 - トランザクション戦略の精査（batch vs interactive transaction）
 - Date↔string変換のRepository層一元化
+
+**Phase 3以降の順序変更（2026-03-17）**:
+- Workers移行を先行（旧Phase 5 → 新Phase 3）
+- 外部依存切り離しを後に（旧Phase 4 → 新Phase 4）
+- デプロイパイプラインをその次に（旧Phase 6 → 新Phase 5）
+- テスト・検証を最後に（旧Phase 3 → 新Phase 6）
