@@ -19,8 +19,21 @@ declare module 'react-router' {
 
 let _initialized = false;
 
-export function initializeApp(env: CloudflareEnv) {
+/**
+ * Get env from globalThis (set by worker.ts) or from parameter.
+ * worker.ts and build/server/index.js have separate module scopes,
+ * so globalThis is used to bridge them.
+ */
+function resolveEnv(env?: CloudflareEnv): CloudflareEnv {
+  if (env) return env;
+  const globalEnv = (globalThis as any).__cloudflareEnv;
+  if (globalEnv) return globalEnv;
+  throw new Error('CloudflareEnv not available');
+}
+
+export function initializeApp(envParam?: CloudflareEnv) {
   if (_initialized) return;
+  const env = resolveEnv(envParam);
   initSessionStorage(env.SESSION_SECRET || env.HPE_SESSION_SECRET || 's3cr3t');
   initVisitorSession();
   initAuth({

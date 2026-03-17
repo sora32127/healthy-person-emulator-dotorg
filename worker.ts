@@ -1,6 +1,5 @@
 import { createRequestHandler } from 'react-router';
 import type { CloudflareEnv } from './app/types/env';
-import { initializeApp } from './app/load-context';
 
 // Import the server build output
 // @ts-expect-error - this is the built server output
@@ -10,7 +9,11 @@ const requestHandler = createRequestHandler(serverBuild);
 
 export default {
   async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
-    initializeApp(env);
+    // Share env via globalThis so the build output's modules can access it.
+    // worker.ts and build/server/index.js have separate module scopes,
+    // but globalThis is shared within the same Workers isolate.
+    (globalThis as any).__cloudflareEnv = env;
+
     const loadContext = {
       cloudflare: {
         env,

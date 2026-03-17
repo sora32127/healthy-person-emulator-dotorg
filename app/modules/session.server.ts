@@ -18,8 +18,16 @@ export function initSessionStorage(sessionSecret: string) {
 }
 
 function ensureStorage() {
-  if (!_sessionStorage) throw new Error('Session storage not initialized. Call initSessionStorage first.');
-  return _sessionStorage;
+  if (!_sessionStorage) {
+    const env = (globalThis as any).__cloudflareEnv;
+    if (env) {
+      initSessionStorage(env.SESSION_SECRET || env.HPE_SESSION_SECRET || 's3cr3t');
+    }
+    if (!_sessionStorage) {
+      throw new Error('Session storage not initialized and no env available.');
+    }
+  }
+  return _sessionStorage!;
 }
 
 export const sessionStorage = {

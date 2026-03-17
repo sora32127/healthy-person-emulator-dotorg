@@ -95,7 +95,18 @@ export function initAuth(env: {
 }
 
 export function getAuthenticatorInstance(): Authenticator<ExposedUser> {
-  if (!_initialized) throw new Error('Auth not initialized. Call initAuth first.');
+  if (!_initialized) {
+    const env = (globalThis as any).__cloudflareEnv;
+    if (env) {
+      initAuth({
+        GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+        CLIENT_URL: env.CLIENT_URL,
+        HPE_SESSION_SECRET: env.HPE_SESSION_SECRET,
+      });
+    }
+    if (!_initialized) throw new Error('Auth not initialized and no env available.');
+  }
   return _authenticator;
 }
 

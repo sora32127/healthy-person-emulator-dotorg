@@ -42,7 +42,13 @@ export function initDb(d1: D1Database) {
 }
 
 function getRepo(): DatabaseRepository {
-  if (!_repo) throw new Error('DB not initialized. Call initDb first.');
+  if (!_repo) {
+    const env = (globalThis as any).__cloudflareEnv;
+    if (env?.DB) {
+      initDb(env.DB);
+    }
+    if (!_repo) throw new Error('DB not initialized and no env available.');
+  }
   return _repo;
 }
 
