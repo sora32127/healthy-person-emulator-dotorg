@@ -8,28 +8,37 @@ interface CreateEmbeddingInput {
 }
 
 export async function createEmbedding({ postId, postContent, postTitle }: CreateEmbeddingInput) {
-  const allTagNames = await getTagNamesByPostId(postId);
-  const inputText = getEmbeddingInputText(postContent, postTitle, allTagNames);
+  try {
+    const allTagNames = await getTagNamesByPostId(postId);
+    const inputText = getEmbeddingInputText(postContent, postTitle, allTagNames);
 
-  const embedding = await getEmbedding(inputText);
+    const embedding = await getEmbedding(inputText);
 
-  await upsertVectors([
-    {
-      id: String(postId),
-      values: embedding,
-      metadata: {
-        postId,
-        postTitle,
-        embeddingModel: 'embeddinggemma-300m',
-        updatedAt: new Date().toISOString(),
+    await upsertVectors([
+      {
+        id: String(postId),
+        values: embedding,
+        metadata: {
+          postId,
+          postTitle,
+          embeddingModel: 'embeddinggemma-300m',
+          updatedAt: new Date().toISOString(),
+        },
       },
-    },
-  ]);
+    ]);
 
-  return {
-    status: 200,
-    message: 'Embedding created successfully',
-  };
+    return {
+      status: 200,
+      message: 'Embedding created successfully',
+    };
+  } catch (error) {
+    // Vectorize/AI unavailable (e.g. local dev) — skip embedding
+    console.warn('createEmbedding failed, skipping:', (error as Error).message);
+    return {
+      status: 200,
+      message: 'Embedding skipped (AI unavailable)',
+    };
+  }
 }
 
 function getEmbeddingInputText(
