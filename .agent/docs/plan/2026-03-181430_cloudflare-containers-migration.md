@@ -401,6 +401,36 @@ Cloudflare Containersが本当に使えるかを確認する。
 
 **成果物:** ローカルで動作するDockerコンテナ
 
+#### Phase 1 実施結果（2026-03-18）
+
+**移植完了。ローカルdry-runテスト・Cloudflareデプロイ成功。**
+
+**移植したタスク:**
+
+| タスク | 元Lambda | コンテナエンドポイント | dry-runテスト |
+|--------|----------|----------------------|--------------|
+| OGP画像生成 | `CreateOGImage` | `POST /create-ogp` | - (API key必要) |
+| Twitter投稿 | `PostTweet` | `POST /post-social` (platform=twitter) | ✅ |
+| Bluesky投稿 | `PostBluesky` | `POST /post-social` (platform=bluesky) | ✅ |
+| Misskey投稿 | `PostActivityPub` | `POST /post-social` (platform=activitypub) | ✅ |
+| 週次レポート | `ReportWeeklySummary` | `POST /report-weekly` | - (BQ認証必要) |
+| BigQuery ETL | `ExtractAndLoadToBQ` | `POST /etl-to-bq` | - (BQ認証必要) |
+
+**プランからの変更点:**
+- `SaveSNSIdsToDB` は移植不要と判断（プラン通り）。Worker側がD1に直接書き込む
+- `main.py` を `importlib.import_module` によるタスクルーター方式に刷新（プランの「HTTPサーバー + タスクルーター」に対応）
+- `Dockerfile` のCMDは `uv run main.py` → `.venv/bin/python main.py`（hatchlingのeditable build問題を回避）
+- `container/shared/config.py` に共通設定（`API_BASE_URL`, `DRY_RUN`, `get_r2_client()`）を集約
+- フォントは `NotoSansJP-Medium.ttf` のみコピー（`NotoSansJP-Light.ttf` は旧コードでも未使用）
+
+**未検証事項（Phase 2以降で対応）:**
+- `envVars` でシークレットをコンテナに渡す設定がまだ未実装。container-worker.tsに追加が必要
+- Worker→Containerのタスク呼び出し統合テスト（Worker fetchハンドラーからコンテナのタスクエンドポイントを叩くパスがない）
+- OGP生成の本番テスト（API key + R2書き込み）
+
+**スキル改善の提案:**
+- 特になし
+
 ---
 
 ### Phase 2: Worker側フロー構築（3-4日）

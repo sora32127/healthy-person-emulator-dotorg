@@ -1,5 +1,4 @@
 import { createRequestHandler } from 'react-router';
-import { getContainer } from '@cloudflare/containers';
 import type { CloudflareEnv } from './app/types/env';
 
 // Import the server build output
@@ -37,17 +36,18 @@ export default {
     env: CloudflareEnv,
     ctx: ExecutionContext,
   ) {
+    const { handleOgpAndSocialPost, recoverStaleJobs } = await import(
+      './app/modules/automation.server'
+    );
+
     console.log(`[scheduled] cron=${controller.cron} at ${new Date().toISOString()}`);
 
-    // PoC: Test container startup via cron
     if (controller.cron === '*/10 * * * *') {
       try {
-        const container = getContainer(env.AUTOMATION_CONTAINER);
-        const res = await container.fetch(new Request('http://container/health'));
-        const data = await res.json();
-        console.log('[scheduled] Container health:', JSON.stringify(data));
+        await handleOgpAndSocialPost(env);
+        await recoverStaleJobs(env);
       } catch (err) {
-        console.error('[scheduled] Container call failed:', err);
+        console.error('[scheduled] OGP/social post flow failed:', err);
       }
     }
   },
@@ -57,32 +57,65 @@ export default {
     env: CloudflareEnv,
     ctx: ExecutionContext,
   ) {
+    const { handleSocialPostConsumer } = await import(
+      './app/modules/automation.server'
+    );
     const CURRENT_SCHEMA_VERSION = 1;
 
     for (const message of batch.messages) {
-      const { type, payload, schema_version } = message.body as { type: string; payload: Record<string, unknown>; schema_version: number };
-      console.log(`[queue] Processing message: type=${type}, schema_version=${schema_version}`);
+      const body = message.body as {
+        type: string;
+        schema_version: number;
+        payload: {
+          job_id: string;
+          post_id: number;
+          platform: string;
+          post_title: string;
+          post_url: string;
+          og_url: string;
+          message_type: string;
+        };
+      };
 
-      if (schema_version !== CURRENT_SCHEMA_VERSION) {
-        console.warn(`[queue] Unknown schema_version=${schema_version}, sending to DLQ`);
+      console.log(
+        `[queue] Processing: type=${body.type}, schema_version=${body.schema_version}, job=${body.payload?.job_id}`,
+      );
+
+      if (body.schema_version !== CURRENT_SCHEMA_VERSION) {
+        console.warn(`[queue] Unknown schema_version=${body.schema_version}, sending to DLQ`);
+        message.retry();
+        continue;
+      }
+
+      if (body.type !== 'social_post') {
+        console.warn(`[queue] Unknown message type=${body.type}, acking`);
+        message.ack();
+        continue;
+      }
+
+      // If SEND_ENABLED is false, don't consume — leave in queue without
+      // consuming retries, DLQ, or attempt_count.
+      if (env.SEND_ENABLED !== 'true') {
+        console.log('[queue] SEND_ENABLED is not true, retrying later');
         message.retry();
         continue;
       }
 
       try {
-        const container = getContainer(env.AUTOMATION_CONTAINER);
-        const res = await container.fetch(
-          new Request('http://container/echo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, payload }),
-          }),
-        );
-        const data = await res.json();
-        console.log(`[queue] Container response:`, JSON.stringify(data));
-        message.ack();
+        const result = await handleSocialPostConsumer(env, body.payload as Parameters<typeof handleSocialPostConsumer>[1]);
+
+        if (result.action === 'sent' || result.action === 'skipped') {
+          message.ack();
+        } else if (result.action === 'unknown') {
+          // Ambiguous — ack to prevent retry (status is already "unknown" in DB)
+          message.ack();
+        } else {
+          // failed — ack (terminal error, no retry)
+          message.ack();
+        }
       } catch (err) {
-        console.error(`[queue] Error processing message:`, err);
+        // Retryable error — let Queue retry
+        console.error(`[queue] Retryable error for job ${body.payload.job_id}:`, err);
         message.retry();
       }
     }
