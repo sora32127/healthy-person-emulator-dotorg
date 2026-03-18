@@ -432,6 +432,14 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 ### 7.3 Wrangler Secrets設定漏れ確認
 - `INTERNAL_API_KEY` の設定（内部API認証用）
 
+### Phase 7.1-7.3 実施結果（2026-03-18）
+- ✅ データ再マイグレーション完了（260,958行、前回比+357行の差分反映）
+- ✅ `prisma/schema.prisma` 削除、`openai` パッケージ削除
+- ✅ `GCS_PARQUET_BASE_URL` を `wrangler.toml` の `[vars]` に移動
+- ✅ `INTERNAL_API_KEY` をwrangler secretsに設定
+- ✅ Vectorize欠損データ14件をバックフィル（48697-48711の新規投稿分）
+- ✅ ビルド・テスト全パス
+
 ### 7.4 SNS連携の切り替え
 - 自動化プログラム（別リポジトリ: `healthy-person-emulator`）をDB直接接続 → 内部API経由に修正
 - `INTERNAL_API_KEY` をwrangler secretsに設定
