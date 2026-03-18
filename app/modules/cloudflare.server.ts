@@ -1,6 +1,7 @@
 let _cfWorkersAiToken: string | undefined;
 let _cloudflareAccountId: string | undefined;
 let _vectorizeIndexName: string | undefined;
+let _cloudflareInitialized = false;
 
 export function initCloudflare(env: {
   CF_WORKERS_AI_TOKEN?: string;
@@ -10,6 +11,19 @@ export function initCloudflare(env: {
   _cfWorkersAiToken = env.CF_WORKERS_AI_TOKEN;
   _cloudflareAccountId = env.CLOUDFLARE_ACCOUNT_ID || "9ecb9a8692f7c2c5c56387d93a9a1e60";
   _vectorizeIndexName = env.VECTORIZE_INDEX_NAME || "embeddings-index";
+  _cloudflareInitialized = true;
+}
+
+function ensureCloudflareInit() {
+  if (_cloudflareInitialized) return;
+  const env = (globalThis as any).__cloudflareEnv;
+  if (env) {
+    initCloudflare({
+      CF_WORKERS_AI_TOKEN: env.CF_WORKERS_AI_TOKEN,
+      CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID,
+      VECTORIZE_INDEX_NAME: env.VECTORIZE_INDEX_NAME,
+    });
+  }
 }
 
 const TIMEOUT_MS = 5000;
@@ -20,6 +34,7 @@ function getBaseUrl(): string {
 }
 
 function getToken(): string {
+  ensureCloudflareInit();
   if (!_cfWorkersAiToken) {
     throw new Error("CF_WORKERS_AI_TOKEN is not set");
   }

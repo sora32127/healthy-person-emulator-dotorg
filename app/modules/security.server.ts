@@ -6,6 +6,7 @@ let _cfTurnstileSecretKey: string | undefined;
 let _cfTurnstileSiteKey: string | undefined;
 let _googleGenerativeApiKey: string | undefined;
 let _nodeEnv: string | undefined;
+let _securityInitialized = false;
 
 export function initSecurity(env: {
   CF_TURNSTILE_SECRET_KEY: string;
@@ -17,9 +18,24 @@ export function initSecurity(env: {
   _cfTurnstileSiteKey = env.CF_TURNSTILE_SITEKEY;
   _googleGenerativeApiKey = env.GOOGLE_GENERATIVE_API_KEY;
   _nodeEnv = env.NODE_ENV;
+  _securityInitialized = true;
+}
+
+function ensureSecurityInit() {
+  if (_securityInitialized) return;
+  const env = (globalThis as any).__cloudflareEnv;
+  if (env) {
+    initSecurity({
+      CF_TURNSTILE_SECRET_KEY: env.CF_TURNSTILE_SECRET_KEY,
+      CF_TURNSTILE_SITEKEY: env.CF_TURNSTILE_SITEKEY,
+      GOOGLE_GENERATIVE_API_KEY: env.GOOGLE_GENERATIVE_API_KEY,
+      NODE_ENV: env.NODE_ENV,
+    });
+  }
 }
 
 export async function validateRequest(token: string, ipAddress: string) {
+  ensureSecurityInit();
   if (!_cfTurnstileSecretKey) {
     throw new Error('CF_TURNSTILE_SECRET_KEY is not set');
   }
@@ -51,6 +67,7 @@ export async function validateRequest(token: string, ipAddress: string) {
 }
 
 export async function getTurnStileSiteKey() {
+  ensureSecurityInit();
   if (!_cfTurnstileSiteKey) {
     throw new Error('CF_TURNSTILE_SITEKEY is not set');
   }
@@ -69,6 +86,7 @@ export async function getHashedUserIPAddress(request: Request) {
 }
 
 export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string) {
+  ensureSecurityInit();
   if (!_googleGenerativeApiKey) {
     throw new Error('GOOGLE_GENERATIVE_API_KEY is not set');
   }

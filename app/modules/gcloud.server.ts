@@ -20,6 +20,12 @@ export async function generateDownloadSignedUrl(
   }
 
   if (!_baseUrl) {
+    const env = (globalThis as any).__cloudflareEnv;
+    if (env?.GCS_PARQUET_BASE_URL) {
+      initGcloud(env.GCS_PARQUET_BASE_URL);
+    }
+  }
+  if (!_baseUrl) {
     throw new Error('GCS base URL not initialized. Call initGcloud first.');
   }
 
