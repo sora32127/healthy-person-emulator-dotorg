@@ -1,10 +1,14 @@
 import { createCookieSessionStorage } from 'react-router';
 
-let _sessionStorage: ReturnType<typeof createCookieSessionStorage> | null = null;
+interface VisitorSessionData {
+  redirectUrl: string;
+}
+
+let _sessionStorage: ReturnType<typeof createCookieSessionStorage<VisitorSessionData>> | null = null;
 
 export function initVisitorSession() {
   if (_sessionStorage) return;
-  _sessionStorage = createCookieSessionStorage({
+  _sessionStorage = createCookieSessionStorage<VisitorSessionData>({
     cookie: {
       name: 'visitor-cookie',
       httpOnly: true,
@@ -25,7 +29,7 @@ const getSession = (cookieHeader: string | null) => ensureStorage().getSession(c
 const commitSession = (session: any) => ensureStorage().commitSession(session);
 const destroySessionFn = (session: any) => ensureStorage().destroySession(session);
 
-export async function getVisitorCookieURL(request: Request): Promise<string> {
+export async function getVisitorCookieURL(request: Request): Promise<string | undefined> {
   const cookieHeader = request.headers.get('Cookie');
   const cookie = await getSession(cookieHeader);
   return cookie.get('redirectUrl') ?? undefined;

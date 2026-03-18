@@ -8,6 +8,10 @@
     "**/.client/**/*.tsx",
     ".react-router/types/**/*"
   ],
+  "exclude": [
+    "node_modules",
+    "scripts/generateParquetFiles.ts"
+  ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["@cloudflare/workers-types", "vite/client", "vitest/globals"],

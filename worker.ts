@@ -2,13 +2,14 @@ import { createRequestHandler } from 'react-router';
 import type { CloudflareEnv } from './app/types/env';
 
 // Import the server build output
-// @ts-expect-error - this is the built server output
+import type { ServerBuild } from 'react-router';
+// @ts-ignore - this is the built server output
 import * as serverBuild from './build/server/index.js';
 
 // Re-export the Container class so wrangler can find it
 export { AutomationContainer } from './container-worker';
 
-const requestHandler = createRequestHandler(serverBuild);
+const requestHandler = createRequestHandler(serverBuild as unknown as ServerBuild);
 
 export default {
   async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
