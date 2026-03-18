@@ -60,6 +60,30 @@ export default {
         console.error('[scheduled] Legendary article report failed:', err);
       }
     }
+
+    // Weekly summary — Mondays 12:00 UTC
+    if (controller.cron === '0 12 * * 1') {
+      try {
+        const { callContainer } = await import('./app/modules/automation.server');
+        await callContainer(env, '/report-weekly', {});
+        console.log('[scheduled] Weekly summary report completed');
+      } catch (err) {
+        console.error('[scheduled] Weekly summary report failed:', err);
+      }
+    }
+
+    // BigQuery ETL — daily 16:00 UTC
+    if (controller.cron === '0 16 * * *') {
+      try {
+        const { exportD1ToR2 } = await import('./app/modules/d1-export.server');
+        const { manifest_key } = await exportD1ToR2(env);
+        const { callContainer } = await import('./app/modules/automation.server');
+        await callContainer(env, '/etl-to-bq', { manifest_key });
+        console.log('[scheduled] BigQuery ETL completed');
+      } catch (err) {
+        console.error('[scheduled] BigQuery ETL failed:', err);
+      }
+    }
   },
 
   async queue(
