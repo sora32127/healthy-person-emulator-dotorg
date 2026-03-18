@@ -3,7 +3,6 @@ import type { Container } from "@cloudflare/containers";
 export interface CloudflareEnv {
   // Bindings
   DB: D1Database;
-  PARQUET_BUCKET: R2Bucket;
   STATIC_BUCKET: R2Bucket;
   AI: Ai;
   VECTORIZE: VectorizeIndex;
