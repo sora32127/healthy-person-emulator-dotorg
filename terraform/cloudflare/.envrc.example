@@ -1,0 +1,7 @@
+# Cloudflare API Token (provider認証用)
+# CLOUDFLARE_API_TOKEN は provider が自動で読み込む
+export CLOUDFLARE_API_TOKEN=""
+
+# R2 S3互換 API 認証 (terraform state backend用)
+export AWS_ACCESS_KEY_ID=""
+export AWS_SECRET_ACCESS_KEY=""

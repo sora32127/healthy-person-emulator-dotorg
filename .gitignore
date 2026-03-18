@@ -40,3 +40,12 @@ memo.md
 
 # Experimental/deprecated files
 /app/embeddingBatch.ts
+
+# Terraform
+terraform/cloudflare/.terraform/
+terraform/cloudflare/.terraform.lock.hcl
+terraform/cloudflare/.envrc
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
