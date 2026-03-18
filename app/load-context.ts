@@ -5,7 +5,6 @@ import { initSecurity } from './modules/security.server';
 import { initCloudflare } from './modules/cloudflare.server';
 import { initVisitorSession } from './modules/visitor.server';
 import { initDb } from './modules/db.server';
-import { initGcloud } from './modules/gcloud.server';
 import type { AppLoadContext } from 'react-router';
 type Cloudflare = {
   env: CloudflareEnv;
@@ -60,7 +59,6 @@ export function initializeApp(envParam?: CloudflareEnv) {
     VECTORIZE_INDEX_NAME: env.VECTORIZE_INDEX_NAME,
   });
   initDb(env.DB);
-  initGcloud(env.GCS_PARQUET_BASE_URL || '');
   _initialized = true;
 }
 

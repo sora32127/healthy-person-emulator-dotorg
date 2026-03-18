@@ -140,6 +140,29 @@ export type CommentShowCardData = z.infer<typeof CommentShowCardDataSchema>;
 
 export type FeedPostType = 'unboundedLikes' | 'likes' | 'timeDesc' | 'timeAsc';
 
+export type SearchOrderBy = 'timeDesc' | 'timeAsc' | 'like';
+
+export type SearchPostsResult = {
+  metadata: {
+    query: string;
+    count: number;
+    page: number;
+    totalPages: number;
+    orderby: SearchOrderBy;
+    hasMore: boolean;
+  };
+  tagCounts: Array<{ tagName: string; count: number }>;
+  results: Array<{
+    postId: number;
+    postTitle: string;
+    postDateGmt: Date;
+    countLikes: number;
+    countDislikes: number;
+    tagNames: string[];
+    countComments: number;
+  }>;
+};
+
 const PostFeedDataSchema = z.object({
   meta: z.object({
     totalCount: z.number(),
@@ -220,6 +243,8 @@ export interface DatabaseRepository {
     email: string | null;
     userAuthType: string | null;
   }>;
+
+  searchPosts(query: string, orderby: SearchOrderBy, page: number, tags: string[], pageSize: number): Promise<SearchPostsResult>;
 
   // Internal functions used by ArchiveDataEntry
   getPostByPostId(postId: number): Promise<PostData>;

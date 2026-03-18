@@ -26,6 +26,8 @@ export type {
   UpdatePostWithTagsInput,
   PostFeedData,
   CommentFeedData,
+  SearchOrderBy,
+  SearchPostsResult,
 } from '../repositories/types';
 
 let _repo: DatabaseRepository | null = null;
@@ -73,6 +75,7 @@ export const updatePostWithTagsAndHistory = (...args: Parameters<DatabaseReposit
 export const upsertNowEditingInfo = (...args: Parameters<DatabaseRepository['upsertNowEditingInfo']>) => getRepo().upsertNowEditingInfo(...args);
 export const findUserByEmail = (...args: Parameters<DatabaseRepository['findUserByEmail']>) => getRepo().findUserByEmail(...args);
 export const createGoogleUser = (...args: Parameters<DatabaseRepository['createGoogleUser']>) => getRepo().createGoogleUser(...args);
+export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) => getRepo().searchPosts(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 

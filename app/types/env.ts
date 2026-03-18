@@ -21,13 +21,10 @@ export interface CloudflareEnv {
   CF_TURNSTILE_SECRET_KEY: string;
   CF_TURNSTILE_SITEKEY: string;
   GOOGLE_GENERATIVE_API_KEY: string;
-  SEARCH_PARQUET_FILE_NAME: string;
-  TAGS_PARQUET_FILE_NAME: string;
   CF_WORKERS_AI_TOKEN: string;
   CLOUDFLARE_ACCOUNT_ID: string;
   VECTORIZE_INDEX_NAME: string;
   GOOGLE_REDIRECT_URI: string;
-  GCS_PARQUET_BASE_URL: string;
   INTERNAL_API_KEY: string;
   // Automation secrets (Worker Secrets — kept for backward compat)
   TWITTER_CK?: string;
