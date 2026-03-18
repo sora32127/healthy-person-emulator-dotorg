@@ -3,16 +3,16 @@
 # =============================================================================
 
 resource "cloudflare_workers_script" "main" {
-  account_id         = var.cloudflare_account_id
-  script_name        = "healthy-person-emulator-dotorg"
-  main_module        = "worker.js"
-  compatibility_date = "2025-04-01"
+  account_id          = var.cloudflare_account_id
+  script_name         = "healthy-person-emulator-dotorg"
+  main_module         = "worker.js"
+  compatibility_date  = "2025-04-01"
   compatibility_flags = ["nodejs_compat"]
 
   # Assets
   assets = {
     config = {
-      html_handling     = "auto-trailing-slash"
+      html_handling      = "auto-trailing-slash"
       not_found_handling = "none"
     }
   }
@@ -168,10 +168,10 @@ resource "cloudflare_workers_cron_trigger" "main" {
   script_name = cloudflare_workers_script.main.script_name
 
   schedules = [
-    { cron = "*/10 * * * *" },  # OGP生成 + ソーシャル投稿
-    { cron = "0 12 * * *" },    # 殿堂入り記事レポート
-    { cron = "0 12 * * 1" },    # 週間サマリーレポート
-    { cron = "0 16 * * *" },    # BigQuery ETLエクスポート
+    { cron = "*/10 * * * *" }, # OGP生成 + ソーシャル投稿
+    { cron = "0 12 * * *" },   # 殿堂入り記事レポート
+    { cron = "0 12 * * 1" },   # 週間サマリーレポート
+    { cron = "0 16 * * *" },   # BigQuery ETLエクスポート
   ]
 }
 
