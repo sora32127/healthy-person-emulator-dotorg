@@ -1,7 +1,15 @@
-import { getJudgeWelcomedByGenerativeAI } from './security.server';
-import { describe, it, expect } from 'vitest';
+import { getJudgeWelcomedByGenerativeAI, initSecurity } from './security.server';
+import { describe, it, expect, beforeAll } from 'vitest';
 
 describe('security.server', () => {
+  beforeAll(() => {
+    initSecurity({
+      CF_TURNSTILE_SECRET_KEY: 'test',
+      CF_TURNSTILE_SITEKEY: 'test',
+      GOOGLE_GENERATIVE_API_KEY: 'google-generative-api-demo-key',
+    });
+  });
+
   it('デモキーであればテスト投稿と判断される', async () => {
     const result = await getJudgeWelcomedByGenerativeAI(testPostHtml, 'プログラムテスト投稿');
     expect(result.isWelcomed).toBe(true);

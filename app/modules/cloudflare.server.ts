@@ -1,17 +1,48 @@
-const CLOUDFLARE_ACCOUNT_ID =
-  process.env.CLOUDFLARE_ACCOUNT_ID || "9ecb9a8692f7c2c5c56387d93a9a1e60";
-const CF_WORKERS_AI_TOKEN = process.env.CF_WORKERS_AI_TOKEN;
-const VECTORIZE_INDEX_NAME =
-  process.env.VECTORIZE_INDEX_NAME || "embeddings-index";
+let _cfWorkersAiToken: string | undefined;
+let _cloudflareAccountId: string | undefined;
+let _vectorizeIndexName: string | undefined;
+let _cloudflareInitialized = false;
+
+export function initCloudflare(env: {
+  CF_WORKERS_AI_TOKEN?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  VECTORIZE_INDEX_NAME?: string;
+}) {
+  _cfWorkersAiToken = env.CF_WORKERS_AI_TOKEN;
+  _cloudflareAccountId = env.CLOUDFLARE_ACCOUNT_ID || "9ecb9a8692f7c2c5c56387d93a9a1e60";
+  _vectorizeIndexName = env.VECTORIZE_INDEX_NAME || "embeddings-index";
+  _cloudflareInitialized = true;
+}
+
+function ensureCloudflareInit() {
+  if (_cloudflareInitialized) return;
+  const env = (globalThis as any).__cloudflareEnv;
+  if (env) {
+    initCloudflare({
+      CF_WORKERS_AI_TOKEN: env.CF_WORKERS_AI_TOKEN,
+      CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID,
+      VECTORIZE_INDEX_NAME: env.VECTORIZE_INDEX_NAME,
+    });
+  }
+}
 
 const TIMEOUT_MS = 5000;
-const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}`;
+
+function getBaseUrl(): string {
+  const accountId = _cloudflareAccountId || "9ecb9a8692f7c2c5c56387d93a9a1e60";
+  return `https://api.cloudflare.com/client/v4/accounts/${accountId}`;
+}
 
 function getToken(): string {
-  if (!CF_WORKERS_AI_TOKEN) {
+  ensureCloudflareInit();
+  if (!_cfWorkersAiToken) {
     throw new Error("CF_WORKERS_AI_TOKEN is not set");
   }
-  return CF_WORKERS_AI_TOKEN;
+  return _cfWorkersAiToken;
+}
+
+function getIndexName(): string {
+  return _vectorizeIndexName || "embeddings-index";
 }
 
 async function cfFetch<T>(
@@ -23,7 +54,7 @@ async function cfFetch<T>(
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${BASE_URL}${path}`, {
+    const response = await fetch(`${getBaseUrl()}${path}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${getToken()}`,
@@ -103,7 +134,7 @@ export async function upsertVectors(vectors: VectorInput[]): Promise<number> {
     .join("\n");
 
   const data = await cfFetch<VectorizeUpsertResponse>(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/upsert`,
+    `/vectorize/v2/indexes/${getIndexName()}/upsert`,
     ndjson,
     true,
   );
@@ -119,7 +150,7 @@ export async function querySimilar(
   topK: number,
 ): Promise<VectorizeMatch[]> {
   const data = await cfFetch<VectorizeQueryResponse>(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/query`,
+    `/vectorize/v2/indexes/${getIndexName()}/query`,
     { vector, topK, returnMetadata: "all" },
   );
 
@@ -133,7 +164,7 @@ export async function getVectorsByIds(
   ids: string[],
 ): Promise<VectorizeMatch[]> {
   const data = await cfFetch<VectorizeGetByIdsResponse>(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/get_by_ids`,
+    `/vectorize/v2/indexes/${getIndexName()}/get_by_ids`,
     { ids },
   );
 
@@ -145,7 +176,7 @@ export async function getVectorsByIds(
 
 export async function deleteVectors(ids: string[]): Promise<void> {
   await cfFetch(
-    `/vectorize/v2/indexes/${VECTORIZE_INDEX_NAME}/delete_by_ids`,
+    `/vectorize/v2/indexes/${getIndexName()}/delete_by_ids`,
     { ids },
   );
 }

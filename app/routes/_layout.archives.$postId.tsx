@@ -1,6 +1,5 @@
 import { useLoaderData, NavLink, useFetcher } from 'react-router';
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from 'react-router';
-import parser from 'html-react-parser';
 import { Turnstile } from '@marsidev/react-turnstile';
 import {
   ArchiveDataEntry,
@@ -386,7 +385,7 @@ export default function Component() {
             </div>
           </div>
         </div>
-        <div className="postContent">{parser(data.postContent)}</div>
+        <div className="postContent" dangerouslySetInnerHTML={{ __html: data.postContent }} />
         <div className="flex justify">
           <div className="flex items-center p-2 rounded">
             <VoteButton

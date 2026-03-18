@@ -17,18 +17,105 @@ const exposedUserSchema = z.object({
 
 type ExposedUser = z.infer<typeof exposedUserSchema>;
 
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.CLIENT_URL) {
-  throw new Error('Missing environment variables');
-}
+let _initialized = false;
+let _authenticator: Authenticator<ExposedUser>;
 
-const SESSION_SECRET = process.env.HPE_SESSION_SECRET;
-if (!SESSION_SECRET) {
-  throw new Error('Missing SESSION_SECRET environment variable');
-}
+// Cached env values for use in strategy callbacks
+let _clientUrl: string;
 
 const SESSION_KEY = 'user';
 
-export const authenticator = new Authenticator<ExposedUser>();
+export function initAuth(env: {
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  CLIENT_URL: string;
+  HPE_SESSION_SECRET: string;
+}) {
+  if (_initialized) return;
+
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.CLIENT_URL) {
+    throw new Error('Missing environment variables for auth');
+  }
+  if (!env.HPE_SESSION_SECRET) {
+    throw new Error('Missing HPE_SESSION_SECRET environment variable');
+  }
+
+  _clientUrl = env.CLIENT_URL;
+  _authenticator = new Authenticator<ExposedUser>();
+
+  if (env.GOOGLE_CLIENT_ID === 'google-client-demo-id') {
+    _authenticator.use(new MockGoogleStrategy(env.CLIENT_URL), 'google');
+  } else {
+    const googleStrategy = new OAuth2Strategy<ExposedUser>(
+      {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        tokenEndpoint: 'https://oauth2.googleapis.com/token',
+        redirectURI: `${env.CLIENT_URL}/auth/google/callback`,
+        scopes: ['openid', 'email', 'profile'],
+      },
+      async ({ tokens }) => {
+        const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken()}`,
+          },
+        });
+        const profile = (await response.json()) as {
+          email: string;
+          picture?: string;
+        };
+        const email = profile.email;
+
+        const isUserExists = await judgeIsUserExists(email);
+        if (!isUserExists) {
+          const user = await createUser(email);
+          return {
+            userUuid: user.userUuid,
+            email: user.email,
+            userAuthType: user.userAuthType,
+          };
+        }
+        const user = await getUser(email);
+        if (!user) {
+          throw new Error('User not found');
+        }
+        return {
+          userUuid: user.userUuid,
+          email: user.email,
+          userAuthType: user.userAuthType,
+          photoUrl: profile.picture,
+        };
+      },
+    );
+    _authenticator.use(googleStrategy, 'google');
+  }
+
+  _initialized = true;
+}
+
+export function getAuthenticatorInstance(): Authenticator<ExposedUser> {
+  if (!_initialized) {
+    const env = (globalThis as any).__cloudflareEnv;
+    if (env) {
+      initAuth({
+        GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+        CLIENT_URL: env.CLIENT_URL,
+        HPE_SESSION_SECRET: env.HPE_SESSION_SECRET,
+      });
+    }
+    if (!_initialized) throw new Error('Auth not initialized and no env available.');
+  }
+  return _authenticator;
+}
+
+// Keep `authenticator` as a getter-based export for backward compatibility
+export const authenticator = new Proxy({} as Authenticator<ExposedUser>, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getAuthenticatorInstance(), prop, receiver);
+  },
+});
 
 /**
  * セッションから認証済みユーザーを取得する（remix-auth v4 では isAuthenticated が廃止されたため）
@@ -68,20 +155,23 @@ export async function logoutUser(
  * デモ用のGoogle認証ストラテジー
  */
 class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
-  constructor() {
+  private _clientUrl: string;
+
+  constructor(clientUrl: string) {
     super(
       {
         clientId: 'mock',
         clientSecret: 'mock',
         authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenEndpoint: 'https://oauth2.googleapis.com/token',
-        redirectURI: `${process.env.CLIENT_URL}/auth/google/callback`,
+        redirectURI: `${clientUrl}/auth/google/callback`,
         scopes: ['openid', 'email', 'profile'],
       },
       async () => {
         return await this.getExposedUserByEmail(this.demoEmail);
       },
     );
+    this._clientUrl = clientUrl;
   }
 
   name = 'google';
@@ -94,7 +184,7 @@ class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
       return await this.getExposedUserByEmail(this.demoEmail);
     }
 
-    throw redirect(`${process.env.CLIENT_URL}/auth/google/callback`);
+    throw redirect(`${this._clientUrl}/auth/google/callback`);
   }
 
   private async getExposedUserByEmail(email: string): Promise<ExposedUser> {
@@ -117,58 +207,6 @@ class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
       userAuthType: user.userAuthType,
     };
   }
-}
-
-/**
- * Google認証ストラテジー
- */
-const googleStrategy = new OAuth2Strategy<ExposedUser>(
-  {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenEndpoint: 'https://oauth2.googleapis.com/token',
-    redirectURI: `${process.env.CLIENT_URL}/auth/google/callback`,
-    scopes: ['openid', 'email', 'profile'],
-  },
-  async ({ tokens }) => {
-    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: {
-        Authorization: `Bearer ${tokens.accessToken()}`,
-      },
-    });
-    const profile = (await response.json()) as {
-      email: string;
-      picture?: string;
-    };
-    const email = profile.email;
-
-    const isUserExists = await judgeIsUserExists(email);
-    if (!isUserExists) {
-      const user = await createUser(email);
-      return {
-        userUuid: user.userUuid,
-        email: user.email,
-        userAuthType: user.userAuthType,
-      };
-    }
-    const user = await getUser(email);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return {
-      userUuid: user.userUuid,
-      email: user.email,
-      userAuthType: user.userAuthType,
-      photoUrl: profile.picture,
-    };
-  },
-);
-
-if (process.env.GOOGLE_CLIENT_ID === 'google-client-demo-id') {
-  authenticator.use(new MockGoogleStrategy(), 'google');
-} else {
-  authenticator.use(googleStrategy, 'google');
 }
 
 async function judgeIsUserExists(email: string) {

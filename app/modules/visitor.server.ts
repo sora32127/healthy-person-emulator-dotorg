@@ -1,17 +1,29 @@
 import { createCookieSessionStorage } from 'react-router';
 
-const sessionStorage = createCookieSessionStorage({
-  cookie: {
-    name: 'visitor-cookie',
-    httpOnly: true,
-    maxAge: 1000 * 60 * 1, // 1 minutes
-    path: '/',
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  },
-});
+let _sessionStorage: ReturnType<typeof createCookieSessionStorage> | null = null;
 
-const { getSession, commitSession, destroySession } = sessionStorage;
+export function initVisitorSession() {
+  if (_sessionStorage) return;
+  _sessionStorage = createCookieSessionStorage({
+    cookie: {
+      name: 'visitor-cookie',
+      httpOnly: true,
+      maxAge: 1000 * 60 * 1, // 1 minute
+      path: '/',
+      sameSite: 'lax',
+      secure: true, // Workers are always HTTPS
+    },
+  });
+}
+
+function ensureStorage() {
+  if (!_sessionStorage) throw new Error('Visitor session storage not initialized. Call initVisitorSession first.');
+  return _sessionStorage;
+}
+
+const getSession = (cookieHeader: string | null) => ensureStorage().getSession(cookieHeader);
+const commitSession = (session: any) => ensureStorage().commitSession(session);
+const destroySessionFn = (session: any) => ensureStorage().destroySession(session);
 
 export async function getVisitorCookieURL(request: Request): Promise<string> {
   const cookieHeader = request.headers.get('Cookie');
@@ -33,7 +45,7 @@ export async function setVisitorCookieData(
 
 export async function destroyVisitorCookie(request: Request): Promise<Headers> {
   const session = await getSession(request.headers.get('Cookie'));
-  const cookie = await destroySession(session);
+  const cookie = await destroySessionFn(session);
   const headers = new Headers();
   headers.append('Set-Cookie', cookie);
   return headers;

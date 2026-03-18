@@ -33,9 +33,6 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install
-      - name: prisma generate
-        run: |
-          pnpm prisma generate
       - name: Run Vitest
         run: |
           pnpm exec vp test --coverage

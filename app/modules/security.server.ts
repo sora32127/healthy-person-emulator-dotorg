@@ -1,24 +1,51 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-const CF_TURNSTILE_SECRET_KEY = process.env.CF_TURNSTILE_SECRET_KEY;
-const CF_TURNSTILE_SITEKEY = process.env.CF_TURNSTILE_SITEKEY;
-const GOOGLE_GENERATIVE_API_KEY =
-  process.env.NODE_ENV === 'test'
-    ? process.env.VITE_GOOGLE_GENERATIVE_API_KEY
-    : process.env.GOOGLE_GENERATIVE_API_KEY;
+
+let _cfTurnstileSecretKey: string | undefined;
+let _cfTurnstileSiteKey: string | undefined;
+let _googleGenerativeApiKey: string | undefined;
+let _nodeEnv: string | undefined;
+let _securityInitialized = false;
+
+export function initSecurity(env: {
+  CF_TURNSTILE_SECRET_KEY: string;
+  CF_TURNSTILE_SITEKEY: string;
+  GOOGLE_GENERATIVE_API_KEY: string;
+  NODE_ENV?: string;
+}) {
+  _cfTurnstileSecretKey = env.CF_TURNSTILE_SECRET_KEY;
+  _cfTurnstileSiteKey = env.CF_TURNSTILE_SITEKEY;
+  _googleGenerativeApiKey = env.GOOGLE_GENERATIVE_API_KEY;
+  _nodeEnv = env.NODE_ENV;
+  _securityInitialized = true;
+}
+
+function ensureSecurityInit() {
+  if (_securityInitialized) return;
+  const env = (globalThis as any).__cloudflareEnv;
+  if (env) {
+    initSecurity({
+      CF_TURNSTILE_SECRET_KEY: env.CF_TURNSTILE_SECRET_KEY,
+      CF_TURNSTILE_SITEKEY: env.CF_TURNSTILE_SITEKEY,
+      GOOGLE_GENERATIVE_API_KEY: env.GOOGLE_GENERATIVE_API_KEY,
+      NODE_ENV: env.NODE_ENV,
+    });
+  }
+}
 
 export async function validateRequest(token: string, ipAddress: string) {
-  if (!CF_TURNSTILE_SECRET_KEY) {
+  ensureSecurityInit();
+  if (!_cfTurnstileSecretKey) {
     throw new Error('CF_TURNSTILE_SECRET_KEY is not set');
   }
   const formData = new FormData();
   const idempotencyKey = crypto.randomUUID();
   formData.append(
     'secret',
-    process.env.NODE_ENV === 'development'
+    _nodeEnv === 'development'
       ? '1x0000000000000000000000000000000AA'
-      : CF_TURNSTILE_SECRET_KEY,
+      : _cfTurnstileSecretKey,
   );
   formData.append('response', token || '');
   formData.append('remoteip', ipAddress);
@@ -40,13 +67,14 @@ export async function validateRequest(token: string, ipAddress: string) {
 }
 
 export async function getTurnStileSiteKey() {
-  if (!CF_TURNSTILE_SITEKEY) {
+  ensureSecurityInit();
+  if (!_cfTurnstileSiteKey) {
     throw new Error('CF_TURNSTILE_SITEKEY is not set');
   }
-  if (process.env.NODE_ENV === 'development') {
+  if (_nodeEnv === 'development') {
     return '1x00000000000000000000AA'; // Always return true
   }
-  return CF_TURNSTILE_SITEKEY;
+  return _cfTurnstileSiteKey;
 }
 
 export async function getHashedUserIPAddress(request: Request) {
@@ -58,11 +86,12 @@ export async function getHashedUserIPAddress(request: Request) {
 }
 
 export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string) {
-  if (!GOOGLE_GENERATIVE_API_KEY) {
+  ensureSecurityInit();
+  if (!_googleGenerativeApiKey) {
     throw new Error('GOOGLE_GENERATIVE_API_KEY is not set');
   }
 
-  if (GOOGLE_GENERATIVE_API_KEY === 'google-generative-api-demo-key') {
+  if (_googleGenerativeApiKey === 'google-generative-api-demo-key') {
     return { isWelcomed: true, explanation: 'テスト投稿です' };
   }
 
@@ -89,7 +118,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
     required: ['isWelcomed', 'explanation'],
   };
 
-  const generativeAi = new GoogleGenerativeAI(GOOGLE_GENERATIVE_API_KEY);
+  const generativeAi = new GoogleGenerativeAI(_googleGenerativeApiKey);
   const model = generativeAi.getGenerativeModel({
     model: 'gemini-2.5-flash-lite',
     generationConfig: {
