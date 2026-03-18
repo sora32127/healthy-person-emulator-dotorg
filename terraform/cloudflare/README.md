@@ -1,4 +1,5 @@
 # Terraform 管理外のリソース
+<!-- CI trigger test -->
 
 以下のリソースは Cloudflare Terraform Provider が未対応のため、別途管理する。
 
