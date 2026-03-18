@@ -417,6 +417,6 @@ async function updateDimPostsSocialId(
 
   // Only update if not already set (first post only)
   await db.run(
-    sql`UPDATE dim_posts SET ${sql.raw(columnMap[platform])} = ${providerPostId}, is_sns_shared = 1, updated_at = ${nowUTC()} WHERE post_id = ${postId} AND ${sql.raw(columnMap[platform])} IS NULL`,
+    sql`UPDATE dim_posts SET ${sql.raw(columnMap[platform])} = ${providerPostId}, is_sns_shared = 1 WHERE post_id = ${postId} AND ${sql.raw(columnMap[platform])} IS NULL`,
   );
 }
