@@ -318,42 +318,25 @@ GitHub Settings → Branches → main:
 
 ---
 
-## Phase 2: 本番デプロイ自動化（後日）
+## Phase 2: 本番デプロイ自動化（実施済み）
 
-ci.yml に push トリガー + deploy job を追加。
+### 実施内容
+- `cf-workers.yml` を新規作成（main push → `wrangler deploy`）
+- `terraform-plan.yml` を `terraform.yml` にリネームし、main push 時の `terraform apply` job を追加
+- `ci.yml` は変更なし（PR専用のまま）
 
-```yaml
-# ci.yml の on に追加
-  push:
-    branches: [main]
-    paths-ignore:
-      - '**/*.md'
-      - '.agent/**'
-      - '.claude/**'
-      - 'docs/**'
+### ワークフロー構成（Phase 2 完了後）
+| ファイル | トリガー | 役割 |
+|---|---|---|
+| `ci.yml` | PR | テスト + ビルド検証 |
+| `cf-workers.yml` | main push | Workers ビルド + デプロイ |
+| `terraform.yml` | PR + main push | plan（PR）/ apply（main push） |
+| `container-check.yml` | PR | コンテナビルド + テスト |
+| `merge-gate.yml` | PR | 全チェック集約 |
 
-# jobs に追加
-  deploy:
-    needs: [test, build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: production
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: 'package.json'
-          cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm build
-      - run: npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-```
+### プランからの変更点
+- 当初は `ci.yml` に deploy job を追加する案だったが、関心の分離のため `cf-workers.yml` として独立させた
+- Terraform apply も自動化した（当初プランにはなかった）
 
 ### Dashboard 無効化手順
 1. GitHub Actions deploy が安定動作を確認
@@ -362,6 +345,7 @@ ci.yml に push トリガー + deploy job を追加。
 
 ### ロールバック
 - `wrangler rollback`（手動）
+- Terraform: git revert → main push で自動 apply
 - D1 migration は戻せない → 破壊的変更は段階デプロイ
 
 ---
