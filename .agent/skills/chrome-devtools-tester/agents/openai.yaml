@@ -1,4 +1,0 @@
-interface:
-  display_name: "Chrome DevTools Tester"
-  short_description: "ブラウザ変更を実画面で検証する"
-  default_prompt: "Use $chrome-devtools-tester to verify whether the browser-side change actually works in Chrome DevTools MCP."

@@ -1,17 +1,18 @@
 ---
-name: chrome-devtools-tester
-description: Chrome DevTools MCPを使って、ブラウザ上の変更が正しく反映されたかを検証するテストスキル。UI変更、導線変更、フォーム操作、表示崩れ、回帰確認、console/networkエラー確認、レスポンシブ確認などを依頼されたときに使う。「テスターとして見て」「ブラウザで変更確認して」「Chrome DevTools MCPで検証して」「表示が直ったかテストして」などの依頼で起動する。
+name: e2e-tester
+description: Claude in Chrome MCP を使って、ブラウザ上の変更が正しく反映されたかを検証するE2Eテストスキル。UI変更、導線変更、フォーム操作、表示崩れ、回帰確認、console/networkエラー確認、レスポンシブ確認などを依頼されたときに使う。「テスターとして見て」「ブラウザで変更確認して」「E2Eテストして」「表示が直ったかテストして」などの依頼で起動する。
 ---
 
-# Chrome DevTools Tester
+# E2E Tester
 
-Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。コードを読んで終わらせず、画面上の挙動と回帰の有無で判断する。
+Claude in Chrome MCP を使い、実ブラウザで変更結果を検証する。コードを読んで終わらせず、画面上の挙動と回帰の有無で判断する。
 
 ## 基本方針
 
 - 期待結果を先に短く言語化する。曖昧なら、ユーザーの依頼文と差分から妥当な期待値を置く。
-- Chrome DevTools MCP を起動・接続するときは `--autoConnect` オプションを使う。
-- まず `take_snapshot` で構造を把握し、必要なときだけ `take_screenshot` を使う。
+- Claude in Chrome MCP（`mcp__claude-in-chrome__*` ツール群）を使ってブラウザを操作する。
+- まず `mcp__claude-in-chrome__tabs_context_mcp` でタブ状況を把握し、必要なら `mcp__claude-in-chrome__tabs_create_mcp` で新しいタブを開く。
+- `mcp__claude-in-chrome__read_page` でページ構造を把握し、`mcp__claude-in-chrome__computer` でクリック・入力を行う。
 - 変更箇所だけでなく、その周辺の壊れやすい導線も確認する。
 - DOM の存在だけで合格にしない。見た目、操作、遷移、エラー有無まで見る。
 - 問題を見つけたら、再現手順と観測結果を残す。
@@ -28,7 +29,7 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 ### 1. テスト対象を確定する
 
 - 対象ページ、期待挙動、関連導線を整理する。
-- ローカルアプリなら必要に応じて起動方法を確認し、対象URLへ移動する。
+- 対象URLへ移動する。ローカルなら `http://localhost:8787`、本番なら `https://healthy-person-emulator.org`。
 - 既知の変更点があるなら、その変更が見える最短シナリオを先に試す。
 - この時点で `references/test-selection.md` を開き、今回読むシナリオを絞る。
 
@@ -36,13 +37,14 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 
 - ページが開くかを見る。
 - 主要な見出し、ボタン、入力欄、カードなどが表示されるか確認する。
-- 直後に console error や致命的な network failure が出ていないか必要に応じて確認する。
+- `mcp__claude-in-chrome__read_console_messages` で console error が出ていないか確認する。
 
 ### 3. 変更箇所を検証する
 
-- `click`、`fill`、`press_key`、`hover`、`drag` などで実操作する。
+- `mcp__claude-in-chrome__computer` でクリック、入力、スクロールなどの実操作を行う。
+- `mcp__claude-in-chrome__form_input` でフォーム入力を行う。
 - 状態変化があるなら、操作前後で文言、属性、表示位置、活性状態、URL、モーダル表示を比較する。
-- 非同期処理があるなら `wait_for` で完了条件を待ってから判定する。
+- 非同期処理があるなら適切に待ってから判定する。
 
 ### 4. 回帰を確認する
 
@@ -52,15 +54,13 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 
 ### 5. 必要なら追加診断する
 
-- 見た目の崩れ: `resize_page` や `emulate` で viewport を変える。
-- JSエラー疑い: `list_console_messages` を確認する。
-- API失敗疑い: `list_network_requests` と `get_network_request` を確認する。
+- JSエラー疑い: `mcp__claude-in-chrome__read_console_messages` を確認する。
+- API失敗疑い: `mcp__claude-in-chrome__read_network_requests` を確認する。
 - 再現が不安定: 同じ操作をもう一度行い、再現性を確かめる。
-- `TypeError: Cannot read properties of null (reading 'useContext')` が表示された場合は、まず同じページを一度リロードして回復するか確認する。リロード後も再現した場合だけ問題として報告する。
 
 ### 6. 証跡を残す
 
-- 問題がある場合は、再現に必要な画面の `take_screenshot` を残す。
+- 問題がある場合は、スクリーンショットを撮って残す。
 - 合格時も、判断に使った操作と観測結果を短くまとめる。
 
 ## よく使う観点
@@ -70,7 +70,6 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 - 状態: ローディング、成功表示、エラー表示、トグル切り替え、URL変化
 - 回帰: 変更箇所以外の主要導線が壊れていないか
 - 技術的兆候: console error、4xx/5xx、失敗したfetch、無限ローディング
-- 画面幅: 少なくとも desktop と mobile 相当を確認する価値があるか考える
 
 ## レポート形式
 
@@ -80,7 +79,7 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 2. 実施内容: 何をどう操作したか
 3. 観測結果: 何が見えたか、何が起きたか
 4. 問題点: fail または partial のときだけ、再現手順つきで書く
-5. 補足: console/network/viewport など追加確認があれば書く
+5. 補足: console/network など追加確認があれば書く
 
 ## 注意
 
@@ -95,5 +94,5 @@ Chrome DevTools MCP を使い、実ブラウザで変更結果を検証する。
 - `references/pages/top-page.md` - `/` と `tab=fixed` `tab=random` を含むトップ系シナリオ
 - `references/pages/support-page.md` - `/support`
 - `references/pages/readme-page.md` - `/readme`
-- `references/pages/post-page.md` - `/post`
+- `references/pages/post-page.md` - `/post`（投稿→コメント→編集→削除の一連テスト含む）
 - `references/pages/article-page.md` - `/archives/:postId`

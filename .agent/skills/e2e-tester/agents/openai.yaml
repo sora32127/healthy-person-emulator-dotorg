@@ -1,0 +1,4 @@
+interface:
+  display_name: "E2E Tester"
+  short_description: "ブラウザ変更を実画面で検証する"
+  default_prompt: "Use $e2e-tester to verify whether the browser-side change actually works using Claude in Chrome MCP."
