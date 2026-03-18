@@ -94,7 +94,7 @@ export function initAuth(env: {
   _initialized = true;
 }
 
-export function getAuthenticatorInstance(): Authenticator<ExposedUser> {
+function getAuthenticatorInstance(): Authenticator<ExposedUser> {
   if (!_initialized) {
     const env = (globalThis as any).__cloudflareEnv;
     if (env) {

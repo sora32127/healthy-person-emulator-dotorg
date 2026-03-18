@@ -104,7 +104,7 @@ const PreviousOrNextPostSchema = z.object({
 });
 export type PreviousOrNextPostData = z.infer<typeof PreviousOrNextPostSchema>;
 
-export const PostCardDataSchema = z.object({
+const PostCardDataSchema = z.object({
   postId: z.number(),
   postTitle: z.string(),
   postDateGmt: z.date(),
@@ -126,7 +126,7 @@ const BookmarkPostCardDataSchema = PostCardDataSchema.extend({
 });
 export type BookmarkPostCardData = z.infer<typeof BookmarkPostCardDataSchema>;
 
-export const CommentShowCardDataSchema = z.object({
+const CommentShowCardDataSchema = z.object({
   commentId: z.number(),
   postId: z.number(),
   commentContent: z.string(),
@@ -228,12 +228,4 @@ export interface DatabaseRepository {
   getNextPost(postId: number): Promise<PreviousOrNextPostData>;
   getCountBookmarks(postId: number): Promise<number>;
 
-  // Test helpers
-  getOldestPostIdsForTest(chunkSize: number): Promise<number[]>;
-  getNewestPostIdsForTest(chunkSize: number): Promise<number[]>;
-  getUnboundedLikesPostIdsForTest(chunkSize: number): Promise<number[]>;
-  getRecentCommentIdsForTest(chunkSize?: number): Promise<number[]>;
-  getOldestCommentIdsForTest(chunkSize?: number): Promise<number[]>;
-  getUnboundedLikesCommentIdsForTest(chunkSize?: number): Promise<number[]>;
-  getLikedCommentsForTest(chunkSize?: number, likeFromHour?: number, likeToHour?: number): Promise<number[]>;
 }
