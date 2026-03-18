@@ -29,12 +29,49 @@ interface QueueMessage {
 
 // ─── Container helpers ───────────────────────────────────────
 
+async function resolveSecrets(env: CloudflareEnv): Promise<Record<string, string>> {
+  const [
+    twitterCk, twitterCs, twitterAt, twitterAts,
+    blueskyUser, blueskyPassword,
+    misskeyToken,
+    r2Endpoint, r2AccessKeyId, r2SecretAccessKey,
+    dryRun,
+  ] = await Promise.all([
+    env.SS_TWITTER_CK.get(),
+    env.SS_TWITTER_CS.get(),
+    env.SS_TWITTER_AT.get(),
+    env.SS_TWITTER_ATS.get(),
+    env.SS_BLUESKY_USER.get(),
+    env.SS_BLUESKY_PASSWORD.get(),
+    env.SS_MISSKEY_TOKEN.get(),
+    env.SS_R2_ENDPOINT.get(),
+    env.SS_R2_ACCESS_KEY_ID.get(),
+    env.SS_R2_SECRET_ACCESS_KEY.get(),
+    env.SS_AUTOMATION_DRY_RUN.get(),
+  ]);
+  return {
+    TWITTER_CK: twitterCk, TWITTER_CS: twitterCs,
+    TWITTER_AT: twitterAt, TWITTER_ATS: twitterAts,
+    BLUESKY_USER: blueskyUser, BLUESKY_PASSWORD: blueskyPassword,
+    MISSKEY_TOKEN: misskeyToken,
+    R2_ENDPOINT: r2Endpoint, R2_ACCESS_KEY_ID: r2AccessKeyId,
+    R2_SECRET_ACCESS_KEY: r2SecretAccessKey,
+    AUTOMATION_DRY_RUN: dryRun,
+    BIGQUERY_CREDENTIALS: env.BIGQUERY_CREDENTIALS ?? "",
+  };
+}
+
 export async function callContainer(
   env: CloudflareEnv,
   path: string,
   body: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const container = getContainer(env.AUTOMATION_CONTAINER);
+
+  // Pass secrets via startAndWaitForPorts
+  const envVars = await resolveSecrets(env);
+  await container.startAndWaitForPorts({ startOptions: { envVars } });
+
   const res = await container.fetch(
     new Request(`http://container${path}`, {
       method: "POST",
@@ -309,41 +346,42 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
   if (env.ENQUEUE_ENABLED !== "true") return;
 
   const db = drizzle(env.DB);
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
-  // Find queued jobs older than 10 minutes
-  const staleJobs = await db
+  // Find pending or stale queued jobs that need (re-)enqueue
+  const jobsToRecover = await db
     .select()
     .from(socialPostJobs)
-    .where(and(eq(socialPostJobs.status, "queued"), lt(socialPostJobs.updatedAt, tenMinutesAgo)));
+    .where(
+      sql`${socialPostJobs.status} = 'pending' OR (${socialPostJobs.status} = 'queued' AND ${socialPostJobs.updatedAt} < ${new Date(Date.now() - 10 * 60 * 1000).toISOString()})`,
+    );
 
-  for (const job of staleJobs) {
-    // CAS: only reset if still queued
-    const resetResult = await db
-      .update(socialPostJobs)
-      .set({ status: "pending", updatedAt: nowUTC() })
-      .where(and(eq(socialPostJobs.id, job.id), eq(socialPostJobs.status, "queued")));
+  for (const job of jobsToRecover) {
+    // If queued, reset to pending first
+    if (job.status === "queued") {
+      const resetResult = await db
+        .update(socialPostJobs)
+        .set({ status: "pending", updatedAt: nowUTC() })
+        .where(and(eq(socialPostJobs.id, job.id), eq(socialPostJobs.status, "queued")));
+      if (!resetResult.meta.changed_db) continue;
+      console.log(`[automation] Reset stale queued job ${job.id} to pending`);
+    }
 
-    if (resetResult.meta.changed_db) {
-      console.log(`[automation] Reset stale job ${job.id} to pending`);
+    // Enqueue pending job
+    const [post] = await db
+      .select({ postTitle: dimPosts.postTitle, ogpImageUrl: dimPosts.ogpImageUrl })
+      .from(dimPosts)
+      .where(eq(dimPosts.postId, job.postId))
+      .limit(1);
 
-      // Fetch post info for re-enqueue
-      const [post] = await db
-        .select({ postTitle: dimPosts.postTitle, ogpImageUrl: dimPosts.ogpImageUrl })
-        .from(dimPosts)
-        .where(eq(dimPosts.postId, job.postId))
-        .limit(1);
-
-      if (post) {
-        await enqueueAndMarkQueued(env, db, job.id, {
-          post_id: job.postId,
-          platform: job.platform as Platform,
-          post_title: post.postTitle,
-          post_url: `https://healthy-person-emulator.org/archives/${job.postId}`,
-          og_url: post.ogpImageUrl ?? "",
-          message_type: "new",
-        });
-      }
+    if (post) {
+      await enqueueAndMarkQueued(env, db, job.id, {
+        post_id: job.postId,
+        platform: job.platform as Platform,
+        post_title: post.postTitle,
+        post_url: `https://healthy-person-emulator.org/archives/${job.postId}`,
+        og_url: post.ogpImageUrl ?? "",
+        message_type: "new",
+      });
     }
   }
 }

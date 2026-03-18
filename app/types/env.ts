@@ -29,7 +29,7 @@ export interface CloudflareEnv {
   GOOGLE_REDIRECT_URI: string;
   GCS_PARQUET_BASE_URL: string;
   INTERNAL_API_KEY: string;
-  // Automation secrets (passed to container via getEnv)
+  // Automation secrets (Worker Secrets — kept for backward compat)
   TWITTER_CK?: string;
   TWITTER_CS?: string;
   TWITTER_AT?: string;
@@ -41,6 +41,18 @@ export interface CloudflareEnv {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   BIGQUERY_CREDENTIALS?: string;
+  // Secrets Store bindings (async .get())
+  SS_TWITTER_CK: { get(): Promise<string> };
+  SS_TWITTER_CS: { get(): Promise<string> };
+  SS_TWITTER_AT: { get(): Promise<string> };
+  SS_TWITTER_ATS: { get(): Promise<string> };
+  SS_BLUESKY_USER: { get(): Promise<string> };
+  SS_BLUESKY_PASSWORD: { get(): Promise<string> };
+  SS_MISSKEY_TOKEN: { get(): Promise<string> };
+  SS_R2_ENDPOINT: { get(): Promise<string> };
+  SS_R2_ACCESS_KEY_ID: { get(): Promise<string> };
+  SS_R2_SECRET_ACCESS_KEY: { get(): Promise<string> };
+  SS_AUTOMATION_DRY_RUN: { get(): Promise<string> };
   // Automation feature flags
   ENQUEUE_ENABLED?: string;
   SEND_ENABLED?: string;

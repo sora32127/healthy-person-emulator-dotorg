@@ -45,6 +45,62 @@ max_batch_size = 1
 max_retries = 3
 dead_letter_queue = "social-post-dlq"
 
+# --- Secrets Store ---
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_CK"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_CK"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_CS"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_CS"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_AT"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_AT"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_ATS"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_ATS"
+
+[[secrets_store_secrets]]
+binding = "SS_BLUESKY_USER"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "BLUESKY_USER"
+
+[[secrets_store_secrets]]
+binding = "SS_BLUESKY_PASSWORD"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "BLUESKY_PASSWORD"
+
+[[secrets_store_secrets]]
+binding = "SS_MISSKEY_TOKEN"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "MISSKEY_TOKEN"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_ENDPOINT"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_ENDPOINT"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_ACCESS_KEY_ID"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_ACCESS_KEY_ID"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_SECRET_ACCESS_KEY"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_SECRET_ACCESS_KEY"
+
+[[secrets_store_secrets]]
+binding = "SS_AUTOMATION_DRY_RUN"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "AUTOMATION_DRY_RUN"
+
 # --- Container ---
 [[containers]]
 class_name = "AutomationContainer"
