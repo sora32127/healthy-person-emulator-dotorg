@@ -29,7 +29,7 @@ interface QueueMessage {
 
 // ─── Container helpers ───────────────────────────────────────
 
-async function callContainer(
+export async function callContainer(
   env: CloudflareEnv,
   path: string,
   body: Record<string, unknown>,

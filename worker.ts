@@ -50,6 +50,16 @@ export default {
         console.error('[scheduled] OGP/social post flow failed:', err);
       }
     }
+
+    if (controller.cron === '0 12 * * *') {
+      try {
+        const { callContainer } = await import('./app/modules/automation.server');
+        await callContainer(env, '/report-legendary', { api_key: env.INTERNAL_API_KEY });
+        console.log('[scheduled] Legendary article report completed');
+      } catch (err) {
+        console.error('[scheduled] Legendary article report failed:', err);
+      }
+    }
   },
 
   async queue(

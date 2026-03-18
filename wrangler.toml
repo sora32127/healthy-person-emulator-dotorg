@@ -9,7 +9,7 @@ enabled = true
 
 # --- Cron Triggers ---
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["*/10 * * * *", "0 12 * * *"]
 
 # --- Database ---
 [[d1_databases]]
