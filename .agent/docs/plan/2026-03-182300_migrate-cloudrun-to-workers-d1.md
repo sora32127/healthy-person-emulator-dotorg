@@ -415,6 +415,38 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 
 ---
 
+## Phase 7: カットオーバー・クリーンアップ
+
+### 7.1 データ再マイグレーション
+- Phase 2で移行した後にPostgreSQL側で発生した差分をD1に反映
+- `scripts/migrate-pg-to-d1.ts` を再実行（INSERT OR REPLACEで冪等）
+- 差分件数を確認し、整合性チェック
+
+### 7.2 DNS切り替え
+- `healthy-person-emulator.org` のDNSをCloud Run → Cloudflare Workersに変更
+- Cloudflareダッシュボードで Workers Routes またはカスタムドメインを設定
+- Google OAuthの承認済みリダイレクトURIを本番ドメインで確認
+
+### 7.3 SNS連携の切り替え
+- 自動化プログラム（別リポジトリ: `healthy-person-emulator`）をDB直接接続 → 内部API経由に修正
+- `INTERNAL_API_KEY` をwrangler secretsに設定
+- 対象エンドポイント:
+  - `GET /api/internal/posts-for-pickup`
+  - `POST /api/internal/mark-picked-up`
+  - `POST /api/internal/update-social-ids`
+  - `POST /api/internal/add-tag-to-post`
+
+### 7.4 不要ファイル・パッケージの削除
+- `prisma/schema.prisma` 削除
+- `html-react-parser` パッケージ削除（`dangerouslySetInnerHTML`に置換済み）
+- `openai` パッケージ削除（Cloudflare AI移行済み）
+- `GCS_PARQUET_BASE_URL` をwrangler secretsから`wrangler.toml`の`[vars]`に移動（固定値のため）
+
+### 7.5 Wrangler Secrets設定漏れ確認
+- `INTERNAL_API_KEY` の設定（内部API認証用）
+
+---
+
 ## リスクと対策
 
 | リスク | 影響度 | 対策 | 検証フェーズ |
@@ -441,7 +473,8 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 | 4 | 外部依存の切り離し | 2-3日 | ✅ 完了 |
 | 5 | デプロイパイプライン | 2-3日 | ✅ 完了 |
 | 6 | テスト・検証 | 3-4日 | ✅ 完了 |
-| **合計** | | **23-32日** | |
+| 7 | カットオーバー・クリーンアップ | 1-2日 | ⬜ 次 |
+| **合計** | | **24-34日** | |
 
 ---
 
