@@ -448,6 +448,17 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
   - `POST /api/internal/mark-picked-up`
   - `POST /api/internal/update-social-ids`
   - `POST /api/internal/add-tag-to-post`
+  - `GET /api/internal/posts-for-ogp`
+  - `POST /api/internal/update-ogp`
+
+### Phase 7.4 実施結果（2026-03-18）
+- ✅ Webアプリ側: OGP用エンドポイント2つ追加（計6エンドポイント）
+- ✅ 自動化プログラム側: 4つのLambda関数をSupabase → 内部API経由に修正
+  - PickRandomArticle, SaveSNSIdsToDB, ReportLegendaryArticle, CreateOGImage
+  - PR #7 マージ済み: https://github.com/sora32127/healthy-person-emulator/pull/7
+- ✅ 4関数全てAWS Lambdaにデプロイ済み（`sls deploy --function`）
+- ✅ AWS Secrets Managerに`HPE_INTERNAL_API`シークレット登録済み
+- ✅ 内部API疎通確認: `posts-for-pickup`, `posts-for-ogp` ともにHTTP 200
 
 ### 7.5 DNS切り替え
 - `healthy-person-emulator.org` のDNSをCloud Run → Cloudflare Workersに変更
