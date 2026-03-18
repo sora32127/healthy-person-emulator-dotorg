@@ -22,3 +22,4 @@ index_name = "embeddings-index"
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
+GCS_PARQUET_BASE_URL = "https://storage.googleapis.com/hpe-temp"
