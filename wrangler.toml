@@ -4,21 +4,61 @@ compatibility_flags = ["nodejs_compat"]
 main = "worker.ts"
 assets = { directory = "build/client" }
 
+[observability]
+enabled = true
+
+# --- Cron Triggers ---
+[triggers]
+crons = ["*/10 * * * *"]
+
+# --- Database ---
 [[d1_databases]]
 binding = "DB"
 database_name = "healthy-person-emulator-db"
 database_id = "1d5558b5-f0c7-4c13-9af9-82856367bfb9"
 
+# --- Storage ---
 [[r2_buckets]]
 binding = "PARQUET_BUCKET"
 bucket_name = "hpe-parquet"
 
+[[r2_buckets]]
+binding = "STATIC_BUCKET"
+bucket_name = "healthy-person-emulator-static"
+
+# --- AI ---
 [ai]
 binding = "AI"
 
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "embeddings-index"
+
+# --- Queues ---
+[[queues.producers]]
+binding = "SOCIAL_POST_QUEUE"
+queue = "social-post"
+
+[[queues.consumers]]
+queue = "social-post"
+max_batch_size = 1
+max_retries = 3
+dead_letter_queue = "social-post-dlq"
+
+# --- Container ---
+[[containers]]
+class_name = "AutomationContainer"
+image = "./container/Dockerfile"
+max_instances = 2
+instance_type = "standard-1"
+
+[[durable_objects.bindings]]
+name = "AUTOMATION_CONTAINER"
+class_name = "AutomationContainer"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AutomationContainer"]
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"

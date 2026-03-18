@@ -1,9 +1,16 @@
+import type { Container } from "@cloudflare/containers";
+
 export interface CloudflareEnv {
   // Bindings
   DB: D1Database;
   PARQUET_BUCKET: R2Bucket;
+  STATIC_BUCKET: R2Bucket;
   AI: Ai;
   VECTORIZE: VectorizeIndex;
+  // Container (Durable Object)
+  AUTOMATION_CONTAINER: DurableObjectNamespace<Container<CloudflareEnv>>;
+  // Queues
+  SOCIAL_POST_QUEUE: Queue;
   // Secrets (set via wrangler secret put)
   HPE_SESSION_SECRET: string;
   SESSION_SECRET: string;
@@ -22,6 +29,10 @@ export interface CloudflareEnv {
   GOOGLE_REDIRECT_URI: string;
   GCS_PARQUET_BASE_URL: string;
   INTERNAL_API_KEY: string;
+  // Automation feature flags
+  ENQUEUE_ENABLED?: string;
+  SEND_ENABLED?: string;
+  AUTOMATION_DRY_RUN?: string;
   // Optional
   NODE_ENV?: string;
 }
