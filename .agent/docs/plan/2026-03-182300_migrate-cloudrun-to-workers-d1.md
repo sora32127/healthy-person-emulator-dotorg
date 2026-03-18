@@ -423,12 +423,16 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - `scripts/migrate-pg-to-d1.ts` を再実行（INSERT OR REPLACEで冪等）
 - 差分件数を確認し、整合性チェック
 
-### 7.2 DNS切り替え
-- `healthy-person-emulator.org` のDNSをCloud Run → Cloudflare Workersに変更
-- Cloudflareダッシュボードで Workers Routes またはカスタムドメインを設定
-- Google OAuthの承認済みリダイレクトURIを本番ドメインで確認
+### 7.2 不要ファイル・パッケージの削除
+- `prisma/schema.prisma` 削除
+- `html-react-parser` パッケージ削除（`dangerouslySetInnerHTML`に置換済み）
+- `openai` パッケージ削除（Cloudflare AI移行済み）
+- `GCS_PARQUET_BASE_URL` をwrangler secretsから`wrangler.toml`の`[vars]`に移動（固定値のため）
 
-### 7.3 SNS連携の切り替え
+### 7.3 Wrangler Secrets設定漏れ確認
+- `INTERNAL_API_KEY` の設定（内部API認証用）
+
+### 7.4 SNS連携の切り替え
 - 自動化プログラム（別リポジトリ: `healthy-person-emulator`）をDB直接接続 → 内部API経由に修正
 - `INTERNAL_API_KEY` をwrangler secretsに設定
 - 対象エンドポイント:
@@ -437,14 +441,21 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
   - `POST /api/internal/update-social-ids`
   - `POST /api/internal/add-tag-to-post`
 
-### 7.4 不要ファイル・パッケージの削除
-- `prisma/schema.prisma` 削除
-- `html-react-parser` パッケージ削除（`dangerouslySetInnerHTML`に置換済み）
-- `openai` パッケージ削除（Cloudflare AI移行済み）
-- `GCS_PARQUET_BASE_URL` をwrangler secretsから`wrangler.toml`の`[vars]`に移動（固定値のため）
+### 7.5 DNS切り替え
+- `healthy-person-emulator.org` のDNSをCloud Run → Cloudflare Workersに変更
+- Cloudflareダッシュボードで Workers Routes またはカスタムドメインを設定
+- Google OAuthの承認済みリダイレクトURIを本番ドメインで確認
+- Cloudflare TurnstileのドメインリストにWorkers URLが含まれていることを確認
 
-### 7.5 Wrangler Secrets設定漏れ確認
-- `INTERNAL_API_KEY` の設定（内部API認証用）
+### 7.6 最終動作確認
+- 本番ドメイン（`healthy-person-emulator.org`）で以下を実施:
+  - トップページ表示
+  - 記事詳細ページ表示
+  - Google OAuthログイン
+  - 投稿作成（Turnstile認証 → コンテンツ入力 → 送信 → 記事表示）
+  - 投稿へのいいね・コメント
+  - 検索
+  - ブックマーク
 
 ---
 
