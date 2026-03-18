@@ -7,12 +7,6 @@ import type {
   PreviousOrNextPostData,
 } from '../repositories/types';
 
-// Re-export types and schemas from repositories/types.ts
-export {
-  PostCardDataSchema,
-  CommentShowCardDataSchema,
-} from '../repositories/types';
-
 export type {
   PostCardData,
   CommentShowCardData,
@@ -64,7 +58,6 @@ export const recordCommentVote = (...args: Parameters<DatabaseRepository['record
 export const createPostComment = (...args: Parameters<DatabaseRepository['createPostComment']>) => getRepo().createPostComment(...args);
 export const judgeIsBookmarked = (...args: Parameters<DatabaseRepository['judgeIsBookmarked']>) => getRepo().judgeIsBookmarked(...args);
 export const getRecentPostsByTagId = (...args: Parameters<DatabaseRepository['getRecentPostsByTagId']>) => getRepo().getRecentPostsByTagId(...args);
-export const getRecentComments = (...args: Parameters<DatabaseRepository['getRecentComments']>) => getRepo().getRecentComments(...args);
 export const getRandomPosts = (...args: Parameters<DatabaseRepository['getRandomPosts']>) => getRepo().getRandomPosts(...args);
 export const getRandomComments = (...args: Parameters<DatabaseRepository['getRandomComments']>) => getRepo().getRandomComments(...args);
 export const getFeedPosts = (...args: Parameters<DatabaseRepository['getFeedPosts']>) => getRepo().getFeedPosts(...args);
@@ -80,15 +73,6 @@ export const updatePostWithTagsAndHistory = (...args: Parameters<DatabaseReposit
 export const upsertNowEditingInfo = (...args: Parameters<DatabaseRepository['upsertNowEditingInfo']>) => getRepo().upsertNowEditingInfo(...args);
 export const findUserByEmail = (...args: Parameters<DatabaseRepository['findUserByEmail']>) => getRepo().findUserByEmail(...args);
 export const createGoogleUser = (...args: Parameters<DatabaseRepository['createGoogleUser']>) => getRepo().createGoogleUser(...args);
-
-// Test helpers
-export const getOldestPostIdsForTest = (...args: Parameters<DatabaseRepository['getOldestPostIdsForTest']>) => getRepo().getOldestPostIdsForTest(...args);
-export const getNewestPostIdsForTest = (...args: Parameters<DatabaseRepository['getNewestPostIdsForTest']>) => getRepo().getNewestPostIdsForTest(...args);
-export const getUnboundedLikesPostIdsForTest = (...args: Parameters<DatabaseRepository['getUnboundedLikesPostIdsForTest']>) => getRepo().getUnboundedLikesPostIdsForTest(...args);
-export const getRecentCommentIdsForTest = (...args: Parameters<DatabaseRepository['getRecentCommentIdsForTest']>) => getRepo().getRecentCommentIdsForTest(...args);
-export const getOldestCommentIdsForTest = (...args: Parameters<DatabaseRepository['getOldestCommentIdsForTest']>) => getRepo().getOldestCommentIdsForTest(...args);
-export const getUnboundedLikesCommentIdsForTest = (...args: Parameters<DatabaseRepository['getUnboundedLikesCommentIdsForTest']>) => getRepo().getUnboundedLikesCommentIdsForTest(...args);
-export const getLikedCommentsForTest = (...args: Parameters<DatabaseRepository['getLikedCommentsForTest']>) => getRepo().getLikedCommentsForTest(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 

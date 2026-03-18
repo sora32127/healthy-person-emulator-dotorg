@@ -27,12 +27,6 @@ importers:
       '@marsidev/react-turnstile':
         specifier: ^1.3.1
         version: 1.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-router/cloudflare':
-        specifier: ^7.13.1
-        version: 7.13.1(@cloudflare/workers-types@4.20260317.1)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
-      chalk:
-        specifier: ^5.6.2
-        version: 5.6.2
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -134,9 +128,6 @@ importers:
         specifier: ^7.6.13
         version: 7.6.13
       '@types/diff':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@types/marked':
         specifier: ^6.0.0
         version: 6.0.0
       '@types/node':
@@ -1377,17 +1368,6 @@ packages:
   '@prisma/get-platform@5.22.0':
     resolution: {integrity: sha512-pHhpQdr1UPFpt+zFfnPazhulaZYCUqeIcPpJViYoq9R+D/yw4fjE+CtnsnKzPYm0ddUbeXUzjGVGIRVgPDCk4Q==}
 
-  '@react-router/cloudflare@7.13.1':
-    resolution: {integrity: sha512-FujLJEDig7pJLqTHIlatEr4pxLhg3fy8ZiUzwPcHF0YxdP+ag2NZovZVIl6o0vkJXOs6ENks6He5I2vcE0Yh5Q==}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      '@cloudflare/workers-types': ^4.0.0
-      react-router: ^7.13.1
-      typescript: ^5.1.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   '@react-router/dev@7.13.1':
     resolution: {integrity: sha512-H+kEvbbOaWGaitOyL6CgqPsHqRUh66HuVRvIEaZEqdoAY/1xChdhmmq6ZumMHzcFHgHlfOcoXgNHlz6ZO4NWcg==}
     engines: {node: '>=20.0.0'}
@@ -1517,10 +1497,6 @@ packages:
 
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
-
-  '@types/marked@6.0.0':
-    resolution: {integrity: sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA==}
-    deprecated: This is a stub types definition. marked provides its own type definitions, so you do not need this installed.
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -1876,10 +1852,6 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
-
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   character-entities-html4@2.1.0:
     resolution: {integrity: sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA==}
@@ -4709,13 +4681,6 @@ snapshots:
       '@prisma/debug': 5.22.0
     optional: true
 
-  '@react-router/cloudflare@7.13.1(@cloudflare/workers-types@4.20260317.1)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
-    dependencies:
-      '@cloudflare/workers-types': 4.20260317.1
-      react-router: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-    optionalDependencies:
-      typescript: 5.9.3
-
   '@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@22.19.2)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@22.19.2)(esbuild@0.27.1)(jiti@2.6.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.7.0))(esbuild@0.27.1)(jiti@2.6.1)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(tsx@4.21.0)(typescript@5.9.3)(yaml@2.7.0)':
     dependencies:
       '@babel/core': 7.29.0
@@ -4886,10 +4851,6 @@ snapshots:
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
-
-  '@types/marked@6.0.0':
-    dependencies:
-      marked: 15.0.12
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -5232,8 +5193,6 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
-
-  chalk@5.6.2: {}
 
   character-entities-html4@2.1.0: {}
 
