@@ -412,6 +412,7 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
   - 全サーバーモジュールのauto-init（`globalThis.__cloudflareEnv`経由）が不完全 → security, cloudflare, gcloudにも追加
   - GCS `hpe-temp`バケットのパブリックアクセス防止解除 + CORS絞り込み
   - `CLIENT_URL` secret更新 + Google OAuth承認済みリダイレクトURI追加
+  - Cloudflare Turnstileの許可ドメインにWorkers URLを追加
 
 ---
 
