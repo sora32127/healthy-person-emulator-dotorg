@@ -1,40 +1,31 @@
 import { Container } from "@cloudflare/containers";
+import { env } from "cloudflare:workers";
 import type { CloudflareEnv } from "./app/types/env";
 
 export class AutomationContainer extends Container<CloudflareEnv> {
   defaultPort = 8080;
   sleepAfter = "5m";
 
-  getEnv(): Record<string, string> {
-    const env = this.env;
-    const vars: Record<string, string> = {};
-
+  envVars = {
     // Feature flags
-    if (env.AUTOMATION_DRY_RUN) vars.AUTOMATION_DRY_RUN = env.AUTOMATION_DRY_RUN;
-
+    AUTOMATION_DRY_RUN: (env as CloudflareEnv).AUTOMATION_DRY_RUN ?? "false",
     // Twitter
-    if (env.TWITTER_CK) vars.TWITTER_CK = env.TWITTER_CK;
-    if (env.TWITTER_CS) vars.TWITTER_CS = env.TWITTER_CS;
-    if (env.TWITTER_AT) vars.TWITTER_AT = env.TWITTER_AT;
-    if (env.TWITTER_ATS) vars.TWITTER_ATS = env.TWITTER_ATS;
-
+    TWITTER_CK: (env as CloudflareEnv).TWITTER_CK ?? "",
+    TWITTER_CS: (env as CloudflareEnv).TWITTER_CS ?? "",
+    TWITTER_AT: (env as CloudflareEnv).TWITTER_AT ?? "",
+    TWITTER_ATS: (env as CloudflareEnv).TWITTER_ATS ?? "",
     // Bluesky
-    if (env.BLUESKY_USER) vars.BLUESKY_USER = env.BLUESKY_USER;
-    if (env.BLUESKY_PASSWORD) vars.BLUESKY_PASSWORD = env.BLUESKY_PASSWORD;
-
+    BLUESKY_USER: (env as CloudflareEnv).BLUESKY_USER ?? "",
+    BLUESKY_PASSWORD: (env as CloudflareEnv).BLUESKY_PASSWORD ?? "",
     // Misskey
-    if (env.MISSKEY_TOKEN) vars.MISSKEY_TOKEN = env.MISSKEY_TOKEN;
-
+    MISSKEY_TOKEN: (env as CloudflareEnv).MISSKEY_TOKEN ?? "",
     // R2 S3-compatible API
-    if (env.R2_ENDPOINT) vars.R2_ENDPOINT = env.R2_ENDPOINT;
-    if (env.R2_ACCESS_KEY_ID) vars.R2_ACCESS_KEY_ID = env.R2_ACCESS_KEY_ID;
-    if (env.R2_SECRET_ACCESS_KEY) vars.R2_SECRET_ACCESS_KEY = env.R2_SECRET_ACCESS_KEY;
-
+    R2_ENDPOINT: (env as CloudflareEnv).R2_ENDPOINT ?? "",
+    R2_ACCESS_KEY_ID: (env as CloudflareEnv).R2_ACCESS_KEY_ID ?? "",
+    R2_SECRET_ACCESS_KEY: (env as CloudflareEnv).R2_SECRET_ACCESS_KEY ?? "",
     // BigQuery
-    if (env.BIGQUERY_CREDENTIALS) vars.BIGQUERY_CREDENTIALS = env.BIGQUERY_CREDENTIALS;
-
-    return vars;
-  }
+    BIGQUERY_CREDENTIALS: (env as CloudflareEnv).BIGQUERY_CREDENTIALS ?? "",
+  };
 
   override onStart(): void {
     console.log("[AutomationContainer] Container started");
