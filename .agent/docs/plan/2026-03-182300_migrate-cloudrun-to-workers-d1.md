@@ -466,6 +466,12 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - Google OAuthの承認済みリダイレクトURIを本番ドメインで確認
 - Cloudflare TurnstileのドメインリストにWorkers URLが含まれていることを確認
 
+### Phase 7.5 実施結果（2026-03-18）
+- ✅ 既存Aレコード削除 → Workers Custom Domain (`healthy-person-emulator.org`) 設定
+- ✅ `https://healthy-person-emulator.org/` で200 OK確認
+- ✅ GitHub branch protection の required check を `deploy` → `Workers Builds: healthy-person-emulator-dotorg` に変更
+- ✅ PR #282 マージ済み
+
 ### 7.6 最終動作確認
 - 本番ドメイン（`healthy-person-emulator.org`）で以下を実施:
   - トップページ表示
@@ -480,6 +486,10 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - PostgreSQLとD1の全テーブル行数比較
 - 差分がある場合は再マイグレーションを実施
 - 特に移行後に追加された投稿・コメント・投票データの取りこぼしがないか確認
+
+### Phase 7.7 実施結果（2026-03-18）
+- ✅ 全11テーブル行数一致（260,983行）
+- ✅ 差分3テーブル（コメント+2、投票+11、コメント投票+12）を再マイグレーションで解消
 
 ---
 
