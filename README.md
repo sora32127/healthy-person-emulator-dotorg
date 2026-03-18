@@ -1,3 +1,4 @@
+<!-- CI trigger test -->
 <p align="center">
 <img src = ./public/favicon.ico width=500>
 </p>
