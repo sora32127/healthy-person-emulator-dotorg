@@ -19,10 +19,6 @@ database_id = "1d5558b5-f0c7-4c13-9af9-82856367bfb9"
 
 # --- Storage ---
 [[r2_buckets]]
-binding = "PARQUET_BUCKET"
-bucket_name = "hpe-parquet"
-
-[[r2_buckets]]
 binding = "STATIC_BUCKET"
 bucket_name = "healthy-person-emulator-static"
 
@@ -118,4 +114,3 @@ new_sqlite_classes = ["AutomationContainer"]
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
-GCS_PARQUET_BASE_URL = "https://storage.googleapis.com/hpe-temp"

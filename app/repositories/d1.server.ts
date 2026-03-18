@@ -20,6 +20,8 @@ import type {
   PostForEditing,
   PostEditHistoryEntry,
   UpdatePostWithTagsInput,
+  SearchOrderBy,
+  SearchPostsResult,
 } from './types';
 import { formatDate } from '../modules/util.server';
 import * as schema from '../drizzle/schema';
@@ -1192,6 +1194,138 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           userAuthType: schema.dimUsers.userAuthType,
         });
       return user;
+    },
+
+    async searchPosts(
+      query: string,
+      orderby: SearchOrderBy = 'timeDesc',
+      page: number = 1,
+      tags: string[] = [],
+      pageSize: number = 10,
+    ): Promise<SearchPostsResult> {
+      const offset = (page - 1) * pageSize;
+      const sanitizedQuery = query.trim();
+
+      // Build WHERE conditions
+      const conditions = [];
+
+      if (sanitizedQuery) {
+        conditions.push(
+          sql`(${schema.dimPosts.postTitle} LIKE ${'%' + sanitizedQuery + '%'} OR ${schema.dimPosts.postContent} LIKE ${'%' + sanitizedQuery + '%'})`,
+        );
+      }
+
+      // Tag filter: find postIds that have ALL specified tags
+      if (tags.length > 0) {
+        for (const tag of tags) {
+          conditions.push(
+            sql`${schema.dimPosts.postId} IN (
+              SELECT ${schema.relPostTags.postId}
+              FROM ${schema.relPostTags}
+              INNER JOIN ${schema.dimTags} ON ${schema.relPostTags.tagId} = ${schema.dimTags.tagId}
+              WHERE ${schema.dimTags.tagName} = ${tag}
+            )`,
+          );
+        }
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      // Order by
+      const orderByClause =
+        orderby === 'like'
+          ? [desc(schema.dimPosts.countLikes), desc(schema.dimPosts.postDateGmt)]
+          : orderby === 'timeAsc'
+            ? [asc(schema.dimPosts.postDateGmt)]
+            : [desc(schema.dimPosts.postDateGmt)];
+
+      // Get total count
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(schema.dimPosts)
+        .where(whereClause);
+      const totalCount = totalResult.count;
+
+      // Get paginated results
+      const posts = await db
+        .select({
+          postId: schema.dimPosts.postId,
+          postTitle: schema.dimPosts.postTitle,
+          postDateGmt: schema.dimPosts.postDateGmt,
+          countLikes: schema.dimPosts.countLikes,
+          countDislikes: schema.dimPosts.countDislikes,
+        })
+        .from(schema.dimPosts)
+        .where(whereClause)
+        .orderBy(...orderByClause)
+        .offset(offset)
+        .limit(pageSize);
+
+      const postIds = posts.map((p) => p.postId);
+      const allTags = await getTagsByPostIds(postIds);
+      const commentCounts = await getCommentCountsByPostIds(postIds);
+
+      const results = posts.map((post) => ({
+        postId: post.postId,
+        postTitle: post.postTitle,
+        postDateGmt: toDate(post.postDateGmt),
+        countLikes: post.countLikes,
+        countDislikes: post.countDislikes,
+        tagNames: allTags
+          .filter((t) => t.postId === post.postId)
+          .map((t) => t.tagName),
+        countComments: commentCounts.find((c) => c.postId === post.postId)?.cnt || 0,
+      }));
+
+      // Get tag counts for the filtered result set
+      // Use raw SQL for efficiency — count tags across all matching posts (not just current page)
+      let tagCountsQuery;
+      if (conditions.length === 0) {
+        // No filters: count all tags
+        tagCountsQuery = await db
+          .select({
+            tagName: schema.dimTags.tagName,
+            count: count(),
+          })
+          .from(schema.relPostTags)
+          .innerJoin(schema.dimTags, eq(schema.relPostTags.tagId, schema.dimTags.tagId))
+          .groupBy(schema.dimTags.tagName)
+          .orderBy(desc(count()));
+      } else {
+        // With filters: count tags only for matching posts
+        tagCountsQuery = await db
+          .select({
+            tagName: schema.dimTags.tagName,
+            count: count(),
+          })
+          .from(schema.relPostTags)
+          .innerJoin(schema.dimTags, eq(schema.relPostTags.tagId, schema.dimTags.tagId))
+          .where(
+            sql`${schema.relPostTags.postId} IN (
+              SELECT ${schema.dimPosts.postId} FROM ${schema.dimPosts} WHERE ${whereClause}
+            )`,
+          )
+          .groupBy(schema.dimTags.tagName)
+          .orderBy(desc(count()));
+      }
+
+      const totalPages = Math.ceil(totalCount / pageSize);
+
+      return {
+        metadata: {
+          query: sanitizedQuery,
+          count: totalCount,
+          page,
+          totalPages,
+          orderby,
+          hasMore: page < totalPages,
+        },
+        tagCounts: tagCountsQuery.map((t) => ({
+          tagName: t.tagName,
+          count: t.count,
+        })),
+        results,
+      };
     },
 
   };
