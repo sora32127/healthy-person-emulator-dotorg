@@ -12,6 +12,9 @@ importers:
 
   .:
     dependencies:
+      '@cloudflare/containers':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@duckdb/duckdb-wasm':
         specifier: 1.31.1-dev31.0
         version: 1.31.1-dev31.0
@@ -353,6 +356,9 @@ packages:
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
+
+  '@cloudflare/containers@0.1.1':
+    resolution: {integrity: sha512-YTdobRTnTlUOUPMFemufH367A9Z8pDfZ+UboYMLbGpO0VlvEXZDiioSmXPQMHld2vRtkL31mcRii3bcbQU6fdw==}
 
   '@cloudflare/workers-types@4.20260317.1':
     resolution: {integrity: sha512-+G4eVwyCpm8Au1ex8vQBCuA9wnwqetz4tPNRoB/53qvktERWBRMQnrtvC1k584yRE3emMThtuY0gWshvSJ++PQ==}
@@ -4064,6 +4070,8 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@1.0.2': {}
+
+  '@cloudflare/containers@0.1.1': {}
 
   '@cloudflare/workers-types@4.20260317.1': {}
 
