@@ -365,8 +365,8 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - ✅ `Dockerfile`, `compose.dev.yaml`, `docker/` 削除
 - ✅ `prisma.server.ts`, `@prisma/client` 削除
 - ✅ ビルド・テスト全パス
-- ⚠️ `CLOUDFLARE_API_TOKEN` をGitHub Secretsに追加が必要
-- ⚠️ wrangler secretsの設定が必要（HPE_SESSION_SECRET等）
+- ✅ `CLOUDFLARE_API_TOKEN` をGitHub Secretsに設定済み
+- ✅ wrangler secrets 12個設定済み（SESSION_SECRET, GOOGLE_CLIENT_ID等）
 
 ---
 
@@ -392,6 +392,26 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 
 ### 6.4 既存Vitest
 - `pnpm test` で全テストパス
+
+### Phase 6 実施結果（2026-03-18）
+- ✅ PR #282 作成: https://github.com/sora32127/healthy-person-emulator-dotorg/pull/282
+- ✅ Workers本番デプロイ: https://healthy-person-emulator-dotorg.sora32127.workers.dev
+- ✅ E2Eテスト（手動）:
+  - トップページ: ✅ 200
+  - 記事詳細: ✅ 表示OK（`html-react-parser` → `dangerouslySetInnerHTML`に修正）
+  - フィード: ✅ 200
+  - 検索: ✅ 200（GCSパブリック化 + CORS設定で解決）
+  - 投稿: ✅ 投稿成功（embedding生成はAI未接続時スキップ）
+  - ログイン（Google OAuth）: ✅ 動作確認済み（CLIENT_URL + Google承認済みリダイレクトURI設定）
+- ✅ GitHub Actions:
+  - Vitest: ✅ 全パス（`prisma generate`ステップ削除で修正）
+  - Preview Deployment: ✅ 成功
+- ⚠️ 修正が必要だった問題:
+  - `html-react-parser`がWorkers SSRでDOM APIを要求 → `dangerouslySetInnerHTML`に置換
+  - `getSimilarPosts`, `createEmbedding`がAI未接続時にエラー → try-catchでgraceful fallback
+  - 全サーバーモジュールのauto-init（`globalThis.__cloudflareEnv`経由）が不完全 → security, cloudflare, gcloudにも追加
+  - GCS `hpe-temp`バケットのパブリックアクセス防止解除 + CORS絞り込み
+  - `CLIENT_URL` secret更新 + Google OAuth承認済みリダイレクトURI追加
 
 ---
 
@@ -420,7 +440,7 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 | 3 | Workers ランタイム移行 | 4-5日 | ✅ 完了 |
 | 4 | 外部依存の切り離し | 2-3日 | ✅ 完了 |
 | 5 | デプロイパイプライン | 2-3日 | ✅ 完了 |
-| 6 | テスト・検証 | 3-4日 | ⬜ 次 |
+| 6 | テスト・検証 | 3-4日 | ✅ 完了 |
 | **合計** | | **23-32日** | |
 
 ---
