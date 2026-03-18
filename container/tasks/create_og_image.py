@@ -125,16 +125,21 @@ def generate_image(table_data: Dict[str, str]) -> bytes:
 
 
 def upload_to_r2(image_bytes: bytes, post_id: int) -> str:
-    s3 = get_r2_client()
-    key = f"ogp/{post_id}.jpg"
-    s3.put_object(
-        Bucket=R2_BUCKET,
-        Key=key,
-        Body=image_bytes,
-        ContentType="image/jpeg",
-    )
-    ogp_base_url = os.environ.get("OGP_BASE_URL", f"https://static.healthy-person-emulator.org")
-    return f"{ogp_base_url}/{key}"
+    """Try R2 upload if credentials available, otherwise skip (Worker will handle it)."""
+    try:
+        s3 = get_r2_client()
+        key = f"ogp/{post_id}.jpg"
+        s3.put_object(
+            Bucket=R2_BUCKET,
+            Key=key,
+            Body=image_bytes,
+            ContentType="image/jpeg",
+        )
+        ogp_base_url = os.environ.get("OGP_BASE_URL", "https://static.healthy-person-emulator.org")
+        return f"{ogp_base_url}/{key}"
+    except (KeyError, Exception) as e:
+        logger.warning(f"R2 upload skipped (will be handled by Worker): {e}")
+        return ""
 
 
 def update_ogp_url(post_id: int, ogp_url: str, api_key: str) -> None:
@@ -168,12 +173,19 @@ def handle(params: dict) -> dict:
 
         image_bytes = generate_image(post["post_content"])
         ogp_url = upload_to_r2(image_bytes, post_id)
-        update_ogp_url(post_id, ogp_url, api_key)
+
+        # If R2 upload was skipped, return base64 image for Worker to handle
+        import base64
+        image_b64 = base64.b64encode(image_bytes).decode() if not ogp_url else None
+
+        if ogp_url:
+            update_ogp_url(post_id, ogp_url, api_key)
 
         results.append({
             "post_id": post_id,
             "post_title": post_title,
             "ogp_url": ogp_url,
+            "image_b64": image_b64,
             "post_url": f"https://healthy-person-emulator.org/archives/{post_id}",
         })
         logger.info(f"OGP created for post {post_id}")

@@ -73,12 +73,32 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
     post_id: number;
     post_title: string;
     ogp_url: string;
+    image_b64?: string;
     post_url: string;
   }>;
 
   if (posts.length === 0) {
     console.log("[automation] No new posts to process");
     return;
+  }
+
+  // Step 1.5: If container couldn't upload to R2, do it from Worker
+  for (const post of posts) {
+    if (!post.ogp_url && post.image_b64) {
+      const key = `ogp/${post.post_id}.jpg`;
+      const imageBytes = Uint8Array.from(atob(post.image_b64), (c) => c.charCodeAt(0));
+      await env.STATIC_BUCKET.put(key, imageBytes, {
+        httpMetadata: { contentType: "image/jpeg" },
+      });
+      post.ogp_url = `https://static.healthy-person-emulator.org/${key}`;
+
+      // Update D1
+      await env.DB.prepare(
+        `UPDATE dim_posts SET ogp_image_url = ? WHERE post_id = ?`
+      ).bind(post.ogp_url, post.post_id).run();
+
+      console.log(`[automation] Worker uploaded OGP to R2: ${key}`);
+    }
   }
 
   // Step 2: For each post, create jobs and enqueue
