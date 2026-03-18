@@ -17,6 +17,9 @@ dependencies = [
     "google-auth>=2.29.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
