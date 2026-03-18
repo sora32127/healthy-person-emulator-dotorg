@@ -1,10 +1,24 @@
 import { createCookieSessionStorage } from 'react-router';
 
-let _sessionStorage: ReturnType<typeof createCookieSessionStorage> | null = null;
+interface SessionData {
+  user: {
+    userUuid: string;
+    email: string;
+    userAuthType: 'Email' | 'Google';
+    photoUrl?: string;
+  };
+  likedPages: number[];
+  dislikedPages: number[];
+  likedComments: number[];
+  dislikedComments: number[];
+  isValidUser: boolean;
+}
+
+let _sessionStorage: ReturnType<typeof createCookieSessionStorage<SessionData>> | null = null;
 
 export function initSessionStorage(sessionSecret: string) {
   if (_sessionStorage) return;
-  _sessionStorage = createCookieSessionStorage({
+  _sessionStorage = createCookieSessionStorage<SessionData>({
     cookie: {
       name: '__healthy_person_emulator',
       httpOnly: true,
@@ -30,12 +44,14 @@ function ensureStorage() {
   return _sessionStorage!;
 }
 
+type TypedSessionStorage = ReturnType<typeof createCookieSessionStorage<SessionData>>;
+
 export const sessionStorage = {
-  getSession: (...args: Parameters<ReturnType<typeof createCookieSessionStorage>['getSession']>) =>
+  getSession: (...args: Parameters<TypedSessionStorage['getSession']>) =>
     ensureStorage().getSession(...args),
-  commitSession: (...args: Parameters<ReturnType<typeof createCookieSessionStorage>['commitSession']>) =>
+  commitSession: (...args: Parameters<TypedSessionStorage['commitSession']>) =>
     ensureStorage().commitSession(...args),
-  destroySession: (...args: Parameters<ReturnType<typeof createCookieSessionStorage>['destroySession']>) =>
+  destroySession: (...args: Parameters<TypedSessionStorage['destroySession']>) =>
     ensureStorage().destroySession(...args),
 };
 

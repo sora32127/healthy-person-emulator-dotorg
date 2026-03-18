@@ -7,9 +7,15 @@ import { initVisitorSession } from './modules/visitor.server';
 import { initDb } from './modules/db.server';
 import { initGcloud } from './modules/gcloud.server';
 import type { AppLoadContext } from 'react-router';
-import type { PlatformProxy } from 'wrangler';
-
-type Cloudflare = Omit<PlatformProxy<CloudflareEnv>, 'dispose'>;
+type Cloudflare = {
+  env: CloudflareEnv;
+  ctx: {
+    waitUntil: (promise: Promise<unknown>) => void;
+    passThroughOnException: () => void;
+  };
+  cf: Request['cf'];
+  caches: typeof caches;
+};
 
 declare module 'react-router' {
   interface AppLoadContext {

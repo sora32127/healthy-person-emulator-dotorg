@@ -72,8 +72,8 @@ export function initAuth(env: {
           const user = await createUser(email);
           return {
             userUuid: user.userUuid,
-            email: user.email,
-            userAuthType: user.userAuthType,
+            email: user.email ?? email,
+            userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
           };
         }
         const user = await getUser(email);
@@ -82,8 +82,8 @@ export function initAuth(env: {
         }
         return {
           userUuid: user.userUuid,
-          email: user.email,
-          userAuthType: user.userAuthType,
+          email: user.email ?? email,
+          userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
           photoUrl: profile.picture,
         };
       },
@@ -193,8 +193,8 @@ class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
       const user = await createUser(email);
       return {
         userUuid: user.userUuid,
-        email: user.email,
-        userAuthType: user.userAuthType,
+        email: user.email ?? email,
+        userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
       };
     }
     const user = await getUser(email);
@@ -203,8 +203,8 @@ class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
     }
     return {
       userUuid: user.userUuid,
-      email: user.email,
-      userAuthType: user.userAuthType,
+      email: user.email ?? email,
+      userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
     };
   }
 }

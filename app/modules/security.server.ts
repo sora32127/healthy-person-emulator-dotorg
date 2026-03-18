@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from '@google/generative-ai';
 
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -58,7 +58,7 @@ export async function validateRequest(token: string, ipAddress: string) {
     method: 'POST',
     body: formData,
   });
-  const outCome = await res.json();
+  const outCome = (await res.json()) as { success: boolean };
   console.log('outCome', outCome);
   if (outCome.success) {
     return true;
@@ -95,7 +95,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
     return { isWelcomed: true, explanation: 'テスト投稿です' };
   }
 
-  const schema = {
+  const schema: ResponseSchema = {
     description: '歓迎される投稿かどうかを判断した結果',
     type: SchemaType.OBJECT,
     properties: {
@@ -106,6 +106,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
       explanation: {
         description: '判断した理由のカテゴリ',
         type: SchemaType.STRING,
+        format: 'enum' as const,
         enum: [
           'テスト投稿です',
           'スパム投稿です',
