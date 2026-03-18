@@ -232,7 +232,33 @@ export const dimUsers = sqliteTable("dim_users", {
 });
 
 // ============================================================
-// 13. fct_user_bookmark_activity
+// 13. social_post_jobs
+// ============================================================
+export const socialPostJobs = sqliteTable(
+  "social_post_jobs",
+  {
+    id: text("id").primaryKey(), // "{post_id}_{platform}"
+    postId: integer("post_id").notNull(),
+    platform: text("platform").notNull(), // "twitter" | "bluesky" | "activitypub"
+    status: text("status").notNull().default("pending"), // pending | queued | sending | sent | failed | unknown
+    providerPostId: text("provider_post_id"), // SNS側の投稿ID
+    claimedAt: text("claimed_at"), // 処理開始時刻
+    leaseTimeoutSec: integer("lease_timeout_sec").default(60),
+    attemptCount: integer("attempt_count").default(0),
+    lastError: text("last_error"),
+    resolvedAt: text("resolved_at"), // unknown解消時刻
+    resolutionNote: text("resolution_note"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_social_post_jobs_post_id").on(table.postId),
+    index("idx_social_post_jobs_status").on(table.status),
+  ],
+);
+
+// ============================================================
+// 14. fct_user_bookmark_activity
 // ============================================================
 export const fctUserBookmarkActivity = sqliteTable(
   "fct_user_bookmark_activity",
