@@ -331,7 +331,7 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 
 ---
 
-## Phase 5: デプロイパイプライン + カットオーバー
+## Phase 5: デプロイパイプライン
 
 ### 5.1 GitHub Actions書き換え
 
@@ -347,25 +347,26 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 - npx wrangler versions upload --tag pr-${{ github.event.pull_request.number }}
 ```
 
-### 5.2 カットオーバー手順
-
-1. Workers版をデプロイ（Cloud Runと並行稼働）
-2. DNSでトラフィックの10%をWorkersに振り分け
-3. 1日間モニタリング（エラー率、レスポンスタイム、データ整合性）
-4. 問題なければ50% → 100%に段階移行
-5. 1週間安定稼働後にCloud Run廃止
-
-### 5.3 ロールバック手順（明文化）
+### 5.2 ロールバック手順（明文化）
 - **即時**: DNSをCloud Runに切り戻し（TTL: 5分）
 - **データ同期**: D1での書き込みがある場合、D1→PostgreSQLへの差分同期スクリプトを事前に用意
 - **判定基準**: エラー率1%超、P95レスポンスタイム3倍超、データ不整合検出時
 
-### 5.4 不要ファイル削除（カットオーバー完了後）
+### 5.3 不要ファイル削除（カットオーバー完了後）
 - `Dockerfile`, Docker関連設定
 - Cloud Run用ワークフロー
 - `prisma/schema.prisma`, Prisma Repository実装
 - `gcloud.server.ts`
 - `@prisma/client`, `@react-router/node`, `@react-router/serve`, `@google-cloud/storage`
+
+### Phase 5 実施結果（2026-03-18）
+- ✅ Workers用ワークフロー追加（本番: `wrangler deploy`、プレビュー: `wrangler versions upload`）
+- ✅ Cloud Run用ワークフロー2つ削除
+- ✅ `Dockerfile`, `compose.dev.yaml`, `docker/` 削除
+- ✅ `prisma.server.ts`, `@prisma/client` 削除
+- ✅ ビルド・テスト全パス
+- ⚠️ `CLOUDFLARE_API_TOKEN` をGitHub Secretsに追加が必要
+- ⚠️ wrangler secretsの設定が必要（HPE_SESSION_SECRET等）
 
 ---
 
@@ -373,7 +374,11 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 
 **Workers移行後、カットオーバー前に実施。**
 
+### 6.1 PRを作成する
+- `main`ブランチに対してPRを作成し、プレビュー環境で動作確認を行う
+
 ### 6.1 E2Eテスト
+- プレビュー環境で動作確認を実施
 - 主要ユーザーフロー（投稿作成→閲覧→検索→ブックマーク→OAuth）の手動検証
 - `wrangler dev`ローカル環境 + 本番Workers環境の両方で確認
 
@@ -414,8 +419,8 @@ Webアプリに内部APIを追加し、自動化プログラムのDB直接接続
 | 2 | Drizzle/D1実装 + データ移行 | 7-10日 | ✅ 完了 |
 | 3 | Workers ランタイム移行 | 4-5日 | ✅ 完了 |
 | 4 | 外部依存の切り離し | 2-3日 | ✅ 完了 |
-| 5 | デプロイパイプライン + カットオーバー | 2-3日 | ⬜ 次 |
-| 6 | テスト・検証 | 3-4日 | ⬜ |
+| 5 | デプロイパイプライン | 2-3日 | ✅ 完了 |
+| 6 | テスト・検証 | 3-4日 | ⬜ 次 |
 | **合計** | | **23-32日** | |
 
 ---
