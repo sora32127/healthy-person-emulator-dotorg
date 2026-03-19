@@ -27,7 +27,8 @@ jobs:
           node-version-file: 'package.json'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm exec vp test --coverage
+      - run: pnpm lint
+      - run: pnpm test
       - uses: davelosert/vitest-coverage-report-action@v2
         if: always() && github.event_name == 'pull_request'
 
@@ -42,5 +43,4 @@ jobs:
           node-version-file: 'package.json'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm lint
       - run: pnpm build
