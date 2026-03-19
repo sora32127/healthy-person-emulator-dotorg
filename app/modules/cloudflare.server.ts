@@ -9,8 +9,8 @@ export function initCloudflare(env: {
   VECTORIZE_INDEX_NAME?: string;
 }) {
   _cfWorkersAiToken = env.CF_WORKERS_AI_TOKEN;
-  _cloudflareAccountId = env.CLOUDFLARE_ACCOUNT_ID || "9ecb9a8692f7c2c5c56387d93a9a1e60";
-  _vectorizeIndexName = env.VECTORIZE_INDEX_NAME || "embeddings-index";
+  _cloudflareAccountId = env.CLOUDFLARE_ACCOUNT_ID || '9ecb9a8692f7c2c5c56387d93a9a1e60';
+  _vectorizeIndexName = env.VECTORIZE_INDEX_NAME || 'embeddings-index';
   _cloudflareInitialized = true;
 }
 
@@ -29,38 +29,32 @@ function ensureCloudflareInit() {
 const TIMEOUT_MS = 5000;
 
 function getBaseUrl(): string {
-  const accountId = _cloudflareAccountId || "9ecb9a8692f7c2c5c56387d93a9a1e60";
+  const accountId = _cloudflareAccountId || '9ecb9a8692f7c2c5c56387d93a9a1e60';
   return `https://api.cloudflare.com/client/v4/accounts/${accountId}`;
 }
 
 function getToken(): string {
   ensureCloudflareInit();
   if (!_cfWorkersAiToken) {
-    throw new Error("CF_WORKERS_AI_TOKEN is not set");
+    throw new Error('CF_WORKERS_AI_TOKEN is not set');
   }
   return _cfWorkersAiToken;
 }
 
 function getIndexName(): string {
-  return _vectorizeIndexName || "embeddings-index";
+  return _vectorizeIndexName || 'embeddings-index';
 }
 
-async function cfFetch<T>(
-  path: string,
-  body: unknown,
-  isNdjson = false,
-): Promise<T> {
+async function cfFetch<T>(path: string, body: unknown, isNdjson = false): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const response = await fetch(`${getBaseUrl()}${path}`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${getToken()}`,
-        "Content-Type": isNdjson
-          ? "application/x-ndjson"
-          : "application/json",
+        'Content-Type': isNdjson ? 'application/x-ndjson' : 'application/json',
       },
       body: isNdjson ? (body as string) : JSON.stringify(body),
       signal: controller.signal,
@@ -85,15 +79,12 @@ interface WorkersAIEmbeddingResponse {
 }
 
 export async function getEmbedding(text: string): Promise<number[]> {
-  const data = await cfFetch<WorkersAIEmbeddingResponse>(
-    "/ai/run/@cf/google/embeddinggemma-300m",
-    { text: [text] },
-  );
+  const data = await cfFetch<WorkersAIEmbeddingResponse>('/ai/run/@cf/google/embeddinggemma-300m', {
+    text: [text],
+  });
 
   if (!data.success || !data.result?.data?.[0]) {
-    throw new Error(
-      `Workers AI unexpected response: ${JSON.stringify(data)}`,
-    );
+    throw new Error(`Workers AI unexpected response: ${JSON.stringify(data)}`);
   }
   return data.result.data[0];
 }
@@ -129,9 +120,7 @@ interface VectorInput {
 }
 
 export async function upsertVectors(vectors: VectorInput[]): Promise<number> {
-  const ndjson = vectors
-    .map((v) => JSON.stringify(v))
-    .join("\n");
+  const ndjson = vectors.map((v) => JSON.stringify(v)).join('\n');
 
   const data = await cfFetch<VectorizeUpsertResponse>(
     `/vectorize/v2/indexes/${getIndexName()}/upsert`,
@@ -145,13 +134,10 @@ export async function upsertVectors(vectors: VectorInput[]): Promise<number> {
   return data.result.count;
 }
 
-export async function querySimilar(
-  vector: number[],
-  topK: number,
-): Promise<VectorizeMatch[]> {
+export async function querySimilar(vector: number[], topK: number): Promise<VectorizeMatch[]> {
   const data = await cfFetch<VectorizeQueryResponse>(
     `/vectorize/v2/indexes/${getIndexName()}/query`,
-    { vector, topK, returnMetadata: "all" },
+    { vector, topK, returnMetadata: 'all' },
   );
 
   if (!data.success) {
@@ -160,9 +146,7 @@ export async function querySimilar(
   return data.result.matches;
 }
 
-export async function getVectorsByIds(
-  ids: string[],
-): Promise<VectorizeMatch[]> {
+export async function getVectorsByIds(ids: string[]): Promise<VectorizeMatch[]> {
   const data = await cfFetch<VectorizeGetByIdsResponse>(
     `/vectorize/v2/indexes/${getIndexName()}/get_by_ids`,
     { ids },
@@ -175,8 +159,5 @@ export async function getVectorsByIds(
 }
 
 export async function deleteVectors(ids: string[]): Promise<void> {
-  await cfFetch(
-    `/vectorize/v2/indexes/${getIndexName()}/delete_by_ids`,
-    { ids },
-  );
+  await cfFetch(`/vectorize/v2/indexes/${getIndexName()}/delete_by_ids`, { ids });
 }

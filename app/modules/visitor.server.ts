@@ -4,7 +4,8 @@ interface VisitorSessionData {
   redirectUrl: string;
 }
 
-let _sessionStorage: ReturnType<typeof createCookieSessionStorage<VisitorSessionData>> | null = null;
+let _sessionStorage: ReturnType<typeof createCookieSessionStorage<VisitorSessionData>> | null =
+  null;
 
 export function initVisitorSession() {
   if (_sessionStorage) return;
@@ -21,7 +22,8 @@ export function initVisitorSession() {
 }
 
 function ensureStorage() {
-  if (!_sessionStorage) throw new Error('Visitor session storage not initialized. Call initVisitorSession first.');
+  if (!_sessionStorage)
+    throw new Error('Visitor session storage not initialized. Call initVisitorSession first.');
   return _sessionStorage;
 }
 

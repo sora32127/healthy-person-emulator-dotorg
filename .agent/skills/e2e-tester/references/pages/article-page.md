@@ -1,7 +1,8 @@
 # Article Page Scenarios
 
 対象実装:
-- [_layout.archives.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.$postId.tsx)
+
+- [\_layout.archives.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.$postId.tsx)
 - [CommentInputBox.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/CommentInputBox.tsx)
 - [CommentCard.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/CommentCard.tsx)
 - [PostShareButtonGroup.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/PostShareButtonGroup.tsx)

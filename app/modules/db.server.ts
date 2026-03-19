@@ -49,33 +49,67 @@ function getRepo(): DatabaseRepository {
 }
 
 // Re-export all repository functions
-export const getPostDataForSitemap = (...args: Parameters<DatabaseRepository['getPostDataForSitemap']>) => getRepo().getPostDataForSitemap(...args);
-export const getTagNamesByPostId = (...args: Parameters<DatabaseRepository['getTagNamesByPostId']>) => getRepo().getTagNamesByPostId(...args);
-export const createPostWithTags = (...args: Parameters<DatabaseRepository['createPostWithTags']>) => getRepo().createPostWithTags(...args);
-export const getUserId = (...args: Parameters<DatabaseRepository['getUserId']>) => getRepo().getUserId(...args);
-export const getBookmarkPostsByPagenation = (...args: Parameters<DatabaseRepository['getBookmarkPostsByPagenation']>) => getRepo().getBookmarkPostsByPagenation(...args);
-export const addOrRemoveBookmark = (...args: Parameters<DatabaseRepository['addOrRemoveBookmark']>) => getRepo().addOrRemoveBookmark(...args);
-export const recordPostVote = (...args: Parameters<DatabaseRepository['recordPostVote']>) => getRepo().recordPostVote(...args);
-export const recordCommentVote = (...args: Parameters<DatabaseRepository['recordCommentVote']>) => getRepo().recordCommentVote(...args);
-export const createPostComment = (...args: Parameters<DatabaseRepository['createPostComment']>) => getRepo().createPostComment(...args);
-export const judgeIsBookmarked = (...args: Parameters<DatabaseRepository['judgeIsBookmarked']>) => getRepo().judgeIsBookmarked(...args);
-export const getRecentPostsByTagId = (...args: Parameters<DatabaseRepository['getRecentPostsByTagId']>) => getRepo().getRecentPostsByTagId(...args);
-export const getRandomPosts = (...args: Parameters<DatabaseRepository['getRandomPosts']>) => getRepo().getRandomPosts(...args);
-export const getRandomComments = (...args: Parameters<DatabaseRepository['getRandomComments']>) => getRepo().getRandomComments(...args);
-export const getFeedPosts = (...args: Parameters<DatabaseRepository['getFeedPosts']>) => getRepo().getFeedPosts(...args);
-export const getFeedComments = (...args: Parameters<DatabaseRepository['getFeedComments']>) => getRepo().getFeedComments(...args);
-export const getTagsCounts = (...args: Parameters<DatabaseRepository['getTagsCounts']>) => getRepo().getTagsCounts(...args);
-export const getStopWords = (...args: Parameters<DatabaseRepository['getStopWords']>) => getRepo().getStopWords(...args);
-export const updatePostWelcomed = (...args: Parameters<DatabaseRepository['updatePostWelcomed']>) => getRepo().updatePostWelcomed(...args);
-export const getUserEditHistory = (...args: Parameters<DatabaseRepository['getUserEditHistory']>) => getRepo().getUserEditHistory(...args);
-export const getNowEditingInfo = (...args: Parameters<DatabaseRepository['getNowEditingInfo']>) => getRepo().getNowEditingInfo(...args);
-export const getPostForEditing = (...args: Parameters<DatabaseRepository['getPostForEditing']>) => getRepo().getPostForEditing(...args);
-export const getPostEditHistory = (...args: Parameters<DatabaseRepository['getPostEditHistory']>) => getRepo().getPostEditHistory(...args);
-export const updatePostWithTagsAndHistory = (...args: Parameters<DatabaseRepository['updatePostWithTagsAndHistory']>) => getRepo().updatePostWithTagsAndHistory(...args);
-export const upsertNowEditingInfo = (...args: Parameters<DatabaseRepository['upsertNowEditingInfo']>) => getRepo().upsertNowEditingInfo(...args);
-export const findUserByEmail = (...args: Parameters<DatabaseRepository['findUserByEmail']>) => getRepo().findUserByEmail(...args);
-export const createGoogleUser = (...args: Parameters<DatabaseRepository['createGoogleUser']>) => getRepo().createGoogleUser(...args);
-export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) => getRepo().searchPosts(...args);
+export const getPostDataForSitemap = (
+  ...args: Parameters<DatabaseRepository['getPostDataForSitemap']>
+) => getRepo().getPostDataForSitemap(...args);
+export const getTagNamesByPostId = (
+  ...args: Parameters<DatabaseRepository['getTagNamesByPostId']>
+) => getRepo().getTagNamesByPostId(...args);
+export const createPostWithTags = (...args: Parameters<DatabaseRepository['createPostWithTags']>) =>
+  getRepo().createPostWithTags(...args);
+export const getUserId = (...args: Parameters<DatabaseRepository['getUserId']>) =>
+  getRepo().getUserId(...args);
+export const getBookmarkPostsByPagenation = (
+  ...args: Parameters<DatabaseRepository['getBookmarkPostsByPagenation']>
+) => getRepo().getBookmarkPostsByPagenation(...args);
+export const addOrRemoveBookmark = (
+  ...args: Parameters<DatabaseRepository['addOrRemoveBookmark']>
+) => getRepo().addOrRemoveBookmark(...args);
+export const recordPostVote = (...args: Parameters<DatabaseRepository['recordPostVote']>) =>
+  getRepo().recordPostVote(...args);
+export const recordCommentVote = (...args: Parameters<DatabaseRepository['recordCommentVote']>) =>
+  getRepo().recordCommentVote(...args);
+export const createPostComment = (...args: Parameters<DatabaseRepository['createPostComment']>) =>
+  getRepo().createPostComment(...args);
+export const judgeIsBookmarked = (...args: Parameters<DatabaseRepository['judgeIsBookmarked']>) =>
+  getRepo().judgeIsBookmarked(...args);
+export const getRecentPostsByTagId = (
+  ...args: Parameters<DatabaseRepository['getRecentPostsByTagId']>
+) => getRepo().getRecentPostsByTagId(...args);
+export const getRandomPosts = (...args: Parameters<DatabaseRepository['getRandomPosts']>) =>
+  getRepo().getRandomPosts(...args);
+export const getRandomComments = (...args: Parameters<DatabaseRepository['getRandomComments']>) =>
+  getRepo().getRandomComments(...args);
+export const getFeedPosts = (...args: Parameters<DatabaseRepository['getFeedPosts']>) =>
+  getRepo().getFeedPosts(...args);
+export const getFeedComments = (...args: Parameters<DatabaseRepository['getFeedComments']>) =>
+  getRepo().getFeedComments(...args);
+export const getTagsCounts = (...args: Parameters<DatabaseRepository['getTagsCounts']>) =>
+  getRepo().getTagsCounts(...args);
+export const getStopWords = (...args: Parameters<DatabaseRepository['getStopWords']>) =>
+  getRepo().getStopWords(...args);
+export const updatePostWelcomed = (...args: Parameters<DatabaseRepository['updatePostWelcomed']>) =>
+  getRepo().updatePostWelcomed(...args);
+export const getUserEditHistory = (...args: Parameters<DatabaseRepository['getUserEditHistory']>) =>
+  getRepo().getUserEditHistory(...args);
+export const getNowEditingInfo = (...args: Parameters<DatabaseRepository['getNowEditingInfo']>) =>
+  getRepo().getNowEditingInfo(...args);
+export const getPostForEditing = (...args: Parameters<DatabaseRepository['getPostForEditing']>) =>
+  getRepo().getPostForEditing(...args);
+export const getPostEditHistory = (...args: Parameters<DatabaseRepository['getPostEditHistory']>) =>
+  getRepo().getPostEditHistory(...args);
+export const updatePostWithTagsAndHistory = (
+  ...args: Parameters<DatabaseRepository['updatePostWithTagsAndHistory']>
+) => getRepo().updatePostWithTagsAndHistory(...args);
+export const upsertNowEditingInfo = (
+  ...args: Parameters<DatabaseRepository['upsertNowEditingInfo']>
+) => getRepo().upsertNowEditingInfo(...args);
+export const findUserByEmail = (...args: Parameters<DatabaseRepository['findUserByEmail']>) =>
+  getRepo().findUserByEmail(...args);
+export const createGoogleUser = (...args: Parameters<DatabaseRepository['createGoogleUser']>) =>
+  getRepo().createGoogleUser(...args);
+export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) =>
+  getRepo().searchPosts(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 

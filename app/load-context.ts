@@ -61,7 +61,11 @@ export function initializeApp(envParam?: CloudflareEnv) {
   _initialized = true;
 }
 
-export function getLoadContext({ context }: { context: { cloudflare: Cloudflare } }): AppLoadContext {
+export function getLoadContext({
+  context,
+}: {
+  context: { cloudflare: Cloudflare };
+}): AppLoadContext {
   initializeApp(context.cloudflare.env);
   return context;
 }

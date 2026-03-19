@@ -94,9 +94,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
 
   return {
     async getPostDataForSitemap() {
-      const posts = await db
-        .select({ postId: schema.dimPosts.postId })
-        .from(schema.dimPosts);
+      const posts = await db.select({ postId: schema.dimPosts.postId }).from(schema.dimPosts);
 
       return posts.map((post) => ({
         loc: `https://healthy-person-emulator.org/archives/${post.postId}`,
@@ -155,10 +153,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         // Create new tags
         const newTags = [];
         for (const tagName of newTagNames) {
-          const [created] = await db
-            .insert(schema.dimTags)
-            .values({ tagName })
-            .returning();
+          const [created] = await db.insert(schema.dimTags).values({ tagName }).returning();
           newTags.push(created);
         }
 
@@ -450,10 +445,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       });
     },
 
-    async judgeIsBookmarked(
-      postId: number,
-      userUuid: string | undefined,
-    ): Promise<boolean> {
+    async judgeIsBookmarked(postId: number, userUuid: string | undefined): Promise<boolean> {
       if (!userUuid) return false;
 
       const [user] = await db
@@ -517,10 +509,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       }));
     },
 
-    async getRecentComments(
-      chunkSize = 12,
-      pageNumber = 1,
-    ): Promise<CommentShowCardData[]> {
+    async getRecentComments(chunkSize = 12, pageNumber = 1): Promise<CommentShowCardData[]> {
       const offset = (pageNumber - 1) * chunkSize;
 
       const recentComments = await db
@@ -714,7 +703,14 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         const postIds = voteCountRows.map((v) => v.postId);
         if (postIds.length === 0) {
           return {
-            meta: { totalCount: 0, currentPage: pagingNumber, type, likeFromHour, likeToHour, chunkSize },
+            meta: {
+              totalCount: 0,
+              currentPage: pagingNumber,
+              type,
+              likeFromHour,
+              likeToHour,
+              chunkSize,
+            },
             result: [],
           };
         }
@@ -744,7 +740,14 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         }));
 
         return {
-          meta: { totalCount, currentPage: pagingNumber, type, likeFromHour, likeToHour, chunkSize },
+          meta: {
+            totalCount,
+            currentPage: pagingNumber,
+            type,
+            likeFromHour,
+            likeToHour,
+            chunkSize,
+          },
           result: postData,
         };
       }
@@ -846,8 +849,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
 
         // Sort by the same order as commentIdRows
         const sortedComments = comments.sort(
-          (a, b) =>
-            commentIds.indexOf(a.commentId) - commentIds.indexOf(b.commentId),
+          (a, b) => commentIds.indexOf(a.commentId) - commentIds.indexOf(b.commentId),
         );
 
         const voteCounts = await getCommentVoteCounts(commentIds);
@@ -905,7 +907,14 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         const commentIds = commentIdRows.map((c) => c.commentId);
         if (commentIds.length === 0) {
           return {
-            meta: { totalCount, currentPage: pagingNumber, type, chunkSize, likeFromHour, likeToHour },
+            meta: {
+              totalCount,
+              currentPage: pagingNumber,
+              type,
+              chunkSize,
+              likeFromHour,
+              likeToHour,
+            },
             result: [],
           };
         }
@@ -925,8 +934,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
 
         // Sort by the same order as commentIdRows
         const sortedComments = comments.sort(
-          (a, b) =>
-            commentIds.indexOf(a.commentId) - commentIds.indexOf(b.commentId),
+          (a, b) => commentIds.indexOf(a.commentId) - commentIds.indexOf(b.commentId),
         );
 
         const voteCounts = await getCommentVoteCounts(commentIds);
@@ -939,7 +947,14 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         }));
 
         return {
-          meta: { totalCount, currentPage: pagingNumber, type, chunkSize, likeFromHour, likeToHour },
+          meta: {
+            totalCount,
+            currentPage: pagingNumber,
+            type,
+            chunkSize,
+            likeFromHour,
+            likeToHour,
+          },
           result: commentData,
         };
       }
@@ -1271,9 +1286,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         postDateGmt: toDate(post.postDateGmt),
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
-        tagNames: allTags
-          .filter((t) => t.postId === post.postId)
-          .map((t) => t.tagName),
+        tagNames: allTags.filter((t) => t.postId === post.postId).map((t) => t.tagName),
         countComments: commentCounts.find((c) => c.postId === post.postId)?.cnt || 0,
       }));
 
@@ -1327,6 +1340,5 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         results,
       };
     },
-
   };
 }

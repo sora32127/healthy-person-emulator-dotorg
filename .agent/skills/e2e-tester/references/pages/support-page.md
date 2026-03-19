@@ -1,7 +1,8 @@
 # Support Page Scenarios
 
 対象実装:
-- [_layout.support.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.support.tsx)
+
+- [\_layout.support.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.support.tsx)
 
 ## シナリオ S1: 基本表示
 

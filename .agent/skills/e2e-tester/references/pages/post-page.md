@@ -1,9 +1,10 @@
 # Post Page Scenarios
 
 対象実装:
-- [_layout.post.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.post.tsx)
-- [_layout.archives.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.$postId.tsx)
-- [_layout.archives.edit.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.edit.$postId.tsx)
+
+- [\_layout.post.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.post.tsx)
+- [\_layout.archives.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.$postId.tsx)
+- [\_layout.archives.edit.$postId.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.archives.edit.$postId.tsx)
 
 ## シナリオ P1: 初期表示
 

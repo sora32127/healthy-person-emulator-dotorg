@@ -5,12 +5,14 @@
 現在のCI/CDは `vitest.yml`（テスト実行のみ）。デプロイはCloudflare Dashboard連携。変更パターンに応じたCI実行を整備する。
 
 ### 設計方針
+
 - **シンプルさ優先**: GitHub Actions ネイティブ `paths` フィルタ + マージゲート
 - **段階導入**: Phase 1（CI強化）→ Phase 2（本番デプロイ）→ Phase 3（プレビュー、将来）
 - **ワークフローは関心ごとに分離**: 各ファイルは短く独立
 - **branch protection**: `merge-gate` のみを required check に設定
 
 ### Wrangler/Terraform 責務分界
+
 - Workers Script のコード・設定 → **wrangler** (wrangler.toml)
 - workers.tf の bindings/cron 宣言 → **参照用スナップショット**（`ignore_changes = all`、drift 監視しない）
 - D1/R2/Queue/DNS/Turnstile リソース → **Terraform**
@@ -100,7 +102,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "~> 1.5"
+          terraform_version: '~> 1.5'
       - run: terraform init
       - run: terraform fmt -check -recursive
       - run: terraform validate
@@ -238,9 +240,11 @@ dev = ["pytest>=8.0.0"]
 #### `container/Dockerfile` への追記（テスト用 dev deps インストール）
 
 Dockerfile の `uv sync` 行を以下に変更:
+
 ```dockerfile
 RUN uv sync --frozen --no-install-project
 ```
+
 （`--no-dev` を外して dev dependency も含める。本番用は別途最適化するか、multi-stage で対応）
 
 **代替案**: Dockerfile は変えず、CI ワークフローで `docker run --rm hpe-container-check .venv/bin/pip install pytest && ...` とする。ただし Dockerfile で dev deps を含める方がシンプル。
@@ -312,6 +316,7 @@ jobs:
 ### Branch Protection 設定
 
 GitHub Settings → Branches → main:
+
 - **Require status checks to pass before merging**: ON
 - **Required checks**: `gate` (merge-gate.yml の job 名) のみ
 - **Require branches to be up to date before merging**: ON（推奨）
@@ -321,29 +326,34 @@ GitHub Settings → Branches → main:
 ## Phase 2: 本番デプロイ自動化（実施済み）
 
 ### 実施内容
+
 - `cf-workers.yml` を新規作成（main push → `wrangler deploy`）
 - `terraform-plan.yml` を `terraform.yml` にリネームし、main push 時の `terraform apply` job を追加
 - `ci.yml` は変更なし（PR専用のまま）
 
 ### ワークフロー構成（Phase 2 完了後）
-| ファイル | トリガー | 役割 |
-|---|---|---|
-| `ci.yml` | PR | テスト + ビルド検証 |
-| `cf-workers.yml` | main push | Workers ビルド + デプロイ |
-| `terraform.yml` | PR + main push | plan（PR）/ apply（main push） |
-| `container-check.yml` | PR | コンテナビルド + テスト |
-| `merge-gate.yml` | PR | 全チェック集約 |
+
+| ファイル              | トリガー       | 役割                           |
+| --------------------- | -------------- | ------------------------------ |
+| `ci.yml`              | PR             | テスト + ビルド検証            |
+| `cf-workers.yml`      | main push      | Workers ビルド + デプロイ      |
+| `terraform.yml`       | PR + main push | plan（PR）/ apply（main push） |
+| `container-check.yml` | PR             | コンテナビルド + テスト        |
+| `merge-gate.yml`      | PR             | 全チェック集約                 |
 
 ### プランからの変更点
+
 - 当初は `ci.yml` に deploy job を追加する案だったが、関心の分離のため `cf-workers.yml` として独立させた
 - Terraform apply も自動化した（当初プランにはなかった）
 
 ### Dashboard 無効化手順
+
 1. GitHub Actions deploy が安定動作を確認
 2. Cloudflare Dashboard → Settings → Builds → Git integration 無効化
 3. main push で GitHub Actions 経由デプロイを確認
 
 ### ロールバック
+
 - `wrangler rollback`（手動）
 - Terraform: git revert → main push で自動 apply
 - D1 migration は戻せない → 破壊的変更は段階デプロイ
@@ -358,27 +368,29 @@ DO/Container 付き Worker のため環境分離が複雑。見送り。
 
 ## ファイル変更
 
-| 操作 | ファイル |
-|---|---|
-| 削除 | `.github/workflows/vitest.yml` |
-| 新規 | `.github/workflows/ci.yml` |
-| 新規 | `.github/workflows/terraform-plan.yml` |
-| 新規 | `.github/workflows/container-check.yml` |
-| 新規 | `.github/workflows/merge-gate.yml` |
-| 新規 | `container/tests/test_smoke.py` |
+| 操作 | ファイル                                                 |
+| ---- | -------------------------------------------------------- |
+| 削除 | `.github/workflows/vitest.yml`                           |
+| 新規 | `.github/workflows/ci.yml`                               |
+| 新規 | `.github/workflows/terraform-plan.yml`                   |
+| 新規 | `.github/workflows/container-check.yml`                  |
+| 新規 | `.github/workflows/merge-gate.yml`                       |
+| 新規 | `container/tests/test_smoke.py`                          |
 | 編集 | `container/pyproject.toml`（pytest dev dependency 追加） |
-| 編集 | `container/Dockerfile`（dev deps 含めるよう変更） |
+| 編集 | `container/Dockerfile`（dev deps 含めるよう変更）        |
 
 ## 必要なGitHub Secrets
-| Secret | 用途 |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Terraform provider |
-| `R2_ACCESS_KEY_ID` | Terraform S3バックエンド |
-| `R2_SECRET_ACCESS_KEY` | Terraform S3バックエンド |
-| `R2_ENDPOINT` | Terraform S3エンドポイント |
-| `TF_VAR_CLOUDFLARE_ZONE_ID` | Terraform変数 |
+
+| Secret                      | 用途                       |
+| --------------------------- | -------------------------- |
+| `CLOUDFLARE_API_TOKEN`      | Terraform provider         |
+| `R2_ACCESS_KEY_ID`          | Terraform S3バックエンド   |
+| `R2_SECRET_ACCESS_KEY`      | Terraform S3バックエンド   |
+| `R2_ENDPOINT`               | Terraform S3エンドポイント |
+| `TF_VAR_CLOUDFLARE_ZONE_ID` | Terraform変数              |
 
 ## 検証方法
+
 1. `app/` のみ変更PR → ci.yml 発動、merge-gate が CI 結果を待って pass
 2. `terraform/` のみ変更PR → terraform-plan.yml 発動、merge-gate が結果を待って pass
 3. `container/` のみ変更PR → container-check.yml 発動、merge-gate が結果を待って pass
@@ -386,4 +398,5 @@ DO/Container 付き Worker のため環境分離が複雑。見送り。
 5. CI が失敗 → merge-gate が fail → マージ不可
 
 ## 運用ルール
+
 CI を発動させたくないファイル種別が増えた場合、ci.yml の `paths-ignore` に追加すること。

@@ -3,11 +3,11 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
-      - "**/*.md"
-      - ".agent/**"
-      - ".claude/**"
-      - "docs/**"
-      - "terraform/**"
+      - '**/*.md'
+      - '.agent/**'
+      - '.claude/**'
+      - 'docs/**'
+      - 'terraform/**'
 
 concurrency:
   group: preview-deploy
@@ -25,19 +25,31 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
-          cache: "pnpm"
+          node-version-file: 'package.json'
+          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm build
+      - name: Seed migration state for already-applied changes
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: '4'
+          command: >-
+            d1 execute healthy-person-emulator-db-preview --remote
+            --config wrangler.preview.toml
+            --command "INSERT INTO d1_migrations (name) SELECT '0002_add_sns_columns.sql' WHERE (SELECT count(*) FROM pragma_table_info('dim_posts') WHERE name='is_sns_pickuped') > 0 AND NOT EXISTS (SELECT 1 FROM d1_migrations WHERE name='0002_add_sns_columns.sql');"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: '4'
           command: d1 migrations apply healthy-person-emulator-db-preview --remote --config wrangler.preview.toml
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy to preview
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: '4'
           command: deploy --config wrangler.preview.toml
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

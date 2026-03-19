@@ -3,18 +3,18 @@
  * Orchestrates Container calls, D1 state management, and Queue messaging.
  */
 
-import { drizzle } from "drizzle-orm/d1";
-import { eq, and, sql, lt } from "drizzle-orm";
-import { socialPostJobs, dimPosts } from "../drizzle/schema";
-import { nowUTC } from "../drizzle/utils";
-import type { CloudflareEnv } from "../types/env";
-import { getContainer } from "@cloudflare/containers";
+import { drizzle } from 'drizzle-orm/d1';
+import { eq, and, sql, lt } from 'drizzle-orm';
+import { socialPostJobs, dimPosts } from '../drizzle/schema';
+import { nowUTC } from '../drizzle/utils';
+import type { CloudflareEnv } from '../types/env';
+import { getContainer } from '@cloudflare/containers';
 
-const PLATFORMS = ["twitter", "bluesky", "activitypub"] as const;
+const PLATFORMS = ['twitter', 'bluesky', 'activitypub'] as const;
 type Platform = (typeof PLATFORMS)[number];
 
 interface QueueMessage {
-  type: "social_post";
+  type: 'social_post';
   schema_version: number;
   payload: {
     job_id: string;
@@ -31,10 +31,16 @@ interface QueueMessage {
 
 async function resolveSecrets(env: CloudflareEnv): Promise<Record<string, string>> {
   const [
-    twitterCk, twitterCs, twitterAt, twitterAts,
-    blueskyUser, blueskyPassword,
+    twitterCk,
+    twitterCs,
+    twitterAt,
+    twitterAts,
+    blueskyUser,
+    blueskyPassword,
     misskeyToken,
-    r2Endpoint, r2AccessKeyId, r2SecretAccessKey,
+    r2Endpoint,
+    r2AccessKeyId,
+    r2SecretAccessKey,
     dryRun,
   ] = await Promise.all([
     env.SS_TWITTER_CK.get(),
@@ -50,14 +56,18 @@ async function resolveSecrets(env: CloudflareEnv): Promise<Record<string, string
     env.SS_AUTOMATION_DRY_RUN.get(),
   ]);
   return {
-    TWITTER_CK: twitterCk, TWITTER_CS: twitterCs,
-    TWITTER_AT: twitterAt, TWITTER_ATS: twitterAts,
-    BLUESKY_USER: blueskyUser, BLUESKY_PASSWORD: blueskyPassword,
+    TWITTER_CK: twitterCk,
+    TWITTER_CS: twitterCs,
+    TWITTER_AT: twitterAt,
+    TWITTER_ATS: twitterAts,
+    BLUESKY_USER: blueskyUser,
+    BLUESKY_PASSWORD: blueskyPassword,
     MISSKEY_TOKEN: misskeyToken,
-    R2_ENDPOINT: r2Endpoint, R2_ACCESS_KEY_ID: r2AccessKeyId,
+    R2_ENDPOINT: r2Endpoint,
+    R2_ACCESS_KEY_ID: r2AccessKeyId,
     R2_SECRET_ACCESS_KEY: r2SecretAccessKey,
     AUTOMATION_DRY_RUN: dryRun,
-    BIGQUERY_CREDENTIALS: env.BIGQUERY_CREDENTIALS ?? "",
+    BIGQUERY_CREDENTIALS: env.BIGQUERY_CREDENTIALS ?? '',
   };
 }
 
@@ -74,8 +84,8 @@ export async function callContainer(
 
   const res = await container.fetch(
     new Request(`http://container${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
   );
@@ -94,15 +104,15 @@ export async function callContainer(
  * 2. For each processed post, create social_post_jobs and enqueue
  */
 export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> {
-  if (env.ENQUEUE_ENABLED !== "true") {
-    console.log("[automation] ENQUEUE_ENABLED is not true, skipping");
+  if (env.ENQUEUE_ENABLED !== 'true') {
+    console.log('[automation] ENQUEUE_ENABLED is not true, skipping');
     return;
   }
 
   const db = drizzle(env.DB);
 
   // Step 1: Call container to generate OGP
-  const ogpResult = await callContainer(env, "/create-ogp", {
+  const ogpResult = await callContainer(env, '/create-ogp', {
     api_key: env.INTERNAL_API_KEY,
   });
 
@@ -115,7 +125,7 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
   }>;
 
   if (posts.length === 0) {
-    console.log("[automation] No new posts to process");
+    console.log('[automation] No new posts to process');
     return;
   }
 
@@ -125,14 +135,14 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
       const key = `ogp/${post.post_id}.jpg`;
       const imageBytes = Uint8Array.from(atob(post.image_b64), (c) => c.charCodeAt(0));
       await env.STATIC_BUCKET.put(key, imageBytes, {
-        httpMetadata: { contentType: "image/jpeg" },
+        httpMetadata: { contentType: 'image/jpeg' },
       });
       post.ogp_url = `https://static.healthy-person-emulator.org/${key}`;
 
       // Update D1
-      await env.DB.prepare(
-        `UPDATE dim_posts SET ogp_image_url = ? WHERE post_id = ?`
-      ).bind(post.ogp_url, post.post_id).run();
+      await env.DB.prepare(`UPDATE dim_posts SET ogp_image_url = ? WHERE post_id = ?`)
+        .bind(post.ogp_url, post.post_id)
+        .run();
 
       console.log(`[automation] Worker uploaded OGP to R2: ${key}`);
     }
@@ -160,7 +170,7 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
         id: jobId,
         postId: post.post_id,
         platform,
-        status: "pending",
+        status: 'pending',
         createdAt: now,
         updatedAt: now,
       });
@@ -171,7 +181,7 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
         post_title: post.post_title,
         post_url: post.post_url,
         og_url: post.ogp_url,
-        message_type: "new",
+        message_type: 'new',
       });
     }
   }
@@ -185,15 +195,15 @@ async function enqueueAndMarkQueued(
   env: CloudflareEnv,
   db: ReturnType<typeof drizzle>,
   jobId: string,
-  payload: QueueMessage["payload"] extends infer T ? Omit<T, "job_id"> : never,
+  payload: QueueMessage['payload'] extends infer T ? Omit<T, 'job_id'> : never,
 ): Promise<boolean> {
   const now = nowUTC();
 
   // CAS: only update if status is still pending
   const result = await db
     .update(socialPostJobs)
-    .set({ status: "queued", updatedAt: now })
-    .where(and(eq(socialPostJobs.id, jobId), eq(socialPostJobs.status, "pending")));
+    .set({ status: 'queued', updatedAt: now })
+    .where(and(eq(socialPostJobs.id, jobId), eq(socialPostJobs.status, 'pending')));
 
   // Check if update affected any rows
   if (!result.meta.changed_db) {
@@ -202,7 +212,7 @@ async function enqueueAndMarkQueued(
   }
 
   const message: QueueMessage = {
-    type: "social_post",
+    type: 'social_post',
     schema_version: 1,
     payload: { ...payload, job_id: jobId },
   };
@@ -220,11 +230,11 @@ async function enqueueAndMarkQueued(
  */
 export async function handleSocialPostConsumer(
   env: CloudflareEnv,
-  payload: QueueMessage["payload"],
-): Promise<{ action: "sent" | "skipped" | "failed" | "unknown" }> {
-  if (env.SEND_ENABLED !== "true") {
+  payload: QueueMessage['payload'],
+): Promise<{ action: 'sent' | 'skipped' | 'failed' | 'unknown' }> {
+  if (env.SEND_ENABLED !== 'true') {
     console.log(`[automation] SEND_ENABLED is not true, keeping job ${payload.job_id} as queued`);
-    return { action: "skipped" };
+    return { action: 'skipped' };
   }
 
   const db = drizzle(env.DB);
@@ -239,38 +249,38 @@ export async function handleSocialPostConsumer(
 
   if (!job) {
     console.warn(`[automation] Job ${payload.job_id} not found in DB`);
-    return { action: "skipped" };
+    return { action: 'skipped' };
   }
 
-  if (job.status === "sent" || job.status === "failed") {
+  if (job.status === 'sent' || job.status === 'failed') {
     console.log(`[automation] Job ${payload.job_id} already ${job.status}, skipping`);
-    return { action: "skipped" };
+    return { action: 'skipped' };
   }
 
-  if (job.status === "sending") {
+  if (job.status === 'sending') {
     console.log(`[automation] Job ${payload.job_id} is already being processed, skipping`);
-    return { action: "skipped" };
+    return { action: 'skipped' };
   }
 
   // CAS: claim the job (queued → sending)
   const claimResult = await db
     .update(socialPostJobs)
     .set({
-      status: "sending",
+      status: 'sending',
       claimedAt: now,
       attemptCount: sql`${socialPostJobs.attemptCount} + 1`,
       updatedAt: now,
     })
-    .where(and(eq(socialPostJobs.id, payload.job_id), eq(socialPostJobs.status, "queued")));
+    .where(and(eq(socialPostJobs.id, payload.job_id), eq(socialPostJobs.status, 'queued')));
 
   if (!claimResult.meta.changed_db) {
     console.log(`[automation] Failed to claim job ${payload.job_id} (not in queued status)`);
-    return { action: "skipped" };
+    return { action: 'skipped' };
   }
 
   // Call container to post
   try {
-    const result = await callContainer(env, "/post-social", {
+    const result = await callContainer(env, '/post-social', {
       platform: payload.platform,
       post_title: payload.post_title,
       post_url: payload.post_url,
@@ -290,7 +300,7 @@ export async function handleSocialPostConsumer(
     await db
       .update(socialPostJobs)
       .set({
-        status: "sent",
+        status: 'sent',
         providerPostId,
         updatedAt: nowUTC(),
       })
@@ -301,26 +311,28 @@ export async function handleSocialPostConsumer(
       await updateDimPostsSocialId(db, payload.post_id, payload.platform, providerPostId);
     }
 
-    console.log(`[automation] Job ${payload.job_id} sent successfully (provider_id=${providerPostId})`);
-    return { action: "sent" };
+    console.log(
+      `[automation] Job ${payload.job_id} sent successfully (provider_id=${providerPostId})`,
+    );
+    return { action: 'sent' };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     const errorType = classifyError(err);
 
-    if (errorType === "terminal") {
+    if (errorType === 'terminal') {
       await db
         .update(socialPostJobs)
-        .set({ status: "failed", lastError: errorMessage, updatedAt: nowUTC() })
+        .set({ status: 'failed', lastError: errorMessage, updatedAt: nowUTC() })
         .where(eq(socialPostJobs.id, payload.job_id));
       console.error(`[automation] Job ${payload.job_id} permanently failed: ${errorMessage}`);
-      return { action: "failed" };
+      return { action: 'failed' };
     }
 
-    if (errorType === "retryable") {
+    if (errorType === 'retryable') {
       // Back to queued for Queue retry
       await db
         .update(socialPostJobs)
-        .set({ status: "queued", lastError: errorMessage, updatedAt: nowUTC() })
+        .set({ status: 'queued', lastError: errorMessage, updatedAt: nowUTC() })
         .where(eq(socialPostJobs.id, payload.job_id));
       console.warn(`[automation] Job ${payload.job_id} retryable error: ${errorMessage}`);
       throw err; // Let Queue retry
@@ -329,10 +341,10 @@ export async function handleSocialPostConsumer(
     // ambiguous — mark as unknown
     await db
       .update(socialPostJobs)
-      .set({ status: "unknown", lastError: errorMessage, updatedAt: nowUTC() })
+      .set({ status: 'unknown', lastError: errorMessage, updatedAt: nowUTC() })
       .where(eq(socialPostJobs.id, payload.job_id));
     console.error(`[automation] Job ${payload.job_id} ambiguous error: ${errorMessage}`);
-    return { action: "unknown" };
+    return { action: 'unknown' };
   }
 }
 
@@ -343,7 +355,7 @@ export async function handleSocialPostConsumer(
  * Jobs stuck in "queued" for >10 min → reset to "pending" and re-enqueue.
  */
 export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
-  if (env.ENQUEUE_ENABLED !== "true") return;
+  if (env.ENQUEUE_ENABLED !== 'true') return;
 
   const db = drizzle(env.DB);
 
@@ -357,11 +369,11 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
 
   for (const job of jobsToRecover) {
     // If queued, reset to pending first
-    if (job.status === "queued") {
+    if (job.status === 'queued') {
       const resetResult = await db
         .update(socialPostJobs)
-        .set({ status: "pending", updatedAt: nowUTC() })
-        .where(and(eq(socialPostJobs.id, job.id), eq(socialPostJobs.status, "queued")));
+        .set({ status: 'pending', updatedAt: nowUTC() })
+        .where(and(eq(socialPostJobs.id, job.id), eq(socialPostJobs.status, 'queued')));
       if (!resetResult.meta.changed_db) continue;
       console.log(`[automation] Reset stale queued job ${job.id} to pending`);
     }
@@ -379,8 +391,8 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
         platform: job.platform as Platform,
         post_title: post.postTitle,
         post_url: `https://healthy-person-emulator.org/archives/${job.postId}`,
-        og_url: post.ogpImageUrl ?? "",
-        message_type: "new",
+        og_url: post.ogpImageUrl ?? '',
+        message_type: 'new',
       });
     }
   }
@@ -388,19 +400,19 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
 
 // ─── Helpers ────────────────────────────────────────────────
 
-function classifyError(err: unknown): "terminal" | "retryable" | "ambiguous" {
+function classifyError(err: unknown): 'terminal' | 'retryable' | 'ambiguous' {
   const msg = err instanceof Error ? err.message : String(err);
 
   // Terminal: auth failures
-  if (/401|403|Unauthorized|Forbidden/i.test(msg)) return "terminal";
+  if (/401|403|Unauthorized|Forbidden/i.test(msg)) return 'terminal';
 
   // Retryable: rate limits, server errors
-  if (/429|500|502|503|504|rate.?limit|timeout/i.test(msg)) return "retryable";
+  if (/429|500|502|503|504|rate.?limit|timeout/i.test(msg)) return 'retryable';
 
   // Connection errors are ambiguous
-  if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(msg)) return "ambiguous";
+  if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(msg)) return 'ambiguous';
 
-  return "ambiguous";
+  return 'ambiguous';
 }
 
 async function updateDimPostsSocialId(
@@ -410,9 +422,9 @@ async function updateDimPostsSocialId(
   providerPostId: string,
 ): Promise<void> {
   const columnMap: Record<Platform, string> = {
-    twitter: "tweet_id_of_first_tweet",
-    bluesky: "bluesky_post_uri_of_first_post",
-    activitypub: "misskey_note_id_of_first_note",
+    twitter: 'tweet_id_of_first_tweet',
+    bluesky: 'bluesky_post_uri_of_first_post',
+    activitypub: 'misskey_note_id_of_first_note',
   };
 
   // Only update if not already set (first post only)

@@ -16,9 +16,7 @@ export default function BeSponsor() {
         暗黙知を共有できる場所を作るためには、サーバー代をはじめとしたある程度の金銭が必要です。もし健常者エミュレータ事例集の理念に共感していただけるのなら、サポートしていただけると助かります。
       </p>
       <br />
-      <p>
-        サポートの詳細については、以下のページをご覧ください。
-      </p>
+      <p>サポートの詳細については、以下のページをご覧ください。</p>
       <a
         href="https://contradictiononline.org/entry/2026/03/17/161448/"
         className="btn-primary font-bold py-2 px-8 rounded-md block w-full mt-8 text-center"

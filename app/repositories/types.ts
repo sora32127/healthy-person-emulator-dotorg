@@ -202,30 +202,60 @@ export interface DatabaseRepository {
   getTagNamesByPostId(postId: number): Promise<string[]>;
   createPostWithTags(input: CreatePostWithTagsInput): Promise<CreatedPostSummary>;
   getUserId(userUuid: string): Promise<number>;
-  getBookmarkPostsByPagenation(userId: number, pageNumber: number, chunkSize: number): Promise<BookmarkPostCardData[]>;
-  addOrRemoveBookmark(postId: number, userId: number): Promise<{ message: string; success: boolean }>;
-  recordPostVote(postId: number, voteType: 'like' | 'dislike', voteUserIpHash: string): Promise<void>;
-  recordCommentVote(postId: number, commentId: number, voteType: 'like' | 'dislike', voteUserIpHash: string): Promise<void>;
+  getBookmarkPostsByPagenation(
+    userId: number,
+    pageNumber: number,
+    chunkSize: number,
+  ): Promise<BookmarkPostCardData[]>;
+  addOrRemoveBookmark(
+    postId: number,
+    userId: number,
+  ): Promise<{ message: string; success: boolean }>;
+  recordPostVote(
+    postId: number,
+    voteType: 'like' | 'dislike',
+    voteUserIpHash: string,
+  ): Promise<void>;
+  recordCommentVote(
+    postId: number,
+    commentId: number,
+    voteType: 'like' | 'dislike',
+    voteUserIpHash: string,
+  ): Promise<void>;
   createPostComment(input: CreateCommentInput): Promise<void>;
   judgeIsBookmarked(postId: number, userUuid: string | undefined): Promise<boolean>;
   getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>;
   getRecentComments(chunkSize?: number, pageNumber?: number): Promise<CommentShowCardData[]>;
   getRandomPosts(): Promise<PostCardData[]>;
   getRandomComments(chunkSize?: number): Promise<CommentShowCardData[]>;
-  getFeedPosts(pagingNumber: number, type: FeedPostType, chunkSize?: number, likeFromHour?: number, likeToHour?: number): Promise<PostFeedData>;
-  getFeedComments(pagingNumber: number, type: FeedPostType, chunkSize?: number, likeFromHour?: number, likeToHour?: number): Promise<CommentFeedData>;
+  getFeedPosts(
+    pagingNumber: number,
+    type: FeedPostType,
+    chunkSize?: number,
+    likeFromHour?: number,
+    likeToHour?: number,
+  ): Promise<PostFeedData>;
+  getFeedComments(
+    pagingNumber: number,
+    type: FeedPostType,
+    chunkSize?: number,
+    likeFromHour?: number,
+    likeToHour?: number,
+  ): Promise<CommentFeedData>;
   getTagsCounts(): Promise<TagCount[]>;
   getStopWords(): Promise<string[]>;
   updatePostWelcomed(postId: number, isWelcomed: boolean, explanation: string): Promise<void>;
-  getUserEditHistory(userUuid: string): Promise<{
-    postId: number;
-    postRevisionNumber: number;
-    postEditDateGmt: Date;
-    postEditDateJst: Date;
-    postTitleBeforeEdit: string;
-    postTitleAfterEdit: string;
-    dim_posts: { postTitle: string };
-  }[]>;
+  getUserEditHistory(userUuid: string): Promise<
+    {
+      postId: number;
+      postRevisionNumber: number;
+      postEditDateGmt: Date;
+      postEditDateJst: Date;
+      postTitleBeforeEdit: string;
+      postTitleAfterEdit: string;
+      dim_posts: { postTitle: string };
+    }[]
+  >;
   getNowEditingInfo(postId: number): Promise<NowEditingInfo | null>;
   getPostForEditing(postId: number): Promise<PostForEditing | null>;
   getPostEditHistory(postId: number): Promise<PostEditHistoryEntry[]>;
@@ -244,7 +274,13 @@ export interface DatabaseRepository {
     userAuthType: string | null;
   }>;
 
-  searchPosts(query: string, orderby: SearchOrderBy, page: number, tags: string[], pageSize: number): Promise<SearchPostsResult>;
+  searchPosts(
+    query: string,
+    orderby: SearchOrderBy,
+    page: number,
+    tags: string[],
+    pageSize: number,
+  ): Promise<SearchPostsResult>;
 
   // Internal functions used by ArchiveDataEntry
   getPostByPostId(postId: number): Promise<PostData>;
@@ -252,5 +288,4 @@ export interface DatabaseRepository {
   getPreviousPost(postId: number): Promise<PreviousOrNextPostData>;
   getNextPost(postId: number): Promise<PreviousOrNextPostData>;
   getCountBookmarks(postId: number): Promise<number>;
-
 }

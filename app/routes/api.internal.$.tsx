@@ -49,12 +49,7 @@ async function handlePostsForPickup(db: ReturnType<typeof drizzle>) {
       ogpImageUrl: schema.dimPosts.ogpImageUrl,
     })
     .from(schema.dimPosts)
-    .where(
-      and(
-        eq(schema.dimPosts.isSnsPickuped, false),
-        gte(schema.dimPosts.countLikes, 10),
-      ),
-    )
+    .where(and(eq(schema.dimPosts.isSnsPickuped, false), gte(schema.dimPosts.countLikes, 10)))
     .limit(1);
 
   return jsonResponse({ posts });
@@ -87,10 +82,7 @@ async function handleUpdateSocialIds(db: ReturnType<typeof drizzle>, body: any) 
     return jsonResponse({ error: 'No fields to update' }, 400);
   }
 
-  await db
-    .update(schema.dimPosts)
-    .set(updateData)
-    .where(eq(schema.dimPosts.postId, postId));
+  await db.update(schema.dimPosts).set(updateData).where(eq(schema.dimPosts.postId, postId));
 
   return jsonResponse({ success: true });
 }
@@ -124,10 +116,7 @@ async function handleUpdateOgp(db: ReturnType<typeof drizzle>, body: any) {
   const updateData: Record<string, any> = { isSnsShared: true };
   if (ogpImageUrl !== undefined) updateData.ogpImageUrl = ogpImageUrl;
 
-  await db
-    .update(schema.dimPosts)
-    .set(updateData)
-    .where(eq(schema.dimPosts.postId, postId));
+  await db.update(schema.dimPosts).set(updateData).where(eq(schema.dimPosts.postId, postId));
 
   return jsonResponse({ success: true });
 }
@@ -137,10 +126,7 @@ async function handleAddTagToPost(db: ReturnType<typeof drizzle>, body: any) {
   const { postId, tagId } = body;
   if (!postId || !tagId) return jsonResponse({ error: 'postId and tagId required' }, 400);
 
-  await db
-    .insert(schema.relPostTags)
-    .values({ postId, tagId })
-    .onConflictDoNothing();
+  await db.insert(schema.relPostTags).values({ postId, tagId }).onConflictDoNothing();
 
   return jsonResponse({ success: true });
 }

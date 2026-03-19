@@ -1,0 +1,2 @@
+ALTER TABLE dim_posts ADD COLUMN is_sns_pickuped INTEGER DEFAULT 0;
+ALTER TABLE dim_posts ADD COLUMN is_sns_shared INTEGER DEFAULT 0;

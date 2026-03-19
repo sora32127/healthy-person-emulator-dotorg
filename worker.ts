@@ -29,68 +29,67 @@ export default {
     return requestHandler(request, loadContext);
   },
 
-  async scheduled(
-    controller: ScheduledController,
-    env: CloudflareEnv,
-    ctx: ExecutionContext,
-  ) {
+  async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext) {
     console.log(`[scheduled] cron=${controller.cron} at ${new Date().toISOString()}`);
 
     if (controller.cron === '*/10 * * * *') {
-      ctx.waitUntil((async () => {
-        try {
-          const { handleOgpAndSocialPost, recoverStaleJobs } = await import('./app/modules/automation.server');
-          await handleOgpAndSocialPost(env);
-          await recoverStaleJobs(env);
-        } catch (err) {
-          console.error('[scheduled] OGP/social post flow failed:', err);
-        }
-      })());
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const { handleOgpAndSocialPost, recoverStaleJobs } =
+              await import('./app/modules/automation.server');
+            await handleOgpAndSocialPost(env);
+            await recoverStaleJobs(env);
+          } catch (err) {
+            console.error('[scheduled] OGP/social post flow failed:', err);
+          }
+        })(),
+      );
     }
 
     if (controller.cron === '0 12 * * *') {
-      ctx.waitUntil((async () => {
-        try {
-          const { callContainer } = await import('./app/modules/automation.server');
-          await callContainer(env, '/report-legendary', { api_key: env.INTERNAL_API_KEY });
-        } catch (err) {
-          console.error('[scheduled] Legendary article report failed:', err);
-        }
-      })());
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const { callContainer } = await import('./app/modules/automation.server');
+            await callContainer(env, '/report-legendary', { api_key: env.INTERNAL_API_KEY });
+          } catch (err) {
+            console.error('[scheduled] Legendary article report failed:', err);
+          }
+        })(),
+      );
     }
 
     if (controller.cron === '0 12 * * 1') {
-      ctx.waitUntil((async () => {
-        try {
-          const { callContainer } = await import('./app/modules/automation.server');
-          await callContainer(env, '/report-weekly', {});
-        } catch (err) {
-          console.error('[scheduled] Weekly summary report failed:', err);
-        }
-      })());
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const { callContainer } = await import('./app/modules/automation.server');
+            await callContainer(env, '/report-weekly', {});
+          } catch (err) {
+            console.error('[scheduled] Weekly summary report failed:', err);
+          }
+        })(),
+      );
     }
 
     if (controller.cron === '0 16 * * *') {
-      ctx.waitUntil((async () => {
-        try {
-          const { exportD1ToGCS } = await import('./app/modules/gcs-export.server');
-          const result = await exportD1ToGCS(env);
-          console.log(`[scheduled] GCS export complete: ${result.tables_exported} tables`);
-        } catch (err) {
-          console.error('[scheduled] GCS export failed:', err);
-        }
-      })());
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const { exportD1ToGCS } = await import('./app/modules/gcs-export.server');
+            const result = await exportD1ToGCS(env);
+            console.log(`[scheduled] GCS export complete: ${result.tables_exported} tables`);
+          } catch (err) {
+            console.error('[scheduled] GCS export failed:', err);
+          }
+        })(),
+      );
     }
   },
 
-  async queue(
-    batch: MessageBatch,
-    env: CloudflareEnv,
-    ctx: ExecutionContext,
-  ) {
-    const { handleSocialPostConsumer } = await import(
-      './app/modules/automation.server'
-    );
+  async queue(batch: MessageBatch, env: CloudflareEnv, ctx: ExecutionContext) {
+    const { handleSocialPostConsumer } = await import('./app/modules/automation.server');
     const CURRENT_SCHEMA_VERSION = 1;
 
     for (const message of batch.messages) {
@@ -124,8 +123,16 @@ export default {
       }
 
       try {
-        const result = await handleSocialPostConsumer(env, body.payload as Parameters<typeof handleSocialPostConsumer>[1]);
-        if (result.action === 'sent' || result.action === 'skipped' || result.action === 'unknown' || result.action === 'failed') {
+        const result = await handleSocialPostConsumer(
+          env,
+          body.payload as Parameters<typeof handleSocialPostConsumer>[1],
+        );
+        if (
+          result.action === 'sent' ||
+          result.action === 'skipped' ||
+          result.action === 'unknown' ||
+          result.action === 'failed'
+        ) {
           message.ack();
         }
       } catch (err) {

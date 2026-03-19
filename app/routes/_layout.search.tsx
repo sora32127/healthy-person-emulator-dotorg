@@ -192,9 +192,12 @@ export default function LightSearch() {
   // デバウンス検索
   const debouncedSearch = useMemo(
     () =>
-      debounce((searchQuery: string, currentOrderby: SearchOrderBy, currentSelectedTags: string[]) => {
-        updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
-      }, 1000),
+      debounce(
+        (searchQuery: string, currentOrderby: SearchOrderBy, currentSelectedTags: string[]) => {
+          updateSearchParams(searchQuery, currentOrderby, currentSelectedTags);
+        },
+        1000,
+      ),
     [],
   );
 
@@ -285,7 +288,8 @@ export default function LightSearch() {
                 {currentSearchResult.metadata.query !== '' || selectedTags.length > 0 ? (
                   <div className="h-full flex flex-col justify-center">
                     <p>
-                      検索結果: {currentSearchResult.metadata.count}件 (表示中: {allResults.length}件)
+                      検索結果: {currentSearchResult.metadata.count}件 (表示中: {allResults.length}
+                      件)
                     </p>
                     {currentSearchResult.metadata.query && (
                       <p className="truncate">キーワード: {currentSearchResult.metadata.query}</p>
