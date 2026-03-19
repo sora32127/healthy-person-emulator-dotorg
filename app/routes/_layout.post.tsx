@@ -164,6 +164,7 @@ export default function App() {
           formValues: methods.getValues(),
         }),
       );
+      window.localStorage.setItem(formId, JSON.stringify(methods.getValues()));
       navigate('/post/preview');
     }
     if (response?.success === false) {
