@@ -51,7 +51,6 @@ export function initializeApp(envParam?: CloudflareEnv) {
     CF_TURNSTILE_SECRET_KEY: env.CF_TURNSTILE_SECRET_KEY,
     CF_TURNSTILE_SITEKEY: env.CF_TURNSTILE_SITEKEY,
     AI: env.AI,
-    NODE_ENV: env.NODE_ENV,
   });
   initCloudflare({
     CF_WORKERS_AI_TOKEN: env.CF_WORKERS_AI_TOKEN,

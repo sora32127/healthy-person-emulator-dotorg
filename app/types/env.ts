@@ -53,6 +53,4 @@ export interface CloudflareEnv {
   ENQUEUE_ENABLED?: string;
   SEND_ENABLED?: string;
   AUTOMATION_DRY_RUN?: string;
-  // Optional
-  NODE_ENV?: string;
 }
