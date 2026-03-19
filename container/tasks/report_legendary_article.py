@@ -23,7 +23,7 @@ def get_bq_client() -> bigquery.Client:
 def get_legendary_article_data(client: bigquery.Client) -> list:
     query = """
         SELECT *
-        FROM `healthy-person-emulator.dbt_sora32127.report_new_legend_posts`
+        FROM `healthy-person-emulator.HPE_REPORTS.report_new_legend_posts`
     """
     rows = client.query(query)
     return [
