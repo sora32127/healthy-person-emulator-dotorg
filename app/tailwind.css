@@ -1,3 +1,31 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+  --color-primary: #99D9EA;
+  --color-secondary: #264AF4;
+  --color-info: #00118F;
+  --color-error: #B91C1C;
+  --color-base-100: #f5f5f5;
+  --color-base-200: #e5e5e5;
+  --color-base-300: #d4d4d4;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  prefersdark: true;
+  color-scheme: dark;
+  --color-primary: #99D9EA;
+  --color-secondary: #264AF4;
+  --color-base-100: #0F0F0F;
+}
+
 @font-face {
   font-family: 'Noto Sans JP';
   src: url('/fonts/NotoSansJP-Medium.ttf') format('truetype');
@@ -5,9 +33,35 @@
   font-display: optional;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --font-noto-sans: 'Noto Sans JP';
+
+  --text-4xl: 32px;
+  --text-3xl: 28px;
+  --text-2xl: 24px;
+  --text-xl: 20px;
+  --text-lg: 16px;
+
+  --animate-spin: spin 1s linear;
+  --animate-like: like 1s ease-in-out;
+  --animate-dislike: dislike 1s ease-in-out;
+  --animate-vote-spin: voteSpin 0.5s ease-in-out;
+
+  @keyframes like {
+    0% { transform: scale(1); color: inherit; }
+    50% { transform: scale(1.5); color: #0000ff; }
+    100% { transform: scale(1.2); color: #0000ff; }
+  }
+  @keyframes dislike {
+    0% { transform: scale(1); color: inherit; }
+    50% { transform: scale(1.5); color: #ff0000; }
+    100% { transform: scale(1.2); color: #ff0000; }
+  }
+  @keyframes voteSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
 
 h1 {
   @apply text-4xl font-bold;
