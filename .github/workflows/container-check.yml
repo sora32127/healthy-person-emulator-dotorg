@@ -2,7 +2,7 @@ name: Container Check
 on:
   pull_request:
     paths:
-      - "container/**"
+      - 'container/**'
 
 jobs:
   check:

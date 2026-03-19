@@ -51,20 +51,22 @@ curl -s https://api.cloudflare.com/client/v4/graphql \
 取得した UA を以下のカテゴリに分類してレポートする：
 
 #### ブラウザ（実ユーザー）
+
 - **モバイル**: iPhone Safari, Android Chrome, Twitter/X アプリ内ブラウザ, その他アプリ内ブラウザ
 - **デスクトップ**: Chrome, Firefox, Edge, Safari
 
 #### ボット・クローラー
+
 以下のカテゴリで分類する：
 
-| カテゴリ | 主なボット |
-|---|---|
-| 検索エンジン | Googlebot, Bingbot, YandexBot, Applebot |
+| カテゴリ       | 主なボット                                                                               |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| 検索エンジン   | Googlebot, Bingbot, YandexBot, Applebot                                                  |
 | SNS プレビュー | Twitterbot, facebookexternalhit, meta-externalagent, Discordbot, SummalyBot（Misskey系） |
-| SEO ツール | SemrushBot, AhrefsBot, MJ12bot（Majestic）, DotBot（Moz） |
-| AI クローラー | GPTBot（OpenAI）, Amazonbot, ClaudeBot（Anthropic）, Bytespider |
-| Fediverse | Mastodon 各インスタンス（http.rb UA）, Akkoma, Misskey |
-| その他 | curl, got, wget, 空UA |
+| SEO ツール     | SemrushBot, AhrefsBot, MJ12bot（Majestic）, DotBot（Moz）                                |
+| AI クローラー  | GPTBot（OpenAI）, Amazonbot, ClaudeBot（Anthropic）, Bytespider                          |
+| Fediverse      | Mastodon 各インスタンス（http.rb UA）, Akkoma, Misskey                                   |
+| その他         | curl, got, wget, 空UA                                                                    |
 
 #### ボット判定ロジック（UA文字列ベース）
 
@@ -91,16 +93,19 @@ curl -s https://api.cloudflare.com/client/v4/graphql \
 ## よく使うクエリバリエーション
 
 ### リクエストメソッド別
+
 ```
 dimensions { clientRequestHTTPMethodName userAgent }
 ```
 
 ### ステータスコード別
+
 ```
 dimensions { edgeResponseStatus userAgent }
 ```
 
 ### パス別のリクエスト数
+
 ```
 dimensions { clientRequestPath }
 ```

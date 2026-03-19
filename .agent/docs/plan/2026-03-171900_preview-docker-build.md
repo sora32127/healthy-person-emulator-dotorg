@@ -10,33 +10,35 @@ PR作成時の Preview Deployment が約5分かかっている。原因は `gclo
 
 ## 現状のビルドタイムライン（PR #273 Cloud Build ログ: `2a99ecbd`）
 
-| ステップ | 所要時間 | 備考 |
-|---|---|---|
-| fetch source | 1s | 3.59 MiB |
-| pre-buildpack | 5s | ビルダーイメージ準備 |
-| Node.js runtime | 5s | CACHE MISS |
-| pnpm engine | 3s | CACHE MISS |
-| pnpm install | 22s | 679パッケージ, reused 0 |
-| pnpm run build | 29s | client 23s + server 1.4s |
-| pnpm prune --prod | 2s | |
-| export image | 10s | |
-| post-buildpack | 30s | レイヤー取得 |
-| PUSH | 20s | |
-| Creating Revision | 27s | |
-| Routing traffic | 14s | |
-| **合計** | **~5m10s** | |
+| ステップ          | 所要時間   | 備考                     |
+| ----------------- | ---------- | ------------------------ |
+| fetch source      | 1s         | 3.59 MiB                 |
+| pre-buildpack     | 5s         | ビルダーイメージ準備     |
+| Node.js runtime   | 5s         | CACHE MISS               |
+| pnpm engine       | 3s         | CACHE MISS               |
+| pnpm install      | 22s        | 679パッケージ, reused 0  |
+| pnpm run build    | 29s        | client 23s + server 1.4s |
+| pnpm prune --prod | 2s         |                          |
+| export image      | 10s        |                          |
+| post-buildpack    | 30s        | レイヤー取得             |
+| PUSH              | 20s        |                          |
+| Creating Revision | 27s        |                          |
+| Routing traffic   | 14s        |                          |
+| **合計**          | **~5m10s** |                          |
 
 ## 方針
 
 GitHub Actions で Docker イメージをビルドし、Artifact Registry に push。その後 `gcloud run deploy --image` でデプロイする。
 
 ### メリット
+
 - `docker/build-push-action` + `cache-from/cache-to: type=gha` で **Docker レイヤーキャッシュ** が使える
 - Buildpacks のオーバーヘッド（pre/post-buildpack 35s、export 10s）を排除
 - ビルドとデプロイの責務が明確に分離される
 - Public Repo → GitHub Actions 無料枠
 
 ### デメリット
+
 - ワークフローが現状より複雑になる
 - カスタム Dockerfile の管理が必要
 - GitHub → Artifact Registry への push 時間が発生
@@ -80,6 +82,7 @@ CMD ["node", "build/server/index.js"]
 ```
 
 **設計ポイント**:
+
 - `deps` ステージ: `package.json` + `pnpm-lock.yaml` + `pnpm-workspace.yaml` のみコピー → lockfile 未変更時にレイヤーキャッシュ全ヒット（pnpm install スキップ）
 - `build` ステージ: prisma schema を先にコピー → schema 未変更時に `prisma generate` もキャッシュヒット
 - `runtime` ステージ: 最小限のファイルのみコピー（`build/`, `node_modules/`, `package.json`, `public/`）
@@ -149,6 +152,7 @@ jobs:
 ```
 
 **変更点まとめ**:
+
 - `--source .` + `--base-image nodejs22` → `--image` でプリビルトイメージを指定
 - `docker/setup-buildx-action` + `docker/build-push-action` を追加
 - `gcloud auth configure-docker` で Artifact Registry 認証を追加
@@ -168,34 +172,35 @@ jobs:
 
 ### キャッシュヒット時（lockfile 未変更、通常のコード変更）
 
-| ステップ | 所要時間 | 備考 |
-|---|---|---|
-| Checkout + Auth | ~10s | |
-| Docker Buildx setup | ~5s | |
-| Docker build: deps | ~0s | レイヤーキャッシュヒット |
-| Docker build: prisma generate | ~0s | レイヤーキャッシュヒット |
-| Docker build: COPY . . + build | ~30s | ソース変更分のみ再実行 |
-| Docker build: prune | ~2s | |
-| Docker build: runtime stage | ~0s | ベース + apt-get キャッシュヒット |
-| Push to Artifact Registry | ~15-30s | 差分レイヤーのみ（未知数） |
-| gcloud run deploy --image | ~30-40s | revision 作成 |
-| **合計** | **~90-120s** | |
+| ステップ                       | 所要時間     | 備考                              |
+| ------------------------------ | ------------ | --------------------------------- |
+| Checkout + Auth                | ~10s         |                                   |
+| Docker Buildx setup            | ~5s          |                                   |
+| Docker build: deps             | ~0s          | レイヤーキャッシュヒット          |
+| Docker build: prisma generate  | ~0s          | レイヤーキャッシュヒット          |
+| Docker build: COPY . . + build | ~30s         | ソース変更分のみ再実行            |
+| Docker build: prune            | ~2s          |                                   |
+| Docker build: runtime stage    | ~0s          | ベース + apt-get キャッシュヒット |
+| Push to Artifact Registry      | ~15-30s      | 差分レイヤーのみ（未知数）        |
+| gcloud run deploy --image      | ~30-40s      | revision 作成                     |
+| **合計**                       | **~90-120s** |                                   |
 
 ### キャッシュミス時（lockfile 変更）
 
-| ステップ | 所要時間 | 備考 |
-|---|---|---|
-| Docker build: deps | ~25s | pnpm install フル |
-| Docker build: build | ~35s | prisma generate + react-router build |
-| Push to Artifact Registry | ~30-45s | 全レイヤー push（未知数） |
-| gcloud run deploy --image | ~30-40s | |
-| **合計** | **~140-170s** | |
+| ステップ                  | 所要時間      | 備考                                 |
+| ------------------------- | ------------- | ------------------------------------ |
+| Docker build: deps        | ~25s          | pnpm install フル                    |
+| Docker build: build       | ~35s          | prisma generate + react-router build |
+| Push to Artifact Registry | ~30-45s       | 全レイヤー push（未知数）            |
+| gcloud run deploy --image | ~30-40s       |                                      |
+| **合計**                  | **~140-170s** |                                      |
 
 > **注意**: GitHub Actions → Artifact Registry への push 時間は未知数。初回実測で要確認。Codex は「楽観的」と指摘しており、保守的に見積もっている。
 
 ## セキュリティに関する注記
 
 Codex は `pull_request_target` + PR head checkout を「pwn-request パターン」と指摘した。ただし：
+
 - **現状のワークフローも全く同じ構成** (`pull_request_target` + `ref: head.sha`)
 - `environment: preview` による **手動承認ゲート** が設定されている
 - 今回の変更でセキュリティモデルは変わらない（既存の信頼境界を維持）

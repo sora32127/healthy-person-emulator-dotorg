@@ -3,10 +3,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
-      - "**/*.md"
-      - ".agent/**"
-      - ".claude/**"
-      - "docs/**"
+      - '**/*.md'
+      - '.agent/**'
+      - '.claude/**'
+      - 'docs/**'
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.sha }}
@@ -24,8 +24,8 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
-          cache: "pnpm"
+          node-version-file: 'package.json'
+          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm exec vp test --coverage
       - uses: davelosert/vitest-coverage-report-action@v2
@@ -39,8 +39,8 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
-          cache: "pnpm"
+          node-version-file: 'package.json'
+          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm typecheck
       - run: pnpm build

@@ -7,14 +7,17 @@ Preview と Production で異なるビルド・デプロイ方式を使用して
 ## 変更内容
 
 ### 1. `Dockerfile.preview` → `Dockerfile` にリネーム
+
 - 内容は基本そのまま
 - ただし `prisma generate` の重複実行を修正（`pnpm build` の中で既に `prisma generate` が走るため、Stage 2 の明示的な `RUN pnpm exec prisma generate` を削除）
 
 ### 2. `Dockerfile.dev` を削除 + `compose.dev.yaml` を更新
+
 - `compose.dev.yaml:65` が `Dockerfile.dev` を参照しているため、app サービスの build 定義を変更
 - `Dockerfile.dev` は deps install + prisma generate + dev server 起動をしているだけなので、`compose.dev.yaml` で直接 `node:22.12.0-slim` イメージを使い、command で pnpm install → dev 起動する方式に変更（既に volumes で `.:/app` をマウントしており、command でも `pnpm dev` を実行しているため、Dockerfile.dev はほぼ不要）
 
 ### 3. Production ワークフロー書き換え
+
 `cloud-run-production-deployment.yml` を Preview と同じ方式に統一：
 
 ```yaml
@@ -27,7 +30,7 @@ on:
 
 concurrency:
   group: production-deploy
-  cancel-in-progress: false  # 本番は進行中デプロイをキャンセルしない
+  cancel-in-progress: false # 本番は進行中デプロイをキャンセルしない
 
 jobs:
   deploy:
@@ -75,25 +78,28 @@ jobs:
 ```
 
 ### 4. Preview ワークフローの微修正
+
 - `file: Dockerfile.preview` → `file: Dockerfile`
 
 ### 5. actions ピン留め
+
 - タグ指定 (`@v4`, `@v3`, `@v6`) で統一（ユーザー指定）
 
 ## ロールバック戦略
+
 - Cloud Run は revision ベースなので、デプロイ失敗時は前の revision にトラフィックを戻すだけで復旧可能
 - `gcloud run services update-traffic --to-revisions=PREVIOUS_REVISION=100` で即時ロールバック
 - Artifact Registry にイメージが SHA タグで残るため、任意の過去バージョンを再デプロイ可能
 
 ## 対象ファイル
 
-| ファイル | 操作 |
-|---|---|
-| `Dockerfile.preview` | `Dockerfile` にリネーム + prisma generate 重複修正 |
-| `Dockerfile.dev` | 削除 |
-| `compose.dev.yaml` | app サービスの build 定義を変更 |
-| `.github/workflows/cloud-run-production-deployment.yml` | 全面書き換え |
-| `.github/workflows/cloud-run-preview-deployment.yml` | Dockerfile 参照を修正 |
+| ファイル                                                | 操作                                               |
+| ------------------------------------------------------- | -------------------------------------------------- |
+| `Dockerfile.preview`                                    | `Dockerfile` にリネーム + prisma generate 重複修正 |
+| `Dockerfile.dev`                                        | 削除                                               |
+| `compose.dev.yaml`                                      | app サービスの build 定義を変更                    |
+| `.github/workflows/cloud-run-production-deployment.yml` | 全面書き換え                                       |
+| `.github/workflows/cloud-run-preview-deployment.yml`    | Dockerfile 参照を修正                              |
 
 ## 検証方法
 

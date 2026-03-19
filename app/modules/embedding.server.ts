@@ -41,10 +41,6 @@ export async function createEmbedding({ postId, postContent, postTitle }: Create
   }
 }
 
-function getEmbeddingInputText(
-  postContent: string,
-  postTitle: string,
-  allTagNames: string[],
-) {
+function getEmbeddingInputText(postContent: string, postTitle: string, allTagNames: string[]) {
   return `タイトル: ${postTitle}\nタグ: ${allTagNames}\n本文: ${postContent}`;
 }

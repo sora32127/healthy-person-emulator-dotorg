@@ -70,14 +70,14 @@ npx wrangler vectorize create hpe-post-embeddings --dimensions=768 --metric=cosi
 
 ## 変更対象ファイル
 
-| ファイル | 変更 |
-|---------|------|
-| `app/modules/cloudflare.server.ts` | **新規** |
-| `app/modules/embedding.server.ts` | OpenAI → Workers AI + Vectorize |
-| `app/modules/db.server.ts` | `getSimilarPosts`(L281): pgvector → Vectorize |
-| `.env.example` | 環境変数更新 |
-| `scripts/migrate-embeddings-to-vectorize.ts` | **新規** |
-| `scripts/poc-embedding-comparison.ts` | EmbeddingGemma追加 |
+| ファイル                                     | 変更                                          |
+| -------------------------------------------- | --------------------------------------------- |
+| `app/modules/cloudflare.server.ts`           | **新規**                                      |
+| `app/modules/embedding.server.ts`            | OpenAI → Workers AI + Vectorize               |
+| `app/modules/db.server.ts`                   | `getSimilarPosts`(L281): pgvector → Vectorize |
+| `.env.example`                               | 環境変数更新                                  |
+| `scripts/migrate-embeddings-to-vectorize.ts` | **新規**                                      |
+| `scripts/poc-embedding-comparison.ts`        | EmbeddingGemma追加                            |
 
 **変更不要**: `_layout.post.tsx`, `_layout.archives.edit.$postId.tsx`, `_layout.archives.$postId.tsx`
 

@@ -1,4 +1,4 @@
-import type { Container } from "@cloudflare/containers";
+import type { Container } from '@cloudflare/containers';
 
 export interface CloudflareEnv {
   // Bindings

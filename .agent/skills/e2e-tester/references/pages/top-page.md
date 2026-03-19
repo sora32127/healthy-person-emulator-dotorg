@@ -1,12 +1,13 @@
 # Top Page Scenarios
 
 対象実装:
-- [_layout._index.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout._index.tsx)
-- [_layout.random.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.random.tsx)
+
+- [\_layout.\_index.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout._index.tsx)
+- [\_layout.random.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.random.tsx)
 - [PostSection.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/PostSection.tsx)
 - [PostCard.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/PostCard.tsx)
 - [CommentSection.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/components/CommentSection.tsx)
-- [_layout.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.tsx)
+- [\_layout.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.tsx)
 - [itemMenu.ts](/Users/sorachi/code/healthy-person-emulator-dotorg/app/utils/itemMenu.ts)
 
 ## シナリオ T1: トップ `trend` タブの初期表示

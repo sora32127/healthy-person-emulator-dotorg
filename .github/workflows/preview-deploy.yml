@@ -3,11 +3,11 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     paths-ignore:
-      - "**/*.md"
-      - ".agent/**"
-      - ".claude/**"
-      - "docs/**"
-      - "terraform/**"
+      - '**/*.md'
+      - '.agent/**'
+      - '.claude/**'
+      - 'docs/**'
+      - 'terraform/**'
 
 concurrency:
   group: preview-deploy
@@ -25,8 +25,8 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
-          cache: "pnpm"
+          node-version-file: 'package.json'
+          cache: 'pnpm'
       - run: pnpm install
       - run: pnpm build
       - name: Apply D1 migrations

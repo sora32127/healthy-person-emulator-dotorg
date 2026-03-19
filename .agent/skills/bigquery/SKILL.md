@@ -65,6 +65,7 @@ bq query --nouse_legacy_sql --dry_run 'SELECT ...'
 - **1TB 以上**: ユーザーにスキャン量を伝えて実行してよいか確認する
 
 スキャン量を減らすテクニック:
+
 - GA4 events テーブルは `_TABLE_SUFFIX` で日付範囲を絞る
 - `SELECT *` を避け、必要なカラムだけ指定する
 - パーティションカラム（`event_date` 等）で WHERE 絞り込みを入れる
@@ -87,12 +88,12 @@ bq query --nouse_legacy_sql --max_rows=100 '
 
 ## データセットの概要
 
-| データセット | 内容 |
-|---|---|
-| `analytics_353281755` | GA4 の生データ。`events_*` テーブル群（日付シャーディング） |
-| `searchconsole` | Google Search Console のデータ。検索クエリ、表示回数、クリック数など |
-| `HPE_RAW` | D1 からエクスポートされたアプリケーションのローデータ（GCS Parquet 外部テーブル） |
-| `HPE_REPORTS` | レポート用ビュー（旧 dbt_sora32127 から移行） |
+| データセット          | 内容                                                                              |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `analytics_353281755` | GA4 の生データ。`events_*` テーブル群（日付シャーディング）                       |
+| `searchconsole`       | Google Search Console のデータ。検索クエリ、表示回数、クリック数など              |
+| `HPE_RAW`             | D1 からエクスポートされたアプリケーションのローデータ（GCS Parquet 外部テーブル） |
+| `HPE_REPORTS`         | レポート用ビュー（旧 dbt_sora32127 から移行）                                     |
 
 ## GA4 events テーブルのよく使うパターン
 

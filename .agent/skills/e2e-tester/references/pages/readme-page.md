@@ -1,7 +1,8 @@
 # Readme Page Scenarios
 
 対象実装:
-- [_layout.readme.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.readme.tsx)
+
+- [\_layout.readme.tsx](/Users/sorachi/code/healthy-person-emulator-dotorg/app/routes/_layout.readme.tsx)
 
 ## シナリオ R1: 基本表示
 

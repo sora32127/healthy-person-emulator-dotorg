@@ -4,29 +4,29 @@
  * BigQuery reads these directly via external tables (no load job needed).
  */
 
-import { SignJWT, importPKCS8 } from "jose";
-import { parquetWriteBuffer } from "hyparquet-writer";
-import type { CloudflareEnv } from "../types/env";
+import { SignJWT, importPKCS8 } from 'jose';
+import { parquetWriteBuffer } from 'hyparquet-writer';
+import type { CloudflareEnv } from '../types/env';
 
 const TABLES = [
-  "dim_tags",
-  "dim_posts",
-  "dim_comments",
-  "dim_stop_words",
-  "dim_users",
-  "rel_post_tags",
-  "fct_post_vote_history",
-  "fct_comment_vote_history",
-  "fct_post_edit_history",
-  "fct_aicompletion_suggestion_history",
-  "fct_aicompletion_commit_history",
-  "fct_user_bookmark_activity",
-  "now_editing_pages",
-  "social_post_jobs",
+  'dim_tags',
+  'dim_posts',
+  'dim_comments',
+  'dim_stop_words',
+  'dim_users',
+  'rel_post_tags',
+  'fct_post_vote_history',
+  'fct_comment_vote_history',
+  'fct_post_edit_history',
+  'fct_aicompletion_suggestion_history',
+  'fct_aicompletion_commit_history',
+  'fct_user_bookmark_activity',
+  'now_editing_pages',
+  'social_post_jobs',
 ];
 
-const GCS_BUCKET = "hpe-d1-export";
-const GCS_PREFIX = "d1";
+const GCS_BUCKET = 'hpe-d1-export';
+const GCS_PREFIX = 'd1';
 const BATCH_SIZE = 1000;
 
 interface TableResult {
@@ -46,29 +46,33 @@ export interface ExportResult {
 async function getGCSAccessToken(env: CloudflareEnv): Promise<string> {
   // GCS_CREDENTIALS is a Worker secret containing the full SA key JSON
   // (Secrets Store has a 1KB limit, too small for RSA private keys)
-  const creds = JSON.parse(env.GCS_CREDENTIALS ?? "{}") as {
+  const creds = JSON.parse(env.GCS_CREDENTIALS ?? '{}') as {
     client_email: string;
     private_key: string;
     private_key_id: string;
   };
-  const { client_email: clientEmail, private_key: privateKeyPem, private_key_id: privateKeyId } = creds;
+  const {
+    client_email: clientEmail,
+    private_key: privateKeyPem,
+    private_key_id: privateKeyId,
+  } = creds;
 
-  const privateKey = await importPKCS8(privateKeyPem, "RS256");
+  const privateKey = await importPKCS8(privateKeyPem, 'RS256');
 
   const jwt = await new SignJWT({
-    scope: "https://www.googleapis.com/auth/devstorage.read_write",
+    scope: 'https://www.googleapis.com/auth/devstorage.read_write',
   })
-    .setProtectedHeader({ alg: "RS256", typ: "JWT", kid: privateKeyId })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: privateKeyId })
     .setIssuer(clientEmail)
     .setSubject(clientEmail)
-    .setAudience("https://oauth2.googleapis.com/token")
+    .setAudience('https://oauth2.googleapis.com/token')
     .setIssuedAt()
-    .setExpirationTime("1h")
+    .setExpirationTime('1h')
     .sign(privateKey);
 
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
   });
 
@@ -85,7 +89,7 @@ async function getGCSAccessToken(env: CloudflareEnv): Promise<string> {
 
 function rowsToParquet(rows: Record<string, unknown>[]): ArrayBuffer {
   if (rows.length === 0) {
-    throw new Error("Cannot convert 0 rows to Parquet");
+    throw new Error('Cannot convert 0 rows to Parquet');
   }
 
   const columns = Object.keys(rows[0]);
@@ -94,7 +98,7 @@ function rowsToParquet(rows: Record<string, unknown>[]): ArrayBuffer {
     data: rows.map((row) => row[col]),
   }));
 
-  return parquetWriteBuffer({ columnData, codec: "UNCOMPRESSED" });
+  return parquetWriteBuffer({ columnData, codec: 'UNCOMPRESSED' });
 }
 
 // --- GCS upload ---
@@ -108,10 +112,10 @@ async function uploadToGCS(
   const url = `https://storage.googleapis.com/upload/storage/v1/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
 
   const res = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/octet-stream",
+      'Content-Type': 'application/octet-stream',
     },
     body: data,
   });
@@ -124,10 +128,7 @@ async function uploadToGCS(
 
 // --- D1 table read ---
 
-async function readD1Table(
-  db: D1Database,
-  tableName: string,
-): Promise<Record<string, unknown>[]> {
+async function readD1Table(db: D1Database, tableName: string): Promise<Record<string, unknown>[]> {
   let allRows: Record<string, unknown>[] = [];
   let offset = 0;
 
