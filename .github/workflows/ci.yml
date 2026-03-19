@@ -42,5 +42,5 @@ jobs:
           node-version-file: 'package.json'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm typecheck
+      - run: pnpm lint
       - run: pnpm build
