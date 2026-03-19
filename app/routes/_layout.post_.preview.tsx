@@ -4,7 +4,6 @@ import { data } from 'react-router';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { z } from 'zod';
 import { H1 } from '~/components/Headings';
-import { FaCopy } from 'react-icons/fa';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 import { createPostFormSchema } from '~/schemas/post.schema';
 import {
@@ -38,7 +37,6 @@ export default function PreviewPage() {
   const [isTurnstileVerified, setIsTurnstileVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('previewData');
@@ -105,17 +103,6 @@ export default function PreviewPage() {
     }
   }, [submitFetcher.data, submitFetcher.state, navigate]);
 
-  const handleCopy = async () => {
-    if (!previewData) return;
-    try {
-      await navigator.clipboard.writeText(previewData.markdownResult);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch {
-      // clipboard API may not be available
-    }
-  };
-
   if (!previewData) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -145,21 +132,9 @@ export default function PreviewPage() {
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-base-200 pt-6">
-        <button type="button" onClick={() => navigate('/post')} className="btn btn-secondary">
+        <button type="button" onClick={() => navigate('/post')} className="btn btn-ghost">
           修正する
         </button>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="btn btn-circle btn-outline"
-            title="Markdownをコピー"
-          >
-            <FaCopy />
-          </button>
-          {copySuccess && <span className="text-success text-sm">コピーしました</span>}
-        </div>
 
         <div className="flex flex-col items-center gap-2">
           <Turnstile siteKey={turnStileSiteKey} onSuccess={handleTurnStileSuccess} />

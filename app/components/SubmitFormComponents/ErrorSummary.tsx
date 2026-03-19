@@ -20,15 +20,8 @@ export default function ErrorSummary() {
 
   if (errorCount === 0) return null;
 
-  const handleScrollToFirstError = () => {
-    const firstErrorElement = document.querySelector('.text-error');
-    if (firstErrorElement) {
-      firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
-
   return (
-    <div className="alert alert-error mb-6 cursor-pointer" onClick={handleScrollToFirstError}>
+    <div className="alert alert-error mb-6">
       <p className="font-bold">{errorCount}個のエラーがあります</p>
     </div>
   );

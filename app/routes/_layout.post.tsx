@@ -120,7 +120,6 @@ export default function App() {
   const postCategory = methods.watch('postCategory');
 
   const firstSubmitFetcher = useFetcher();
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   const handleFirstSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -143,15 +142,6 @@ export default function App() {
       action: '/post',
     });
   };
-
-  useEffect(() => {
-    if (firstSubmitFetcher.state === 'submitting') {
-      setIsPreviewLoading(true);
-    }
-    if (firstSubmitFetcher.state === 'idle') {
-      setIsPreviewLoading(false);
-    }
-  }, [firstSubmitFetcher.state]);
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -345,29 +335,21 @@ export default function App() {
                 registerKey="title"
               />
             </div>
-            <div className="flex justify-center py-6">
-              <button
-                type="submit"
-                className="btn btn-primary btn-wide"
-                onClick={handleFirstSubmit}
-                disabled={isPreviewLoading}
-              >
-                {isPreviewLoading ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm" />
-                    プレビュー取得中...
-                  </>
-                ) : (
-                  'プレビューする'
-                )}
-              </button>
-            </div>
             <ErrorSummary />
             {previewError && (
               <div className="alert alert-error mb-6">
                 <p>{previewError}</p>
               </div>
             )}
+            <div className="flex justify-center py-6">
+              <button
+                type="submit"
+                className="btn btn-primary btn-wide"
+                onClick={handleFirstSubmit}
+              >
+                入力内容を確認する
+              </button>
+            </div>
           </Form>
         </FormProvider>
       </div>
