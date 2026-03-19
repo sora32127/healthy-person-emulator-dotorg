@@ -3,19 +3,16 @@ const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstil
 let _cfTurnstileSecretKey: string | undefined;
 let _cfTurnstileSiteKey: string | undefined;
 let _aiBinding: Ai | undefined;
-let _nodeEnv: string | undefined;
 let _securityInitialized = false;
 
 export function initSecurity(env: {
   CF_TURNSTILE_SECRET_KEY: string;
   CF_TURNSTILE_SITEKEY: string;
   AI: Ai;
-  NODE_ENV?: string;
 }) {
   _cfTurnstileSecretKey = env.CF_TURNSTILE_SECRET_KEY;
   _cfTurnstileSiteKey = env.CF_TURNSTILE_SITEKEY;
   _aiBinding = env.AI;
-  _nodeEnv = env.NODE_ENV;
   _securityInitialized = true;
 }
 
@@ -27,7 +24,6 @@ function ensureSecurityInit() {
       CF_TURNSTILE_SECRET_KEY: env.CF_TURNSTILE_SECRET_KEY,
       CF_TURNSTILE_SITEKEY: env.CF_TURNSTILE_SITEKEY,
       AI: env.AI,
-      NODE_ENV: env.NODE_ENV,
     });
   }
 }
@@ -39,12 +35,7 @@ export async function validateRequest(token: string, ipAddress: string) {
   }
   const formData = new FormData();
   const idempotencyKey = crypto.randomUUID();
-  formData.append(
-    'secret',
-    _nodeEnv === 'development'
-      ? '1x0000000000000000000000000000000AA'
-      : _cfTurnstileSecretKey,
-  );
+  formData.append('secret', _cfTurnstileSecretKey);
   formData.append('response', token || '');
   formData.append('remoteip', ipAddress);
   formData.append('idempotency_key', idempotencyKey);
@@ -68,9 +59,6 @@ export async function getTurnStileSiteKey() {
   ensureSecurityInit();
   if (!_cfTurnstileSiteKey) {
     throw new Error('CF_TURNSTILE_SITEKEY is not set');
-  }
-  if (_nodeEnv === 'development') {
-    return '1x00000000000000000000AA'; // Always return true
   }
   return _cfTurnstileSiteKey;
 }
