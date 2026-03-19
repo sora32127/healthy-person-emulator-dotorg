@@ -22,7 +22,7 @@ def get_bq_client() -> bigquery.Client:
 def get_weekly_summary_data(client: bigquery.Client) -> list:
     query = """
         SELECT *
-        FROM `healthy-person-emulator.dbt_sora32127.report_weekly_summary`
+        FROM `healthy-person-emulator.HPE_REPORTS.report_weekly_summary`
     """
     rows = client.query(query)
     return [

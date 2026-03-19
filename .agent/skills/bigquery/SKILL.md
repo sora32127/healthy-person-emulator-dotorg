@@ -91,9 +91,8 @@ bq query --nouse_legacy_sql --max_rows=100 '
 |---|---|
 | `analytics_353281755` | GA4 の生データ。`events_*` テーブル群（日付シャーディング） |
 | `searchconsole` | Google Search Console のデータ。検索クエリ、表示回数、クリック数など |
-| `dbt_sora32127` | dbt で加工された分析用テーブル |
-| `hpe_raw` | アプリケーションのローデータ |
-| `tmp` | 一時テーブル |
+| `HPE_RAW` | D1 からエクスポートされたアプリケーションのローデータ（GCS Parquet 外部テーブル） |
+| `HPE_REPORTS` | レポート用ビュー（旧 dbt_sora32127 から移行） |
 
 ## GA4 events テーブルのよく使うパターン
 
