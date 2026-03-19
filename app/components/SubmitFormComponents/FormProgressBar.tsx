@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react';
+
+const sections = [
+  { id: 'section-post-type', label: '投稿タイプ' },
+  { id: 'section-situation', label: '状況説明' },
+  { id: 'section-reflection', label: 'ブレイクポイント等' },
+  { id: 'section-tags-title', label: 'タグ・タイトル' },
+];
+
+export default function FormProgressBar() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const index = sections.findIndex((s) => s.id === entry.target.id);
+            if (index !== -1) {
+              setActiveIndex(index);
+            }
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -60% 0px' },
+    );
+
+    for (const section of sections) {
+      const element = document.getElementById(section.id);
+      if (element) {
+        observer.observe(element);
+      }
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="sticky top-16 z-10 bg-base-100 py-2 border-b border-base-200">
+      <ul className="steps steps-horizontal w-full text-xs sm:text-sm">
+        {sections.map((section, index) => (
+          <li key={section.id} className={`step ${index <= activeIndex ? 'step-primary' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:underline"
+            >
+              {section.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
