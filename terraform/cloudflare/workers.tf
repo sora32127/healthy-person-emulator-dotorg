@@ -132,6 +132,7 @@ resource "cloudflare_workers_script" "main" {
       store_id    = "52f3d1be601046039169fad4f66570d1"
       secret_name = "TWITTER_CS"
     },
+    # GCS_CREDENTIALS は wrangler secret put で設定 (Secrets Store は RSA鍵に対してサイズ制限あり)
     {
       name        = "STATIC_BUCKET"
       type        = "r2_bucket"

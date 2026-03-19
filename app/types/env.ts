@@ -49,6 +49,8 @@ export interface CloudflareEnv {
   SS_R2_ACCESS_KEY_ID: { get(): Promise<string> };
   SS_R2_SECRET_ACCESS_KEY: { get(): Promise<string> };
   SS_AUTOMATION_DRY_RUN: { get(): Promise<string> };
+  // GCS export (D1 → GCS Parquet) — SA key JSON stored as Worker Secret
+  GCS_CREDENTIALS?: string;
   // Automation feature flags
   ENQUEUE_ENABLED?: string;
   SEND_ENABLED?: string;

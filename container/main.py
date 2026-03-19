@@ -16,7 +16,6 @@ startup_time = time.time()
 TASK_ROUTES = {
     "/create-ogp": "tasks.create_og_image",
     "/post-social": None,  # dispatches to sub-tasks based on platform
-    "/etl-to-bq": "tasks.extract_and_load_to_bq",
     "/report-weekly": "tasks.report_weekly_summary",
     "/report-legendary": "tasks.report_legendary_article",
 }

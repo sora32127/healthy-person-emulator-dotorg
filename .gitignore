@@ -49,3 +49,4 @@ terraform/cloudflare/.envrc
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+terraform/google-cloud/.terraform/
