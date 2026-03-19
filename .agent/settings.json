@@ -23,8 +23,8 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/lint-and-format.sh",
-            "timeout": 60,
-            "statusMessage": "lint & format 実行中..."
+            "timeout": 30,
+            "statusMessage": "format 実行中..."
           }
         ]
       },
