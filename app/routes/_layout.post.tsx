@@ -17,7 +17,6 @@ import { commonMetaFunction } from '~/utils/commonMetafunction';
 import { createPostFormSchema } from '~/schemas/post.schema';
 import ErrorSummary from '~/components/SubmitFormComponents/ErrorSummary';
 import FormProgressBar from '~/components/SubmitFormComponents/FormProgressBar';
-import StickySubmitBar from '~/components/SubmitFormComponents/StickySubmitBar';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
@@ -130,7 +129,6 @@ export default function App() {
 
     const isValid = await methods.trigger();
     if (!isValid) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -215,19 +213,13 @@ export default function App() {
     <>
       <div className="templateSubmitForm">
         <FormProvider {...methods}>
+          <FormProgressBar />
           <Form method="post">
             <UserExplanation />
             <br />
             <div className="flex justify-start mt-6">
               <ClearFormButton clearInputs={handleClearForm} />
             </div>
-            <ErrorSummary />
-            {previewError && (
-              <div className="alert alert-error mb-6">
-                <p>{previewError}</p>
-              </div>
-            )}
-            <FormProgressBar />
             <br />
             <div id="section-post-type">
               <TextTypeSwitcher />
@@ -341,7 +333,29 @@ export default function App() {
                 registerKey="title"
               />
             </div>
-            <StickySubmitBar onClick={handleFirstSubmit} isLoading={isPreviewLoading} />
+            <div className="flex justify-center py-6">
+              <button
+                type="submit"
+                className="btn btn-primary btn-wide"
+                onClick={handleFirstSubmit}
+                disabled={isPreviewLoading}
+              >
+                {isPreviewLoading ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm" />
+                    プレビュー取得中...
+                  </>
+                ) : (
+                  'プレビューする'
+                )}
+              </button>
+            </div>
+            <ErrorSummary />
+            {previewError && (
+              <div className="alert alert-error mb-6">
+                <p>{previewError}</p>
+              </div>
+            )}
           </Form>
         </FormProvider>
       </div>
@@ -645,7 +659,7 @@ function StaticTextInput({
             placeholder={placeholders[i]}
             {...register(`${registerKey}.${i}`)}
           />
-          {errors[registerKey] && (
+          {i === 0 && errors[registerKey] && (
             <ErrorMessageContainer errormessage={errors[registerKey]?.root?.message as string} />
           )}
         </div>,
@@ -665,7 +679,7 @@ function StaticTextInput({
 function ErrorMessageContainer({ errormessage }: { errormessage: string }) {
   return (
     <div>
-      <p className="text-error">[!] {errormessage}</p>
+      <p className="text-error">* {errormessage}</p>
     </div>
   );
 }

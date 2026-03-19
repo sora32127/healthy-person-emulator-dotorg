@@ -36,8 +36,8 @@ export default function FormProgressBar() {
   }, []);
 
   return (
-    <div className="sticky top-16 z-10 bg-base-100 py-2 border-b border-base-200">
-      <ul className="steps steps-horizontal w-full text-xs sm:text-sm">
+    <div className="hidden lg:block fixed right-8 top-1/3 z-10">
+      <ul className="steps steps-vertical text-sm">
         {sections.map((section, index) => (
           <li key={section.id} className={`step ${index <= activeIndex ? 'step-primary' : ''}`}>
             <button
@@ -45,7 +45,7 @@ export default function FormProgressBar() {
               onClick={() => {
                 document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="hover:underline"
+              className="hover:underline text-left"
             >
               {section.label}
             </button>
