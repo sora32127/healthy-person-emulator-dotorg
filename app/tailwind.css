@@ -9,6 +9,7 @@
   default: true;
   color-scheme: light;
   --color-primary: #99D9EA;
+  --color-primary-content: #0F172A;
   --color-secondary: #264AF4;
   --color-info: #00118F;
   --color-error: #B91C1C;
@@ -22,6 +23,7 @@
   prefersdark: true;
   color-scheme: dark;
   --color-primary: #99D9EA;
+  --color-primary-content: #0F172A;
   --color-secondary: #264AF4;
   --color-info: #38BDF8;
   --color-error: #F87171;
@@ -134,7 +136,7 @@ h1 {
 
 .btn-primary {
   @apply bg-primary;
-  @apply text-slate-950;
+  @apply text-primary-content;
   @apply hover:bg-primary/80;
   @apply font-bold;
   @apply cursor-pointer;
