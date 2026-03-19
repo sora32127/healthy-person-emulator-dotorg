@@ -82,6 +82,6 @@ describe('VoteButton', () => {
         onClick={() => {}}
       />,
     );
-    expect(screen.getByRole('button')).toHaveClass('text-blue-500 font-bold bg-base-300');
+    expect(screen.getByRole('button')).toHaveClass('text-secondary font-bold bg-base-300');
   });
 });
