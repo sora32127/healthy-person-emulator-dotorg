@@ -85,7 +85,7 @@ function FAQItem({ faq, isLast }: { faq: FAQItem; isLast: boolean }) {
           <ReactMarkdown>{`A: ${faq.answer}`}</ReactMarkdown>
         </li>
       </ul>
-      {!isLast && <hr className="my-6 border-gray-300" />}
+      {!isLast && <hr className="my-6 border-base-300" />}
     </div>
   );
 }

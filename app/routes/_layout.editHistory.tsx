@@ -35,12 +35,12 @@ function EditHistoryItem({ editHistory }: { editHistory: EditHistory }) {
   });
 
   return (
-    <li className="border-b border-gray-200 py-4">
+    <li className="border-b border-base-300 py-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <CommonNavLink to={postUrl}>{editHistory.dim_posts.postTitle}</CommonNavLink>
         </div>
-        <div className="text-sm text-gray-500 ml-1">{editDate}</div>
+        <div className="text-sm text-base-content/60 ml-1">{editDate}</div>
       </div>
     </li>
   );
@@ -53,7 +53,7 @@ export default function MyPageLayout() {
       <H1>編集履歴</H1>
       {userEditHistory.length > 0 && (
         <div className="flex flex-col gap-4">
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-base-300">
             {userEditHistory.map((editHistory) => (
               <EditHistoryItem
                 key={`${editHistory.postId}-${editHistory.postRevisionNumber}`}
