@@ -130,7 +130,7 @@ resource "google_bigquery_table" "report_weekly_summary" {
           post_title,
           post_date_jst
         FROM `healthy-person-emulator.HPE_RAW.dim_posts`
-        WHERE post_date_jst >= TIMESTAMP_TRUNC(
+        WHERE TIMESTAMP(post_date_jst) >= TIMESTAMP_TRUNC(
           CAST(
             DATETIME_ADD(
               CAST(CAST(TIMESTAMP(DATETIME(CURRENT_TIMESTAMP(), 'Asia/Tokyo')) AS DATE) AS DATETIME),
