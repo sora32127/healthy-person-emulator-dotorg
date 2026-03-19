@@ -5,9 +5,10 @@
   "sideEffects": false,
   "scripts": {
     "build": "vp build",
-    "start": "wrangler dev --local",
-    "deploy": "wrangler deploy",
-    "typegen": "wrangler types",
+    "start:local": "npx wrangler dev --config wrangler.dev.toml --local",
+    "start:remote": "npx wrangler dev --config wrangler.dev.toml --remote",
+    "deploy": "npx wrangler deploy",
+    "typegen": "npx wrangler types",
     "lint": "vp lint",
     "format": "vp fmt --write .",
     "test": "vp test"
