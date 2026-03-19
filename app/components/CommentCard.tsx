@@ -108,7 +108,7 @@ export default function CommentCard({
   return (
     <div className="bg-base-100 p-4 mb-4" style={{ marginLeft }}>
       <div className="flex items-center">
-        <p className="text-green-700 font-bold mr-1">{commentAuthor}</p>
+        <p className="text-success font-bold mr-1">{commentAuthor}</p>
         <div className="pr-0.5">
           <ClockIcon />
         </div>
@@ -138,7 +138,7 @@ export default function CommentCard({
         />
       </div>
       <button
-        className="mt-2 text-blue-500"
+        className="mt-2 text-info"
         onClick={() => setIsReplyBoxShown(!isReplyBoxShown)}
         type="button"
       >

@@ -57,7 +57,7 @@ export default function CommentInputBox({
           defaultValue="Anonymous"
         />
         {errors.commentAuthor && (
-          <p className="text-red-500 text-sm">{errors.commentAuthor.message}</p>
+          <p className="text-error text-sm">{errors.commentAuthor.message}</p>
         )}
       </div>
       <div>
@@ -68,7 +68,7 @@ export default function CommentInputBox({
           rows={4}
         />
         {errors.commentContent && (
-          <p className="text-red-500 text-sm">{errors.commentContent.message}</p>
+          <p className="text-error text-sm">{errors.commentContent.message}</p>
         )}
       </div>
       <button type="submit" className="btn w-full btn-primary">
