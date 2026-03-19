@@ -5,7 +5,7 @@
     "ui-ux-pro-max@ui-ux-pro-max-skill": true
   },
   "hooks": {
-    "PreToolUse": [
+    "PostToolUse": [
       {
         "matcher": "Write|Edit",
         "hooks": [
@@ -16,9 +16,7 @@
             "statusMessage": "変更行数チェック中..."
           }
         ]
-      }
-    ],
-    "PostToolUse": [
+      },
       {
         "matcher": "Write|Edit",
         "hooks": [
