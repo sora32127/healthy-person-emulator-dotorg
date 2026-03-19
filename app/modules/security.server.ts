@@ -1,22 +1,20 @@
-import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from '@google/generative-ai';
-
 const CF_TURNSTILE_VERIFY_ENDPOINT = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 let _cfTurnstileSecretKey: string | undefined;
 let _cfTurnstileSiteKey: string | undefined;
-let _googleGenerativeApiKey: string | undefined;
+let _aiBinding: Ai | undefined;
 let _nodeEnv: string | undefined;
 let _securityInitialized = false;
 
 export function initSecurity(env: {
   CF_TURNSTILE_SECRET_KEY: string;
   CF_TURNSTILE_SITEKEY: string;
-  GOOGLE_GENERATIVE_API_KEY: string;
+  AI: Ai;
   NODE_ENV?: string;
 }) {
   _cfTurnstileSecretKey = env.CF_TURNSTILE_SECRET_KEY;
   _cfTurnstileSiteKey = env.CF_TURNSTILE_SITEKEY;
-  _googleGenerativeApiKey = env.GOOGLE_GENERATIVE_API_KEY;
+  _aiBinding = env.AI;
   _nodeEnv = env.NODE_ENV;
   _securityInitialized = true;
 }
@@ -28,7 +26,7 @@ function ensureSecurityInit() {
     initSecurity({
       CF_TURNSTILE_SECRET_KEY: env.CF_TURNSTILE_SECRET_KEY,
       CF_TURNSTILE_SITEKEY: env.CF_TURNSTILE_SITEKEY,
-      GOOGLE_GENERATIVE_API_KEY: env.GOOGLE_GENERATIVE_API_KEY,
+      AI: env.AI,
       NODE_ENV: env.NODE_ENV,
     });
   }
@@ -87,77 +85,79 @@ export async function getHashedUserIPAddress(request: Request) {
 
 export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTitle: string) {
   ensureSecurityInit();
-  if (!_googleGenerativeApiKey) {
-    throw new Error('GOOGLE_GENERATIVE_API_KEY is not set');
-  }
 
-  if (_googleGenerativeApiKey === 'google-generative-api-demo-key') {
+  if (!_aiBinding) {
+    console.warn('[security] AI binding not available, skipping guideline check');
     return { isWelcomed: true, explanation: 'テスト投稿です' };
   }
 
-  const schema: ResponseSchema = {
-    description: '歓迎される投稿かどうかを判断した結果',
-    type: SchemaType.OBJECT,
-    properties: {
-      isWelcomed: {
-        description: '歓迎される投稿の場合はtrue、歓迎されない投稿の場合はfalse',
-        type: SchemaType.BOOLEAN,
-      },
-      explanation: {
-        description: '判断した理由のカテゴリ',
-        type: SchemaType.STRING,
-        format: 'enum' as const,
-        enum: [
-          'テスト投稿です',
-          'スパム投稿です',
-          '基本的人権を侵害する行為が奨励されています',
-          '違法な行為を奨励する内容を含みます',
-          'ガイドラインに準拠した投稿です',
-        ],
-      },
-    },
-    required: ['isWelcomed', 'explanation'],
-  };
+  const systemPrompt = `あなたはHTMLで表現されたテキストを分析して、そのテキストが「歓迎されない投稿」に該当するかどうかを判断するAIです。
+歓迎されない条件に該当する場合は「歓迎されない投稿」と判断し、条件に該当していても例外に該当する場合は「歓迎される投稿」と判断してください。
 
-  const generativeAi = new GoogleGenerativeAI(_googleGenerativeApiKey);
-  const model = generativeAi.getGenerativeModel({
-    model: 'gemini-2.5-flash-lite',
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: schema,
+# 歓迎されない投稿の条件
+- 自らが経験した知識ではない知識について記述された投稿
+- 基本的人権を侵害する行為を奨励する投稿
+- 違法な行為を奨励する内容を含む投稿
+- テスト投稿だとわかるもの
+- スパム投稿
+
+# 例外
+- 社会通念上望ましくない行為であっても、違法な行為・基本的人権を侵害を侵害する行為を奨励するわけではないなら全て「歓迎される投稿」と判断してください。
+- 社会通念上望ましくない行為であっても、反省している場合は「歓迎される投稿」と判断してください。
+- 違法・もしくは基本的人権を侵害するような表現が含まれていた場合でも、奨励しているわけではない場合は「歓迎される投稿」と判断してください。
+- 違法・もしくは基本的人権を侵害するような表現が含まれていた場合でも、反省している場合は「歓迎される投稿」と判断してください。
+
+JSONで結果を返してください。`;
+
+  const result = await _aiBinding.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `${postTitle}\n${postContent}` },
+    ],
+    response_format: {
+      type: 'json_schema' as const,
+      json_schema: {
+        name: 'guideline_check',
+        schema: {
+          type: 'object',
+          properties: {
+            isWelcomed: { type: 'boolean' },
+            explanation: {
+              type: 'string',
+              enum: [
+                'テスト投稿です',
+                'スパム投稿です',
+                '基本的人権を侵害する行為が奨励されています',
+                '違法な行為を奨励する内容を含みます',
+                'ガイドラインに準拠した投稿です',
+              ],
+            },
+          },
+          required: ['isWelcomed', 'explanation'],
+        },
+        strict: true,
+      },
     },
   });
 
-  const prompt = `
-  # 指示
-  - あなたはHTMLで表現されたテキストを分析して、そのテキストが「歓迎されない投稿」に該当するかどうかを判断してください。
-  - 歓迎されない条件に該当する場合は「歓迎されない投稿」と判断し、条件に該当していても例外に該当する場合は「歓迎される投稿」と判断してください。
-  - 判断した理由も含めてください
+  const raw = (result as { response?: unknown }).response;
+  if (!raw) {
+    console.warn('[security] AI returned empty response, defaulting to welcomed');
+    return { isWelcomed: true, explanation: 'ガイドラインに準拠した投稿です' };
+  }
 
-  # 歓迎されない投稿の条件
-  - 自らが経験した知識ではない知識について記述された投稿
-  - 基本的人権を侵害する行為を奨励する投稿
-  - 違法な行為を奨励する内容を含む投稿
-  - テスト投稿だとわかるもの
-  - スパム投稿
-
-  # 例外
-  - 社会通念上望ましくない行為であっても、違法な行為・基本的人権を侵害を侵害する行為を奨励するわけではないなら全て「歓迎される投稿」と判断してください。
-  - 社会通念上望ましくない行為であっても、反省している場合は「歓迎される投稿」と判断してください。
-  - 違法・もしくは基本的人権を侵害するような表現が含まれていた場合でも、奨励しているわけではない場合は「歓迎される投稿」と判断してください。
-  - 違法・もしくは基本的人権を侵害するような表現が含まれていた場合でも、反省している場合は「歓迎される投稿」と判断してください。
-
-  HTMLで表現されたテキストは以下の通りです。
-
-  ${postTitle}
-  ${postContent}
-  `;
-
-  const result = await model.generateContent(prompt);
-  const parsedResult =
-    JSON.parse(result?.response?.candidates?.[0]?.content?.parts?.[0]?.text ?? '') || {};
-  return {
-    isWelcomed: parsedResult.isWelcomed,
-    explanation: parsedResult.explanation,
-  };
+  try {
+    // json_schema使用時、responseはオブジェクトまたはJSON文字列で返る
+    const parsed = (typeof raw === 'object' ? raw : JSON.parse(raw as string)) as {
+      isWelcomed: boolean;
+      explanation: string;
+    };
+    return {
+      isWelcomed: parsed.isWelcomed,
+      explanation: parsed.explanation,
+    };
+  } catch {
+    console.warn('[security] Failed to parse AI response, defaulting to welcomed:', raw);
+    return { isWelcomed: true, explanation: 'ガイドラインに準拠した投稿です' };
+  }
 }

@@ -19,7 +19,7 @@ export interface CloudflareEnv {
   BASE_URL: string;
   CF_TURNSTILE_SECRET_KEY: string;
   CF_TURNSTILE_SITEKEY: string;
-  GOOGLE_GENERATIVE_API_KEY: string;
+
   CF_WORKERS_AI_TOKEN: string;
   CLOUDFLARE_ACCOUNT_ID: string;
   VECTORIZE_INDEX_NAME: string;
