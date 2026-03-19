@@ -134,9 +134,10 @@ h1 {
 
 .btn-primary {
   @apply bg-primary;
-  @apply text-primary-content;
+  @apply text-slate-950;
   @apply hover:bg-primary/80;
   @apply font-bold;
+  @apply cursor-pointer;
 }
 .btn-secondary {
   @apply bg-base-200;
