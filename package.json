@@ -4,7 +4,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "react-router build",
+    "build": "vp build",
     "start": "wrangler dev --local",
     "deploy": "wrangler deploy",
     "typegen": "wrangler types",
