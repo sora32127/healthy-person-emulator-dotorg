@@ -41,20 +41,20 @@ function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[]
       {bookmarkPosts.map((post) => (
         <li
           key={post.postId}
-          className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="p-4 rounded-lg border border-base-300 hover:bg-base-200 transition-colors"
         >
           <div className="flex flex-col gap-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 sm:gap-x-3">
-              <time className="text-sm text-gray-500">{post.bookmarkDateJST}</time>
+              <time className="text-sm text-base-content/60">{post.bookmarkDateJST}</time>
               <CommonNavLink
                 to={`/archives/${post.postId}`}
-                className="text-base sm:text-lg font-medium hover:text-blue-600"
+                className="text-base sm:text-lg font-medium hover:text-info"
               >
                 {post.postTitle}
               </CommonNavLink>
             </div>
 
-            <div className="flex items-center gap-x-4 text-sm text-gray-600">
+            <div className="flex items-center gap-x-4 text-sm text-base-content/70">
               <div className="flex items-center gap-x-1">
                 <ThumbsUp className="w-4 h-4 fill-none stroke-current" />
                 <span>{post.countLikes}</span>

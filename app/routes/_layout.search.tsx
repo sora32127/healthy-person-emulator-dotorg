@@ -337,7 +337,7 @@ export default function LightSearch() {
           <div className="md:absolute md:top-4 md:left-4 md:z-10 block md:block p-4 md:p-0">
             <button
               onClick={handleBackToSearch}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-white px-3 py-1 rounded-full shadow-md"
+              className="flex items-center gap-2 text-info hover:text-info/80 transition-colors bg-base-100 px-3 py-1 rounded-full shadow-md"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -415,7 +415,7 @@ function InfiniteScrollResults({
           <div
             key={result.postId}
             className={`cursor-pointer transition-colors ${
-              selectedPostId === result.postId.toString() ? 'bg-blue-50' : 'hover:bg-gray-50'
+              selectedPostId === result.postId.toString() ? 'bg-info/10' : 'hover:bg-base-200'
             }`}
             onClickCapture={(e) => {
               const target = e.target as HTMLElement | null;
@@ -455,10 +455,10 @@ function InfiniteScrollResults({
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-              <span className="text-gray-600">読み込み中...</span>
+              <span className="text-base-content/70">読み込み中...</span>
             </div>
           ) : (
-            <div className="text-gray-400">ここまで読み込みました</div>
+            <div className="text-base-content/40">ここまで読み込みました</div>
           )}
         </div>
       )}
@@ -466,8 +466,8 @@ function InfiniteScrollResults({
       {/* 読み込み完了メッセージ */}
       {!hasMore && allResults.length > 0 && (
         <div className="text-center py-8">
-          <div className="text-gray-500">すべての結果を表示しました</div>
-          <div className="text-sm text-gray-400 mt-1">({allResults.length}件)</div>
+          <div className="text-base-content/60">すべての結果を表示しました</div>
+          <div className="text-sm text-base-content/40 mt-1">({allResults.length}件)</div>
         </div>
       )}
     </div>

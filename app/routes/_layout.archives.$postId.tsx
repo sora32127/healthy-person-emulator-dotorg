@@ -429,7 +429,7 @@ export default function Component() {
               }
             }}
             type="button"
-            className="btn-primary rounded px-4 py-2 mx-1 my-20"
+            className="btn-primary rounded px-4 py-2 mx-1 my-20 cursor-pointer"
           >
             編集する
           </button>

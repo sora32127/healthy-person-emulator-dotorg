@@ -23,8 +23,8 @@ export const CopyToClipboardButton = ({
   const buttonClass = useMemo(
     () =>
       variant === 'comment'
-        ? 'btn btn-circle btn-sm btn-ghost'
-        : 'hover:bg-base-300 rounded-full p-2 transition-colors duration-300',
+        ? 'btn btn-circle btn-sm btn-ghost cursor-pointer'
+        : 'hover:bg-base-300 rounded-full p-2 transition-colors duration-300 cursor-pointer',
     [variant],
   );
 

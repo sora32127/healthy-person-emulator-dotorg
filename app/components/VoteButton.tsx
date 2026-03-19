@@ -23,7 +23,7 @@ export function VoteButton({
           isAnimating
             ? 'animate-voteSpin bg-base-300'
             : isVoted
-              ? `text-${type === 'like' ? 'blue' : 'red'}-500 font-bold bg-base-300`
+              ? `${type === 'like' ? 'text-secondary' : 'text-error'} font-bold bg-base-300`
               : 'bg-base-300 hover:bg-base-200'
         }`}
         disabled={disabled}

@@ -19,7 +19,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
     <div className="flex justify-center items-center space-x-4">
       <button
         type="button"
-        className="bg-black flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-black hover:bg-black/80 flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200 cursor-pointer"
       >
         <a
           href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
@@ -28,7 +28,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
           <img src={XLogo} alt="X" width="20" height="20" />
         </a>
       </button>
-      <button type="button">
+      <button type="button" className="cursor-pointer">
         <a href={`https://b.hatena.ne.jp/entry/s/${hatenaBlogUrl}`}>
           <img
             src="https://b.st-hatena.com/images/v4/public/entry-button/button-only@2x.png"
@@ -40,7 +40,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
       </button>
       <button
         type="button"
-        className="bg-violet-800 flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-violet-800 hover:bg-violet-700 flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200 cursor-pointer"
       >
         <a
           href={`https://donshare.net/share.html?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
@@ -51,7 +51,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
       </button>
       <button
         type="button"
-        className="bg-green-200 flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-green-200 hover:bg-green-300 flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200 cursor-pointer"
       >
         <a
           href={`https://misskeyshare.link/share.html?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
