@@ -29,6 +29,16 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install
       - run: pnpm build
+      - name: Seed migration state for already-applied changes
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: '4'
+          command: >-
+            d1 execute healthy-person-emulator-db-preview --remote
+            --config wrangler.preview.toml
+            --command "INSERT INTO d1_migrations (name) SELECT '0002_add_sns_columns.sql' WHERE (SELECT count(*) FROM pragma_table_info('dim_posts') WHERE name='is_sns_pickuped') > 0 AND NOT EXISTS (SELECT 1 FROM d1_migrations WHERE name='0002_add_sns_columns.sql');"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
