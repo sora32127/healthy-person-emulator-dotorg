@@ -2,11 +2,7 @@ import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
   test: {
-    env: {
-      VITE_GOOGLE_GENERATIVE_API_KEY:
-        process.env.VITE_GOOGLE_GENERATIVE_API_KEY || 'google-generative-api-demo-key',
-    },
-    exclude: ['tests', 'node_modules', 'app/tests'],
+    exclude: ['tests', 'node_modules', 'app/tests', '.agent/**', '.codex/**', '.claude/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json'],

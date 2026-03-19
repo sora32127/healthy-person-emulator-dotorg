@@ -6,7 +6,7 @@ describe('security.server', () => {
     initSecurity({
       CF_TURNSTILE_SECRET_KEY: 'test',
       CF_TURNSTILE_SITEKEY: 'test',
-      GOOGLE_GENERATIVE_API_KEY: 'google-generative-api-demo-key',
+      AI: undefined as unknown as Ai,
     });
   });
 
