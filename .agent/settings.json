@@ -5,6 +5,31 @@
     "ui-ux-pro-max@ui-ux-pro-max-skill": true
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start-branch.sh",
+            "timeout": 30,
+            "statusMessage": "mainを最新化してブランチを作成中..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-plan-files.sh",
+            "timeout": 10,
+            "statusMessage": "プランファイルの確認中..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
