@@ -19,7 +19,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
     <div className="flex justify-center items-center space-x-4">
       <button
         type="button"
-        className="bg-black flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-base-300 hover:bg-black flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200"
       >
         <a
           href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
@@ -40,7 +40,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
       </button>
       <button
         type="button"
-        className="bg-violet-800 flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-base-300 hover:bg-violet-800 flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200"
       >
         <a
           href={`https://donshare.net/share.html?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
@@ -51,7 +51,7 @@ export default function PostShareButtonGroup({ currentURL, postTitle }: ShareBut
       </button>
       <button
         type="button"
-        className="bg-green-200 flex items-center justify-center space-x-2 px-4 py-2 rounded-full"
+        className="bg-base-300 hover:bg-green-200 flex items-center justify-center space-x-2 px-4 py-2 rounded-full transition-colors duration-200"
       >
         <a
           href={`https://misskeyshare.link/share.html?text=${encodeURIComponent(socialShareText)}&url=${encodeURIComponent(currentURL)}`}
