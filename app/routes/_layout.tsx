@@ -14,7 +14,6 @@ import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { Modal } from '~/components/Modal';
 import GoogleLoginButton from '~/components/GoogleAuthButton';
 import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from '~/stores/loginmodal';
-import toast, { Toaster } from 'react-hot-toast';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userObject = await getAuthenticatedUser(request);
@@ -266,15 +265,22 @@ export default function Component() {
   const location = useLocation();
   const isInPostPage = location.pathname === '/post';
 
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   useEffect(() => {
     if (location.search === '?loginSuccess=true') {
-      toast.success('ログインしました', { id: 'loginSuccess' });
+      setShowLoginSuccess(true);
+      const timer = setTimeout(() => setShowLoginSuccess(false), 3000);
+      return () => clearTimeout(timer);
     }
   }, [location.search]);
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Toaster />
+      {showLoginSuccess && (
+        <div className="alert alert-success fixed top-4 left-1/2 -translate-x-1/2 z-50 w-auto shadow-lg">
+          <span>ログインしました</span>
+        </div>
+      )}
       <div className="hidden md:block">{renderDesktopHeader()}</div>
       <div className="block md:hidden">{renderMobileHeader(handleSearchModalOpen)}</div>
       <main
