@@ -1,0 +1,114 @@
+name = "healthy-person-emulator-dotorg-preview"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+main = "worker.ts"
+assets = { directory = "build/client" }
+
+[observability]
+enabled = true
+
+# プレビューではCron無効
+# [triggers]
+
+# --- Database ---
+[[d1_databases]]
+binding = "DB"
+database_name = "healthy-person-emulator-db-preview"
+database_id = "2a23f922-6a22-4fa2-8b39-7619e24d08f6"
+migrations_dir = "drizzle/migrations"
+
+# --- Storage ---
+[[r2_buckets]]
+binding = "STATIC_BUCKET"
+bucket_name = "healthy-person-emulator-static"
+
+# --- AI ---
+[ai]
+binding = "AI"
+
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "embeddings-index"
+
+# --- Queues ---
+[[queues.producers]]
+binding = "SOCIAL_POST_QUEUE"
+queue = "social-post-preview"
+
+[[queues.consumers]]
+queue = "social-post-preview"
+max_batch_size = 1
+max_retries = 3
+dead_letter_queue = "social-post-preview-dlq"
+
+# --- Secrets Store ---
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_CK"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_CK"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_CS"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_CS"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_AT"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_AT"
+
+[[secrets_store_secrets]]
+binding = "SS_TWITTER_ATS"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "TWITTER_ATS"
+
+[[secrets_store_secrets]]
+binding = "SS_BLUESKY_USER"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "BLUESKY_USER"
+
+[[secrets_store_secrets]]
+binding = "SS_BLUESKY_PASSWORD"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "BLUESKY_PASSWORD"
+
+[[secrets_store_secrets]]
+binding = "SS_MISSKEY_TOKEN"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "MISSKEY_TOKEN"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_ENDPOINT"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_ENDPOINT"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_ACCESS_KEY_ID"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_ACCESS_KEY_ID"
+
+[[secrets_store_secrets]]
+binding = "SS_R2_SECRET_ACCESS_KEY"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "R2_SECRET_ACCESS_KEY"
+
+[[secrets_store_secrets]]
+binding = "SS_AUTOMATION_DRY_RUN"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "AUTOMATION_DRY_RUN"
+
+# GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
+
+# --- Durable Objects ---
+# Container は Docker ビルドが必要なためプレビューでは無効化
+# Durable Object バインディングは Worker コード内で参照されるため残す
+[[durable_objects.bindings]]
+name = "AUTOMATION_CONTAINER"
+class_name = "AutomationContainer"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AutomationContainer"]
+
+[vars]
+BASE_URL = "https://preview.healthy-person-emulator.org"
