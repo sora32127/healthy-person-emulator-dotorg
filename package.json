@@ -4,17 +4,12 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "react-router build",
     "start": "wrangler dev --local",
     "deploy": "wrangler deploy",
     "typegen": "wrangler types",
     "lint": "vp lint",
     "format": "vp fmt --write .",
-    "seed": "tsx prisma/seed.ts",
-    "reset:db": "prisma migrate reset -f && prisma db push",
-    "typecheck": "react-router typegen && tsc",
-    "knip": "knip",
     "test": "vp test"
   },
   "dependencies": {

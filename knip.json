@@ -1,9 +1,0 @@
-{
-  "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreExportsUsedInFile": {
-    "interface": true,
-    "type": true
-  },
-  "ignore": ["app/routes.ts", "app/test/globalsetup.ts", "worker.ts", "container-worker.ts", "app/modules/automation.server.ts", "app/modules/d1-export.server.ts"],
-  "tags": ["-lintignore"]
-}
