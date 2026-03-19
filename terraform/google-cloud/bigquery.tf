@@ -9,7 +9,8 @@ resource "google_bigquery_dataset" "hpe_raw" {
   location      = var.gcp_region
 }
 
-# D1 テーブル一覧 (app/modules/d1-export.server.ts の TABLES と一致)
+# D1 テーブル一覧 (app/modules/gcs-export.server.ts の TABLES と一致)
+# GCS に Parquet ファイルが存在するテーブルのみ (0行のテーブルはスキップされる)
 locals {
   d1_tables = [
     "dim_tags",
@@ -21,8 +22,6 @@ locals {
     "fct_post_vote_history",
     "fct_comment_vote_history",
     "fct_post_edit_history",
-    "fct_aicompletion_suggestion_history",
-    "fct_aicompletion_commit_history",
     "fct_user_bookmark_activity",
     "now_editing_pages",
     "social_post_jobs",
