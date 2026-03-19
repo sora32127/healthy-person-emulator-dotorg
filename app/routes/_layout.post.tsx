@@ -6,44 +6,26 @@ import { Form, useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { data } from 'react-router';
 import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ClearFormButton from '~/components/SubmitFormComponents/ClearFormButton';
-import { H1, H3 } from '~/components/Headings';
+import { H3 } from '~/components/Headings';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
-import {
-  getStopWords,
-  getTagsCounts,
-  updatePostWelcomed,
-  createPostWithTags,
-} from '~/modules/db.server';
+import { getStopWords, getTagsCounts } from '~/modules/db.server';
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
-import { Modal } from '~/components/Modal';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
-import { createEmbedding } from '~/modules/embedding.server';
-import { FaCopy } from 'react-icons/fa';
 import { NodeHtmlMarkdown } from 'node-html-markdown';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
-import { toast, Toaster } from 'react-hot-toast';
 import { createPostFormSchema } from '~/schemas/post.schema';
-import {
-  getHashedUserIPAddress,
-  getJudgeWelcomedByGenerativeAI,
-  getTurnStileSiteKey,
-  validateRequest,
-} from '~/modules/security.server';
-import { commitSession, getSession, isUserValid } from '~/modules/session.server';
-import { Turnstile } from '@marsidev/react-turnstile';
-import { MakeToastMessage } from '~/utils/makeToastMessage';
+import ErrorSummary from '~/components/SubmitFormComponents/ErrorSummary';
+import FormProgressBar from '~/components/SubmitFormComponents/FormProgressBar';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const tags = await getTagsCounts();
   const stopWords = await getStopWords();
-  const isValid = await isUserValid(request);
-  const turnStileSiteKey = await getTurnStileSiteKey();
-  return { tags, stopWords, isValid, turnStileSiteKey };
+  return { tags, stopWords };
 }
 
 export default function App() {
-  const { tags, stopWords, turnStileSiteKey } = useLoaderData<typeof loader>();
+  const { tags, stopWords } = useLoaderData<typeof loader>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [createdTags, setCreatedTags] = useState<string[]>([]);
 
@@ -137,35 +119,19 @@ export default function App() {
 
   const postCategory = methods.watch('postCategory');
 
-  const turnstileFetcher = useFetcher();
-  const handleTurnStileSuccess = (token: string) => {
-    const formData = new FormData();
-    formData.append('token', token);
-    formData.append('_action', 'validateTurnstile');
-    turnstileFetcher.submit(formData, { method: 'post', action: '/post' });
-  };
-
-  useEffect(() => {
-    const response = turnstileFetcher.data as { success: boolean };
-    if (response?.success === false) {
-      toast.error('リクエスト検証に失敗しました。時間をおいて再度お試しください。');
-    }
-    if (response?.success === true) {
-      setIsFirstSubmitButtonOpen(true);
-    }
-  }, [turnstileFetcher.data]);
-
   const firstSubmitFetcher = useFetcher();
-  const handleFirstSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
+  const handleFirstSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const inputValues = methods.getValues();
-    const zodErrors = postFormSchema.safeParse(inputValues);
-    if (!zodErrors.success) {
-      const toastValidationMessage = MakeToastMessage(zodErrors.error.issues);
-      toast.error(toastValidationMessage);
+    setPreviewError(null);
+
+    const isValid = await methods.trigger();
+    if (!isValid) {
       return;
     }
 
+    const inputValues = methods.getValues();
     const formData = new FormData();
     formData.append('_action', 'firstSubmit');
     for (const [key, value] of Object.entries(inputValues)) {
@@ -177,94 +143,34 @@ export default function App() {
     });
   };
 
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(false);
-
-  useEffect(() => {
-    const response = firstSubmitFetcher.data as { success: boolean };
-    if (response?.success) {
-      setIsPreviewModalOpen(true);
-    }
-    if (response?.success === false) {
-      toast.error('プレビューを取得できませんでした。時間をおいて再度試してください。');
-    }
-  }, [firstSubmitFetcher.data]);
-
-  useEffect(() => {
-    if (firstSubmitFetcher.state === 'submitting') {
-      toast.loading('プレビューを取得しています');
-    }
-    if (firstSubmitFetcher.state === 'submitting') {
-      setIsFirstSubmitButtonOpen(false);
-    }
-    if (firstSubmitFetcher.state === 'loading') {
-      setIsFirstSubmitButtonOpen(true);
-      toast.dismiss(); // ローディング中のトーストを消す
-    }
-  }, [firstSubmitFetcher.state]);
-
-  const handleCopy = () => {
-    const response = firstSubmitFetcher.data as {
-      data: {
-        data: {
-          MarkdownResult: string;
-        };
-      };
-    };
-    try {
-      navigator.clipboard.writeText(response?.data?.data?.MarkdownResult);
-      toast.success('クリップボードにコピーしました。');
-    } catch (error) {
-      toast.error('クリップボードにコピーできませんでした。');
-    }
-  };
-
-  const secondSubmitFetcher = useFetcher();
-  const handleSecondSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('_action', 'secondSubmit');
-    for (const [key, value] of Object.entries(methods.getValues())) {
-      formData.append(key, JSON.stringify(value));
-    }
-    secondSubmitFetcher.submit(formData, { method: 'post', action: '/post' });
-  };
-  const [isSecondSubmitButtonOpen, setIsSecondSubmitButtonOpen] = useState(true);
-
-  useEffect(() => {
-    if (secondSubmitFetcher.state === 'submitting') {
-      setIsSecondSubmitButtonOpen(false);
-      toast.loading('投稿中です...');
-    }
-    if (
-      secondSubmitFetcher.state === 'loading' &&
-      (secondSubmitFetcher.data as { success: boolean })?.success === true
-    ) {
-      toast.dismiss();
-    }
-  }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
-
   const navigate = useNavigate();
   useEffect(() => {
-    const response = secondSubmitFetcher.data as {
+    const response = firstSubmitFetcher.data as {
       success: boolean;
-      data: { postId: number };
+      data?: {
+        data: { WikifiedResult: string; MarkdownResult: string };
+        title: string;
+        tags: string[];
+      };
     };
-    if (response?.success === true && secondSubmitFetcher.state === 'idle') {
-      handleClearForm();
-      toast.success('投稿しました。リダイレクトします...', {
-        icon: '🎉',
-        id: 'post-success-toast',
-      });
-      setTimeout(() => {
-        const postId = response?.data?.postId;
-        navigate(`/archives/${postId}`, { viewTransition: true });
-      }, 2000);
+    if (response?.success) {
+      sessionStorage.setItem(
+        'previewData',
+        JSON.stringify({
+          wikifiedHtml: response.data?.data.WikifiedResult,
+          markdownResult: response.data?.data.MarkdownResult,
+          title: response.data?.title,
+          tags: response.data?.tags,
+          formValues: methods.getValues(),
+        }),
+      );
+      window.localStorage.setItem(formId, JSON.stringify(methods.getValues()));
+      navigate('/post/preview');
     }
-    return () => {
-      toast.dismiss('post-success-toast');
-    };
-  }, [secondSubmitFetcher.data, navigate, secondSubmitFetcher.state]);
+    if (response?.success === false) {
+      setPreviewError('プレビューを取得できませんでした。時間をおいて再度試してください。');
+    }
+  }, [firstSubmitFetcher.data]);
 
   const handleClearForm = () => {
     window.localStorage.removeItem(formId);
@@ -298,7 +204,7 @@ export default function App() {
     <>
       <div className="templateSubmitForm">
         <FormProvider {...methods}>
-          <Toaster />
+          <FormProgressBar />
           <Form method="post">
             <UserExplanation />
             <br />
@@ -306,79 +212,95 @@ export default function App() {
               <ClearFormButton clearInputs={handleClearForm} />
             </div>
             <br />
-            <TextTypeSwitcher />
-            <SituationInput />
-            <DynamicTextInput
-              description="書ききれなかった前提条件はありますか？"
-              key="situations.assumption"
-            />
+            <div id="section-post-type">
+              <TextTypeSwitcher />
+            </div>
+            <div id="section-situation">
+              <SituationInput />
+              <DynamicTextInput
+                description="書ききれなかった前提条件はありますか？"
+                key="situations.assumption"
+              />
+            </div>
 
             {postCategory === 'misDeed' ? (
               <>
-                <StaticTextInput
-                  rowNumber={3}
-                  title="健常行動ブレイクポイント"
-                  placeholders={[
-                    '友人の言動は冗談だという事に気が付く必要があった',
-                    '会話の中で自分がされた時に困るようなフリは避けるべきである',
-                  ]}
-                  description="上で記述した状況がどのような点でアウトだったのかの説明です。 できる範囲で構わないので、なるべく理由は深堀りしてください。 「マナーだから」は理由としては認められません。 健常者エミュレータはマナー講師ではありません。一つずつ追加してください。3つ記入する必要はありません。"
-                  registerKey="reflection"
-                />
-                <StaticTextInput
-                  rowNumber={3}
-                  title="どうすればよかったか"
-                  placeholders={[
-                    '冗談に対してただ笑うべきだった',
-                    '詠ませた後もその句を大げさに褒めるなどして微妙な空気にさせないべきだった',
-                  ]}
-                  description="5W1H状説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
-                  registerKey="counterReflection"
-                />
+                <div id="section-reality-check">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="健常行動ブレイクポイント"
+                    placeholders={[
+                      '友人の言動は冗談だという事に気が付く必要があった',
+                      '会話の中で自分がされた時に困るようなフリは避けるべきである',
+                    ]}
+                    description="上で記述した状況がどのような点でアウトだったのかの説明です。 できる範囲で構わないので、なるべく理由は深堀りしてください。 「マナーだから」は理由としては認められません。 健常者エミュレータはマナー講師ではありません。一つずつ追加してください。3つ記入する必要はありません。"
+                    registerKey="reflection"
+                  />
+                </div>
+                <div id="section-counterfactual">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="どうすればよかったか"
+                    placeholders={[
+                      '冗談に対してただ笑うべきだった',
+                      '詠ませた後もその句を大げさに褒めるなどして微妙な空気にさせないべきだった',
+                    ]}
+                    description="5W1H状説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
+                    registerKey="counterReflection"
+                  />
+                </div>
               </>
             ) : postCategory === 'goodDeed' ? (
               <>
-                <StaticTextInput
-                  rowNumber={3}
-                  title="なぜやってよかったのか"
-                  placeholders={[
-                    '一般的に料理とは手間のかかる作業であり、相手がかけてくれた手間に対して何らかの形で報いること、もしくは報いる意思を示すことは相手に対して敬意を表していることと等しい。',
-                    '敬意はコミュニケーションに対して良い作用をもたらす',
-                  ]}
-                  description="上で記述した行動がなぜやってよかったのか、理由を説明します。できる範囲で構わないので、なるべく理由は深堀りしてください。なんとなくただ「よかった」は理由としては認められません。一つずつ追加してください。3つ記入する必要はありません。"
-                  registerKey="reflection"
-                />
-                <StaticTextInput
-                  rowNumber={3}
-                  title="やらなかったらどうなっていたか"
-                  placeholders={[
-                    '相手がかけた手間に対して敬意をわないことは相手を無下に扱っていることと等しい。',
-                    '関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない',
-                  ]}
-                  description="仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構わない。"
-                  registerKey="counterReflection"
-                />
+                <div id="section-reality-check">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="なぜやってよかったのか"
+                    placeholders={[
+                      '一般的に料理とは手間のかかる作業であり、相手がかけてくれた手間に対して何らかの形で報いること、もしくは報いる意思を示すことは相手に対して敬意を表していることと等しい。',
+                      '敬意はコミュニケーションに対して良い作用をもたらす',
+                    ]}
+                    description="上で記述した行動がなぜやってよかったのか、理由を説明します。できる範囲で構わないので、なるべく理由は深堀りしてください。なんとなくただ「よかった」は理由としては認められません。一つずつ追加してください。3つ記入する必要はありません。"
+                    registerKey="reflection"
+                  />
+                </div>
+                <div id="section-counterfactual">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="やらなかったらどうなっていたか"
+                    placeholders={[
+                      '相手がかけた手間に対して敬意をわないことは相手を無下に扱っていることと等しい。',
+                      '関係が改善されることはなく、状況が悪ければ破局に至っていたかもしれない',
+                    ]}
+                    description="仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構わない。"
+                    registerKey="counterReflection"
+                  />
+                </div>
               </>
             ) : postCategory === 'wanted' ? (
               <>
-                <StaticTextInput
-                  rowNumber={3}
-                  title="試したこと"
-                  placeholders={[
-                    '趣味の話をしたことがあるが、筆者の趣味はかなりマイナー趣味であり、反応が何もなかった',
-                  ]}
-                  description="考えたり実行したり、試してみたことを説明します。できる範囲で記述して下さい。"
-                  registerKey="reflection"
-                />
-                <StaticTextInput
-                  rowNumber={3}
-                  title="まだやってないこと"
-                  placeholders={[
-                    '天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした',
-                  ]}
-                  description="解決策として考えたが、まだ実行していない考えを記述してください。ない場合は「ない」と明記してください。"
-                  registerKey="counterReflection"
-                />
+                <div id="section-reality-check">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="試したこと"
+                    placeholders={[
+                      '趣味の話をしたことがあるが、筆者の趣味はかなりマイナー趣味であり、反応が何もなかった',
+                    ]}
+                    description="考えたり実行したり、試してみたことを説明します。できる範囲で記述して下さい。"
+                    registerKey="reflection"
+                  />
+                </div>
+                <div id="section-counterfactual">
+                  <StaticTextInput
+                    rowNumber={3}
+                    title="まだやってないこと"
+                    placeholders={[
+                      '天気の話題を話そうかと思ったが、自己紹介の時に話すのは違う気がした',
+                    ]}
+                    description="解決策として考えたが、まだ実行していない考えを記述してください。ない場合は「ない」と明記してください。"
+                    registerKey="counterReflection"
+                  />
+                </div>
               </>
             ) : null}
             <StaticTextInput
@@ -392,77 +314,42 @@ export default function App() {
               }
               registerKey="note"
             />
-            <TagSelectionBox
-              allTagsOnlyForSearch={tags}
-              onTagsSelected={handleTagSelection}
-              parentComponentStateValues={selectedTags}
-            />
-            <TagCreateBox
-              handleTagCreated={handleTagCreated}
-              handleTagRemoved={handleTagRemoved}
-              parentComponentStateValues={createdTags}
-            />
-            <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags} />
-            <StaticTextInput
-              rowNumber={1}
-              title="タイトル"
-              description="タイトルを入力してください"
-              placeholders={['タイトル']}
-              registerKey="title"
-            />
-            <div className="flex justify-end">
-              <div className="flex flex-col items-center gap-1 p-2">
-                <Turnstile siteKey={turnStileSiteKey} onSuccess={handleTurnStileSuccess} />
-                <button
-                  type="submit"
-                  className="btn btn-primary disabled:btn-disabled"
-                  onClick={handleFirstSubmit}
-                  disabled={!isFirstSubmitButtonOpen}
-                >
-                  投稿する
-                </button>
+            <div id="section-tags">
+              <TagSelectionBox
+                allTagsOnlyForSearch={tags}
+                onTagsSelected={handleTagSelection}
+                parentComponentStateValues={selectedTags}
+              />
+              <TagCreateBox
+                handleTagCreated={handleTagCreated}
+                handleTagRemoved={handleTagRemoved}
+                parentComponentStateValues={createdTags}
+              />
+              <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags} />
+            </div>
+            <div id="section-title">
+              <StaticTextInput
+                rowNumber={1}
+                title="タイトル"
+                description="タイトルを入力してください"
+                placeholders={['タイトル']}
+                registerKey="title"
+              />
+            </div>
+            <ErrorSummary />
+            {previewError && (
+              <div className="alert alert-error mb-6">
+                <p>{previewError}</p>
               </div>
-              <Modal
-                isOpen={isPreviewModalOpen}
-                onClose={() => setIsPreviewModalOpen(false)}
-                title="投稿する内容を確認してください。"
-                showCloseButton={false}
+            )}
+            <div className="flex justify-center py-6">
+              <button
+                type="submit"
+                className="btn btn-primary btn-wide"
+                onClick={handleFirstSubmit}
               >
-                <div className="postContent previewContainer">
-                  <H1>{(firstSubmitFetcher?.data as { data: { title: string } })?.data?.title}</H1>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: (
-                        firstSubmitFetcher?.data as {
-                          data: { data: { WikifiedResult: string } };
-                        }
-                      )?.data?.data?.WikifiedResult,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setIsPreviewModalOpen(false)}
-                    className="btn btn-secondary"
-                  >
-                    修正する
-                  </button>
-                  <div className="flex flex-row items-center gap-1 p-2">
-                    <button type="button" onClick={handleCopy} className="btn btn-circle">
-                      <FaCopy />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSecondSubmit}
-                    className="btn btn-primary disabled:btn-disabled"
-                    disabled={!isSecondSubmitButtonOpen}
-                  >
-                    投稿する
-                  </button>
-                </div>
-              </Modal>
+                入力内容を確認する
+              </button>
             </div>
           </Form>
         </FormProvider>
@@ -664,7 +551,7 @@ function SituationInput() {
   return (
     <div className="mb-8">
       <H3>5W1H+Then状況説明</H3>
-      {placeholder.map((data, index) => {
+      {placeholder.map((data) => {
         return (
           <div key={data.key} className="mb-4">
             <label htmlFor={data.key} className="block font-bold mb-2">
@@ -767,7 +654,7 @@ function StaticTextInput({
             placeholder={placeholders[i]}
             {...register(`${registerKey}.${i}`)}
           />
-          {errors[registerKey] && (
+          {i === 0 && errors[registerKey] && (
             <ErrorMessageContainer errormessage={errors[registerKey]?.root?.message as string} />
           )}
         </div>,
@@ -787,7 +674,7 @@ function StaticTextInput({
 function ErrorMessageContainer({ errormessage }: { errormessage: string }) {
   return (
     <div>
-      <p className="text-error">[!] {errormessage}</p>
+      <p className="text-error">* {errormessage}</p>
     </div>
   );
 }
@@ -795,64 +682,25 @@ function ErrorMessageContainer({ errormessage }: { errormessage: string }) {
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const actionType = formData.get('_action');
-  const turnstileToken = formData.get('token');
-
-  if (actionType === 'validateTurnstile') {
-    console.log('validateTurnstile has been called');
-    const ipAddress = await getHashedUserIPAddress(request);
-    const isValidatedByTurnstile = await validateRequest(turnstileToken as string, ipAddress);
-    console.log('isValidatedByTurnstile', isValidatedByTurnstile);
-    if (!isValidatedByTurnstile) {
-      return data(
-        {
-          success: false,
-          error: 'リクエストの検証に失敗しました。再度お試しください。',
-        },
-        { status: 400 },
-      );
-    }
-    const session = await getSession(request.headers.get('Cookie'));
-    session.set('isValidUser', true);
-    return data(
-      {
-        success: true,
-      },
-      {
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      },
-    );
-  }
-
-  const postData = Object.fromEntries(formData);
-  const stopWords = await getStopWords();
-  const postFormSchema = createPostFormSchema(stopWords);
-  type Inputs = z.infer<typeof postFormSchema>;
-
-  const parsedData = {
-    ...postData,
-    postCategory: JSON.parse(postData.postCategory as string),
-    situations: JSON.parse(postData.situations as string),
-    reflection: JSON.parse(postData.reflection as string),
-    counterReflection: JSON.parse(postData.counterReflection as string),
-    note: JSON.parse(postData.note as string),
-    selectedTags: JSON.parse((postData.selectedTags as string) || '[]'),
-    createdTags: JSON.parse((postData.createdTags as string) || '[]'),
-    title: JSON.parse(postData.title as string),
-  } as unknown as Inputs;
-  const isValidUser = await isUserValid(request);
-  if (!isValidUser) {
-    return data(
-      {
-        success: false,
-        error: 'リクエスト検証に失敗しました。時間をおいて再度お試しください。',
-      },
-      { status: 400 },
-    );
-  }
 
   if (actionType === 'firstSubmit') {
+    const postData = Object.fromEntries(formData);
+    const stopWords = await getStopWords();
+    const postFormSchema = createPostFormSchema(stopWords);
+    type Inputs = z.infer<typeof postFormSchema>;
+
+    const parsedData = {
+      ...postData,
+      postCategory: JSON.parse(postData.postCategory as string),
+      situations: JSON.parse(postData.situations as string),
+      reflection: JSON.parse(postData.reflection as string),
+      counterReflection: JSON.parse(postData.counterReflection as string),
+      note: JSON.parse(postData.note as string),
+      selectedTags: JSON.parse((postData.selectedTags as string) || '[]'),
+      createdTags: JSON.parse((postData.createdTags as string) || '[]'),
+      title: JSON.parse(postData.title as string),
+    } as unknown as Inputs;
+
     try {
       const html = await Wikify(parsedData, postFormSchema);
       return data({
@@ -864,7 +712,7 @@ export async function action({ request }: ActionFunctionArgs) {
         },
         error: undefined,
       });
-    } catch (error) {
+    } catch {
       return data({
         success: false,
         data: undefined,
@@ -872,66 +720,12 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
   }
-
-  if (actionType === 'secondSubmit') {
-    const html = await Wikify(parsedData, postFormSchema);
-    const isSuccess = html.data.success;
-    const wikifyResult = html.data?.data?.WikifiedResult;
-    const postTitle = parsedData.title[0];
-    const createdTags = parsedData.createdTags;
-    const selectedTags = parsedData.selectedTags;
-    if (!wikifyResult) {
-      return data({ success: false, error: 'Wikify failed', data: undefined });
-    }
-
-    if (isSuccess) {
-      const hashedUserIpAddress = await getHashedUserIPAddress(request);
-      if (html.data === undefined) {
-        return data(
-          {
-            success: false,
-            error: 'Wikify failed',
-            data: undefined,
-          },
-          { status: 400 },
-        );
-      }
-      const newPost = await createPostWithTags({
-        postContent: wikifyResult,
-        postTitle,
-        hashedUserIpAddress,
-        selectedTags,
-        createdTags,
-      });
-
-      await createEmbedding({
-        postId: Number(newPost.postId),
-        postContent: newPost.postContent,
-        postTitle: newPost.postTitle,
-      });
-
-      const { isWelcomed, explanation } = await getJudgeWelcomedByGenerativeAI(
-        wikifyResult,
-        postTitle,
-      );
-      await updatePostWelcomed(Number(newPost.postId), isWelcomed, explanation);
-
-      return data({
-        success: true,
-        error: undefined,
-        data: { postId: newPost.postId },
-      });
-    }
-
-    return data({ success: false, error: 'Wikify failed', data: undefined }, { status: 400 });
-  }
 }
 
 async function Wikify(
   postData: z.infer<ReturnType<typeof createPostFormSchema>>,
   postFormSchema: ReturnType<typeof createPostFormSchema>,
 ) {
-  // バリデーションを実施
   const validationResult = postFormSchema.safeParse(postData);
   if (!validationResult.success) {
     return data(

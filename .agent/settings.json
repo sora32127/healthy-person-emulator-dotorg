@@ -1,0 +1,44 @@
+{
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-diff-size.sh",
+            "timeout": 10,
+            "statusMessage": "変更行数チェック中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/lint-and-format.sh",
+            "timeout": 30,
+            "statusMessage": "format 実行中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/terraform-fmt.sh",
+            "timeout": 30,
+            "statusMessage": "terraform fmt 実行中..."
+          }
+        ]
+      }
+    ]
+  }
+}

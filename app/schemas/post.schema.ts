@@ -7,49 +7,28 @@ export const createPostFormSchema = (stopWords: string[]) => {
   return z.object({
     postCategory: z.enum(['misDeed', 'goodDeed', 'wanted']),
     situations: z.object({
-      who: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「誰が」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
-      what: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「何を」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
-      when: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「いつ」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
-      where: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「どこで」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
-      why: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「なぜ」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
-      how: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「どうやって」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
+      who: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
+      what: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
+      when: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
+      where: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
+      why: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
+      how: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
       // eslint-disable-next-line unicorn/no-thenable
-      then: z
-        .string()
-        .min(1, { message: '5W1H+Then状況説明>「どうなったか」は必須です' })
-        .refine(checkStopWords, {
-          message: '利用できない単語が含まれています',
-        }),
+      then: z.string().min(1, { message: '入力してください' }).refine(checkStopWords, {
+        message: '利用できない単語が含まれています',
+      }),
       assumption: z
         .array(z.string())
         .optional()
@@ -61,8 +40,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
       if (value.every((v) => v.length < 1)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            '「健常行動ブレイクポイント」もしくは「なぜやってよかったのか」もしくは「試したこと」は最低一つ入力してください',
+          message: '最低一つ入力してください',
         });
       }
       if (value.some((v) => !checkStopWords(v))) {
@@ -77,8 +55,7 @@ export const createPostFormSchema = (stopWords: string[]) => {
       if (value.every((v) => v.length < 1)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            '「どうすればよかったか」もしくは「やらなかったらどうなっていたか」もしくは「まだやっていないこと」は最低一つ入力してください',
+          message: '最低一つ入力してください',
         });
       }
       if (value.some((v) => !checkStopWords(v))) {
