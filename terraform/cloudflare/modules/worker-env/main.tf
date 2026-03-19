@@ -1,15 +1,10 @@
-# =============================================================================
-# Workers Script
-# =============================================================================
-
-resource "cloudflare_workers_script" "main" {
-  account_id          = var.cloudflare_account_id
-  script_name         = "healthy-person-emulator-dotorg"
+resource "cloudflare_workers_script" "worker" {
+  account_id          = var.account_id
+  script_name         = var.worker_name
   main_module         = "worker.js"
   compatibility_date  = "2025-04-01"
   compatibility_flags = ["nodejs_compat"]
 
-  # Assets
   assets = {
     config = {
       html_handling      = "auto-trailing-slash"
@@ -17,7 +12,6 @@ resource "cloudflare_workers_script" "main" {
     }
   }
 
-  # Observability
   observability = {
     enabled = true
   }
@@ -40,13 +34,13 @@ resource "cloudflare_workers_script" "main" {
     {
       name = "BASE_URL"
       type = "plain_text"
-      text = "https://healthy-person-emulator.org"
+      text = var.base_url
     },
     # D1 Database
     {
       name = "DB"
       type = "d1"
-      id   = cloudflare_d1_database.main.id
+      id   = cloudflare_d1_database.db.id
     },
     {
       name = "GCS_PARQUET_BASE_URL"
@@ -57,86 +51,86 @@ resource "cloudflare_workers_script" "main" {
     {
       name        = "PARQUET_BUCKET"
       type        = "r2_bucket"
-      bucket_name = cloudflare_r2_bucket.parquet.name
+      bucket_name = var.r2_parquet_bucket_name
     },
     # Queue Producer
     {
       name       = "SOCIAL_POST_QUEUE"
       type       = "queue"
-      queue_name = cloudflare_queue.social_post.queue_name
+      queue_name = cloudflare_queue.main.queue_name
     },
     # Secrets Store (アルファベット順)
     {
       name        = "SS_AUTOMATION_DRY_RUN"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "AUTOMATION_DRY_RUN"
     },
     {
       name        = "SS_BLUESKY_PASSWORD"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "BLUESKY_PASSWORD"
     },
     {
       name        = "SS_BLUESKY_USER"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "BLUESKY_USER"
     },
     {
       name        = "SS_MISSKEY_TOKEN"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "MISSKEY_TOKEN"
     },
     {
       name        = "SS_R2_ACCESS_KEY_ID"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "R2_ACCESS_KEY_ID"
     },
     {
       name        = "SS_R2_ENDPOINT"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "R2_ENDPOINT"
     },
     {
       name        = "SS_R2_SECRET_ACCESS_KEY"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "R2_SECRET_ACCESS_KEY"
     },
     {
       name        = "SS_TWITTER_AT"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "TWITTER_AT"
     },
     {
       name        = "SS_TWITTER_ATS"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "TWITTER_ATS"
     },
     {
       name        = "SS_TWITTER_CK"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "TWITTER_CK"
     },
     {
       name        = "SS_TWITTER_CS"
       type        = "secrets_store_secret"
-      store_id    = "52f3d1be601046039169fad4f66570d1"
+      store_id    = var.secrets_store_id
       secret_name = "TWITTER_CS"
     },
     # GCS_CREDENTIALS は wrangler secret put で設定 (Secrets Store は RSA鍵に対してサイズ制限あり)
     {
       name        = "STATIC_BUCKET"
       type        = "r2_bucket"
-      bucket_name = cloudflare_r2_bucket.static.name
+      bucket_name = var.r2_static_bucket_name
     },
     # Vectorize
     {
@@ -153,37 +147,26 @@ resource "cloudflare_workers_script" "main" {
   }
 
   lifecycle {
-    # コードのデプロイは wrangler deploy で行うため、これらの変更は無視する
     # Workers Script のデプロイは wrangler deploy で行うため、全属性の変更を無視する
     # Terraform は state でリソースの存在を追跡するのみ
     ignore_changes = all
   }
 }
 
-# =============================================================================
-# Cron Triggers
-# =============================================================================
+# Cron Triggers（cron_schedules が空なら作成しない）
+resource "cloudflare_workers_cron_trigger" "cron" {
+  count       = length(var.cron_schedules) > 0 ? 1 : 0
+  account_id  = var.account_id
+  script_name = cloudflare_workers_script.worker.script_name
 
-resource "cloudflare_workers_cron_trigger" "main" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.main.script_name
-
-  schedules = [
-    { cron = "*/10 * * * *" }, # OGP生成 + ソーシャル投稿
-    { cron = "0 12 * * *" },   # 殿堂入り記事レポート
-    { cron = "0 12 * * 1" },   # 週間サマリーレポート
-    { cron = "0 16 * * *" },   # BigQuery ETLエクスポート
-  ]
+  schedules = var.cron_schedules
 }
 
-# =============================================================================
-# Workers Custom Domain
-# =============================================================================
-
-resource "cloudflare_workers_custom_domain" "main" {
-  account_id  = var.cloudflare_account_id
-  zone_id     = var.cloudflare_zone_id
-  hostname    = var.domain
-  service     = cloudflare_workers_script.main.script_name
+# Custom Domain
+resource "cloudflare_workers_custom_domain" "domain" {
+  account_id  = var.account_id
+  zone_id     = var.zone_id
+  hostname    = var.hostname
+  service     = cloudflare_workers_script.worker.script_name
   environment = "production"
 }

@@ -71,15 +71,7 @@ resource "cloudflare_dns_record" "admin_cname" {
   ttl     = 1
 }
 
-# --- CNAME: preview subdomain (Google Sites) ---
-resource "cloudflare_dns_record" "preview_cname" {
-  zone_id = var.cloudflare_zone_id
-  name    = "preview.${var.domain}"
-  type    = "CNAME"
-  content = "ghs.googlehosted.com"
-  proxied = true
-  ttl     = 1
-}
+# preview subdomain は Workers Custom Domain が DNS を自動管理するため削除
 
 # --- CNAME: static subdomain (R2 public bucket) ---
 resource "cloudflare_dns_record" "static_cname" {

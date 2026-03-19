@@ -8,6 +8,7 @@ resource "cloudflare_turnstile_widget" "main" {
   domains = [
     "healthy-person-emulator-dotorg.sora32127.workers.dev",
     var.domain,
+    "preview.${var.domain}",
   ]
   mode = "managed"
 }
