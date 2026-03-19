@@ -4,7 +4,7 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "vp build",
+    "build": "react-router build",
     "start:local": "npx wrangler dev --config wrangler.dev.toml --local",
     "start:remote": "npx wrangler dev --config wrangler.dev-remote.toml",
     "deploy": "npx wrangler deploy",
