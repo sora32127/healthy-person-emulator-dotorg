@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vp build",
     "start:local": "npx wrangler dev --config wrangler.dev.toml --local",
-    "start:remote": "npx wrangler dev --config wrangler.dev.toml --remote",
+    "start:remote": "npx wrangler dev --config wrangler.dev-remote.toml",
     "deploy": "npx wrangler deploy",
     "typegen": "npx wrangler types",
     "lint": "vp lint",
