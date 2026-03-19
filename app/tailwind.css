@@ -127,9 +127,6 @@ h1 {
 .markdownEditorPreview th {
   @apply bg-inherit text-left font-normal;
 }
-svg {
-  @apply fill-current;
-}
 
 .btn-primary {
   @apply bg-primary;
