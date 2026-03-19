@@ -12,7 +12,7 @@ export default function TagPreviewBox({ selectedTags, createdTags }: TagPreviewB
         {selectedTags.map((tag) => (
           <span
             key={tag}
-            className="inline-block bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2"
+            className="inline-block bg-secondary text-secondary-content rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2"
           >
             {tag}
           </span>
@@ -20,7 +20,7 @@ export default function TagPreviewBox({ selectedTags, createdTags }: TagPreviewB
         {createdTags.map((tag) => (
           <span
             key={tag}
-            className="inline-block bg-green-500 text-white rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2"
+            className="inline-block bg-success text-success-content rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2"
           >
             {tag}
           </span>

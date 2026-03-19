@@ -54,7 +54,7 @@ export default function TagCreateBox({
           {parentComponentStateValues.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-full cursor-pointer"
+              className="inline-flex items-center px-2 py-1 mr-2 mb-2 text-sm font-medium text-base-content bg-base-200 rounded-full cursor-pointer"
               onClick={() => handleTagRemoved(tag)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
