@@ -38,7 +38,7 @@ export default function FormProgressBar() {
   }, []);
 
   return (
-    <div className="hidden lg:block fixed right-8 top-1/3 z-10">
+    <div className="hidden 2xl:block fixed right-8 top-1/3 z-10">
       <ul className="steps steps-vertical text-sm">
         {sections.map((section, index) => (
           <li key={section.id} className={`step ${index <= activeIndex ? 'step-primary' : ''}`}>
