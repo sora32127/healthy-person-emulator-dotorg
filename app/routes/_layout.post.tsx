@@ -232,9 +232,9 @@ export default function App() {
               />
             </div>
 
-            <div id="section-reflection">
-              {postCategory === 'misDeed' ? (
-                <>
+            {postCategory === 'misDeed' ? (
+              <>
+                <div id="section-reality-check">
                   <StaticTextInput
                     rowNumber={3}
                     title="健常行動ブレイクポイント"
@@ -245,6 +245,8 @@ export default function App() {
                     description="上で記述した状況がどのような点でアウトだったのかの説明です。 できる範囲で構わないので、なるべく理由は深堀りしてください。 「マナーだから」は理由としては認められません。 健常者エミュレータはマナー講師ではありません。一つずつ追加してください。3つ記入する必要はありません。"
                     registerKey="reflection"
                   />
+                </div>
+                <div id="section-counterfactual">
                   <StaticTextInput
                     rowNumber={3}
                     title="どうすればよかったか"
@@ -255,9 +257,11 @@ export default function App() {
                     description="5W1H状説明、健常行動ブレイクポイントを踏まえ、どのようにするべきだったかを提示します。"
                     registerKey="counterReflection"
                   />
-                </>
-              ) : postCategory === 'goodDeed' ? (
-                <>
+                </div>
+              </>
+            ) : postCategory === 'goodDeed' ? (
+              <>
+                <div id="section-reality-check">
                   <StaticTextInput
                     rowNumber={3}
                     title="なぜやってよかったのか"
@@ -268,6 +272,8 @@ export default function App() {
                     description="上で記述した行動がなぜやってよかったのか、理由を説明します。できる範囲で構わないので、なるべく理由は深堀りしてください。なんとなくただ「よかった」は理由としては認められません。一つずつ追加してください。3つ記入する必要はありません。"
                     registerKey="reflection"
                   />
+                </div>
+                <div id="section-counterfactual">
                   <StaticTextInput
                     rowNumber={3}
                     title="やらなかったらどうなっていたか"
@@ -278,9 +284,11 @@ export default function App() {
                     description="仮に上で記述した行動を実行しなかった場合、どのような不利益が起こりうるか記述してください。推論の範囲内で構わない。"
                     registerKey="counterReflection"
                   />
-                </>
-              ) : postCategory === 'wanted' ? (
-                <>
+                </div>
+              </>
+            ) : postCategory === 'wanted' ? (
+              <>
+                <div id="section-reality-check">
                   <StaticTextInput
                     rowNumber={3}
                     title="試したこと"
@@ -290,6 +298,8 @@ export default function App() {
                     description="考えたり実行したり、試してみたことを説明します。できる範囲で記述して下さい。"
                     registerKey="reflection"
                   />
+                </div>
+                <div id="section-counterfactual">
                   <StaticTextInput
                     rowNumber={3}
                     title="まだやってないこと"
@@ -299,21 +309,21 @@ export default function App() {
                     description="解決策として考えたが、まだ実行していない考えを記述してください。ない場合は「ない」と明記してください。"
                     registerKey="counterReflection"
                   />
-                </>
-              ) : null}
-              <StaticTextInput
-                rowNumber={3}
-                title="備考"
-                description="書ききれなかったことを書きます"
-                placeholders={
-                  postCategory === 'misDeed'
-                    ? ['友人が詠んだ句は「ため池や 水がいっぱい きれいだね」だった']
-                    : ['舌が過度に肥えてしまい、コンビニ弁当が食べられなくなった。']
-                }
-                registerKey="note"
-              />
-            </div>
-            <div id="section-tags-title">
+                </div>
+              </>
+            ) : null}
+            <StaticTextInput
+              rowNumber={3}
+              title="備考"
+              description="書ききれなかったことを書きます"
+              placeholders={
+                postCategory === 'misDeed'
+                  ? ['友人が詠んだ句は「ため池や 水がいっぱい きれいだね」だった']
+                  : ['舌が過度に肥えてしまい、コンビニ弁当が食べられなくなった。']
+              }
+              registerKey="note"
+            />
+            <div id="section-tags">
               <TagSelectionBox
                 allTagsOnlyForSearch={tags}
                 onTagsSelected={handleTagSelection}
@@ -325,6 +335,8 @@ export default function App() {
                 parentComponentStateValues={createdTags}
               />
               <TagPreviewBox selectedTags={selectedTags} createdTags={createdTags} />
+            </div>
+            <div id="section-title">
               <StaticTextInput
                 rowNumber={1}
                 title="タイトル"

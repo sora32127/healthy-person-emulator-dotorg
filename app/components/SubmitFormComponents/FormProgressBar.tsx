@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 const sections = [
   { id: 'section-post-type', label: '投稿タイプ' },
   { id: 'section-situation', label: '状況説明' },
-  { id: 'section-reflection', label: 'ブレイクポイント等' },
-  { id: 'section-tags-title', label: 'タグ・タイトル' },
+  { id: 'section-reality-check', label: '現実直視' },
+  { id: 'section-counterfactual', label: '反実仮想' },
+  { id: 'section-tags', label: 'タグ選択' },
+  { id: 'section-title', label: 'タイトル' },
 ];
 
 export default function FormProgressBar() {
