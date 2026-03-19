@@ -23,7 +23,11 @@
   color-scheme: dark;
   --color-primary: #99D9EA;
   --color-secondary: #264AF4;
+  --color-info: #38BDF8;
+  --color-error: #F87171;
   --color-base-100: #0F0F0F;
+  --color-base-200: #1A1A1A;
+  --color-base-300: #262626;
 }
 
 @font-face {
@@ -49,13 +53,13 @@
 
   @keyframes like {
     0% { transform: scale(1); color: inherit; }
-    50% { transform: scale(1.5); color: #0000ff; }
-    100% { transform: scale(1.2); color: #0000ff; }
+    50% { transform: scale(1.5); color: #264AF4; }
+    100% { transform: scale(1.2); color: #264AF4; }
   }
   @keyframes dislike {
     0% { transform: scale(1); color: inherit; }
-    50% { transform: scale(1.5); color: #ff0000; }
-    100% { transform: scale(1.2); color: #ff0000; }
+    50% { transform: scale(1.5); color: #B91C1C; }
+    100% { transform: scale(1.2); color: #B91C1C; }
   }
   @keyframes voteSpin {
     0% { transform: rotate(0deg); }
@@ -89,7 +93,7 @@ h1 {
 
 .postContent table td,
 .markdownEditorPreview table td {
-  @apply border border-gray-300 px-4 py-2;
+  @apply border border-base-300 px-4 py-2;
 }
 
 .postContent table td:first-child,
@@ -130,8 +134,8 @@ h1 {
 
 .btn-primary {
   @apply bg-primary;
-  @apply text-slate-950;
-  @apply hover:bg-teal-100;
+  @apply text-primary-content;
+  @apply hover:bg-primary/80;
   @apply font-bold;
 }
 .btn-secondary {
