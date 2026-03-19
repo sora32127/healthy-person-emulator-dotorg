@@ -45,7 +45,7 @@ function PageTransitionProgressBar() {
       <div
         ref={ref}
         className={clsx(
-          'h-full bg-gradient-to-r from-blue-500 to-blue-700 dark:from-blue-700 dark:to-blue-900 transition-all duration-500 ease-in-out',
+          'h-full bg-gradient-to-r from-secondary to-secondary/80 transition-all duration-500 ease-in-out',
           navigation.state === 'idle' && hasAnimationCompleted && 'w-0 opacity-0 transition-none',
           navigation.state === 'submitting' && 'w-4/12',
           navigation.state === 'loading' && 'w-10/12',

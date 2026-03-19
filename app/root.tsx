@@ -71,7 +71,7 @@ export function ErrorBoundary() {
         <h1 className="text-4xl font-bold mt-32 mb-8">お探しのページは見つかりませんでした</h1>
         <div>
           <div className="flex items-center justify-center">
-            <FaSpinner className="animate-spin text-green-300 mr-2" />
+            <FaSpinner className="animate-spin text-primary mr-2" />
             <p>トップページにリダイレクトしています</p>
           </div>
           <p>
@@ -89,13 +89,13 @@ export function ErrorBoundary() {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-4xl font-bold text-center mt-32 mb-8">不明なエラーが発生しました</h1>
-      <pre className="bg-red-100 p-4 mb-8 overflow-auto">
+      <pre className="bg-error/10 p-4 mb-8 overflow-auto">
         {error instanceof Error ? error.stack : JSON.stringify(error, null, 2)}
       </pre>
       <div className="text-center">
         <NavLink
           to="/"
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-secondary hover:bg-secondary/80 text-secondary-content font-bold py-2 px-4 rounded"
         >
           トップページに戻る
         </NavLink>
