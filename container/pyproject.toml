@@ -12,7 +12,6 @@ dependencies = [
     "Misskey.py>=4.1.0",
     "httpx>=0.25.0",
     "requests>=2.31.0",
-    "dlt[bigquery]>=0.4.8",
     "google-cloud-bigquery>=3.10.0",
     "google-auth>=2.29.0",
 ]

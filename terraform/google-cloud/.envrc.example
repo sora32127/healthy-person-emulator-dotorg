@@ -1,0 +1,5 @@
+# GCP 認証
+# サービスアカウントキーを使う場合:
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+# または ADC を使う場合:
+# gcloud auth application-default login

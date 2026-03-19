@@ -45,9 +45,15 @@ importers:
       happy-dom:
         specifier: ^16.8.1
         version: 16.8.1
+      hyparquet-writer:
+        specifier: ^0.13.0
+        version: 0.13.0
       isbot:
         specifier: ^5.1.32
         version: 5.1.32
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       jotai:
         specifier: ^2.15.2
         version: 2.16.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@types/react@18.3.27)(react@18.3.1)
@@ -2385,6 +2391,12 @@ packages:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
 
+  hyparquet-writer@0.13.0:
+    resolution: {integrity: sha512-4Vl2RxwQPjMhCOZ2mCNK/WY3lJiiy+NlUugdsqBPTTy9sw3Uu7sJPU3UMiy7+aRAbY+y2K5dRJuNGTmQ8PdXFQ==}
+
+  hyparquet@1.25.1:
+    resolution: {integrity: sha512-CXcN/u6RdQqsK8IphUptpAEqY8IzgwzHY+MuXX+2wpoWTumfxPVr6JYbbywsNsiAl9aEbM5sRtxkwRBa22b49w==}
+
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -2492,6 +2504,9 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
+
+  jose@6.2.2:
+    resolution: {integrity: sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ==}
 
   jotai@2.16.0:
     resolution: {integrity: sha512-NmkwPBet0SHQ28GBfEb10sqnbVOYyn6DL4iazZgGRDUKxSWL0iqcm+IK4TqTSFC2ixGk+XX2e46Wbv364a3cKg==}
@@ -5639,6 +5654,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  hyparquet-writer@0.13.0:
+    dependencies:
+      hyparquet: 1.25.1
+
+  hyparquet@1.25.1: {}
+
   iconv-lite@0.4.24:
     dependencies:
       safer-buffer: 2.1.2
@@ -5728,6 +5749,8 @@ snapshots:
   jiti@1.21.7: {}
 
   jiti@2.6.1: {}
+
+  jose@6.2.2: {}
 
   jotai@2.16.0(@babel/core@7.29.0)(@babel/template@7.28.6)(@types/react@18.3.27)(react@18.3.1):
     optionalDependencies:

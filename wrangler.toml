@@ -97,6 +97,8 @@ binding = "SS_AUTOMATION_DRY_RUN"
 store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "AUTOMATION_DRY_RUN"
 
+# GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
+
 # --- Container ---
 [[containers]]
 class_name = "AutomationContainer"

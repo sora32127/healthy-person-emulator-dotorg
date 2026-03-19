@@ -73,12 +73,11 @@ export default {
     if (controller.cron === '0 16 * * *') {
       ctx.waitUntil((async () => {
         try {
-          const { exportD1ToR2 } = await import('./app/modules/d1-export.server');
-          const { manifest_key } = await exportD1ToR2(env);
-          const { callContainer } = await import('./app/modules/automation.server');
-          await callContainer(env, '/etl-to-bq', { manifest_key });
+          const { exportD1ToGCS } = await import('./app/modules/gcs-export.server');
+          const result = await exportD1ToGCS(env);
+          console.log(`[scheduled] GCS export complete: ${result.tables_exported} tables`);
         } catch (err) {
-          console.error('[scheduled] BigQuery ETL failed:', err);
+          console.error('[scheduled] GCS export failed:', err);
         }
       })());
     }
