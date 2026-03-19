@@ -32,12 +32,14 @@ jobs:
       - name: Apply D1 migrations
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: '4'
           command: d1 migrations apply healthy-person-emulator-db-preview --remote --config wrangler.preview.toml
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy to preview
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: '4'
           command: deploy --config wrangler.preview.toml
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
