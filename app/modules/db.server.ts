@@ -104,6 +104,23 @@ async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
   }
 }
 
+export async function getSimilarPostsByText(text: string): Promise<SimilarPostsData[]> {
+  try {
+    const { getEmbedding, querySimilar } = await import('./cloudflare.server');
+    const vector = await getEmbedding(text);
+    const matches = await querySimilar(vector, 16);
+    return matches
+      .slice(0, 15)
+      .map((m) => ({
+        postId: Number(m.metadata?.postId ?? m.id),
+        postTitle: String(m.metadata?.postTitle ?? ''),
+      }));
+  } catch (error) {
+    console.warn('getSimilarPostsByText failed:', (error as Error).message);
+    return [];
+  }
+}
+
 // --- ArchiveDataEntry: orchestrator combining repo + getSimilarPosts ---
 
 export class ArchiveDataEntry {
