@@ -6,29 +6,22 @@ import { Form, useFetcher, useLoaderData, useNavigate } from 'react-router';
 import { data } from 'react-router';
 import UserExplanation from '~/components/SubmitFormComponents/UserExplanation';
 import ClearFormButton from '~/components/SubmitFormComponents/ClearFormButton';
-import { H1, H3 } from '~/components/Headings';
+import { H3 } from '~/components/Headings';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import {
   getStopWords,
   getTagsCounts,
-  updatePostWelcomed,
-  createPostWithTags,
 } from '~/modules/db.server';
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
-import { Modal } from '~/components/Modal';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
-import { createEmbedding } from '~/modules/embedding.server';
-import { FaCopy } from 'react-icons/fa';
-import { NodeHtmlMarkdown } from 'node-html-markdown';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 import { toast, Toaster } from 'react-hot-toast';
 import { createPostFormSchema } from '~/schemas/post.schema';
 import {
-  getHashedUserIPAddress,
-  getJudgeWelcomedByGenerativeAI,
   getTurnStileSiteKey,
   validateRequest,
+  getHashedUserIPAddress,
 } from '~/modules/security.server';
 import { commitSession, getSession, isUserValid } from '~/modules/session.server';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -145,18 +138,20 @@ export default function App() {
     turnstileFetcher.submit(formData, { method: 'post', action: '/post' });
   };
 
+  const [isPreviewButtonOpen, setIsPreviewButtonOpen] = useState(false);
+
   useEffect(() => {
     const response = turnstileFetcher.data as { success: boolean };
     if (response?.success === false) {
       toast.error('リクエスト検証に失敗しました。時間をおいて再度お試しください。');
     }
     if (response?.success === true) {
-      setIsFirstSubmitButtonOpen(true);
+      setIsPreviewButtonOpen(true);
     }
   }, [turnstileFetcher.data]);
 
-  const firstSubmitFetcher = useFetcher();
-  const handleFirstSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const navigate = useNavigate();
+  const handlePreviewNavigate = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const inputValues = methods.getValues();
     const zodErrors = postFormSchema.safeParse(inputValues);
@@ -166,105 +161,9 @@ export default function App() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('_action', 'firstSubmit');
-    for (const [key, value] of Object.entries(inputValues)) {
-      formData.append(key, JSON.stringify(value));
-    }
-    firstSubmitFetcher.submit(formData, {
-      method: 'post',
-      action: '/post',
-    });
+    window.localStorage.setItem(formId, JSON.stringify(inputValues));
+    navigate('/post/confirm');
   };
-
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isFirstSubmitButtonOpen, setIsFirstSubmitButtonOpen] = useState(false);
-
-  useEffect(() => {
-    const response = firstSubmitFetcher.data as { success: boolean };
-    if (response?.success) {
-      setIsPreviewModalOpen(true);
-    }
-    if (response?.success === false) {
-      toast.error('プレビューを取得できませんでした。時間をおいて再度試してください。');
-    }
-  }, [firstSubmitFetcher.data]);
-
-  useEffect(() => {
-    if (firstSubmitFetcher.state === 'submitting') {
-      toast.loading('プレビューを取得しています');
-    }
-    if (firstSubmitFetcher.state === 'submitting') {
-      setIsFirstSubmitButtonOpen(false);
-    }
-    if (firstSubmitFetcher.state === 'loading') {
-      setIsFirstSubmitButtonOpen(true);
-      toast.dismiss(); // ローディング中のトーストを消す
-    }
-  }, [firstSubmitFetcher.state]);
-
-  const handleCopy = () => {
-    const response = firstSubmitFetcher.data as {
-      data: {
-        data: {
-          MarkdownResult: string;
-        };
-      };
-    };
-    try {
-      navigator.clipboard.writeText(response?.data?.data?.MarkdownResult);
-      toast.success('クリップボードにコピーしました。');
-    } catch (error) {
-      toast.error('クリップボードにコピーできませんでした。');
-    }
-  };
-
-  const secondSubmitFetcher = useFetcher();
-  const handleSecondSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('_action', 'secondSubmit');
-    for (const [key, value] of Object.entries(methods.getValues())) {
-      formData.append(key, JSON.stringify(value));
-    }
-    secondSubmitFetcher.submit(formData, { method: 'post', action: '/post' });
-  };
-  const [isSecondSubmitButtonOpen, setIsSecondSubmitButtonOpen] = useState(true);
-
-  useEffect(() => {
-    if (secondSubmitFetcher.state === 'submitting') {
-      setIsSecondSubmitButtonOpen(false);
-      toast.loading('投稿中です...');
-    }
-    if (
-      secondSubmitFetcher.state === 'loading' &&
-      (secondSubmitFetcher.data as { success: boolean })?.success === true
-    ) {
-      toast.dismiss();
-    }
-  }, [secondSubmitFetcher.state, secondSubmitFetcher.data]);
-
-  const navigate = useNavigate();
-  useEffect(() => {
-    const response = secondSubmitFetcher.data as {
-      success: boolean;
-      data: { postId: number };
-    };
-    if (response?.success === true && secondSubmitFetcher.state === 'idle') {
-      handleClearForm();
-      toast.success('投稿しました。リダイレクトします...', {
-        icon: '🎉',
-        id: 'post-success-toast',
-      });
-      setTimeout(() => {
-        const postId = response?.data?.postId;
-        navigate(`/archives/${postId}`, { viewTransition: true });
-      }, 2000);
-    }
-    return () => {
-      toast.dismiss('post-success-toast');
-    };
-  }, [secondSubmitFetcher.data, navigate, secondSubmitFetcher.state]);
 
   const handleClearForm = () => {
     window.localStorage.removeItem(formId);
@@ -416,53 +315,12 @@ export default function App() {
                 <button
                   type="submit"
                   className="btn btn-primary disabled:btn-disabled"
-                  onClick={handleFirstSubmit}
-                  disabled={!isFirstSubmitButtonOpen}
+                  onClick={handlePreviewNavigate}
+                  disabled={!isPreviewButtonOpen}
                 >
-                  投稿する
+                  プレビュー
                 </button>
               </div>
-              <Modal
-                isOpen={isPreviewModalOpen}
-                onClose={() => setIsPreviewModalOpen(false)}
-                title="投稿する内容を確認してください。"
-                showCloseButton={false}
-              >
-                <div className="postContent previewContainer">
-                  <H1>{(firstSubmitFetcher?.data as { data: { title: string } })?.data?.title}</H1>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: (
-                        firstSubmitFetcher?.data as {
-                          data: { data: { WikifiedResult: string } };
-                        }
-                      )?.data?.data?.WikifiedResult,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-6 border-t pt-8 border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setIsPreviewModalOpen(false)}
-                    className="btn btn-secondary"
-                  >
-                    修正する
-                  </button>
-                  <div className="flex flex-row items-center gap-1 p-2">
-                    <button type="button" onClick={handleCopy} className="btn btn-circle">
-                      <FaCopy />
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSecondSubmit}
-                    className="btn btn-primary disabled:btn-disabled"
-                    disabled={!isSecondSubmitButtonOpen}
-                  >
-                    投稿する
-                  </button>
-                </div>
-              </Modal>
             </div>
           </Form>
         </FormProvider>
@@ -798,10 +656,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const turnstileToken = formData.get('token');
 
   if (actionType === 'validateTurnstile') {
-    console.log('validateTurnstile has been called');
     const ipAddress = await getHashedUserIPAddress(request);
     const isValidatedByTurnstile = await validateRequest(turnstileToken as string, ipAddress);
-    console.log('isValidatedByTurnstile', isValidatedByTurnstile);
     if (!isValidatedByTurnstile) {
       return data(
         {
@@ -825,208 +681,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  const postData = Object.fromEntries(formData);
-  const stopWords = await getStopWords();
-  const postFormSchema = createPostFormSchema(stopWords);
-  type Inputs = z.infer<typeof postFormSchema>;
-
-  const parsedData = {
-    ...postData,
-    postCategory: JSON.parse(postData.postCategory as string),
-    situations: JSON.parse(postData.situations as string),
-    reflection: JSON.parse(postData.reflection as string),
-    counterReflection: JSON.parse(postData.counterReflection as string),
-    note: JSON.parse(postData.note as string),
-    selectedTags: JSON.parse((postData.selectedTags as string) || '[]'),
-    createdTags: JSON.parse((postData.createdTags as string) || '[]'),
-    title: JSON.parse(postData.title as string),
-  } as unknown as Inputs;
-  const isValidUser = await isUserValid(request);
-  if (!isValidUser) {
-    return data(
-      {
-        success: false,
-        error: 'リクエスト検証に失敗しました。時間をおいて再度お試しください。',
-      },
-      { status: 400 },
-    );
-  }
-
-  if (actionType === 'firstSubmit') {
-    try {
-      const html = await Wikify(parsedData, postFormSchema);
-      return data({
-        success: true,
-        data: {
-          ...html.data,
-          title: parsedData.title[0],
-          tags: [...(parsedData.createdTags || []), ...(parsedData.selectedTags || [])],
-        },
-        error: undefined,
-      });
-    } catch (error) {
-      return data({
-        success: false,
-        data: undefined,
-        error: 'Wikify failed',
-      });
-    }
-  }
-
-  if (actionType === 'secondSubmit') {
-    const html = await Wikify(parsedData, postFormSchema);
-    const isSuccess = html.data.success;
-    const wikifyResult = html.data?.data?.WikifiedResult;
-    const postTitle = parsedData.title[0];
-    const createdTags = parsedData.createdTags;
-    const selectedTags = parsedData.selectedTags;
-    if (!wikifyResult) {
-      return data({ success: false, error: 'Wikify failed', data: undefined });
-    }
-
-    if (isSuccess) {
-      const hashedUserIpAddress = await getHashedUserIPAddress(request);
-      if (html.data === undefined) {
-        return data(
-          {
-            success: false,
-            error: 'Wikify failed',
-            data: undefined,
-          },
-          { status: 400 },
-        );
-      }
-      const newPost = await createPostWithTags({
-        postContent: wikifyResult,
-        postTitle,
-        hashedUserIpAddress,
-        selectedTags,
-        createdTags,
-      });
-
-      await createEmbedding({
-        postId: Number(newPost.postId),
-        postContent: newPost.postContent,
-        postTitle: newPost.postTitle,
-      });
-
-      const { isWelcomed, explanation } = await getJudgeWelcomedByGenerativeAI(
-        wikifyResult,
-        postTitle,
-      );
-      await updatePostWelcomed(Number(newPost.postId), isWelcomed, explanation);
-
-      return data({
-        success: true,
-        error: undefined,
-        data: { postId: newPost.postId },
-      });
-    }
-
-    return data({ success: false, error: 'Wikify failed', data: undefined }, { status: 400 });
-  }
-}
-
-async function Wikify(
-  postData: z.infer<ReturnType<typeof createPostFormSchema>>,
-  postFormSchema: ReturnType<typeof createPostFormSchema>,
-) {
-  // バリデーションを実施
-  const validationResult = postFormSchema.safeParse(postData);
-  if (!validationResult.success) {
-    return data(
-      {
-        success: false,
-        error: validationResult.error.errors,
-        data: undefined,
-      },
-      { status: 400 },
-    );
-  }
-
-  const { who, when, where, why, what, how, then, assumption } = validationResult.data.situations;
-  const { reflection, counterReflection } = validationResult.data;
-  const { note, postCategory } = validationResult.data;
-
-  function removeEmptyString(array: string[] | undefined): string[] {
-    if (!array) return [];
-    return array.filter((value) => !/^\s*$/.test(value));
-  }
-
-  const result = `
-    <h3>5W1H+Then状況説明</h3>
-    <table><tbody>
-      <tr><td>Who(誰が)</td><td>${who}</td></tr>
-      <tr><td>When(いつ)</td><td>${when}</td></tr>
-      <tr><td>Where(どこで)</td><td>${where}</td></tr>
-      <tr><td>Why(なぜ)</td><td>${why}</td></tr>
-      <tr><td>What(何を)</td><td>${what}</td></tr>
-      <tr><td>How(どのように)</td><td>${how}</td></tr>
-      <tr><td>Then(どうした)</td><td>${then}</td></tr>
-    </tbody></table>
-    ${
-      removeEmptyString(assumption)?.length > 0
-        ? `
-      <h3>前提条件</h3>
-      <ul>
-        ${removeEmptyString(assumption)
-          ?.map((assumption) => `<li>${assumption}</li>`)
-          .join('\n')}
-      </ul>
-      `
-        : ''
-    }
-    <h3>
-      ${
-        postCategory === 'misDeed'
-          ? '健常行動ブレイクポイント'
-          : postCategory === 'goodDeed'
-            ? 'なぜやってよかったのか'
-            : postCategory === 'wanted'
-              ? '試したこと'
-              : ''
-      }
-    </h3>
-    <ul>
-      ${removeEmptyString(reflection)
-        ?.map((reflection) => `<li>${reflection}</li>`)
-        .join('\n')}
-    </ul>
-    <h3>
-      ${
-        postCategory === 'misDeed'
-          ? 'どうすればよかったか'
-          : postCategory === 'goodDeed'
-            ? 'やらなかったらどうなっていたか'
-            : postCategory === 'wanted'
-              ? 'まだやってないこと'
-              : ''
-      }
-    </h3>
-    <ul>
-      ${removeEmptyString(counterReflection)
-        ?.map((counterReflection) => `<li>${counterReflection}</li>`)
-        .join('\n')}
-    </ul>
-    ${
-      removeEmptyString(note)?.length > 0
-        ? `
-      <h3>備考</h3>
-      <ul>
-        ${removeEmptyString(note)
-          ?.map((note) => `<li>${note}</li>`)
-          .join('\n')}
-      </ul>
-    `
-        : ''
-    }
-  `;
-  const markdownContent = NodeHtmlMarkdown.translate(result);
-  return data({
-    success: true,
-    error: undefined,
-    data: { WikifiedResult: result, MarkdownResult: markdownContent },
-  });
+  return data({ success: false, error: 'Unknown action' }, { status: 400 });
 }
 
 export const meta: MetaFunction = () => {
