@@ -29,8 +29,6 @@ jobs:
       - run: pnpm install
       - run: pnpm lint
       - run: pnpm test
-      - uses: davelosert/vitest-coverage-report-action@v2
-        if: always() && github.event_name == 'pull_request'
 
   build:
     if: github.event.pull_request.draft != true
