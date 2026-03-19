@@ -39,6 +39,6 @@ module "preview" {
 
   cron_schedules = [] # プレビューではCron無効
 
-  r2_static_bucket_name  = cloudflare_r2_bucket.static.name   # 共有
-  r2_parquet_bucket_name = cloudflare_r2_bucket.parquet.name   # 共有
+  r2_static_bucket_name  = cloudflare_r2_bucket.static.name  # 共有
+  r2_parquet_bucket_name = cloudflare_r2_bucket.parquet.name # 共有
 }
