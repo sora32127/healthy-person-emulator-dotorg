@@ -64,7 +64,7 @@
     "better-sqlite3": "^12.8.0",
     "daisyui": "^4.12.24",
     "drizzle-kit": "^0.31.10",
-    "jsdom": "^26.1.0",
+    "jsdom": "^29.0.0",
     "knip": "^5.88.0",
     "only-allow": "^1.2.2",
     "postcss": "^8.5.8",
