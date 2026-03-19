@@ -109,7 +109,7 @@ export async function getJudgeWelcomedByGenerativeAI(postContent: string, postTi
 
 JSONで結果を返してください。`;
 
-  const result = await _aiBinding.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
+  const result = await _aiBinding.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `${postTitle}\n${postContent}` },
@@ -140,22 +140,24 @@ JSONで結果を返してください。`;
     },
   });
 
-  const responseText = (result as { response?: string }).response;
-  if (!responseText) {
+  const raw = (result as { response?: unknown }).response;
+  if (!raw) {
     console.warn('[security] AI returned empty response, defaulting to welcomed');
     return { isWelcomed: true, explanation: 'ガイドラインに準拠した投稿です' };
   }
+
   try {
-    const parsedResult = JSON.parse(responseText) as {
+    // json_schema使用時、responseはオブジェクトまたはJSON文字列で返る
+    const parsed = (typeof raw === 'object' ? raw : JSON.parse(raw as string)) as {
       isWelcomed: boolean;
       explanation: string;
     };
     return {
-      isWelcomed: parsedResult.isWelcomed,
-      explanation: parsedResult.explanation,
+      isWelcomed: parsed.isWelcomed,
+      explanation: parsed.explanation,
     };
   } catch {
-    console.warn('[security] Failed to parse AI response, defaulting to welcomed:', responseText);
+    console.warn('[security] Failed to parse AI response, defaulting to welcomed:', raw);
     return { isWelcomed: true, explanation: 'ガイドラインに準拠した投稿です' };
   }
 }
