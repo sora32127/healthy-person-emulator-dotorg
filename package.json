@@ -6,7 +6,6 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "build": "react-router build",
-    "dev": "react-router dev",
     "start": "wrangler dev --local",
     "deploy": "wrangler deploy",
     "typegen": "wrangler types",
