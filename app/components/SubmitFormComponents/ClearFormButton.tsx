@@ -15,7 +15,7 @@ export default function ClearFormButton({ clearInputs }: ClearFormButtonProps) {
 
   return (
     <>
-      <button type="button" className="btn btn-ghost" onClick={() => setShowModal(true)}>
+      <button type="button" className="btn btn-secondary" onClick={() => setShowModal(true)}>
         入力内容をリセット
       </button>
       <Modal

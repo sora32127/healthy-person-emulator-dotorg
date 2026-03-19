@@ -132,7 +132,7 @@ export default function PreviewPage() {
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-base-200 pt-6">
-        <button type="button" onClick={() => navigate('/post')} className="btn btn-ghost">
+        <button type="button" onClick={() => navigate('/post')} className="btn btn-secondary">
           修正する
         </button>
 
