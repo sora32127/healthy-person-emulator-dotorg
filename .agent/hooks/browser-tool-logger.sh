@@ -18,7 +18,8 @@ if [ "$TOOL_NAME" = "Bash" ]; then
   fi
 fi
 
-LOG_DIR="$HOME/.claude/browser-tool-log"
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+LOG_DIR="$REPO_ROOT/.agent/browser-tool-log"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date '+%Y-%m-%d').log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
