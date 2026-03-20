@@ -28,6 +28,17 @@
             "statusMessage": "プランファイルの確認中..."
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-pr-commits.sh",
+            "timeout": 15,
+            "statusMessage": "PRコミットの検証中..."
+          }
+        ]
       }
     ],
     "PostToolUse": [
