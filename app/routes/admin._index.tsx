@@ -5,9 +5,8 @@ import { desc, count } from 'drizzle-orm';
 import { dimPosts } from '~/drizzle/schema';
 import { requireAdmin } from '~/modules/admin.server';
 import { deletePost } from '~/modules/admin-delete.server';
-import { useState, useRef, useEffect, use, Suspense } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { CloudflareEnv } from '~/types/env';
-import { fetchPostPVMap } from '~/modules/bigquery.server';
 
 const PAGE_SIZE = 50;
 
@@ -38,12 +37,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const total = totalResult[0]?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const pvData = fetchPostPVMap(
-    env,
-    posts.map((p) => p.postId),
-  ).then((map) => Object.fromEntries(map));
-
-  return { posts, pvData, page, totalPages, total };
+  return { posts, page, totalPages, total };
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -136,17 +130,19 @@ function DeleteModal({
   );
 }
 
-function PVCount({ postId, pvData }: { postId: number; pvData: Promise<Record<string, number>> }) {
-  const pv = use(pvData);
-  return <>{(pv[postId] ?? 0).toLocaleString()}</>;
-}
-
 export default function AdminIndex() {
-  const { posts, pvData, page, totalPages, total } = useLoaderData<typeof loader>();
+  const { posts, page, totalPages, total } = useLoaderData<typeof loader>();
   const [deleteTarget, setDeleteTarget] = useState<{
     postId: number;
     postTitle: string;
   } | null>(null);
+  const pvFetcher = useFetcher<Record<string, number>>();
+
+  useEffect(() => {
+    if (posts.length === 0) return;
+    const ids = posts.map((p) => p.postId).join(',');
+    pvFetcher.load(`/admin/pv?postIds=${ids}`);
+  }, [posts]);
 
   return (
     <div>
@@ -175,9 +171,11 @@ export default function AdminIndex() {
                 </td>
                 <td>{post.countLikes}</td>
                 <td>
-                  <Suspense fallback={<span className="loading loading-spinner loading-xs" />}>
-                    <PVCount postId={post.postId} pvData={pvData} />
-                  </Suspense>
+                  {pvFetcher.state === 'idle' && pvFetcher.data ? (
+                    (pvFetcher.data[post.postId] ?? 0).toLocaleString()
+                  ) : (
+                    <span className="loading loading-spinner loading-xs" />
+                  )}
                 </td>
                 <td className="text-sm opacity-70">{post.postDateGmt}</td>
                 <td>
