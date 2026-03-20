@@ -64,41 +64,32 @@ export default function Feed() {
           style={{ display: tab === 'trend' ? 'block' : 'none' }}
         >
           <PostSection title="最新の投稿" posts={mostRecentPosts.result} identifier="latest">
-            <button
+            <NavLink
+              to="/feed?p=2&type=timeDesc"
               className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
-              type="button"
             >
-              <NavLink to="/feed?p=2&type=timeDesc" className="block w-full h-full">
-                最新の投稿を見る
-              </NavLink>
-            </button>
+              最新の投稿を見る
+            </NavLink>
           </PostSection>
           <PostSection
             title="最近いいねされた投稿"
             posts={recentVotedPosts.result}
             identifier="voted"
           >
-            <button
+            <NavLink
+              to="/feed?p=2&likeFrom=48&likeTo=0&type=likes"
               className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
-              type="button"
             >
-              <NavLink
-                to="/feed?p=2&likeFrom=48&likeTo=0&type=likes"
-                className="block w-full h-full"
-              >
-                最近いいねされた投稿を見る
-              </NavLink>
-            </button>
+              最近いいねされた投稿を見る
+            </NavLink>
           </PostSection>
           <CommentSection title="最近のコメント" comments={mostRecentComments.result}>
-            <button
+            <NavLink
+              to="/comment?p=2&type=timeDesc"
               className="rounded-md block w-full max-w-[400px] px-4 py-2 text-center my-4 bg-base-200 mx-auto hover:bg-base-300"
-              type="button"
             >
-              <NavLink to="/comment?p=2&type=timeDesc" className="block w-full h-full">
-                最近のコメントを見る
-              </NavLink>
-            </button>
+              最近のコメントを見る
+            </NavLink>
           </CommentSection>
         </div>
         <div
