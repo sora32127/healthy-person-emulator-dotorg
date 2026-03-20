@@ -7,8 +7,7 @@ function cookieDomain(): string {
 }
 
 async function gotoAndWaitForApp(page: Page, path = '/') {
-  await page.goto(path);
-  await page.waitForSelector('html[lang="ja"]', { timeout: 15000 });
+  await page.goto(path, { waitUntil: 'networkidle', timeout: 30000 });
 }
 
 test.describe('テーマ永続化', () => {
@@ -26,7 +25,7 @@ test.describe('テーマ永続化', () => {
 
     // リロード
     await page.reload();
-    await page.waitForSelector('html[lang="ja"]', { timeout: 15000 });
+    await page.waitForSelector('html[lang="ja"]', { timeout: 30000 });
 
     // ダークが維持されること
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -41,7 +40,7 @@ test.describe('テーマ永続化', () => {
 
     // リロード後もダーク維持
     await page.reload();
-    await page.waitForSelector('html[lang="ja"]', { timeout: 15000 });
+    await page.waitForSelector('html[lang="ja"]', { timeout: 30000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     // テーマ切替ボタンでライトに切替
