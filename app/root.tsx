@@ -36,11 +36,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta property="og:site_name" content="健常者エミュレータ事例集" />
         <Meta />
         <Links />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);var t=m&&m[1]==='dark'?'dark':'light';var el=document.documentElement;el.setAttribute('data-theme',t);if(t!=='light'){var o=new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==='data-theme'&&el.getAttribute('data-theme')!==t){el.setAttribute('data-theme',t);o.disconnect()}})});o.observe(el,{attributes:true,attributeFilter:['data-theme']})}}catch(e){document.documentElement.setAttribute('data-theme','light')}})()`,
-          }}
-        />
       </head>
       <body>
         <PageTransitionProgressBar />
