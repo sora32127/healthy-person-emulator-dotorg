@@ -708,5 +708,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     image,
   });
 
+  if (data.data.mergedIntoPostId !== null) {
+    commonMeta.push({ name: 'robots', content: 'noindex, nofollow' });
+  }
+
   return commonMeta;
 };
