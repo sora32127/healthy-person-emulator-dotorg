@@ -11,7 +11,7 @@ const BQ_DATASET = 'HPE_REPORTS';
 const BQ_VIEW = 'vw_post_page_views';
 
 async function getBigQueryAccessToken(env: CloudflareEnv): Promise<string> {
-  const creds = JSON.parse(env.BIGQUERY_CREDENTIALS ?? '{}') as {
+  const creds = JSON.parse(env.GCS_CREDENTIALS ?? '{}') as {
     client_email: string;
     private_key: string;
     private_key_id: string;
