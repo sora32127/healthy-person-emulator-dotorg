@@ -1,3 +1,0 @@
-[submodule ".agents/agent-skills"]
-	path = .agents/agent-skills
-	url = https://github.com/remix-run/agent-skills.git
