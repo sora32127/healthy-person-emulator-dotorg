@@ -38,6 +38,7 @@ function renderDesktopHeader() {
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
+        <h1 className="sr-only">健常者エミュレータ事例集</h1>
         <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
             <ul className="flex flex-col gap-2">
@@ -76,7 +77,7 @@ function renderDesktopHeader() {
             </ul>
           </nav>
         </div>
-        <div className="h-[60px] px-4 flex flex-col justify-center">
+        <nav className="h-[60px] px-4 flex flex-col justify-center" aria-label="ユーティリティ">
           <ThemeSwitcher />
           <a href="/bookmark" aria-label="ブックマーク">
             <div className="avatar">
@@ -89,7 +90,7 @@ function renderDesktopHeader() {
               )}
             </div>
           </a>
-        </div>
+        </nav>
       </div>
     </>
   );
@@ -290,17 +291,17 @@ export default function Component() {
         <div className="md:mx-10 lg:mx-20 xl:mx-32 2xl:mx-96">
           <Outlet />
         </div>
+        <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
+          <NavLink
+            to="/post"
+            viewTransition
+            className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
+            aria-label="投稿する"
+          >
+            <PostIcon />
+          </NavLink>
+        </div>
       </main>
-      <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
-        <NavLink
-          to="/post"
-          viewTransition
-          className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
-          aria-label="投稿する"
-        >
-          <PostIcon />
-        </NavLink>
-      </div>
       <Footer />
       <dialog id="search-modal" className={`modal ${isSearchModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box absolute top-[25%] transform -translate-y-1/2">

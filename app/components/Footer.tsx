@@ -64,7 +64,7 @@ export const Footer = () => {
       <div className="container mx-auto px-4 flex flex-col items-center">
         <div className="flex flex-row justify-center gap-x-24 footer-content">
           <div className="footer-menus">
-            <h2 className="footer-title text-base-content">Menu</h2>
+            <h2 className="footer-title text-base-content opacity-100">Menu</h2>
             <div className="footer-links flex flex-col space-y-2">
               {footerItems.map((item) => (
                 <NavLink
@@ -78,7 +78,7 @@ export const Footer = () => {
             </div>
           </div>
           <div className="footer-socials">
-            <h2 className="footer-title text-base-content">Social</h2>
+            <h2 className="footer-title text-base-content opacity-100">Social</h2>
             <div className="footer-links flex flex-col space-y-2">
               {socialLinks.map((item) => (
                 <NavLink
