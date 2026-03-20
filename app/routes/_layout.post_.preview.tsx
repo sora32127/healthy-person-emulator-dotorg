@@ -17,12 +17,19 @@ import { getStopWords, createPostWithTags, updatePostWelcomed } from '~/modules/
 import { createEmbedding } from '~/modules/embedding.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 
+interface SimilarPostPreview {
+  postId: number;
+  postTitle: string;
+  score: number;
+}
+
 interface PreviewData {
   wikifiedHtml: string;
   markdownResult: string;
   title: string;
   tags: string[];
   formValues: Record<string, unknown>;
+  similarPosts?: SimilarPostPreview[];
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -124,6 +131,32 @@ export default function PreviewPage() {
         <H1>{previewData.title}</H1>
         <div dangerouslySetInnerHTML={{ __html: previewData.wikifiedHtml }} />
       </div>
+
+      {previewData.similarPosts && previewData.similarPosts.length > 0 && (
+        <div className="card bg-base-200 p-6 mb-6">
+          <h3 className="text-lg font-bold mb-3">類似する投稿が見つかりました</h3>
+          <p className="text-sm text-base-content/70 mb-4">
+            以下の投稿と内容が似ています。投稿前にご確認ください。
+          </p>
+          <ul className="space-y-2">
+            {previewData.similarPosts.map((post) => (
+              <li key={post.postId} className="flex items-center justify-between">
+                <a
+                  href={`/archives/${post.postId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link link-primary flex-1"
+                >
+                  {post.postTitle}
+                </a>
+                <span className="badge badge-ghost ml-2">
+                  類似度 {Math.round(post.score * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {submitError && (
         <div className="alert alert-error mb-6">
