@@ -94,9 +94,17 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       .where(inArray(schema.relPostTags.postId, postIds));
   }
 
+  // Helper: exclude posts that have been merged into another post
+  function notMergedSource() {
+    return sql`${schema.dimPosts.postId} NOT IN (SELECT ${schema.postMerges.sourcePostId} FROM ${schema.postMerges})`;
+  }
+
   return {
     async getPostDataForSitemap() {
-      const posts = await db.select({ postId: schema.dimPosts.postId }).from(schema.dimPosts);
+      const posts = await db
+        .select({ postId: schema.dimPosts.postId })
+        .from(schema.dimPosts)
+        .where(notMergedSource());
 
       return posts.map((post) => ({
         loc: `https://healthy-person-emulator.org/archives/${post.postId}`,
@@ -253,6 +261,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           and(
             lt(schema.dimPosts.postId, postId),
             not(like(schema.dimPosts.postTitle, '%プログラムテスト%')),
+            notMergedSource(),
           ),
         )
         .orderBy(desc(schema.dimPosts.postId))
@@ -272,6 +281,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           and(
             gt(schema.dimPosts.postId, postId),
             not(like(schema.dimPosts.postTitle, '%プログラムテスト%')),
+            notMergedSource(),
           ),
         )
         .orderBy(asc(schema.dimPosts.postId))
@@ -479,7 +489,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         })
         .from(schema.relPostTags)
         .innerJoin(schema.dimPosts, eq(schema.relPostTags.postId, schema.dimPosts.postId))
-        .where(eq(schema.relPostTags.tagId, tagId))
+        .where(and(eq(schema.relPostTags.tagId, tagId), notMergedSource()))
         .orderBy(desc(schema.dimPosts.postDateGmt))
         .limit(20);
 
@@ -525,7 +535,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         })
         .from(schema.dimComments)
         .innerJoin(schema.dimPosts, eq(schema.dimComments.postId, schema.dimPosts.postId))
-        .where(not(like(schema.dimPosts.postTitle, '%プログラムテスト%')))
+        .where(and(not(like(schema.dimPosts.postTitle, '%プログラムテスト%')), notMergedSource()))
         .orderBy(desc(schema.dimComments.commentDateJst))
         .offset(offset)
         .limit(chunkSize);
@@ -541,7 +551,10 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
     },
 
     async getRandomPosts(): Promise<PostCardData[]> {
-      const [totalResult] = await db.select({ count: count() }).from(schema.dimPosts);
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(schema.dimPosts)
+        .where(notMergedSource());
       const postCount = totalResult.count;
       const randomPostOffset = Math.max(Math.floor(Math.random() * postCount) - 12, 0);
 
@@ -555,6 +568,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
+        .where(notMergedSource())
         .orderBy(asc(schema.dimPosts.uuid))
         .offset(randomPostOffset)
         .limit(12);
@@ -589,6 +603,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         })
         .from(schema.dimComments)
         .innerJoin(schema.dimPosts, eq(schema.dimComments.postId, schema.dimPosts.postId))
+        .where(notMergedSource())
         .orderBy(asc(schema.dimComments.uuid))
         .offset(randomCommentOffset)
         .limit(chunkSize);
@@ -630,6 +645,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
+          .where(notMergedSource())
           .orderBy(...orderByClause)
           .offset(offset)
           .limit(chunkSize);
@@ -637,7 +653,10 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         const postIds = posts.map((p) => p.postId);
         const commentCounts = await getCommentCountsByPostIds(postIds);
         const allTags = await getTagsByPostIds(postIds);
-        const [totalResult] = await db.select({ count: count() }).from(schema.dimPosts);
+        const [totalResult] = await db
+          .select({ count: count() })
+          .from(schema.dimPosts)
+          .where(notMergedSource());
 
         const postData = posts.map((post) => ({
           postId: post.postId,
@@ -727,10 +746,11 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
-          .where(inArray(schema.dimPosts.postId, postIds));
+          .where(and(inArray(schema.dimPosts.postId, postIds), notMergedSource()));
 
-        const allTags = await getTagsByPostIds(postIds);
-        const commentCounts = await getCommentCountsByPostIds(postIds);
+        const filteredPostIds = posts.map((p) => p.postId);
+        const allTags = await getTagsByPostIds(filteredPostIds);
+        const commentCounts = await getCommentCountsByPostIds(filteredPostIds);
 
         const postData = posts.map((post) => ({
           ...post,
@@ -783,6 +803,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           })
           .from(schema.dimComments)
           .innerJoin(schema.dimPosts, eq(schema.dimComments.postId, schema.dimPosts.postId))
+          .where(notMergedSource())
           .orderBy(
             type === 'timeDesc'
               ? desc(schema.dimComments.commentDateJst)
@@ -847,7 +868,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           })
           .from(schema.dimComments)
           .innerJoin(schema.dimPosts, eq(schema.dimComments.postId, schema.dimPosts.postId))
-          .where(inArray(schema.dimComments.commentId, commentIds));
+          .where(and(inArray(schema.dimComments.commentId, commentIds), notMergedSource()));
 
         // Sort by the same order as commentIdRows
         const sortedComments = comments.sort(
@@ -932,7 +953,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           })
           .from(schema.dimComments)
           .innerJoin(schema.dimPosts, eq(schema.dimComments.postId, schema.dimPosts.postId))
-          .where(inArray(schema.dimComments.commentId, commentIds));
+          .where(and(inArray(schema.dimComments.commentId, commentIds), notMergedSource()));
 
         // Sort by the same order as commentIdRows
         const sortedComments = comments.sort(
@@ -1224,7 +1245,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       const sanitizedQuery = query.trim();
 
       // Build WHERE conditions
-      const conditions = [];
+      const conditions = [notMergedSource()];
 
       if (sanitizedQuery) {
         conditions.push(
