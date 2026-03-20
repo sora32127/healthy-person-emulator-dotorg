@@ -16,6 +16,7 @@ crons = ["*/10 * * * *", "0 12 * * *", "0 12 * * 1", "0 16 * * *"]
 binding = "DB"
 database_name = "healthy-person-emulator-db"
 database_id = "1d5558b5-f0c7-4c13-9af9-82856367bfb9"
+migrations_dir = "drizzle/migrations"
 
 # --- Storage ---
 [[r2_buckets]]
