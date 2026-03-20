@@ -74,6 +74,74 @@
             "statusMessage": "terraform fmt 実行中..."
           }
         ]
+      },
+      {
+        "matcher": "mcp__claude-in-chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作をログ記録中..."
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__playwright__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作をログ記録中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作をログ記録中..."
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "mcp__claude-in-chrome__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作失敗をログ記録中..."
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__playwright__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作失敗をログ記録中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/browser-tool-logger.sh",
+            "timeout": 10000,
+            "statusMessage": "ブラウザ操作失敗をログ記録中..."
+          }
+        ]
       }
     ]
   }
