@@ -52,6 +52,7 @@ function renderDesktopHeader() {
                         onClick={() => setIsLoginModalOpen(true)}
                         className={`w-full flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                         type="button"
+                        aria-label={item.text}
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
                         <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
@@ -63,6 +64,7 @@ function renderDesktopHeader() {
                         to={item.to}
                         className={`flex items-center gap-2 p-2 rounded-lg hover:bg-base-300 ${isActive ? 'bg-base-200 font-bold' : ''}`}
                         viewTransition
+                        aria-label={item.text}
                       >
                         <item.icon className="w-5 h-5 stroke-current fill-none min-w-[1.25rem]" />
                         <span className="invisible w-0 group-hover:visible group-hover:w-auto 2xl:visible 2xl:w-auto whitespace-nowrap transition-all duration-300">
