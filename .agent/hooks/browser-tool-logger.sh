@@ -1,6 +1,7 @@
 #!/bin/bash
-# ブラウザ操作ツールの失敗時にClaude自身へログ記録をリマインドするPostHook
+# ブラウザ操作ツールの全操作をログ記録し、Claudeに振り返りをリマインドするHook
 # 対象: Claude in Chrome, Playwright, agent-browser
+# イベント: PostToolUse（成功時）, PostToolUseFailure（失敗時）
 
 set -euo pipefail
 
@@ -21,12 +22,11 @@ LOG_DIR="$HOME/.claude/browser-tool-log"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/$(date '+%Y-%m-%d').log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+TOOL_INPUT_SUMMARY=$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null | head -c 300)
 
 if [ "$EVENT" = "PostToolUseFailure" ]; then
   ERROR=$(echo "$INPUT" | jq -r '.error // "unknown"' 2>/dev/null | head -c 300)
-  TOOL_INPUT_SUMMARY=$(echo "$INPUT" | jq -c '.tool_input // {}' 2>/dev/null | head -c 300)
 
-  # 生データをログに追記
   cat >> "$LOG_FILE" << EOF
 
 ## $TIMESTAMP | $TOOL_NAME | FAILED
@@ -37,7 +37,6 @@ if [ "$EVENT" = "PostToolUseFailure" ]; then
 - **解消策**: (TODO: Claudeが記入)
 EOF
 
-  # Claudeへリマインド
   cat << REMINDER
 ブラウザ操作が失敗しました。$LOG_FILE の末尾にTODOエントリを作成済みです。
 Editツールで「意図」「原因」「解消策」を記入してください。
@@ -47,5 +46,20 @@ REMINDER
   exit 0
 fi
 
-# 成功時は何もしない
+if [ "$EVENT" = "PostToolUse" ]; then
+  TOOL_OUTPUT_SUMMARY=$(echo "$INPUT" | jq -c '.tool_output // .tool_result // {}' 2>/dev/null | head -c 300)
+
+  cat >> "$LOG_FILE" << EOF
+
+## $TIMESTAMP | $TOOL_NAME | OK
+- **raw_input**: $TOOL_INPUT_SUMMARY
+- **raw_output**: $TOOL_OUTPUT_SUMMARY
+- **メモ**: (TODO: Claudeが記入 — 想定通りか、時間がかかったか、次回の注意点など)
+EOF
+
+  # 成功時はリマインドを出さない（ログだけ残す）
+  # ただしセッション終了時やブラウザタスク完了時にまとめて振り返ることを推奨
+  exit 0
+fi
+
 exit 0
