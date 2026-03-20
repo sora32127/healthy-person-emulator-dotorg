@@ -5,6 +5,8 @@ import type {
   CommentData,
   SimilarPostsData,
   PreviousOrNextPostData,
+  PostMergeInfo,
+  MergedSourcePost,
 } from '../repositories/types';
 
 export type {
@@ -169,6 +171,8 @@ export class ArchiveDataEntry {
   blueskyPostUriOfFirstPost: string | null;
   misskeyNoteIdOfFirstNote: string | null;
   countBookmarks: number;
+  mergeInfo: PostMergeInfo | null;
+  sourcePosts: MergedSourcePost[];
 
   private constructor(
     postData: PostData,
@@ -177,6 +181,8 @@ export class ArchiveDataEntry {
     previousPost: PreviousOrNextPostData,
     nextPost: PreviousOrNextPostData,
     bookmarkCount: number,
+    mergeInfo: PostMergeInfo | null,
+    sourcePosts: MergedSourcePost[],
   ) {
     this.postId = postData.postId;
     this.postTitle = postData.postTitle;
@@ -198,16 +204,31 @@ export class ArchiveDataEntry {
     this.blueskyPostUriOfFirstPost = postData.blueskyPostUriOfFirstPost;
     this.misskeyNoteIdOfFirstNote = postData.misskeyNoteIdOfFirstNote;
     this.countBookmarks = bookmarkCount;
+    this.mergeInfo = mergeInfo;
+    this.sourcePosts = sourcePosts;
   }
 
   static async getData(postId: number) {
     const repo = getRepo();
-    const postData = await repo.getPostByPostId(postId);
-    const comments = await repo.getCommentsByPostId(postId);
-    const similarPosts = await getSimilarPosts(postId);
-    const previousPost = await repo.getPreviousPost(postId);
-    const nextPost = await repo.getNextPost(postId);
-    const countBookmarks = await repo.getCountBookmarks(postId);
+    const [
+      postData,
+      comments,
+      similarPosts,
+      previousPost,
+      nextPost,
+      countBookmarks,
+      mergeInfo,
+      sourcePosts,
+    ] = await Promise.all([
+      repo.getPostByPostId(postId),
+      repo.getCommentsByPostId(postId),
+      getSimilarPosts(postId),
+      repo.getPreviousPost(postId),
+      repo.getNextPost(postId),
+      repo.getCountBookmarks(postId),
+      repo.getMergeInfoBySourcePostId(postId),
+      repo.getSourcePostsByTargetPostId(postId),
+    ]);
     return new ArchiveDataEntry(
       postData,
       comments,
@@ -215,6 +236,8 @@ export class ArchiveDataEntry {
       previousPost,
       nextPost,
       countBookmarks,
+      mergeInfo,
+      sourcePosts,
     );
   }
 }

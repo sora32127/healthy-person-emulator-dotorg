@@ -3,9 +3,16 @@ interface CommonMetaFunctionProps {
   description: string | null;
   url: string | null;
   image: string | null;
+  noindex?: boolean;
 }
 
-export function commonMetaFunction({ title, description, url, image }: CommonMetaFunctionProps) {
+export function commonMetaFunction({
+  title,
+  description,
+  url,
+  image,
+  noindex,
+}: CommonMetaFunctionProps) {
   const commonTitle = title ? `${title} - 健常者エミュレータ事例集` : '健常者エミュレータ事例集';
   const commonDescription = description ?? '現実世界のために';
   const commonImage =
@@ -30,5 +37,6 @@ export function commonMetaFunction({ title, description, url, image }: CommonMet
     { name: 'twitter:description', content: commonDescription },
     { name: 'twitter:creator', content: '@helthypersonemu' },
     { name: 'twitter:image', content: commonImage },
+    ...(noindex ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
   ];
 }
