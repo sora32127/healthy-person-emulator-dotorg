@@ -38,10 +38,6 @@
         <img src="https://img.shields.io/badge/-vite-EEE.svg?logo=vite&style=flat">
       </a>
       <br>
-      <a href="https://www.prisma.io" alt="Prisma">
-        <img src="https://img.shields.io/badge/-prisma-EEE.svg?logo=prisma&style=flat">
-      </a>
-      <br>
       <a href="https://playwright.dev" alt="Playwright">
         <img src="https://img.shields.io/badge/-playwright-EEE.svg?logo=playwright&style=flat">
       </a>
