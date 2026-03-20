@@ -54,17 +54,21 @@ interface BigQueryQueryResponse {
   jobComplete: boolean;
   rows?: Array<{ f: Array<{ v: string | null }> }>;
   schema?: { fields: Array<{ name: string; type: string }> };
-  pageToken?: string;
-  totalRows?: string;
-  jobReference?: { projectId: string; jobId: string };
 }
 
-export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, number>> {
+export async function fetchPostPVMap(
+  env: CloudflareEnv,
+  postIds: number[],
+): Promise<Map<number, number>> {
+  if (postIds.length === 0) {
+    return new Map();
+  }
+
   try {
     const accessToken = await getBigQueryAccessToken(env);
-    const pvMap = new Map<number, number>();
 
-    const query = `SELECT post_id, total_page_views FROM \`${BQ_PROJECT}.${BQ_DATASET}.${BQ_VIEW}\``;
+    const idList = postIds.join(',');
+    const query = `SELECT post_id, total_page_views FROM \`${BQ_PROJECT}.${BQ_DATASET}.${BQ_VIEW}\` WHERE post_id IN (${idList})`;
 
     const res = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${BQ_PROJECT}/queries`,
@@ -77,7 +81,6 @@ export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, nu
         body: JSON.stringify({
           query,
           useLegacySql: false,
-          maxResults: 10000,
           timeoutMs: 30000,
         }),
       },
@@ -96,30 +99,13 @@ export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, nu
       return new Map();
     }
 
-    addRowsToMap(data.rows, pvMap);
-
-    // ページネーション: 残りの行を取得
-    let pageToken = data.pageToken;
-    const jobId = data.jobReference?.jobId;
-
-    while (pageToken && jobId) {
-      const pageRes = await fetch(
-        `https://bigquery.googleapis.com/bigquery/v2/projects/${BQ_PROJECT}/queries/${jobId}?pageToken=${pageToken}&maxResults=10000`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      );
-
-      if (!pageRes.ok) {
-        console.error(`[bigquery] Pagination failed (${pageRes.status})`);
-        break;
+    const pvMap = new Map<number, number>();
+    for (const row of data.rows) {
+      const postId = Number(row.f[0].v);
+      const totalPV = Number(row.f[1].v);
+      if (!Number.isNaN(postId) && !Number.isNaN(totalPV)) {
+        pvMap.set(postId, totalPV);
       }
-
-      const pageData = (await pageRes.json()) as BigQueryQueryResponse;
-      if (pageData.rows) {
-        addRowsToMap(pageData.rows, pvMap);
-      }
-      pageToken = pageData.pageToken;
     }
 
     return pvMap;
@@ -127,18 +113,5 @@ export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, nu
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[bigquery] Failed to fetch PV data: ${message}`);
     return new Map();
-  }
-}
-
-function addRowsToMap(
-  rows: Array<{ f: Array<{ v: string | null }> }>,
-  pvMap: Map<number, number>,
-): void {
-  for (const row of rows) {
-    const postId = Number(row.f[0].v);
-    const totalPV = Number(row.f[1].v);
-    if (!Number.isNaN(postId) && !Number.isNaN(totalPV)) {
-      pvMap.set(postId, totalPV);
-    }
   }
 }
