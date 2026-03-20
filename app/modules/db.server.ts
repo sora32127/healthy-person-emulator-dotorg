@@ -110,6 +110,9 @@ export const createGoogleUser = (...args: Parameters<DatabaseRepository['createG
   getRepo().createGoogleUser(...args);
 export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) =>
   getRepo().searchPosts(...args);
+export const getSourcePostsByMergedPostId = (
+  ...args: Parameters<DatabaseRepository['getSourcePostsByMergedPostId']>
+) => getRepo().getSourcePostsByMergedPostId(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 
@@ -161,6 +164,8 @@ export class ArchiveDataEntry {
   blueskyPostUriOfFirstPost: string | null;
   misskeyNoteIdOfFirstNote: string | null;
   countBookmarks: number;
+  mergedIntoPostId: number | null;
+  sourcePosts: { postId: number; postTitle: string }[];
 
   private constructor(
     postData: PostData,
@@ -169,6 +174,7 @@ export class ArchiveDataEntry {
     previousPost: PreviousOrNextPostData,
     nextPost: PreviousOrNextPostData,
     bookmarkCount: number,
+    sourcePosts: { postId: number; postTitle: string }[],
   ) {
     this.postId = postData.postId;
     this.postTitle = postData.postTitle;
@@ -190,6 +196,8 @@ export class ArchiveDataEntry {
     this.blueskyPostUriOfFirstPost = postData.blueskyPostUriOfFirstPost;
     this.misskeyNoteIdOfFirstNote = postData.misskeyNoteIdOfFirstNote;
     this.countBookmarks = bookmarkCount;
+    this.mergedIntoPostId = postData.mergedIntoPostId;
+    this.sourcePosts = sourcePosts;
   }
 
   static async getData(postId: number) {
@@ -200,6 +208,7 @@ export class ArchiveDataEntry {
     const previousPost = await repo.getPreviousPost(postId);
     const nextPost = await repo.getNextPost(postId);
     const countBookmarks = await repo.getCountBookmarks(postId);
+    const sourcePosts = await repo.getSourcePostsByMergedPostId(postId);
     return new ArchiveDataEntry(
       postData,
       comments,
@@ -207,6 +216,7 @@ export class ArchiveDataEntry {
       previousPost,
       nextPost,
       countBookmarks,
+      sourcePosts,
     );
   }
 }

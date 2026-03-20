@@ -78,6 +78,7 @@ const PostDataSchema = z.object({
   tweetIdOfFirstTweet: z.string().nullable(),
   blueskyPostUriOfFirstPost: z.string().nullable(),
   misskeyNoteIdOfFirstNote: z.string().nullable(),
+  mergedIntoPostId: z.number().nullable(),
 });
 export type PostData = z.infer<typeof PostDataSchema>;
 
@@ -288,4 +289,7 @@ export interface DatabaseRepository {
   getPreviousPost(postId: number): Promise<PreviousOrNextPostData>;
   getNextPost(postId: number): Promise<PreviousOrNextPostData>;
   getCountBookmarks(postId: number): Promise<number>;
+  getSourcePostsByMergedPostId(
+    mergedPostId: number,
+  ): Promise<{ postId: number; postTitle: string }[]>;
 }
