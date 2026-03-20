@@ -5,28 +5,32 @@ import { requireAdmin } from '~/modules/admin.server';
 import { mergePosts, generateMergeDraft } from '~/modules/admin-merge.server';
 import type { CloudflareEnv } from '~/types/env';
 import { drizzle } from 'drizzle-orm/d1';
-import { inArray, isNull } from 'drizzle-orm';
+import { inArray, isNull, desc } from 'drizzle-orm';
 import { dimPosts } from '~/drizzle/schema';
 import { getVectorsByIds, querySimilar } from '~/modules/cloudflare.server';
 
-type SimilarPostCandidate = {
-  postId: number;
-  postTitle: string;
-  score: number;
+// --- Types ---
+
+type DuplicateCluster = {
+  basePostId: number;
+  basePostTitle: string;
+  similars: { postId: number; postTitle: string; score: number }[];
+};
+
+type ScanDuplicatesResult = {
+  action: 'scanDuplicates';
+  success: boolean;
+  clusters?: DuplicateCluster[];
+  scannedCount?: number;
+  totalCount?: number;
+  page?: number;
+  error?: string;
 };
 
 type SourcePost = {
   postId: number;
   postTitle: string;
   postContent: string;
-};
-
-type FindSimilarResult = {
-  action: 'findSimilar';
-  success: boolean;
-  basePost?: { postId: number; postTitle: string };
-  candidates?: SimilarPostCandidate[];
-  error?: string;
 };
 
 type LoadSourcesResult = {
@@ -52,10 +56,15 @@ type ExecuteMergeResult = {
 };
 
 type ActionResult =
-  | FindSimilarResult
+  | ScanDuplicatesResult
   | LoadSourcesResult
   | GenerateDraftResult
   | ExecuteMergeResult;
+
+const SCAN_BATCH_SIZE = 20;
+const SIMILARITY_THRESHOLD = 0.85;
+
+// --- Action ---
 
 export async function action({ request }: ActionFunctionArgs) {
   await requireAdmin(request);
@@ -63,50 +72,91 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const actionType = formData.get('action') as string;
 
-  if (actionType === 'findSimilar') {
-    const postId = Number(formData.get('postId'));
-    if (!postId || Number.isNaN(postId)) {
-      return { action: 'findSimilar', success: false, error: '有効な記事IDを入力してください' };
-    }
+  if (actionType === 'scanDuplicates') {
+    const page = Math.max(1, Number(formData.get('page')) || 1);
+    const threshold = Number(formData.get('threshold')) || SIMILARITY_THRESHOLD;
+    const offset = (page - 1) * SCAN_BATCH_SIZE;
 
     const db = drizzle(env.DB);
-    const [basePost] = await db
+
+    // 総記事数を取得
+    const allPosts = await db
+      .select({ postId: dimPosts.postId })
+      .from(dimPosts)
+      .where(isNull(dimPosts.mergedIntoPostId));
+    const totalCount = allPosts.length;
+
+    // バッチ分の記事を取得
+    const batchPosts = await db
       .select({ postId: dimPosts.postId, postTitle: dimPosts.postTitle })
       .from(dimPosts)
       .where(isNull(dimPosts.mergedIntoPostId))
-      .limit(1)
-      .all()
-      .then((rows) => rows.filter((r) => r.postId === postId));
+      .orderBy(desc(dimPosts.postId))
+      .limit(SCAN_BATCH_SIZE)
+      .offset(offset);
 
-    if (!basePost) {
-      return { action: 'findSimilar', success: false, error: `記事ID ${postId} が見つかりません` };
+    if (batchPosts.length === 0) {
+      return {
+        action: 'scanDuplicates',
+        success: true,
+        clusters: [],
+        scannedCount: 0,
+        totalCount,
+        page,
+      };
     }
 
     try {
-      const vectors = await getVectorsByIds([String(postId)]);
-      if (vectors.length === 0 || !vectors[0].values) {
-        return {
-          action: 'findSimilar',
-          success: false,
-          error: 'この記事のベクトルが見つかりません',
-        };
+      // 各記事のベクトルを取得して類似検索
+      const clusters: DuplicateCluster[] = [];
+      const seenPairs = new Set<string>();
+
+      for (const post of batchPosts) {
+        const vectors = await getVectorsByIds([String(post.postId)]);
+        if (vectors.length === 0 || !vectors[0].values) continue;
+
+        const matches = await querySimilar(vectors[0].values, 10);
+        const highScoreMatches = matches
+          .filter((m) => {
+            const matchId = Number(m.id);
+            if (matchId === post.postId) return false;
+            if (m.score < threshold) return false;
+            // 重複ペアを排除
+            const pairKey = [Math.min(post.postId, matchId), Math.max(post.postId, matchId)].join(
+              '-',
+            );
+            if (seenPairs.has(pairKey)) return false;
+            seenPairs.add(pairKey);
+            return true;
+          })
+          .map((m) => ({
+            postId: Number(m.metadata?.postId ?? m.id),
+            postTitle: String(m.metadata?.postTitle ?? ''),
+            score: Math.round(m.score * 1000) / 1000,
+          }));
+
+        if (highScoreMatches.length > 0) {
+          clusters.push({
+            basePostId: post.postId,
+            basePostTitle: post.postTitle,
+            similars: highScoreMatches,
+          });
+        }
       }
 
-      const matches = await querySimilar(vectors[0].values, 30);
-      const candidates: SimilarPostCandidate[] = matches
-        .filter((m) => m.id !== String(postId))
-        .map((m) => ({
-          postId: Number(m.metadata?.postId ?? m.id),
-          postTitle: String(m.metadata?.postTitle ?? ''),
-          score: Math.round(m.score * 1000) / 1000,
-        }));
-
-      return { action: 'findSimilar', success: true, basePost, candidates };
+      return {
+        action: 'scanDuplicates',
+        success: true,
+        clusters,
+        scannedCount: batchPosts.length,
+        totalCount,
+        page,
+      };
     } catch (err) {
       return {
-        action: 'findSimilar',
+        action: 'scanDuplicates',
         success: false,
-        error: err instanceof Error ? err.message : 'ベクトル検索に失敗しました',
+        error: err instanceof Error ? err.message : 'スキャンに失敗しました',
       };
     }
   }
@@ -186,12 +236,20 @@ export async function action({ request }: ActionFunctionArgs) {
   return { success: false, error: '不明なアクションです' };
 }
 
+// --- Component ---
+
 export default function AdminMerge() {
   const fetcher = useFetcher<ActionResult>();
-  const [searchPostId, setSearchPostId] = useState('');
-  const [basePost, setBasePost] = useState<{ postId: number; postTitle: string } | null>(null);
-  const [candidates, setCandidates] = useState<SimilarPostCandidate[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [clusters, setClusters] = useState<DuplicateCluster[]>([]);
+  const [scanPage, setScanPage] = useState(1);
+  const [scanMeta, setScanMeta] = useState<{
+    scannedCount: number;
+    totalCount: number;
+  } | null>(null);
+  const [threshold, setThreshold] = useState(SIMILARITY_THRESHOLD);
+  const [selectedCluster, setSelectedCluster] = useState<{
+    postIds: number[];
+  } | null>(null);
   const [sourcePosts, setSourcePosts] = useState<SourcePost[]>([]);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftContent, setDraftContent] = useState('');
@@ -204,10 +262,14 @@ export default function AdminMerge() {
     const data = fetcher.data;
     if (!data) return;
 
-    if (data.action === 'findSimilar' && data.success) {
-      setBasePost(data.basePost!);
-      setCandidates(data.candidates!);
-      setSelectedIds(new Set());
+    if (data.action === 'scanDuplicates' && data.success) {
+      setClusters(data.clusters!);
+      setScanMeta({
+        scannedCount: data.scannedCount!,
+        totalCount: data.totalCount!,
+      });
+      setScanPage(data.page!);
+      setSelectedCluster(null);
       setSourcePosts([]);
       setDraftTitle('');
       setDraftContent('');
@@ -224,28 +286,18 @@ export default function AdminMerge() {
     }
   }, [fetcher.data]);
 
-  const handleFindSimilar = () => {
+  const handleScan = (page: number) => {
     const formData = new FormData();
-    formData.append('action', 'findSimilar');
-    formData.append('postId', searchPostId);
+    formData.append('action', 'scanDuplicates');
+    formData.append('page', String(page));
+    formData.append('threshold', String(threshold));
     fetcher.submit(formData, { method: 'post' });
   };
 
-  const toggleCandidate = (postId: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(postId)) {
-        next.delete(postId);
-      } else {
-        next.add(postId);
-      }
-      return next;
-    });
-  };
+  const handleSelectCluster = (cluster: DuplicateCluster) => {
+    const allIds = [cluster.basePostId, ...cluster.similars.map((s) => s.postId)];
+    setSelectedCluster({ postIds: allIds });
 
-  const handleLoadSources = () => {
-    if (!basePost) return;
-    const allIds = [basePost.postId, ...selectedIds];
     const formData = new FormData();
     formData.append('action', 'loadSources');
     formData.append('sourcePostIds', allIds.join(','));
@@ -277,10 +329,9 @@ export default function AdminMerge() {
     setSourcePosts([]);
     setDraftTitle('');
     setDraftContent('');
-    setSearchPostId('');
-    setBasePost(null);
-    setCandidates([]);
-    setSelectedIds(new Set());
+    setClusters([]);
+    setScanMeta(null);
+    setSelectedCluster(null);
   };
 
   if (mergedPostId) {
@@ -305,119 +356,146 @@ export default function AdminMerge() {
     );
   }
 
+  const totalPages = scanMeta ? Math.ceil(scanMeta.totalCount / SCAN_BATCH_SIZE) : 0;
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">記事統合</h1>
 
-      {/* Step 1: 類似記事を探索 */}
+      {/* Step 1: 重複スキャン */}
       <div className="card bg-base-100 shadow-sm mb-4">
         <div className="card-body">
-          <h2 className="card-title text-lg">1. 類似記事を探索</h2>
+          <h2 className="card-title text-lg">1. 重複記事をスキャン</h2>
           <p className="text-sm opacity-70">
-            基準となる記事IDを入力すると、ベクトル検索で類似度の高い記事を一覧表示します。
+            記事をバッチ処理でベクトル検索し、類似度が閾値以上の記事ペアを検出します。
+            1回のスキャンで{SCAN_BATCH_SIZE}件ずつ処理します。
           </p>
-          <div className="form-control">
-            <label className="label" htmlFor="searchPostId">
-              <span className="label-text">基準記事ID</span>
-            </label>
-            <div className="flex gap-2">
+          <div className="flex items-end gap-4 mt-2">
+            <div className="form-control">
+              <label className="label" htmlFor="threshold">
+                <span className="label-text">類似度の閾値</span>
+              </label>
               <input
-                id="searchPostId"
+                id="threshold"
                 type="number"
-                className="input input-bordered flex-1"
-                value={searchPostId}
-                onChange={(e) => setSearchPostId(e.target.value)}
-                placeholder="例: 12345"
+                step="0.01"
+                min="0.5"
+                max="1.0"
+                className="input input-bordered input-sm w-28"
+                value={threshold}
+                onChange={(e) => setThreshold(Number(e.target.value))}
               />
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={handleFindSimilar}
-                disabled={isSubmitting || !searchPostId.trim()}
-              >
-                {isSubmitting && fetcher.formData?.get('action') === 'findSimilar'
-                  ? '検索中...'
-                  : '類似記事を検索'}
-              </button>
             </div>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => handleScan(1)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && fetcher.formData?.get('action') === 'scanDuplicates'
+                ? 'スキャン中...'
+                : 'スキャン開始'}
+            </button>
           </div>
+          {scanMeta && (
+            <p className="text-sm mt-2">
+              {scanMeta.totalCount}件中 {(scanPage - 1) * SCAN_BATCH_SIZE + 1}〜
+              {Math.min(scanPage * SCAN_BATCH_SIZE, scanMeta.totalCount)}件目をスキャン済み （
+              {clusters.length}件の重複候補を検出）
+            </p>
+          )}
         </div>
       </div>
 
       {errorMessage && <div className="alert alert-error mb-4">{errorMessage}</div>}
 
-      {/* Step 2: 統合候補を選択 */}
-      {candidates.length > 0 && basePost && (
+      {/* Step 2: 重複候補一覧 */}
+      {clusters.length > 0 && (
         <div className="card bg-base-100 shadow-sm mb-4">
           <div className="card-body">
-            <h2 className="card-title text-lg">2. 統合する記事を選択</h2>
-            <p className="text-sm opacity-70 mb-2">
-              基準記事「
-              <Link to={`/archives/${basePost.postId}`} className="link" target="_blank">
-                {basePost.postTitle}
-              </Link>
-              」（ID: {basePost.postId}
-              ）に類似する記事です。統合したい記事にチェックを入れてください。
-            </p>
-            <div className="overflow-x-auto">
-              <table className="table table-sm w-full">
-                <thead>
-                  <tr>
-                    <th>選択</th>
-                    <th>類似度</th>
-                    <th>ID</th>
-                    <th>タイトル</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.map((c) => (
-                    <tr key={c.postId} className={selectedIds.has(c.postId) ? 'bg-base-200' : ''}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={selectedIds.has(c.postId)}
-                          onChange={() => toggleCandidate(c.postId)}
-                        />
-                      </td>
-                      <td>
-                        <span
-                          className={`badge badge-sm ${c.score >= 0.9 ? 'badge-error' : c.score >= 0.8 ? 'badge-warning' : 'badge-ghost'}`}
-                        >
-                          {c.score}
-                        </span>
-                      </td>
-                      <td>{c.postId}</td>
-                      <td>
+            <h2 className="card-title text-lg">2. 重複候補から統合する組を選択</h2>
+            <div className="space-y-3">
+              {clusters.map((cluster) => (
+                <div key={cluster.basePostId} className="border rounded p-3 bg-base-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium">
                         <Link
-                          to={`/archives/${c.postId}`}
+                          to={`/archives/${cluster.basePostId}`}
                           className="link link-hover"
                           target="_blank"
                         >
-                          {c.postTitle}
+                          ID:{cluster.basePostId} — {cluster.basePostTitle}
                         </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                      <ul className="ml-4 mt-1">
+                        {cluster.similars.map((s) => (
+                          <li key={s.postId} className="text-sm flex items-center gap-2">
+                            <span
+                              className={`badge badge-xs ${s.score >= 0.95 ? 'badge-error' : s.score >= 0.9 ? 'badge-warning' : 'badge-ghost'}`}
+                            >
+                              {s.score}
+                            </span>
+                            <Link
+                              to={`/archives/${s.postId}`}
+                              className="link link-hover"
+                              target="_blank"
+                            >
+                              ID:{s.postId} — {s.postTitle}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => handleSelectCluster(cluster)}
+                      disabled={isSubmitting}
+                    >
+                      この組を統合
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="card-actions justify-end mt-4">
-              <span className="text-sm opacity-70 self-center mr-2">
-                {selectedIds.size}件選択中（+ 基準記事1件 = 計{selectedIds.size + 1}件を統合）
-              </span>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={handleLoadSources}
-                disabled={isSubmitting || selectedIds.size === 0}
-              >
-                {isSubmitting && fetcher.formData?.get('action') === 'loadSources'
-                  ? '読み込み中...'
-                  : '選択した記事を読み込む'}
-              </button>
-            </div>
+
+            {/* ページネーション */}
+            {totalPages > 1 && (
+              <div className="join mt-4 flex justify-center">
+                {scanPage > 1 && (
+                  <button
+                    type="button"
+                    className="join-item btn btn-sm"
+                    onClick={() => handleScan(scanPage - 1)}
+                    disabled={isSubmitting}
+                  >
+                    &laquo;
+                  </button>
+                )}
+                <span className="join-item btn btn-sm btn-disabled">
+                  {scanPage} / {totalPages}
+                </span>
+                {scanPage < totalPages && (
+                  <button
+                    type="button"
+                    className="join-item btn btn-sm"
+                    onClick={() => handleScan(scanPage + 1)}
+                    disabled={isSubmitting}
+                  >
+                    &raquo;
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {scanMeta && clusters.length === 0 && (
+        <div className="alert alert-info mb-4">
+          このページには類似度 {threshold} 以上の重複候補が見つかりませんでした。
+          次のページをスキャンするか、閾値を下げてみてください。
         </div>
       )}
 
