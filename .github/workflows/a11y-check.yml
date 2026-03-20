@@ -30,18 +30,26 @@ jobs:
       - run: pnpm install
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - name: Wait for preview deployment
+      - name: Wait for Preview Deploy to complete
         run: |
-          echo "Waiting for preview to be ready..."
-          for i in $(seq 1 60); do
-            if curl -s -o /dev/null -w '%{http_code}' https://preview.healthy-person-emulator.org | grep -q '200'; then
-              echo "Preview is ready!"
-              break
+          echo "Waiting for Preview Deploy workflow to complete..."
+          while true; do
+            STATUS=$(gh run list --workflow=preview-deploy.yml --branch "${{ github.head_ref }}" --limit 1 --json status,conclusion --jq '.[0] | "\(.status) \(.conclusion)"')
+            echo "Preview Deploy: $STATUS"
+            if echo "$STATUS" | grep -q "^completed"; then
+              if echo "$STATUS" | grep -q "success"; then
+                echo "Preview Deploy succeeded!"
+                break
+              else
+                echo "Preview Deploy failed, running a11y tests anyway"
+                break
+              fi
             fi
-            echo "Attempt $i/60 - waiting 10s..."
-            sleep 10
+            sleep 15
           done
-        timeout-minutes: 12
+        timeout-minutes: 15
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Run a11y tests against preview
         id: a11y-test
         continue-on-error: true
