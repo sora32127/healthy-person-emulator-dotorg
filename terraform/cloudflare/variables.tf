@@ -16,3 +16,8 @@ variable "domain" {
   type        = string
   default     = "healthy-person-emulator.org"
 }
+
+variable "admin_emails" {
+  description = "管理画面へのアクセスを許可するメールアドレスのリスト"
+  type        = list(string)
+}
