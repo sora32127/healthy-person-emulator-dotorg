@@ -440,6 +440,20 @@ resource "google_bigquery_data_transfer_config" "post_page_views_daily" {
   depends_on = [google_project_iam_member.bq_dts_token_creator]
 }
 
+# --- stg_post_page_views_daily テーブル定義 ---
+# Scheduled Query の宛先テーブル。先に空テーブルを作成しておく
+resource "google_bigquery_table" "stg_post_page_views_daily" {
+  dataset_id          = google_bigquery_dataset.hpe_reports.dataset_id
+  table_id            = "stg_post_page_views_daily"
+  deletion_protection = false
+
+  schema = jsonencode([
+    { name = "event_date", type = "DATE", mode = "NULLABLE" },
+    { name = "post_id", type = "INT64", mode = "NULLABLE" },
+    { name = "page_views", type = "INT64", mode = "NULLABLE" },
+  ])
+}
+
 # --- vw_post_page_views_intraday ---
 # events_intraday_* から当日のリアルタイムPVを集計するView
 resource "google_bigquery_table" "vw_post_page_views_intraday" {
@@ -490,7 +504,7 @@ resource "google_bigquery_table" "vw_post_page_views" {
   }
 
   depends_on = [
-    google_bigquery_data_transfer_config.post_page_views_daily,
+    google_bigquery_table.stg_post_page_views_daily,
     google_bigquery_table.vw_post_page_views_intraday,
   ]
 }
