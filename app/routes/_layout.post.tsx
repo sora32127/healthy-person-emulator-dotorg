@@ -607,6 +607,7 @@ function DynamicTextInput({
               key={field.id}
               {...register(`${registerKey}.${index}`)}
               className="w-3/4 border rounded-lg placeholder-slate-500 px-3 py-2"
+              aria-label={`${description} ${index + 1}`}
             />
             <button
               type="button"
@@ -656,6 +657,7 @@ function StaticTextInput({
             className="flex-grow px-3 py-2 border rounded-lg focus:outline-none w-full my-2 placeholder-slate-500"
             placeholder={placeholders[i]}
             {...register(`${registerKey}.${i}`)}
+            aria-label={`${title} ${i + 1}`}
           />
           {i === 0 && errors[registerKey] && (
             <ErrorMessageContainer errormessage={errors[registerKey]?.root?.message as string} />

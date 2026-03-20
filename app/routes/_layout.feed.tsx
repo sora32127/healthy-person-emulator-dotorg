@@ -107,6 +107,7 @@ export default function Feed() {
           onChange={(e) => handleFeedTypeChange(e.target.value)}
           className="select select-bordered select-sm"
           value={type}
+          aria-label="表示順"
         >
           <option value="unboundedLikes" className="select-option">
             無期限いいね順
@@ -121,8 +122,12 @@ export default function Feed() {
             古い順
           </option>
         </select>
-        <Link to={`/feed.xml?${new URLSearchParams(location.search).toString()}`} reloadDocument>
-          <button type="button" className="btn btn-ghost h-9 w-9 p-0 ml-2">
+        <Link
+          to={`/feed.xml?${new URLSearchParams(location.search).toString()}`}
+          reloadDocument
+          aria-label="RSSフィード"
+        >
+          <button type="button" className="btn btn-ghost h-9 w-9 p-0 ml-2" aria-label="RSSフィード">
             <Rss className="fill-none stroke-current" />
           </button>
         </Link>

@@ -23,6 +23,7 @@ export function AccordionItem({ title, children, isOpen, setIsOpen }: AccordionI
         checked={isOpen}
         onChange={() => setIsOpen(!isOpen)}
         className="peer"
+        aria-label={title}
       />
       <div className="collapse-title text-lg font-medium">{title}</div>
       <div className="collapse-content">{children}</div>
