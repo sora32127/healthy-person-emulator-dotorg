@@ -9,6 +9,7 @@ import {
   recordPostVote,
   recordCommentVote,
   createPostComment,
+  getMergeInfoBySourcePostId,
 } from '~/modules/db.server';
 import CommentCard from '~/components/CommentCard';
 import TagCard from '~/components/TagCard';
@@ -353,6 +354,19 @@ export default function Component() {
           onSuccess={handleTurnstileSuccess}
           options={{ size: 'invisible' }}
         />
+        {data.mergeInfo && (
+          <div className="alert alert-info my-4 mx-4">
+            <span>
+              この記事は統合されました。統合先の記事:{' '}
+              <NavLink
+                to={`/archives/${data.mergeInfo.targetPostId}`}
+                className="link link-hover font-bold"
+              >
+                {data.mergeInfo.targetPostTitle}
+              </NavLink>
+            </span>
+          </div>
+        )}
         <div className="px-4">
           <UserWarningMessage
             isWelcomed={data.isWelcomed ?? true}
@@ -386,54 +400,58 @@ export default function Component() {
           </div>
         </div>
         <div className="postContent" dangerouslySetInnerHTML={{ __html: data.postContent }} />
-        <div className="flex justify">
-          <div className="flex items-center p-2 rounded">
-            <VoteButton
-              type="like"
-              count={data.countLikes}
-              isAnimating={isLikeAnimating}
-              isVoted={isLiked}
-              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
-              onClick={() => handlePostVote({ voteType: 'like' })}
-            />
-            <VoteButton
-              type="dislike"
-              count={data.countDislikes}
-              isAnimating={isDislikeAnimating}
-              isVoted={isDisliked}
-              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
-              onClick={() => handlePostVote({ voteType: 'dislike' })}
-            />
-            <button
-              type="button"
-              onClick={() => handleBookmarkPost()}
-              className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
-                ${isBookmarked ? 'text-green-500 hover:text-base-content' : 'text-base-content hover:text-green-500'}
-                ${isBookmarkSubmitting ? 'animate-spin' : ''}`}
-              disabled={isBookmarkSubmitting}
-            >
-              <Bookmark className="fill-none" />
-              <p className="text-xs">{data.countBookmarks}</p>
-            </button>
-          </div>
-        </div>
-        <div className="my-6">
-          <button
-            onClick={() => {
-              if (isUserAuthenticated) {
-                window.location.href = `/archives/edit/${POSTID}`;
-              } else {
-                handleSetVisitorRedirectURL();
-                toast.error('編集するにはユーザー登録が必要です');
-                setIsLoginModalOpen(true);
-              }
-            }}
-            type="button"
-            className="btn-primary rounded px-4 py-2 mx-1 my-20 cursor-pointer"
-          >
-            編集する
-          </button>
-        </div>
+        {!data.mergeInfo && (
+          <>
+            <div className="flex justify">
+              <div className="flex items-center p-2 rounded">
+                <VoteButton
+                  type="like"
+                  count={data.countLikes}
+                  isAnimating={isLikeAnimating}
+                  isVoted={isLiked}
+                  disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+                  onClick={() => handlePostVote({ voteType: 'like' })}
+                />
+                <VoteButton
+                  type="dislike"
+                  count={data.countDislikes}
+                  isAnimating={isDislikeAnimating}
+                  isVoted={isDisliked}
+                  disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+                  onClick={() => handlePostVote({ voteType: 'dislike' })}
+                />
+                <button
+                  type="button"
+                  onClick={() => handleBookmarkPost()}
+                  className={`btn btn-circle hover:animate-pulse hover:duration-1000 flex flex-row items-center gap-1 px-1 mx-2
+                    ${isBookmarked ? 'text-green-500 hover:text-base-content' : 'text-base-content hover:text-green-500'}
+                    ${isBookmarkSubmitting ? 'animate-spin' : ''}`}
+                  disabled={isBookmarkSubmitting}
+                >
+                  <Bookmark className="fill-none" />
+                  <p className="text-xs">{data.countBookmarks}</p>
+                </button>
+              </div>
+            </div>
+            <div className="my-6">
+              <button
+                onClick={() => {
+                  if (isUserAuthenticated) {
+                    window.location.href = `/archives/edit/${POSTID}`;
+                  } else {
+                    handleSetVisitorRedirectURL();
+                    toast.error('編集するにはユーザー登録が必要です');
+                    setIsLoginModalOpen(true);
+                  }
+                }}
+                type="button"
+                className="btn-primary rounded px-4 py-2 mx-1 my-20 cursor-pointer"
+              >
+                編集する
+              </button>
+            </div>
+          </>
+        )}
         <H2>関連記事</H2>
         <div className="w-full px-1">
           <ul className="list-disc list-outside mb-4 ml-4">
@@ -476,15 +494,29 @@ export default function Component() {
             misskeyNoteIdOfFirstNote={data.misskeyNoteIdOfFirstNote}
           />
         </div>
+        {data.sourcePosts.length > 0 && (
+          <div className="my-8">
+            <H2>統合元の記事</H2>
+            <ul className="list-disc list-outside mb-4 ml-4">
+              {data.sourcePosts.map((post) => (
+                <li key={post.postId} className="my-2">
+                  <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <br />
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
-          <CommentInputBox
-            onSubmit={handleCommentSubmit}
-            isCommentOpen={isCommentOpen}
-            commentParentId={0}
-          />
-        </div>
+        {!data.mergeInfo && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-4">コメントを投稿する</h2>
+            <CommentInputBox
+              onSubmit={handleCommentSubmit}
+              isCommentOpen={isCommentOpen}
+              commentParentId={0}
+            />
+          </div>
+        )}
         <div>{renderComments()}</div>
       </div>
     </>
@@ -495,6 +527,15 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get('action');
   const postId = Number(formData.get('postId'));
+
+  // ソース記事（統合済み）への投票・コメントを拒否
+  if (action !== 'setTurnstileToken' && action !== 'setVisitorRedirectURL') {
+    const mergeInfo = await getMergeInfoBySourcePostId(postId);
+    if (mergeInfo) {
+      return data({ error: 'この記事は統合済みのため操作できません' }, { status: 403 });
+    }
+  }
+
   const ipAddress = await getHashedUserIPAddress(request);
   const userIpHashString = await getHashedUserIPAddress(request);
   const isValidUser = await isUserValid(request);
@@ -666,6 +707,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     description: postDescription,
     url,
     image,
+    noindex: data.data.mergeInfo !== null,
   });
 
   return commonMeta;
