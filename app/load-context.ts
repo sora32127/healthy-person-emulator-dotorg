@@ -53,9 +53,8 @@ export function initializeApp(envParam?: CloudflareEnv) {
     AI: env.AI,
   });
   initCloudflare({
-    CF_WORKERS_AI_TOKEN: env.CF_WORKERS_AI_TOKEN,
-    CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID,
-    VECTORIZE_INDEX_NAME: env.VECTORIZE_INDEX_NAME,
+    AI: env.AI,
+    VECTORIZE: env.VECTORIZE,
   });
   initDb(env.DB);
   _initialized = true;
