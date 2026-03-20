@@ -261,3 +261,20 @@ export const fctUserBookmarkActivity = sqliteTable('fct_user_bookmark_activity',
   bookmarkDateGmt: text('bookmark_date_gmt').notNull(),
   bookmarkDateJst: text('bookmark_date_jst').notNull(),
 });
+
+// ============================================================
+// 15. dim_deleted_posts
+// ============================================================
+export const dimDeletedPosts = sqliteTable('dim_deleted_posts', {
+  deletedPostId: integer('deleted_post_id').primaryKey({ autoIncrement: true }),
+  originalPostId: integer('original_post_id').notNull(),
+  postTitle: text('post_title').notNull(),
+  postContent: text('post_content').notNull(),
+  postDateGmt: text('post_date_gmt').notNull(),
+  deletedAtUtc: text('deleted_at_utc').notNull(),
+  deletedByEmail: text('deleted_by_email').notNull(),
+  deletionReason: text('deletion_reason'),
+  tweetIdOfFirstTweet: text('tweet_id_of_first_tweet'),
+  blueskyPostUriOfFirstPost: text('bluesky_post_uri_of_first_post'),
+  misskeyNoteIdOfFirstNote: text('misskey_note_id_of_first_note'),
+});
