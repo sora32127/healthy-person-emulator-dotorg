@@ -16,6 +16,7 @@ startup_time = time.time()
 TASK_ROUTES = {
     "/create-ogp": "tasks.create_og_image",
     "/post-social": None,  # dispatches to sub-tasks based on platform
+    "/delete-social": None,  # dispatches to sub-tasks based on platform
     "/report-weekly": "tasks.report_weekly_summary",
     "/report-legendary": "tasks.report_legendary_article",
 }
@@ -61,6 +62,8 @@ class AutomationHandler(BaseHTTPRequestHandler):
                     self._respond(400, {"error": f"Unknown platform: {platform}"})
                     return
                 result = import_and_handle(SOCIAL_PLATFORM_MODULES[platform], params)
+            elif self.path == "/delete-social":
+                result = import_and_handle("tasks.delete_social", params)
             elif self.path in TASK_ROUTES:
                 module_name = TASK_ROUTES[self.path]
                 result = import_and_handle(module_name, params)
