@@ -145,6 +145,9 @@ importers:
       '@vitest/ui':
         specifier: ^4.1.0
         version: 4.1.0(@voidzero-dev/vite-plus-test@0.1.12)
+      axe-core:
+        specifier: ^4.11.1
+        version: 4.11.1
       better-sqlite3:
         specifier: ^12.8.0
         version: 12.8.0
@@ -1771,6 +1774,10 @@ packages:
   aws-ssl-profiles@1.1.2:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
     engines: {node: '>= 6.0.0'}
+
+  axe-core@4.11.1:
+    resolution: {integrity: sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A==}
+    engines: {node: '>=4'}
 
   babel-dead-code-elimination@1.0.12:
     resolution: {integrity: sha512-GERT7L2TiYcYDtYk1IpD+ASAYXjKbLTDPhBtYj7X1NuRMDTMtAx9kyBenub1Ev41lo91OHCKdmP+egTDmfQ7Ig==}
@@ -4817,6 +4824,8 @@ snapshots:
 
   aws-ssl-profiles@1.1.2:
     optional: true
+
+  axe-core@4.11.1: {}
 
   babel-dead-code-elimination@1.0.12:
     dependencies:

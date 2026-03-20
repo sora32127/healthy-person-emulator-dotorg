@@ -61,6 +61,7 @@
     "@types/react-transition-group": "^4.4.12",
     "@vitest/coverage-v8": "4.1.0",
     "@vitest/ui": "^4.1.0",
+    "axe-core": "^4.11.1",
     "better-sqlite3": "^12.8.0",
     "daisyui": "^5.5.19",
     "drizzle-kit": "^0.31.10",
