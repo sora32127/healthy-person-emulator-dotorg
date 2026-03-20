@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const offset = (page - 1) * PAGE_SIZE;
 
-  const [posts, totalResult, pvMap] = await Promise.all([
+  const [posts, totalResult] = await Promise.all([
     db
       .select({
         postId: dimPosts.postId,
@@ -33,11 +33,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
       .limit(PAGE_SIZE)
       .offset(offset),
     db.select({ total: count() }).from(dimPosts),
-    fetchPostPVMap(env),
   ]);
 
   const total = totalResult[0]?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const pvMap = await fetchPostPVMap(
+    env,
+    posts.map((p) => p.postId),
+  );
 
   const postsWithPV = posts.map((p) => ({
     ...p,

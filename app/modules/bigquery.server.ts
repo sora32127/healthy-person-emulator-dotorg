@@ -56,11 +56,19 @@ interface BigQueryQueryResponse {
   schema?: { fields: Array<{ name: string; type: string }> };
 }
 
-export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, number>> {
+export async function fetchPostPVMap(
+  env: CloudflareEnv,
+  postIds: number[],
+): Promise<Map<number, number>> {
+  if (postIds.length === 0) {
+    return new Map();
+  }
+
   try {
     const accessToken = await getBigQueryAccessToken(env);
 
-    const query = `SELECT post_id, total_page_views FROM \`${BQ_PROJECT}.${BQ_DATASET}.${BQ_VIEW}\``;
+    const idList = postIds.join(',');
+    const query = `SELECT post_id, total_page_views FROM \`${BQ_PROJECT}.${BQ_DATASET}.${BQ_VIEW}\` WHERE post_id IN (${idList})`;
 
     const res = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${BQ_PROJECT}/queries`,
@@ -73,7 +81,6 @@ export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, nu
         body: JSON.stringify({
           query,
           useLegacySql: false,
-          maxResults: 10000,
           timeoutMs: 30000,
         }),
       },
