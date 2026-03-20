@@ -209,7 +209,8 @@ export default function Component() {
     }
   }, [commentVoteFetcher.data]);
 
-  const isCommentOpen = data.commentStatus === 'open';
+  const isMerged = data.mergedIntoPostId !== null;
+  const isCommentOpen = !isMerged && data.commentStatus === 'open';
 
   const renderComments = (parentId = 0, level = 0) => {
     return data.comments
@@ -358,6 +359,22 @@ export default function Component() {
             isWelcomed={data.isWelcomed ?? true}
             isWelcomedExplanation={data.isWelcomedExplanation ?? ''}
           />
+          {isMerged && (
+            <div className="alert alert-info my-4">
+              <div>
+                <p className="font-bold">この記事は統合されました</p>
+                <p>
+                  この記事の内容は他の記事と統合され、新しい記事にまとめられています。
+                  <NavLink
+                    to={`/archives/${data.mergedIntoPostId}`}
+                    className="link link-primary font-bold"
+                  >
+                    統合後の記事を読む
+                  </NavLink>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <div>
           <H1>{data.postTitle}</H1>
@@ -393,7 +410,7 @@ export default function Component() {
               count={data.countLikes}
               isAnimating={isLikeAnimating}
               isVoted={isLiked}
-              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+              disabled={isMerged || isPageLikeButtonPushed || isLiked || isLikeAnimating}
               onClick={() => handlePostVote({ voteType: 'like' })}
             />
             <VoteButton
@@ -401,7 +418,7 @@ export default function Component() {
               count={data.countDislikes}
               isAnimating={isDislikeAnimating}
               isVoted={isDisliked}
-              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+              disabled={isMerged || isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
               onClick={() => handlePostVote({ voteType: 'dislike' })}
             />
             <button
@@ -417,55 +434,78 @@ export default function Component() {
             </button>
           </div>
         </div>
-        <div className="my-6">
-          <button
-            onClick={() => {
-              if (isUserAuthenticated) {
-                window.location.href = `/archives/edit/${POSTID}`;
-              } else {
-                handleSetVisitorRedirectURL();
-                toast.error('編集するにはユーザー登録が必要です');
-                setIsLoginModalOpen(true);
-              }
-            }}
-            type="button"
-            className="btn-primary rounded px-4 py-2 mx-1 my-20 cursor-pointer"
-          >
-            編集する
-          </button>
-        </div>
-        <H2>関連記事</H2>
-        <div className="w-full px-1">
-          <ul className="list-disc list-outside mb-4 ml-4">
-            {data.similarPosts.map((post) => (
-              <li key={post.postId} className="my-2">
-                <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-col md:flex-row justify-between items-center my-20">
-          {data.nextPost ? (
-            <div className="flex items-center mb-4 md:mb-0">
-              <ArrowForwardIcon />
-              <CommonNavLink to={`/archives/${data.nextPost.postId}`}>
-                {data.nextPost.postTitle}
-              </CommonNavLink>
+        {!isMerged && (
+          <div className="my-6">
+            <button
+              onClick={() => {
+                if (isUserAuthenticated) {
+                  window.location.href = `/archives/edit/${POSTID}`;
+                } else {
+                  handleSetVisitorRedirectURL();
+                  toast.error('編集するにはユーザー登録が必要です');
+                  setIsLoginModalOpen(true);
+                }
+              }}
+              type="button"
+              className="btn-primary rounded px-4 py-2 mx-1 my-20 cursor-pointer"
+            >
+              編集する
+            </button>
+          </div>
+        )}
+        {data.sourcePosts.length > 0 && (
+          <>
+            <H2>統合元の記事</H2>
+            <div className="w-full px-1">
+              <p className="text-sm opacity-70 mb-2">
+                この記事は以下の記事を統合して作成されました。
+              </p>
+              <ul className="list-disc list-outside mb-4 ml-4">
+                {data.sourcePosts.map((post) => (
+                  <li key={post.postId} className="my-2">
+                    <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ) : (
-            <div />
-          )}
-          {data.previousPost ? (
-            <div className="flex items-center">
-              <CommonNavLink to={`/archives/${data.previousPost.postId}`}>
-                {data.previousPost.postTitle}
-              </CommonNavLink>
-              <ArrowBackIcon />
+          </>
+        )}
+        {!isMerged && (
+          <>
+            <H2>関連記事</H2>
+            <div className="w-full px-1">
+              <ul className="list-disc list-outside mb-4 ml-4">
+                {data.similarPosts.map((post) => (
+                  <li key={post.postId} className="my-2">
+                    <CommonNavLink to={`/archives/${post.postId}`}>{post.postTitle}</CommonNavLink>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ) : (
-            <div />
-          )}
-        </div>
+            <div className="flex flex-col md:flex-row justify-between items-center my-20">
+              {data.nextPost ? (
+                <div className="flex items-center mb-4 md:mb-0">
+                  <ArrowForwardIcon />
+                  <CommonNavLink to={`/archives/${data.nextPost.postId}`}>
+                    {data.nextPost.postTitle}
+                  </CommonNavLink>
+                </div>
+              ) : (
+                <div />
+              )}
+              {data.previousPost ? (
+                <div className="flex items-center">
+                  <CommonNavLink to={`/archives/${data.previousPost.postId}`}>
+                    {data.previousPost.postTitle}
+                  </CommonNavLink>
+                  <ArrowBackIcon />
+                </div>
+              ) : (
+                <div />
+              )}
+            </div>
+          </>
+        )}
         <div className="my-8">
           <PostShareButtonGroup currentURL={data.postURL} postTitle={data.postTitle} />
         </div>
