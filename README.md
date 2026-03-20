@@ -29,8 +29,8 @@
         <img src="https://img.shields.io/badge/-typescript-EEE.svg?logo=TypeScript&style=flat">
       </a>
       <br>
-      <a href="https://remix.run" alt="Remix">
-        <img src="https://img.shields.io/badge/-Remix-EEE.svg?logo=Remix&style=flat">
+      <a href="https://reactrouter.com" alt="React Router">
+        <img src="https://img.shields.io/badge/-React_Router-EEE.svg?logo=reactrouter&style=flat">
       </a>
     </td>
     <td>
@@ -45,21 +45,18 @@
       <a href="https://tailwindcss.com" alt="tailwindcss">
         <img src="https://img.shields.io/badge/-tailwindcss-EEE.svg?logo=tailwindcss&style=flat">
       </a>
+      <br>
+      <a href="https://daisyui.com" alt="DaisyUI">
+        <img src="https://img.shields.io/badge/-daisyui-EEE.svg?logo=daisyui&style=flat">
+      </a>
     </td>
     <td>
-      <a href="https://vercel.com" alt="Vercel">
-        <img src="https://img.shields.io/badge/-vercel-EEE.svg?logo=vercel&style=flat">
-      </a>
-      <br>
-      <a href="https://supabase.com" alt="supabase">
-        <img src="https://img.shields.io/badge/-supabase-EEE.svg?logo=supabase&style=flat">
-      </a>
-      <br>
       <a href="https://www.cloudflare.com" alt="Cloudflare">
         <img src="https://img.shields.io/badge/-cloudflare-EEE.svg?logo=cloudflare&style=flat">
       </a>
-      <a href="https://newrelic.com" alt="new relic">
-        <img src="https://img.shields.io/badge/-newrelic-EEE.svg?logo=newrelic&style=flat">
+      <br>
+      <a href="https://orm.drizzle.team" alt="Drizzle ORM">
+        <img src="https://img.shields.io/badge/-drizzle-EEE.svg?logo=drizzle&style=flat">
       </a>
     </td>
   </tr>
@@ -110,41 +107,6 @@
 5. 経済的に支援する
    - 健常者エミュレータ事例集は、運営費用を管理人の自己負担で賄っています
    - サーバーの維持費用やドメインの更新費用など、運営費用を支援するため、[Pixiv FANBOX](https://contradiction29.fanbox.cc/)にて支援を受け付けています
-
-# ローカル開発環境セットアップ
-
-## 手順
-
-Docker compose v2を利用して、ローカル開発環境をセットアップします
-
-1. リポジトリをクローン
-
-```bash
-git clone https://github.com/sora32127/healthy-person-emulator-dotorg.git
-cd healthy-person-emulator-dotorg
-```
-
-2. docker compose upを実行
-
-```bash
-cp .env.example .env
-docker compose -f compose.dev.yaml up
-```
-
-3. アクセス
-
-- Web: http://localhost:3000
-- Supabase Studio: http://localhost:54323
-
-4. (Optional) 作成した環境でCLI操作を行う
-
-```bash
-# シェルにアタッチして操作する
-docker compose -f compose.dev.yaml exec app bash
-
-# pnpm コマンドを実行する
-docker compose -f compose.dev.yaml exec app pnpm ...
-```
 
 ## 活用したアセット
 
