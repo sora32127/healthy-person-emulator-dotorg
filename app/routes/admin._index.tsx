@@ -7,6 +7,7 @@ import { requireAdmin } from '~/modules/admin.server';
 import { deletePost } from '~/modules/admin-delete.server';
 import { useState, useRef, useEffect } from 'react';
 import type { CloudflareEnv } from '~/types/env';
+import { fetchPostPVMap } from '~/modules/bigquery.server';
 
 const PAGE_SIZE = 50;
 
@@ -14,12 +15,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
-  const env = (globalThis as any).__cloudflareEnv;
+  const env = (globalThis as any).__cloudflareEnv as CloudflareEnv;
   const db = drizzle(env.DB);
 
   const offset = (page - 1) * PAGE_SIZE;
 
-  const [posts, totalResult] = await Promise.all([
+  const [posts, totalResult, pvMap] = await Promise.all([
     db
       .select({
         postId: dimPosts.postId,
@@ -32,12 +33,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
       .limit(PAGE_SIZE)
       .offset(offset),
     db.select({ total: count() }).from(dimPosts),
+    fetchPostPVMap(env),
   ]);
 
   const total = totalResult[0]?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  return { posts, page, totalPages, total };
+  const postsWithPV = posts.map((p) => ({
+    ...p,
+    pvCount: pvMap.get(p.postId) ?? 0,
+  }));
+
+  return { posts: postsWithPV, page, totalPages, total };
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -148,6 +155,7 @@ export default function AdminIndex() {
               <th>ID</th>
               <th>タイトル</th>
               <th>いいね</th>
+              <th>PV</th>
               <th>投稿日</th>
               <th>操作</th>
             </tr>
@@ -162,6 +170,7 @@ export default function AdminIndex() {
                   </Link>
                 </td>
                 <td>{post.countLikes}</td>
+                <td>{post.pvCount.toLocaleString()}</td>
                 <td className="text-sm opacity-70">{post.postDateGmt}</td>
                 <td>
                   <button
