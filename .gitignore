@@ -21,6 +21,7 @@ hpe-temp-downloader-key.json
 /playwright/.cache/
 coverage
 a11y-report.json
+a11y-results/
 
 # IDE
 .vscode

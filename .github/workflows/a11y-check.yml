@@ -1,0 +1,98 @@
+name: Accessibility Check
+on:
+  workflow_run:
+    workflows: ['Preview Deploy']
+    types: [completed]
+
+jobs:
+  a11y:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: 'package.json'
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run a11y tests against preview
+        id: a11y-test
+        continue-on-error: true
+        run: pnpm test:a11y
+        env:
+          BASE_URL: https://preview.healthy-person-emulator.org
+      - name: Comment PR with a11y results
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const resultsDir = 'a11y-results';
+            let body = '### Accessibility Check\n\n';
+
+            if (!fs.existsSync(resultsDir)) {
+              body += '⚠️ レポートが生成されませんでした。\n';
+            } else {
+              const files = fs.readdirSync(resultsDir).filter(f => f.endsWith('.json'));
+              const report = files.map(f => JSON.parse(fs.readFileSync(path.join(resultsDir, f), 'utf-8')));
+              const withViolations = report.filter(r => r.violations.length > 0);
+
+              if (withViolations.length === 0) {
+                body += '✅ すべてのページでアクセシビリティ違反は検出されませんでした。\n\n';
+                body += `チェック対象: ${report.length} ページ（light/dark）`;
+              } else {
+                body += `❌ ${withViolations.length} / ${report.length} ページで違反が検出されました。\n\n`;
+                for (const entry of withViolations) {
+                  body += `<details><summary><code>${entry.route}</code> [${entry.colorScheme}] — ${entry.violations.length} 件</summary>\n\n`;
+                  for (const v of entry.violations) {
+                    body += `- **[${v.impact}] ${v.id}**: ${v.description}\n`;
+                    for (const node of v.nodes.slice(0, 3)) {
+                      body += `  - \`${node.substring(0, 100)}\`\n`;
+                    }
+                    if (v.nodes.length > 3) {
+                      body += `  - _...他 ${v.nodes.length - 3} 件_\n`;
+                    }
+                  }
+                  body += '\n</details>\n\n';
+                }
+              }
+            }
+
+            // workflow_run ではPR番号が直接取れないのでAPIで取得
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`,
+              state: 'open',
+            });
+            if (prs.data.length === 0) return;
+            const prNumber = prs.data[0].number;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body?.startsWith('### Accessibility Check'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
+      - name: Fail if a11y violations found
+        if: steps.a11y-test.outcome == 'failure'
+        run: exit 1

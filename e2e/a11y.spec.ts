@@ -1,31 +1,10 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { readdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const REPORT_PATH = resolve(import.meta.dirname, '../a11y-report.json');
-
-type ViolationEntry = {
-  route: string;
-  colorScheme: string;
-  violations: {
-    impact: string;
-    id: string;
-    description: string;
-    nodes: string[];
-  }[];
-};
-
-function loadReport(): Record<string, ViolationEntry> {
-  if (existsSync(REPORT_PATH)) {
-    return JSON.parse(readFileSync(REPORT_PATH, 'utf-8'));
-  }
-  return {};
-}
-
-function saveReport(entries: Record<string, ViolationEntry>) {
-  writeFileSync(REPORT_PATH, JSON.stringify(entries, null, 2));
-}
+const REPORT_DIR = resolve(import.meta.dirname, '../a11y-results');
+mkdirSync(REPORT_DIR, { recursive: true });
 
 function getStaticRoutes(): { path: string; name: string }[] {
   const routesDir = resolve(import.meta.dirname, '../app/routes');
@@ -75,9 +54,7 @@ for (const route of routes) {
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
 
-      const report = loadReport();
-      const key = `${route.path}::${colorScheme}`;
-      report[key] = {
+      const entry = {
         route: route.path,
         colorScheme,
         violations: results.violations.map((v) => ({
@@ -87,7 +64,9 @@ for (const route of routes) {
           nodes: v.nodes.map((n) => n.html.substring(0, 150)),
         })),
       };
-      saveReport(report);
+
+      const filename = `${route.name}--${colorScheme}.json`;
+      writeFileSync(resolve(REPORT_DIR, filename), JSON.stringify(entry, null, 2));
 
       const violations = results.violations.map(
         (v) =>
