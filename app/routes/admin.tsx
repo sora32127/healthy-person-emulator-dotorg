@@ -24,6 +24,9 @@ export default function AdminLayout() {
             <Link to="/admin/deleted-posts" className="btn btn-ghost btn-sm">
               削除済み記事
             </Link>
+            <Link to="/admin/comments" className="btn btn-ghost btn-sm">
+              コメント管理
+            </Link>
           </div>
         </div>
         <div className="flex-none gap-4">
