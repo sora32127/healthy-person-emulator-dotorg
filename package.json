@@ -12,7 +12,8 @@
     "typegen": "npx wrangler types",
     "lint": "vp lint",
     "format": "vp fmt --write .",
-    "test": "vp test"
+    "test": "vp test",
+    "test:a11y": "playwright test"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.1.1",
@@ -48,7 +49,9 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@cloudflare/workers-types": "^4.20260317.1",
+    "@playwright/test": "^1.58.2",
     "@react-router/dev": "^7.13.1",
     "@react-router/fs-routes": "^7.13.1",
     "@testing-library/dom": "^10.4.1",
@@ -61,6 +64,7 @@
     "@types/react-transition-group": "^4.4.12",
     "@vitest/coverage-v8": "4.1.0",
     "@vitest/ui": "^4.1.0",
+    "axe-core": "^4.11.1",
     "better-sqlite3": "^12.8.0",
     "daisyui": "^5.5.19",
     "drizzle-kit": "^0.31.10",
