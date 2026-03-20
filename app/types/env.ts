@@ -36,7 +36,6 @@ export interface CloudflareEnv {
   R2_ENDPOINT?: string;
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
-  BIGQUERY_CREDENTIALS?: string;
   // Secrets Store bindings (async .get())
   SS_TWITTER_CK: { get(): Promise<string> };
   SS_TWITTER_CS: { get(): Promise<string> };
