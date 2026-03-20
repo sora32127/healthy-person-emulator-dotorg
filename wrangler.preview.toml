@@ -112,3 +112,4 @@ new_sqlite_classes = ["AutomationContainer"]
 
 [vars]
 BASE_URL = "https://preview.healthy-person-emulator.org"
+ADMIN_EMAILS = "sora32127@gmail.com"

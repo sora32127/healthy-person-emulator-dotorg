@@ -20,4 +20,5 @@ variable "domain" {
 variable "admin_emails" {
   description = "管理画面へのアクセスを許可するメールアドレスのリスト"
   type        = list(string)
+  default     = ["sora32127@gmail.com"]
 }
