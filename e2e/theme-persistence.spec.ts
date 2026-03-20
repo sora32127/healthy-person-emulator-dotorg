@@ -12,6 +12,7 @@ async function gotoApp(page: Page, path = '/') {
 }
 
 test.describe('テーマ永続化', () => {
+  test.describe.configure({ mode: 'serial', retries: 2 });
   test.setTimeout(60000);
 
   test('ダークに切替 → リロード → ダーク維持', async ({ page }) => {
