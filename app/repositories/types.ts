@@ -195,6 +195,19 @@ const tagCountSchema = z.object({
 });
 export type TagCount = z.infer<typeof tagCountSchema>;
 
+export type PostMergeInfo = {
+  mergeId: number;
+  sourcePostId: number;
+  targetPostId: number;
+  targetPostTitle: string;
+  mergedAtUtc: Date;
+};
+
+export type MergedSourcePost = {
+  postId: number;
+  postTitle: string;
+};
+
 // --- DatabaseRepository interface ---
 
 export interface DatabaseRepository {
@@ -288,4 +301,8 @@ export interface DatabaseRepository {
   getPreviousPost(postId: number): Promise<PreviousOrNextPostData>;
   getNextPost(postId: number): Promise<PreviousOrNextPostData>;
   getCountBookmarks(postId: number): Promise<number>;
+
+  // Post merge functions
+  getMergeInfoBySourcePostId(postId: number): Promise<PostMergeInfo | null>;
+  getSourcePostsByTargetPostId(targetPostId: number): Promise<MergedSourcePost[]>;
 }

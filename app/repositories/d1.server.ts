@@ -22,6 +22,8 @@ import type {
   UpdatePostWithTagsInput,
   SearchOrderBy,
   SearchPostsResult,
+  PostMergeInfo,
+  MergedSourcePost,
 } from './types';
 import { formatDate } from '../modules/util.server';
 import * as schema from '../drizzle/schema';
@@ -1339,6 +1341,40 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         })),
         results,
       };
+    },
+
+    async getMergeInfoBySourcePostId(postId: number): Promise<PostMergeInfo | null> {
+      const result = await db
+        .select({
+          mergeId: schema.postMerges.mergeId,
+          sourcePostId: schema.postMerges.sourcePostId,
+          targetPostId: schema.postMerges.targetPostId,
+          targetPostTitle: schema.dimPosts.postTitle,
+          mergedAtUtc: schema.postMerges.mergedAtUtc,
+        })
+        .from(schema.postMerges)
+        .innerJoin(schema.dimPosts, eq(schema.postMerges.targetPostId, schema.dimPosts.postId))
+        .where(eq(schema.postMerges.sourcePostId, postId))
+        .limit(1);
+
+      if (result.length === 0) return null;
+      return {
+        ...result[0],
+        mergedAtUtc: new Date(result[0].mergedAtUtc),
+      };
+    },
+
+    async getSourcePostsByTargetPostId(targetPostId: number): Promise<MergedSourcePost[]> {
+      const results = await db
+        .select({
+          postId: schema.postMerges.sourcePostId,
+          postTitle: schema.dimPosts.postTitle,
+        })
+        .from(schema.postMerges)
+        .innerJoin(schema.dimPosts, eq(schema.postMerges.sourcePostId, schema.dimPosts.postId))
+        .where(eq(schema.postMerges.targetPostId, targetPostId));
+
+      return results;
     },
   };
 }

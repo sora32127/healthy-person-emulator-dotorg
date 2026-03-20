@@ -28,6 +28,8 @@ export type {
   CommentFeedData,
   SearchOrderBy,
   SearchPostsResult,
+  PostMergeInfo,
+  MergedSourcePost,
 } from '../repositories/types';
 
 let _repo: DatabaseRepository | null = null;
@@ -110,6 +112,12 @@ export const createGoogleUser = (...args: Parameters<DatabaseRepository['createG
   getRepo().createGoogleUser(...args);
 export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) =>
   getRepo().searchPosts(...args);
+export const getMergeInfoBySourcePostId = (
+  ...args: Parameters<DatabaseRepository['getMergeInfoBySourcePostId']>
+) => getRepo().getMergeInfoBySourcePostId(...args);
+export const getSourcePostsByTargetPostId = (
+  ...args: Parameters<DatabaseRepository['getSourcePostsByTargetPostId']>
+) => getRepo().getSourcePostsByTargetPostId(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 
