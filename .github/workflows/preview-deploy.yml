@@ -68,3 +68,21 @@ jobs:
                 issue_number: context.issue.number, body,
               });
             }
+
+  a11y:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: 'package.json'
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run a11y tests against preview
+        run: pnpm test:a11y
+        env:
+          BASE_URL: https://preview.healthy-person-emulator.org
