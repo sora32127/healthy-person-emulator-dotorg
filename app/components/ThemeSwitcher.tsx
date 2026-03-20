@@ -19,8 +19,9 @@ export default function ThemeSwitcher() {
   };
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', nowTheme);
     document.documentElement.classList.remove('theme-transition');
-  }, []);
+  }, [nowTheme]);
 
   return (
     <button
