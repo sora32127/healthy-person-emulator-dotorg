@@ -103,7 +103,8 @@ jobs:
             if (!fs.existsSync(reportPath)) {
               body += '⚠️ レポートファイルが生成されませんでした。\n';
             } else {
-              const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+              const reportObj = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+              const report = Object.values(reportObj);
               const withViolations = report.filter(r => r.violations.length > 0);
 
               if (withViolations.length === 0) {

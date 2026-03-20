@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'e2e',
-  fullyParallel: true,
+  workers: 1,
   retries: 1,
   use: {
     baseURL: process.env.BASE_URL || 'https://preview.healthy-person-emulator.org',

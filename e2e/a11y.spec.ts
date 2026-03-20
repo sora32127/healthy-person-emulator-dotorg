@@ -16,14 +16,14 @@ type ViolationEntry = {
   }[];
 };
 
-function loadReport(): ViolationEntry[] {
+function loadReport(): Record<string, ViolationEntry> {
   if (existsSync(REPORT_PATH)) {
     return JSON.parse(readFileSync(REPORT_PATH, 'utf-8'));
   }
-  return [];
+  return {};
 }
 
-function saveReport(entries: ViolationEntry[]) {
+function saveReport(entries: Record<string, ViolationEntry>) {
   writeFileSync(REPORT_PATH, JSON.stringify(entries, null, 2));
 }
 
@@ -76,7 +76,8 @@ for (const route of routes) {
         .analyze();
 
       const report = loadReport();
-      report.push({
+      const key = `${route.path}::${colorScheme}`;
+      report[key] = {
         route: route.path,
         colorScheme,
         violations: results.violations.map((v) => ({
@@ -85,7 +86,7 @@ for (const route of routes) {
           description: v.description,
           nodes: v.nodes.map((n) => n.html.substring(0, 150)),
         })),
-      });
+      };
       saveReport(report);
 
       const violations = results.violations.map(
