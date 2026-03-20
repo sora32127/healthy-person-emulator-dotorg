@@ -707,7 +707,10 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
       const [html, similarPosts] = await Promise.all([
         Wikify(parsedData, postFormSchema),
-        searchSimilarPosts(parsedData).catch(() => []),
+        searchSimilarPosts(parsedData).catch((e) => {
+          console.error('searchSimilarPosts failed:', e);
+          return [];
+        }),
       ]);
       return data({
         success: true,
