@@ -1,7 +1,31 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { readdirSync } from 'node:fs';
+import { readdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+const REPORT_PATH = resolve(import.meta.dirname, '../a11y-report.json');
+
+type ViolationEntry = {
+  route: string;
+  colorScheme: string;
+  violations: {
+    impact: string;
+    id: string;
+    description: string;
+    nodes: string[];
+  }[];
+};
+
+function loadReport(): ViolationEntry[] {
+  if (existsSync(REPORT_PATH)) {
+    return JSON.parse(readFileSync(REPORT_PATH, 'utf-8'));
+  }
+  return [];
+}
+
+function saveReport(entries: ViolationEntry[]) {
+  writeFileSync(REPORT_PATH, JSON.stringify(entries, null, 2));
+}
 
 function getStaticRoutes(): { path: string; name: string }[] {
   const routesDir = resolve(import.meta.dirname, '../app/routes');
@@ -50,6 +74,19 @@ for (const route of routes) {
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
+
+      const report = loadReport();
+      report.push({
+        route: route.path,
+        colorScheme,
+        violations: results.violations.map((v) => ({
+          impact: v.impact ?? 'unknown',
+          id: v.id,
+          description: v.description,
+          nodes: v.nodes.map((n) => n.html.substring(0, 150)),
+        })),
+      });
+      saveReport(report);
 
       const violations = results.violations.map(
         (v) =>
