@@ -61,15 +61,8 @@ resource "cloudflare_dns_record" "root_aaaa_workers" {
   ttl     = 1
 }
 
-# --- CNAME: admin subdomain (Google Sites) ---
-resource "cloudflare_dns_record" "admin_cname" {
-  zone_id = var.cloudflare_zone_id
-  name    = "admin.${var.domain}"
-  type    = "CNAME"
-  content = "ghs.googlehosted.com"
-  proxied = true
-  ttl     = 1
-}
+# admin subdomain は Workers Custom Domain が DNS を自動管理するため削除
+# (terraform/cloudflare/access.tf で管理)
 
 # preview subdomain は Workers Custom Domain が DNS を自動管理するため削除
 
