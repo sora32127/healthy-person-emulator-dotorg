@@ -41,5 +41,5 @@ if [ "$COMMIT_COUNT" -eq 0 ]; then
 fi
 
 cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"PRに含まれるコミット(${COMMIT_COUNT}件):\n${COMMITS}\n\nこれらが全て意図したコミットか確認してください。余計なコミットが含まれている場合はPR作成を中止してください。"}}
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"PRに含まれるコミット(${COMMIT_COUNT}件):\n${COMMITS}\n\nこのブランチで行った作業と無関係なコミットが含まれている場合は、PR作成を中止してrebaseで整理せよ。全て意図したコミットであればそのまま続行せよ。"}}
 EOF
