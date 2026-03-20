@@ -9,6 +9,7 @@ import ClearFormButton from '~/components/SubmitFormComponents/ClearFormButton';
 import { H3 } from '~/components/Headings';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import { getStopWords, getTagsCounts } from '~/modules/db.server';
+import { getEmbedding, querySimilar } from '~/modules/cloudflare.server';
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
@@ -151,6 +152,7 @@ export default function App() {
         data: { WikifiedResult: string; MarkdownResult: string };
         title: string;
         tags: string[];
+        similarPosts?: SimilarPostResult[];
       };
     };
     if (response?.success) {
@@ -162,6 +164,7 @@ export default function App() {
           title: response.data?.title,
           tags: response.data?.tags,
           formValues: methods.getValues(),
+          similarPosts: response.data?.similarPosts ?? [],
         }),
       );
       window.localStorage.setItem(formId, JSON.stringify(methods.getValues()));
@@ -702,13 +705,17 @@ export async function action({ request }: ActionFunctionArgs) {
     } as unknown as Inputs;
 
     try {
-      const html = await Wikify(parsedData, postFormSchema);
+      const [html, similarPosts] = await Promise.all([
+        Wikify(parsedData, postFormSchema),
+        searchSimilarPosts(parsedData).catch(() => []),
+      ]);
       return data({
         success: true,
         data: {
           ...html.data,
           title: parsedData.title[0],
           tags: [...(parsedData.createdTags || []), ...(parsedData.selectedTags || [])],
+          similarPosts,
         },
         error: undefined,
       });
@@ -720,6 +727,44 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
   }
+}
+
+interface SimilarPostResult {
+  postId: number;
+  postTitle: string;
+  score: number;
+}
+
+async function searchSimilarPosts(
+  parsedData: z.infer<ReturnType<typeof createPostFormSchema>>,
+): Promise<SimilarPostResult[]> {
+  const title = parsedData.title[0];
+  const tags = [...(parsedData.selectedTags || []), ...(parsedData.createdTags || [])];
+  const situations = parsedData.situations;
+  const situationText = [
+    situations.who,
+    situations.when,
+    situations.where,
+    situations.why,
+    situations.what,
+    situations.how,
+    situations.then,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const reflectionText = parsedData.reflection?.filter(Boolean).join(' ') ?? '';
+  const counterText = parsedData.counterReflection?.filter(Boolean).join(' ') ?? '';
+
+  const inputText = `タイトル: ${title}\nタグ: ${tags.join(',')}\n本文: ${situationText} ${reflectionText} ${counterText}`;
+
+  const vector = await getEmbedding(inputText);
+  const matches = await querySimilar(vector, 5);
+
+  return matches.map((m) => ({
+    postId: Number(m.metadata?.postId ?? m.id),
+    postTitle: String(m.metadata?.postTitle ?? ''),
+    score: m.score,
+  }));
 }
 
 async function Wikify(

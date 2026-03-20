@@ -17,12 +17,19 @@ import { getStopWords, createPostWithTags, updatePostWelcomed } from '~/modules/
 import { createEmbedding } from '~/modules/embedding.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 
+interface SimilarPostPreview {
+  postId: number;
+  postTitle: string;
+  score: number;
+}
+
 interface PreviewData {
   wikifiedHtml: string;
   markdownResult: string;
   title: string;
   tags: string[];
   formValues: Record<string, unknown>;
+  similarPosts?: SimilarPostPreview[];
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -124,6 +131,30 @@ export default function PreviewPage() {
         <H1>{previewData.title}</H1>
         <div dangerouslySetInnerHTML={{ __html: previewData.wikifiedHtml }} />
       </div>
+
+      {previewData.similarPosts && previewData.similarPosts.length > 0 && (
+        <div className="card bg-base-200 p-6 mb-6">
+          <p className="text-sm text-base-content/70 mb-3">もしかして：</p>
+          <ul className="space-y-2">
+            {previewData.similarPosts.map((post) => (
+              <li key={post.postId}>
+                <span className="text-base-content/60 mr-1">
+                  類似度 {Math.round(post.score * 100)}%
+                </span>
+                <span className="mr-1">:</span>
+                <a
+                  href={`/archives/${post.postId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link link-primary"
+                >
+                  {post.postTitle}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {submitError && (
         <div className="alert alert-error mb-6">
