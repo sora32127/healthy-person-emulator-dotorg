@@ -5,13 +5,28 @@ import { requireAdmin } from '~/modules/admin.server';
 import { mergePosts, generateMergeDraft } from '~/modules/admin-merge.server';
 import type { CloudflareEnv } from '~/types/env';
 import { drizzle } from 'drizzle-orm/d1';
-import { inArray } from 'drizzle-orm';
+import { inArray, isNull } from 'drizzle-orm';
 import { dimPosts } from '~/drizzle/schema';
+import { getVectorsByIds, querySimilar } from '~/modules/cloudflare.server';
+
+type SimilarPostCandidate = {
+  postId: number;
+  postTitle: string;
+  score: number;
+};
 
 type SourcePost = {
   postId: number;
   postTitle: string;
   postContent: string;
+};
+
+type FindSimilarResult = {
+  action: 'findSimilar';
+  success: boolean;
+  basePost?: { postId: number; postTitle: string };
+  candidates?: SimilarPostCandidate[];
+  error?: string;
 };
 
 type LoadSourcesResult = {
@@ -36,13 +51,65 @@ type ExecuteMergeResult = {
   error?: string;
 };
 
-type ActionResult = LoadSourcesResult | GenerateDraftResult | ExecuteMergeResult;
+type ActionResult =
+  | FindSimilarResult
+  | LoadSourcesResult
+  | GenerateDraftResult
+  | ExecuteMergeResult;
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await requireAdmin(request);
+  await requireAdmin(request);
   const env = (globalThis as any).__cloudflareEnv as CloudflareEnv;
   const formData = await request.formData();
   const actionType = formData.get('action') as string;
+
+  if (actionType === 'findSimilar') {
+    const postId = Number(formData.get('postId'));
+    if (!postId || Number.isNaN(postId)) {
+      return { action: 'findSimilar', success: false, error: '有効な記事IDを入力してください' };
+    }
+
+    const db = drizzle(env.DB);
+    const [basePost] = await db
+      .select({ postId: dimPosts.postId, postTitle: dimPosts.postTitle })
+      .from(dimPosts)
+      .where(isNull(dimPosts.mergedIntoPostId))
+      .limit(1)
+      .all()
+      .then((rows) => rows.filter((r) => r.postId === postId));
+
+    if (!basePost) {
+      return { action: 'findSimilar', success: false, error: `記事ID ${postId} が見つかりません` };
+    }
+
+    try {
+      const vectors = await getVectorsByIds([String(postId)]);
+      if (vectors.length === 0 || !vectors[0].values) {
+        return {
+          action: 'findSimilar',
+          success: false,
+          error: 'この記事のベクトルが見つかりません',
+        };
+      }
+
+      const matches = await querySimilar(vectors[0].values, 30);
+      const candidates: SimilarPostCandidate[] = matches
+        .filter((m) => m.id !== String(postId))
+        .map((m) => ({
+          postId: Number(m.metadata?.postId ?? m.id),
+          postTitle: String(m.metadata?.postTitle ?? ''),
+          score: Math.round(m.score * 1000) / 1000,
+        }));
+
+      return { action: 'findSimilar', success: true, basePost, candidates };
+    } catch (err) {
+      return {
+        action: 'findSimilar',
+        success: false,
+        error: err instanceof Error ? err.message : 'ベクトル検索に失敗しました',
+      };
+    }
+  }
 
   if (actionType === 'loadSources') {
     const idsRaw = (formData.get('sourcePostIds') as string) || '';
@@ -121,7 +188,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function AdminMerge() {
   const fetcher = useFetcher<ActionResult>();
-  const [sourcePostIds, setSourcePostIds] = useState('');
+  const [searchPostId, setSearchPostId] = useState('');
+  const [basePost, setBasePost] = useState<{ postId: number; postTitle: string } | null>(null);
+  const [candidates, setCandidates] = useState<SimilarPostCandidate[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [sourcePosts, setSourcePosts] = useState<SourcePost[]>([]);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftContent, setDraftContent] = useState('');
@@ -134,6 +204,14 @@ export default function AdminMerge() {
     const data = fetcher.data;
     if (!data) return;
 
+    if (data.action === 'findSimilar' && data.success) {
+      setBasePost(data.basePost!);
+      setCandidates(data.candidates!);
+      setSelectedIds(new Set());
+      setSourcePosts([]);
+      setDraftTitle('');
+      setDraftContent('');
+    }
     if (data.action === 'loadSources' && data.success && data.sourcePosts) {
       setSourcePosts(data.sourcePosts);
     }
@@ -146,10 +224,31 @@ export default function AdminMerge() {
     }
   }, [fetcher.data]);
 
+  const handleFindSimilar = () => {
+    const formData = new FormData();
+    formData.append('action', 'findSimilar');
+    formData.append('postId', searchPostId);
+    fetcher.submit(formData, { method: 'post' });
+  };
+
+  const toggleCandidate = (postId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
+  };
+
   const handleLoadSources = () => {
+    if (!basePost) return;
+    const allIds = [basePost.postId, ...selectedIds];
     const formData = new FormData();
     formData.append('action', 'loadSources');
-    formData.append('sourcePostIds', sourcePostIds);
+    formData.append('sourcePostIds', allIds.join(','));
     fetcher.submit(formData, { method: 'post' });
   };
 
@@ -173,6 +272,17 @@ export default function AdminMerge() {
   const errorMessage =
     fetcher.data && !fetcher.data.success ? (fetcher.data as any).error : undefined;
 
+  const resetAll = () => {
+    setMergedPostId(null);
+    setSourcePosts([]);
+    setDraftTitle('');
+    setDraftContent('');
+    setSearchPostId('');
+    setBasePost(null);
+    setCandidates([]);
+    setSelectedIds(new Set());
+  };
+
   if (mergedPostId) {
     return (
       <div>
@@ -188,17 +298,7 @@ export default function AdminMerge() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary mt-4"
-          onClick={() => {
-            setMergedPostId(null);
-            setSourcePosts([]);
-            setDraftTitle('');
-            setDraftContent('');
-            setSourcePostIds('');
-          }}
-        >
+        <button type="button" className="btn btn-primary mt-4" onClick={resetAll}>
           別の記事を統合する
         </button>
       </div>
@@ -209,45 +309,123 @@ export default function AdminMerge() {
     <div>
       <h1 className="text-2xl font-bold mb-4">記事統合</h1>
 
-      {/* Step 1: ソース記事ID入力 */}
+      {/* Step 1: 類似記事を探索 */}
       <div className="card bg-base-100 shadow-sm mb-4">
         <div className="card-body">
-          <h2 className="card-title text-lg">1. ソース記事を選択</h2>
+          <h2 className="card-title text-lg">1. 類似記事を探索</h2>
+          <p className="text-sm opacity-70">
+            基準となる記事IDを入力すると、ベクトル検索で類似度の高い記事を一覧表示します。
+          </p>
           <div className="form-control">
-            <label className="label" htmlFor="sourcePostIds">
-              <span className="label-text">統合する記事のID（カンマ区切り or 改行区切り）</span>
+            <label className="label" htmlFor="searchPostId">
+              <span className="label-text">基準記事ID</span>
             </label>
-            <textarea
-              id="sourcePostIds"
-              className="textarea textarea-bordered"
-              rows={3}
-              value={sourcePostIds}
-              onChange={(e) => setSourcePostIds(e.target.value)}
-              placeholder="例: 12345, 12346, 12347"
-            />
-          </div>
-          <div className="card-actions justify-end">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={handleLoadSources}
-              disabled={isSubmitting || !sourcePostIds.trim()}
-            >
-              {isSubmitting && fetcher.formData?.get('action') === 'loadSources'
-                ? '読み込み中...'
-                : '記事を読み込む'}
-            </button>
+            <div className="flex gap-2">
+              <input
+                id="searchPostId"
+                type="number"
+                className="input input-bordered flex-1"
+                value={searchPostId}
+                onChange={(e) => setSearchPostId(e.target.value)}
+                placeholder="例: 12345"
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleFindSimilar}
+                disabled={isSubmitting || !searchPostId.trim()}
+              >
+                {isSubmitting && fetcher.formData?.get('action') === 'findSimilar'
+                  ? '検索中...'
+                  : '類似記事を検索'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {errorMessage && <div className="alert alert-error mb-4">{errorMessage}</div>}
 
-      {/* Step 2: ソース記事プレビュー */}
+      {/* Step 2: 統合候補を選択 */}
+      {candidates.length > 0 && basePost && (
+        <div className="card bg-base-100 shadow-sm mb-4">
+          <div className="card-body">
+            <h2 className="card-title text-lg">2. 統合する記事を選択</h2>
+            <p className="text-sm opacity-70 mb-2">
+              基準記事「
+              <Link to={`/archives/${basePost.postId}`} className="link" target="_blank">
+                {basePost.postTitle}
+              </Link>
+              」（ID: {basePost.postId}
+              ）に類似する記事です。統合したい記事にチェックを入れてください。
+            </p>
+            <div className="overflow-x-auto">
+              <table className="table table-sm w-full">
+                <thead>
+                  <tr>
+                    <th>選択</th>
+                    <th>類似度</th>
+                    <th>ID</th>
+                    <th>タイトル</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates.map((c) => (
+                    <tr key={c.postId} className={selectedIds.has(c.postId) ? 'bg-base-200' : ''}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={selectedIds.has(c.postId)}
+                          onChange={() => toggleCandidate(c.postId)}
+                        />
+                      </td>
+                      <td>
+                        <span
+                          className={`badge badge-sm ${c.score >= 0.9 ? 'badge-error' : c.score >= 0.8 ? 'badge-warning' : 'badge-ghost'}`}
+                        >
+                          {c.score}
+                        </span>
+                      </td>
+                      <td>{c.postId}</td>
+                      <td>
+                        <Link
+                          to={`/archives/${c.postId}`}
+                          className="link link-hover"
+                          target="_blank"
+                        >
+                          {c.postTitle}
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="card-actions justify-end mt-4">
+              <span className="text-sm opacity-70 self-center mr-2">
+                {selectedIds.size}件選択中（+ 基準記事1件 = 計{selectedIds.size + 1}件を統合）
+              </span>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={handleLoadSources}
+                disabled={isSubmitting || selectedIds.size === 0}
+              >
+                {isSubmitting && fetcher.formData?.get('action') === 'loadSources'
+                  ? '読み込み中...'
+                  : '選択した記事を読み込む'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: ソース記事プレビュー */}
       {sourcePosts.length > 0 && (
         <div className="card bg-base-100 shadow-sm mb-4">
           <div className="card-body">
-            <h2 className="card-title text-lg">2. ソース記事のプレビュー</h2>
+            <h2 className="card-title text-lg">3. ソース記事のプレビュー</h2>
             <div className="space-y-4">
               {sourcePosts.map((post) => (
                 <div key={post.postId} className="collapse collapse-arrow bg-base-200">
@@ -280,11 +458,11 @@ export default function AdminMerge() {
         </div>
       )}
 
-      {/* Step 3: 統合後記事の編集 */}
+      {/* Step 4: 統合後記事の編集 */}
       {sourcePosts.length > 0 && (
         <div className="card bg-base-100 shadow-sm mb-4">
           <div className="card-body">
-            <h2 className="card-title text-lg">3. 統合後の記事を編集</h2>
+            <h2 className="card-title text-lg">4. 統合後の記事を編集</h2>
             <div className="form-control mb-4">
               <label className="label" htmlFor="draftTitle">
                 <span className="label-text">タイトル</span>
