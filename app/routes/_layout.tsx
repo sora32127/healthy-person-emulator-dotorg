@@ -38,7 +38,6 @@ function renderDesktopHeader() {
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        <h1 className="sr-only">健常者エミュレータ事例集</h1>
         <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
             <ul className="flex flex-col gap-2">
@@ -288,6 +287,7 @@ export default function Component() {
       <main
         className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}
       >
+        <h1 className="sr-only hidden md:block">健常者エミュレータ事例集</h1>
         <div className="md:mx-10 lg:mx-20 xl:mx-32 2xl:mx-96">
           <Outlet />
         </div>
