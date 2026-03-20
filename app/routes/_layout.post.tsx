@@ -704,11 +704,11 @@ export async function action({ request }: ActionFunctionArgs) {
       title: JSON.parse(postData.title as string),
     } as unknown as Inputs;
 
-    const similarPostsPromise = searchSimilarPosts(parsedData).catch(() => []);
-
     try {
-      const html = await Wikify(parsedData, postFormSchema);
-      const similarPosts = await similarPostsPromise;
+      const [html, similarPosts] = await Promise.all([
+        Wikify(parsedData, postFormSchema),
+        searchSimilarPosts(parsedData).catch(() => []),
+      ]);
       return data({
         success: true,
         data: {
@@ -763,7 +763,7 @@ async function searchSimilarPosts(
   return matches.map((m) => ({
     postId: Number(m.metadata?.postId ?? m.id),
     postTitle: String(m.metadata?.postTitle ?? ''),
-    score: Math.round(m.score * 100) / 100,
+    score: m.score,
   }));
 }
 
