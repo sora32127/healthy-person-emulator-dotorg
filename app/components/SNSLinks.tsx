@@ -16,7 +16,7 @@ export function SNSLinks({
 
   return (
     <div className="collapse collapse-arrow bg-base-200 rounded-lg shadow-sm transition-all duration-300 mx-auto my-4 max-w-2xl w-full">
-      <input type="checkbox" className="peer" />
+      <input type="checkbox" className="peer" aria-label="共有リンクを開閉" />
       <div className="collapse-title font-medium flex items-center justify-between p-4 md:p-6">
         <span className="flex items-center gap-2">
           <span>投稿時の反応を見る</span>

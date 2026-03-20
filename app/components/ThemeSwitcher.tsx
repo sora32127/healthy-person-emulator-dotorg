@@ -19,8 +19,14 @@ export default function ThemeSwitcher() {
   };
 
   useEffect(() => {
+    // entry.server.tsxが注入したハイドレーション保護用MutationObserverを切断する
+    if ((window as any).__themeObserver) {
+      (window as any).__themeObserver.disconnect();
+      delete (window as any).__themeObserver;
+    }
+    document.documentElement.setAttribute('data-theme', nowTheme);
     document.documentElement.classList.remove('theme-transition');
-  }, []);
+  }, [nowTheme]);
 
   return (
     <button

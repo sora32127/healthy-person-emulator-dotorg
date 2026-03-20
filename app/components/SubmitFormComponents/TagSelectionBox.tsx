@@ -76,6 +76,7 @@ export default function TagSelectionBox({
           className="select select-bordered w-full sm:w-auto"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as 'count' | 'name')}
+          aria-label="タグ並び替え"
         >
           <option value="count">タグ数順</option>
           <option value="name">五十音順</option>

@@ -6,6 +6,22 @@ import { initializeApp } from './load-context';
 
 export const streamTimeout = 5000;
 
+function getThemeFromRequest(request: Request): string {
+  const cookie = request.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|; )theme=([^;]*)/);
+  return match?.[1] === 'dark' ? 'dark' : 'light';
+}
+
+const THEME_SCRIPT = `<script>(function(){var t=document.documentElement.getAttribute("data-theme")||"light";var el=document.documentElement;if(t!=="light"){window.__themeObserver=new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==="data-theme"&&el.getAttribute("data-theme")!==t){el.setAttribute("data-theme",t)}})});window.__themeObserver.observe(el,{attributes:true,attributeFilter:["data-theme"]})}})()</script>`;
+
+function injectTheme(html: string, theme: string): string {
+  if (theme === 'dark') {
+    html = html.replace('data-theme="light"', 'data-theme="dark"');
+  }
+  html = html.replace('</head>', THEME_SCRIPT + '</head>');
+  return html;
+}
+
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -32,7 +48,18 @@ export default async function handleRequest(
 
   responseHeaders.set('Content-Type', 'text/html');
 
-  return new Response(body, {
+  const theme = getThemeFromRequest(request);
+  if (theme === 'light') {
+    return new Response(body, {
+      headers: responseHeaders,
+      status: responseStatusCode,
+    });
+  }
+
+  // ダークテーマの場合のみ HTML を変換する
+  await body.allReady;
+  const html = await new Response(body).text();
+  return new Response(injectTheme(html, theme), {
     headers: responseHeaders,
     status: responseStatusCode,
   });

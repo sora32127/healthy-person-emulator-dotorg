@@ -311,6 +311,7 @@ export default function LightSearch() {
                     value={orderby}
                     onChange={(e) => handleSortOrderChange(e.target.value as SearchOrderBy)}
                     className="select select-bordered select-sm"
+                    aria-label="並び替え"
                   >
                     <option value="timeDesc">新着順</option>
                     <option value="timeAsc">古い順</option>
