@@ -427,7 +427,7 @@ export default function AdminMerge() {
                 id="threshold"
                 type="number"
                 step="0.01"
-                min="0.5"
+                min="0"
                 max="1.0"
                 className="input input-bordered input-sm w-28"
                 value={threshold}
