@@ -1,20 +1,27 @@
 name: Accessibility Check
 on:
-  workflow_run:
-    workflows: ['Preview Deploy']
-    types: [completed]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - '**/*.md'
+      - '.agent/**'
+      - '.claude/**'
+      - 'docs/**'
+      - 'terraform/**'
+
+concurrency:
+  group: a11y-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   a11y:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -23,6 +30,18 @@ jobs:
       - run: pnpm install
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+      - name: Wait for preview deployment
+        run: |
+          echo "Waiting for preview to be ready..."
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w '%{http_code}' https://preview.healthy-person-emulator.org | grep -q '200'; then
+              echo "Preview is ready!"
+              break
+            fi
+            echo "Attempt $i/60 - waiting 10s..."
+            sleep 10
+          done
+        timeout-minutes: 12
       - name: Run a11y tests against preview
         id: a11y-test
         continue-on-error: true
@@ -67,19 +86,9 @@ jobs:
               }
             }
 
-            // workflow_run ではPR番号が直接取れないのでAPIで取得
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`,
-              state: 'open',
-            });
-            if (prs.data.length === 0) return;
-            const prNumber = prs.data[0].number;
-
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner, repo: context.repo.repo,
-              issue_number: prNumber,
+              issue_number: context.issue.number,
             });
             const existing = comments.find(c => c.body?.startsWith('### Accessibility Check'));
             if (existing) {
@@ -90,7 +99,7 @@ jobs:
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: prNumber, body,
+                issue_number: context.issue.number, body,
               });
             }
       - name: Fail if a11y violations found
