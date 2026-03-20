@@ -14,6 +14,7 @@ import {
   getTagsCounts,
   getPostEditHistory,
   updatePostWithTagsAndHistory,
+  getMergeInfoBySourcePostId,
 } from '~/modules/db.server';
 import { H1, H2 } from '~/components/Headings';
 import { MarkdownEditor } from '~/components/MarkdownEditor';
@@ -54,6 +55,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const postId = Number(postIdParam);
   if (Number.isNaN(postId)) {
     throw new Response('Invalid post id', { status: 400 });
+  }
+
+  // ソース記事（統合済み）は編集不可
+  const mergeInfo = await getMergeInfoBySourcePostId(postId);
+  if (mergeInfo) {
+    throw redirect(`/archives/${postId}`);
   }
 
   const nowEditingInfo = await getNowEditingInfo(postId);
