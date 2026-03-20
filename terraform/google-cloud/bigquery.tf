@@ -373,27 +373,124 @@ resource "google_bigquery_table" "report_pv" {
   }
 }
 
-# --- mv_post_page_views (Materialized View) ---
-# GA4 page_view イベントから記事別の累計PV数を集計
-resource "google_bigquery_table" "mv_post_page_views" {
-  dataset_id          = google_bigquery_dataset.hpe_reports.dataset_id
-  table_id            = "mv_post_page_views"
-  deletion_protection = false
+# =============================================================================
+# 記事別PV集計 (Scheduled Query + Intraday View + 統合 View)
+# =============================================================================
+# MVはワイルドカードテーブル(events_*)を参照できないため、3層構成で実現:
+#   1. stg_post_page_views_daily — Scheduled Query が events_YYYYMMDD から日次増分APPEND
+#   2. vw_post_page_views_intraday — events_intraday_* からリアルタイム集計するView
+#   3. vw_post_page_views — 上記2つを統合した累計PVビュー
 
-  materialized_view {
-    allow_non_incremental_definition = true
-    enable_refresh                   = true
-    refresh_interval_ms              = 3600000 # 1時間
-    query                            = <<-SQL
+# --- Scheduled Query 用サービスアカウント ---
+resource "google_service_account" "bq_scheduled_queries" {
+  account_id   = "bq-scheduled-queries"
+  display_name = "BigQuery Scheduled Queries"
+  description  = "GA4 データ集計スケジュールクエリ用 SA"
+}
+
+resource "google_project_iam_member" "bq_scheduled_queries_editor" {
+  project = var.gcp_project_id
+  role    = "roles/bigquery.dataEditor"
+  member  = "serviceAccount:${google_service_account.bq_scheduled_queries.email}"
+}
+
+resource "google_project_iam_member" "bq_scheduled_queries_job_user" {
+  project = var.gcp_project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.bq_scheduled_queries.email}"
+}
+
+# BigQuery Data Transfer Service の内部 SA にトークン発行権限を付与
+data "google_project" "project" {}
+
+resource "google_project_iam_member" "bq_dts_token_creator" {
+  project = var.gcp_project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-bigquerydatatransfer.iam.gserviceaccount.com"
+}
+
+# --- stg_post_page_views_daily (Scheduled Query → 通常テーブル) ---
+# 毎日 events_YYYYMMDD の前日分を増分APPENDする
+resource "google_bigquery_data_transfer_config" "post_page_views_daily" {
+  display_name           = "post-page-views-daily"
+  location               = var.gcp_region
+  data_source_id         = "scheduled_query"
+  schedule               = "every day 06:00"
+  destination_dataset_id = google_bigquery_dataset.hpe_reports.dataset_id
+  service_account_name   = google_service_account.bq_scheduled_queries.email
+
+  params = {
+    destination_table_name_template = "stg_post_page_views_daily"
+    write_disposition               = "WRITE_APPEND"
+    query                           = <<-SQL
       SELECT
+        PARSE_DATE('%Y%m%d', _TABLE_SUFFIX) AS event_date,
         SAFE_CAST(REGEXP_EXTRACT(ep.value.string_value, r'/archives/(\d+)') AS INT64) AS post_id,
-        COUNT(*) AS total_page_views
+        COUNT(*) AS page_views
       FROM `healthy-person-emulator.analytics_353281755.events_*`
       CROSS JOIN UNNEST(event_params) AS ep
       WHERE event_name = 'page_view'
         AND ep.key = 'page_location'
         AND REGEXP_CONTAINS(ep.value.string_value, r'/archives/\d+')
+        AND _TABLE_SUFFIX = FORMAT_DATE('%Y%m%d', DATE_SUB(@run_date, INTERVAL 1 DAY))
+      GROUP BY 1, 2
+    SQL
+  }
+
+  depends_on = [google_project_iam_member.bq_dts_token_creator]
+}
+
+# --- vw_post_page_views_intraday ---
+# events_intraday_* から当日のリアルタイムPVを集計するView
+resource "google_bigquery_table" "vw_post_page_views_intraday" {
+  dataset_id          = google_bigquery_dataset.hpe_reports.dataset_id
+  table_id            = "vw_post_page_views_intraday"
+  deletion_protection = false
+
+  view {
+    use_legacy_sql = false
+    query          = <<-SQL
+      SELECT
+        PARSE_DATE('%Y%m%d', event_date) AS event_date,
+        SAFE_CAST(REGEXP_EXTRACT(ep.value.string_value, r'/archives/(\d+)') AS INT64) AS post_id,
+        COUNT(*) AS page_views
+      FROM `healthy-person-emulator.analytics_353281755.events_intraday_*`
+      CROSS JOIN UNNEST(event_params) AS ep
+      WHERE event_name = 'page_view'
+        AND ep.key = 'page_location'
+        AND REGEXP_CONTAINS(ep.value.string_value, r'/archives/\d+')
+      GROUP BY 1, 2
+    SQL
+  }
+}
+
+# --- vw_post_page_views (統合ビュー) ---
+# 日次確定データ + Intradayリアルタイムデータを統合した累計PVビュー
+resource "google_bigquery_table" "vw_post_page_views" {
+  dataset_id          = google_bigquery_dataset.hpe_reports.dataset_id
+  table_id            = "vw_post_page_views"
+  deletion_protection = false
+
+  view {
+    use_legacy_sql = false
+    query          = <<-SQL
+      SELECT
+        post_id,
+        SUM(page_views) AS total_page_views
+      FROM (
+        SELECT event_date, post_id, page_views
+        FROM `healthy-person-emulator.HPE_REPORTS.stg_post_page_views_daily`
+        UNION ALL
+        SELECT event_date, post_id, page_views
+        FROM `healthy-person-emulator.HPE_REPORTS.vw_post_page_views_intraday`
+      )
+      WHERE post_id IS NOT NULL
       GROUP BY 1
     SQL
   }
+
+  depends_on = [
+    google_bigquery_data_transfer_config.post_page_views_daily,
+    google_bigquery_table.vw_post_page_views_intraday,
+  ]
 }
