@@ -134,24 +134,22 @@ export default function PreviewPage() {
 
       {previewData.similarPosts && previewData.similarPosts.length > 0 && (
         <div className="card bg-base-200 p-6 mb-6">
-          <h3 className="text-lg font-bold mb-3">類似する投稿が見つかりました</h3>
-          <p className="text-sm text-base-content/70 mb-4">
-            以下の投稿と内容が似ています。投稿前にご確認ください。
-          </p>
+          <p className="text-sm text-base-content/70 mb-3">もしかして：</p>
           <ul className="space-y-2">
             {previewData.similarPosts.map((post) => (
-              <li key={post.postId} className="flex items-center justify-between">
+              <li key={post.postId}>
+                <span className="text-base-content/60 mr-1">
+                  類似度 {Math.round(post.score * 100)}%
+                </span>
+                <span className="mr-1">:</span>
                 <a
                   href={`/archives/${post.postId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="link link-primary flex-1"
+                  className="link link-primary"
                 >
                   {post.postTitle}
                 </a>
-                <span className="badge badge-ghost ml-2">
-                  類似度 {Math.round(post.score * 100)}%
-                </span>
               </li>
             ))}
           </ul>
