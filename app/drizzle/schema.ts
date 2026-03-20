@@ -40,8 +40,12 @@ export const dimPosts = sqliteTable(
     isWelcomedExplanation: text('is_welcomed_explanation'),
     isSnsPickuped: integer('is_sns_pickuped', { mode: 'boolean' }).default(false),
     isSnsShared: integer('is_sns_shared', { mode: 'boolean' }).default(false),
+    mergedIntoPostId: integer('merged_into_post_id'),
   },
-  (table) => [uniqueIndex('idx_dim_posts_uuid').on(table.uuid)],
+  (table) => [
+    uniqueIndex('idx_dim_posts_uuid').on(table.uuid),
+    index('idx_dim_posts_merged_into').on(table.mergedIntoPostId),
+  ],
 );
 
 // ============================================================
