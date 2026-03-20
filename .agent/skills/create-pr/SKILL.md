@@ -10,18 +10,16 @@ user_invocable: true
 
 ## ワークフロー
 
-### ステップ 1: 現状把握
+### ステップ 1: 変更内容の分析
 
-以下を並列で実行する：
+以下を並列で実行し、PR本文の材料にする：
 
 ```bash
-git status
-git diff main...HEAD
-git log main..HEAD --oneline
+git diff origin/main...HEAD
+git log origin/main..HEAD --oneline
 ```
 
-- 未コミットの変更がある場合は、コミットするか確認する
-- リモートにpushされていない場合は、pushするか確認する
+> **Note:** コミット一覧の検証（余計なコミットの混入チェック）は `check-pr-commits.sh` フックが `gh pr create` 実行前に自動で行う。未コミットの変更やpush状態のチェックもフックに任せてよい。
 
 ### ステップ 2: PR本文を作成する
 
