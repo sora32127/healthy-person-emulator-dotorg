@@ -5,16 +5,22 @@ import { requireAdmin } from '~/modules/admin.server';
 import { mergePosts, generateMergeDraft } from '~/modules/admin-merge.server';
 import type { CloudflareEnv } from '~/types/env';
 import { drizzle } from 'drizzle-orm/d1';
-import { inArray, isNull, desc } from 'drizzle-orm';
+import { inArray, isNull, desc, count } from 'drizzle-orm';
 import { dimPosts } from '~/drizzle/schema';
-import { getVectorsByIds, querySimilar } from '~/modules/cloudflare.server';
+import { getVectorsByIds, querySimilar, deleteVectors } from '~/modules/cloudflare.server';
 
 // --- Types ---
 
+type ScannedPost = {
+  postId: number;
+  postTitle: string;
+  postContent: string;
+  score: number;
+};
+
 type DuplicateCluster = {
-  basePostId: number;
-  basePostTitle: string;
-  similars: { postId: number; postTitle: string; score: number }[];
+  basePost: ScannedPost;
+  similars: ScannedPost[];
 };
 
 type ScanDuplicatesResult = {
@@ -24,19 +30,7 @@ type ScanDuplicatesResult = {
   scannedCount?: number;
   totalCount?: number;
   page?: number;
-  error?: string;
-};
-
-type SourcePost = {
-  postId: number;
-  postTitle: string;
-  postContent: string;
-};
-
-type LoadSourcesResult = {
-  action: 'loadSources';
-  success: boolean;
-  sourcePosts?: SourcePost[];
+  staleVectorCount?: number;
   error?: string;
 };
 
@@ -55,11 +49,7 @@ type ExecuteMergeResult = {
   error?: string;
 };
 
-type ActionResult =
-  | ScanDuplicatesResult
-  | LoadSourcesResult
-  | GenerateDraftResult
-  | ExecuteMergeResult;
+type ActionResult = ScanDuplicatesResult | GenerateDraftResult | ExecuteMergeResult;
 
 const SCAN_BATCH_SIZE = 20;
 const SIMILARITY_THRESHOLD = 0.85;
@@ -79,16 +69,19 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const db = drizzle(env.DB);
 
-    // 総記事数を取得
-    const allPosts = await db
-      .select({ postId: dimPosts.postId })
+    const [totalResult] = await db
+      .select({ count: count() })
       .from(dimPosts)
       .where(isNull(dimPosts.mergedIntoPostId));
-    const totalCount = allPosts.length;
+    const totalCount = totalResult.count;
 
     // バッチ分の記事を取得
     const batchPosts = await db
-      .select({ postId: dimPosts.postId, postTitle: dimPosts.postTitle })
+      .select({
+        postId: dimPosts.postId,
+        postTitle: dimPosts.postTitle,
+        postContent: dimPosts.postContent,
+      })
       .from(dimPosts)
       .where(isNull(dimPosts.mergedIntoPostId))
       .orderBy(desc(dimPosts.postId))
@@ -103,44 +96,83 @@ export async function action({ request }: ActionFunctionArgs) {
         scannedCount: 0,
         totalCount,
         page,
+        staleVectorCount: 0,
       };
     }
 
     try {
-      // 各記事のベクトルを取得して類似検索
       const clusters: DuplicateCluster[] = [];
       const seenPairs = new Set<string>();
+      let staleVectorCount = 0;
+
+      // 現存する全記事IDをSetで持っておく（存在チェック用）
+      const allPostIds = await db.select({ postId: dimPosts.postId }).from(dimPosts);
+      const existingPostIds = new Set(allPostIds.map((p) => p.postId));
 
       for (const post of batchPosts) {
         const vectors = await getVectorsByIds([String(post.postId)]);
         if (vectors.length === 0 || !vectors[0].values) continue;
 
         const matches = await querySimilar(vectors[0].values, 10);
-        const highScoreMatches = matches
-          .filter((m) => {
-            const matchId = Number(m.id);
-            if (matchId === post.postId) return false;
-            if (m.score < threshold) return false;
-            // 重複ペアを排除
-            const pairKey = [Math.min(post.postId, matchId), Math.max(post.postId, matchId)].join(
-              '-',
-            );
-            if (seenPairs.has(pairKey)) return false;
-            seenPairs.add(pairKey);
-            return true;
-          })
-          .map((m) => ({
-            postId: Number(m.metadata?.postId ?? m.id),
-            postTitle: String(m.metadata?.postTitle ?? ''),
-            score: Math.round(m.score * 1000) / 1000,
-          }));
+
+        // 存在しない記事のベクトルを収集して削除
+        const staleIds = matches.filter((m) => !existingPostIds.has(Number(m.id))).map((m) => m.id);
+        if (staleIds.length > 0) {
+          staleVectorCount += staleIds.length;
+          try {
+            await deleteVectors(staleIds);
+          } catch (err) {
+            console.error('[admin-merge] stale vector cleanup failed:', err);
+          }
+        }
+
+        const highScoreMatches = matches.filter((m) => {
+          const matchId = Number(m.id);
+          if (matchId === post.postId) return false;
+          if (!existingPostIds.has(matchId)) return false;
+          if (m.score < threshold) return false;
+          const pairKey = [Math.min(post.postId, matchId), Math.max(post.postId, matchId)].join(
+            '-',
+          );
+          if (seenPairs.has(pairKey)) return false;
+          seenPairs.add(pairKey);
+          return true;
+        });
 
         if (highScoreMatches.length > 0) {
-          clusters.push({
-            basePostId: post.postId,
-            basePostTitle: post.postTitle,
-            similars: highScoreMatches,
-          });
+          // 類似記事の本文をDBから取得
+          const similarPostIds = highScoreMatches.map((m) => Number(m.id));
+          const similarPostsData = await db
+            .select({
+              postId: dimPosts.postId,
+              postTitle: dimPosts.postTitle,
+              postContent: dimPosts.postContent,
+            })
+            .from(dimPosts)
+            .where(inArray(dimPosts.postId, similarPostIds));
+
+          const similarPostsMap = new Map(similarPostsData.map((p) => [p.postId, p]));
+
+          const similars: ScannedPost[] = highScoreMatches
+            .map((m) => {
+              const matchId = Number(m.id);
+              const dbPost = similarPostsMap.get(matchId);
+              if (!dbPost) return null;
+              return {
+                postId: dbPost.postId,
+                postTitle: dbPost.postTitle,
+                postContent: dbPost.postContent,
+                score: Math.round(m.score * 1000) / 1000,
+              };
+            })
+            .filter((x): x is ScannedPost => x !== null);
+
+          if (similars.length > 0) {
+            clusters.push({
+              basePost: { ...post, score: 1.0 },
+              similars,
+            });
+          }
         }
       }
 
@@ -151,6 +183,7 @@ export async function action({ request }: ActionFunctionArgs) {
         scannedCount: batchPosts.length,
         totalCount,
         page,
+        staleVectorCount,
       };
     } catch (err) {
       return {
@@ -161,43 +194,10 @@ export async function action({ request }: ActionFunctionArgs) {
     }
   }
 
-  if (actionType === 'loadSources') {
-    const idsRaw = (formData.get('sourcePostIds') as string) || '';
-    const postIds = idsRaw
-      .split(/[,\s]+/)
-      .map(Number)
-      .filter((n) => !Number.isNaN(n) && n > 0);
-
-    if (postIds.length < 2) {
-      return { action: 'loadSources', success: false, error: '2つ以上の記事IDを入力してください' };
-    }
-
-    const db = drizzle(env.DB);
-    const posts = await db
-      .select({
-        postId: dimPosts.postId,
-        postTitle: dimPosts.postTitle,
-        postContent: dimPosts.postContent,
-      })
-      .from(dimPosts)
-      .where(inArray(dimPosts.postId, postIds));
-
-    if (posts.length !== postIds.length) {
-      const foundIds = posts.map((p) => p.postId);
-      const missingIds = postIds.filter((id) => !foundIds.includes(id));
-      return {
-        action: 'loadSources',
-        success: false,
-        error: `記事が見つかりません: ${missingIds.join(', ')}`,
-      };
-    }
-
-    return { action: 'loadSources', success: true, sourcePosts: posts };
-  }
-
   if (actionType === 'generateDraft') {
     const sourcePostsJson = formData.get('sourcePosts') as string;
-    const sourcePosts: SourcePost[] = JSON.parse(sourcePostsJson);
+    const sourcePosts: { postId: number; postTitle: string; postContent: string }[] =
+      JSON.parse(sourcePostsJson);
 
     try {
       const draft = await generateMergeDraft(env, sourcePosts);
@@ -238,6 +238,61 @@ export async function action({ request }: ActionFunctionArgs) {
 
 // --- Component ---
 
+function PostTile({
+  post,
+  isSelected,
+  onToggle,
+}: {
+  post: ScannedPost;
+  isSelected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition-colors ${
+        isSelected ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-base-content/30'
+      }`}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onToggle();
+      }}
+      role="checkbox"
+      aria-checked={isSelected}
+      tabIndex={0}
+    >
+      <div className="p-3 border-b border-base-300 flex items-center gap-2 bg-base-200">
+        <input
+          type="checkbox"
+          className="checkbox checkbox-sm checkbox-primary"
+          checked={isSelected}
+          onChange={onToggle}
+          onClick={(e) => e.stopPropagation()}
+        />
+        {post.score < 1.0 && (
+          <span
+            className={`badge badge-xs ${post.score >= 0.95 ? 'badge-error' : post.score >= 0.9 ? 'badge-warning' : 'badge-ghost'}`}
+          >
+            {post.score}
+          </span>
+        )}
+        <span className="font-medium text-sm truncate flex-1">{post.postTitle}</span>
+        <Link
+          to={`/archives/${post.postId}`}
+          className="badge badge-outline badge-sm"
+          target="_blank"
+          onClick={(e) => e.stopPropagation()}
+        >
+          #{post.postId}
+        </Link>
+      </div>
+      <div
+        className="p-3 text-xs max-h-48 overflow-y-auto postContent"
+        dangerouslySetInnerHTML={{ __html: post.postContent }}
+      />
+    </div>
+  );
+}
+
 export default function AdminMerge() {
   const fetcher = useFetcher<ActionResult>();
   const [clusters, setClusters] = useState<DuplicateCluster[]>([]);
@@ -245,12 +300,10 @@ export default function AdminMerge() {
   const [scanMeta, setScanMeta] = useState<{
     scannedCount: number;
     totalCount: number;
+    staleVectorCount: number;
   } | null>(null);
   const [threshold, setThreshold] = useState(SIMILARITY_THRESHOLD);
-  const [selectedCluster, setSelectedCluster] = useState<{
-    postIds: number[];
-  } | null>(null);
-  const [sourcePosts, setSourcePosts] = useState<SourcePost[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [draftTitle, setDraftTitle] = useState('');
   const [draftContent, setDraftContent] = useState('');
   const [mergedPostId, setMergedPostId] = useState<number | null>(null);
@@ -267,15 +320,12 @@ export default function AdminMerge() {
       setScanMeta({
         scannedCount: data.scannedCount!,
         totalCount: data.totalCount!,
+        staleVectorCount: data.staleVectorCount ?? 0,
       });
       setScanPage(data.page!);
-      setSelectedCluster(null);
-      setSourcePosts([]);
+      setSelectedIds(new Set());
       setDraftTitle('');
       setDraftContent('');
-    }
-    if (data.action === 'loadSources' && data.success && data.sourcePosts) {
-      setSourcePosts(data.sourcePosts);
     }
     if (data.action === 'generateDraft' && data.success) {
       setDraftTitle(data.title || '');
@@ -294,20 +344,28 @@ export default function AdminMerge() {
     fetcher.submit(formData, { method: 'post' });
   };
 
-  const handleSelectCluster = (cluster: DuplicateCluster) => {
-    const allIds = [cluster.basePostId, ...cluster.similars.map((s) => s.postId)];
-    setSelectedCluster({ postIds: allIds });
-
-    const formData = new FormData();
-    formData.append('action', 'loadSources');
-    formData.append('sourcePostIds', allIds.join(','));
-    fetcher.submit(formData, { method: 'post' });
+  const togglePost = (postId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
   };
+
+  // 選択中の記事データをclustersから抽出
+  const allScannedPosts: ScannedPost[] = clusters.flatMap((c) => [c.basePost, ...c.similars]);
+  const selectedPosts = allScannedPosts.filter((p) => selectedIds.has(p.postId));
+  // 重複除去
+  const uniqueSelectedPosts = [...new Map(selectedPosts.map((p) => [p.postId, p])).values()];
 
   const handleGenerateDraft = () => {
     const formData = new FormData();
     formData.append('action', 'generateDraft');
-    formData.append('sourcePosts', JSON.stringify(sourcePosts));
+    formData.append('sourcePosts', JSON.stringify(uniqueSelectedPosts));
     fetcher.submit(formData, { method: 'post' });
   };
 
@@ -315,7 +373,7 @@ export default function AdminMerge() {
     confirmDialogRef.current?.close();
     const formData = new FormData();
     formData.append('action', 'executeMerge');
-    formData.append('sourcePostIds', JSON.stringify(sourcePosts.map((p) => p.postId)));
+    formData.append('sourcePostIds', JSON.stringify(uniqueSelectedPosts.map((p) => p.postId)));
     formData.append('newPostTitle', draftTitle);
     formData.append('newPostContent', draftContent);
     fetcher.submit(formData, { method: 'post' });
@@ -326,12 +384,11 @@ export default function AdminMerge() {
 
   const resetAll = () => {
     setMergedPostId(null);
-    setSourcePosts([]);
     setDraftTitle('');
     setDraftContent('');
     setClusters([]);
     setScanMeta(null);
-    setSelectedCluster(null);
+    setSelectedIds(new Set());
   };
 
   if (mergedPostId) {
@@ -367,8 +424,7 @@ export default function AdminMerge() {
         <div className="card-body">
           <h2 className="card-title text-lg">1. 重複記事をスキャン</h2>
           <p className="text-sm opacity-70">
-            記事をバッチ処理でベクトル検索し、類似度が閾値以上の記事ペアを検出します。
-            1回のスキャンで{SCAN_BATCH_SIZE}件ずつ処理します。
+            {SCAN_BATCH_SIZE}件ずつベクトル検索し、類似度が閾値以上の記事を検出します。
           </p>
           <div className="flex items-end gap-4 mt-2">
             <div className="form-control">
@@ -398,67 +454,60 @@ export default function AdminMerge() {
             </button>
           </div>
           {scanMeta && (
-            <p className="text-sm mt-2">
-              {scanMeta.totalCount}件中 {(scanPage - 1) * SCAN_BATCH_SIZE + 1}〜
-              {Math.min(scanPage * SCAN_BATCH_SIZE, scanMeta.totalCount)}件目をスキャン済み （
-              {clusters.length}件の重複候補を検出）
-            </p>
+            <div className="text-sm mt-2 space-y-1">
+              <p>
+                {scanMeta.totalCount}件中 {(scanPage - 1) * SCAN_BATCH_SIZE + 1}〜
+                {Math.min(scanPage * SCAN_BATCH_SIZE, scanMeta.totalCount)}件目をスキャン済み（
+                {clusters.length}組の重複候補を検出）
+              </p>
+              {scanMeta.staleVectorCount > 0 && (
+                <p className="text-warning">
+                  {scanMeta.staleVectorCount}
+                  件の不整合ベクトル（削除済み記事）を自動クリーンアップしました
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
 
       {errorMessage && <div className="alert alert-error mb-4">{errorMessage}</div>}
 
-      {/* Step 2: 重複候補一覧 */}
+      {/* Step 2: 重複候補をタイル表示 */}
       {clusters.length > 0 && (
         <div className="card bg-base-100 shadow-sm mb-4">
           <div className="card-body">
-            <h2 className="card-title text-lg">2. 重複候補から統合する組を選択</h2>
-            <div className="space-y-3">
-              {clusters.map((cluster) => (
-                <div key={cluster.basePostId} className="border rounded p-3 bg-base-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        <Link
-                          to={`/archives/${cluster.basePostId}`}
-                          className="link link-hover"
-                          target="_blank"
-                        >
-                          ID:{cluster.basePostId} — {cluster.basePostTitle}
-                        </Link>
-                      </p>
-                      <ul className="ml-4 mt-1">
-                        {cluster.similars.map((s) => (
-                          <li key={s.postId} className="text-sm flex items-center gap-2">
-                            <span
-                              className={`badge badge-xs ${s.score >= 0.95 ? 'badge-error' : s.score >= 0.9 ? 'badge-warning' : 'badge-ghost'}`}
-                            >
-                              {s.score}
-                            </span>
-                            <Link
-                              to={`/archives/${s.postId}`}
-                              className="link link-hover"
-                              target="_blank"
-                            >
-                              ID:{s.postId} — {s.postTitle}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => handleSelectCluster(cluster)}
-                      disabled={isSubmitting}
-                    >
-                      この組を統合
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <h2 className="card-title text-lg">2. 統合する記事を選択</h2>
+              {selectedIds.size >= 2 && (
+                <span className="badge badge-primary">{selectedIds.size}件選択中</span>
+              )}
             </div>
+            <p className="text-sm opacity-70">
+              タイルをクリックして統合したい記事を選択してください。記事の中身を確認しながら選べます。
+            </p>
+
+            {clusters.map((cluster, idx) => (
+              <div key={cluster.basePost.postId} className="mb-6">
+                {idx > 0 && <div className="divider" />}
+                <p className="text-xs font-bold opacity-50 mb-2">類似グループ #{idx + 1}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  <PostTile
+                    post={cluster.basePost}
+                    isSelected={selectedIds.has(cluster.basePost.postId)}
+                    onToggle={() => togglePost(cluster.basePost.postId)}
+                  />
+                  {cluster.similars.map((s) => (
+                    <PostTile
+                      key={s.postId}
+                      post={s}
+                      isSelected={selectedIds.has(s.postId)}
+                      onToggle={() => togglePost(s.postId)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {/* ページネーション */}
             {totalPages > 1 && (
@@ -488,6 +537,22 @@ export default function AdminMerge() {
                 )}
               </div>
             )}
+
+            {/* 選択した記事で次へ */}
+            {selectedIds.size >= 2 && (
+              <div className="card-actions justify-end mt-4">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleGenerateDraft}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && fetcher.formData?.get('action') === 'generateDraft'
+                    ? 'AI生成中...'
+                    : `${selectedIds.size}件の記事からAI下書き生成`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -499,48 +564,11 @@ export default function AdminMerge() {
         </div>
       )}
 
-      {/* Step 3: ソース記事プレビュー */}
-      {sourcePosts.length > 0 && (
+      {/* Step 3: 統合後記事の編集 */}
+      {(draftTitle || draftContent) && (
         <div className="card bg-base-100 shadow-sm mb-4">
           <div className="card-body">
-            <h2 className="card-title text-lg">3. ソース記事のプレビュー</h2>
-            <div className="space-y-4">
-              {sourcePosts.map((post) => (
-                <div key={post.postId} className="collapse collapse-arrow bg-base-200">
-                  <input type="checkbox" />
-                  <div className="collapse-title font-medium">
-                    ID: {post.postId} — {post.postTitle}
-                  </div>
-                  <div className="collapse-content">
-                    <div
-                      className="postContent text-sm"
-                      dangerouslySetInnerHTML={{ __html: post.postContent }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="card-actions justify-end mt-4">
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleGenerateDraft}
-                disabled={isSubmitting}
-              >
-                {isSubmitting && fetcher.formData?.get('action') === 'generateDraft'
-                  ? 'AI生成中...'
-                  : 'AI下書き生成'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 4: 統合後記事の編集 */}
-      {sourcePosts.length > 0 && (
-        <div className="card bg-base-100 shadow-sm mb-4">
-          <div className="card-body">
-            <h2 className="card-title text-lg">4. 統合後の記事を編集</h2>
+            <h2 className="card-title text-lg">3. 統合後の記事を編集</h2>
             <div className="form-control mb-4">
               <label className="label" htmlFor="draftTitle">
                 <span className="label-text">タイトル</span>
@@ -593,11 +621,11 @@ export default function AdminMerge() {
         <div className="modal-box">
           <h3 className="font-bold text-lg">記事統合の確認</h3>
           <p className="py-2 text-sm">
-            以下の記事を統合します。この操作はソース記事を検索不可にし、コメント・投票・編集を
-            無効化します。
+            以下の{uniqueSelectedPosts.length}件の記事を統合します。
+            ソース記事は検索不可になり、コメント・投票・編集が無効化されます。
           </p>
           <ul className="list-disc list-inside text-sm mb-4">
-            {sourcePosts.map((p) => (
+            {uniqueSelectedPosts.map((p) => (
               <li key={p.postId}>
                 ID: {p.postId} — {p.postTitle}
               </li>
