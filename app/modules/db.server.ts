@@ -134,13 +134,24 @@ async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
 
     const matches = await querySimilar(vectors[0].values, 17);
 
-    return matches
+    // 統合済みソース記事を除外
+    const repo = getRepo();
+    const allMatches = matches
       .filter((m) => m.id !== String(postId))
-      .slice(0, 15)
       .map((m) => ({
         postId: Number(m.metadata?.postId ?? m.id),
         postTitle: String(m.metadata?.postTitle ?? ''),
       }));
+
+    const filtered = [];
+    for (const match of allMatches) {
+      const mergeInfo = await repo.getMergeInfoBySourcePostId(match.postId);
+      if (!mergeInfo) {
+        filtered.push(match);
+      }
+      if (filtered.length >= 15) break;
+    }
+    return filtered;
   } catch (error) {
     // Vectorize/AI unavailable (e.g. local dev) — return empty
     console.warn('getSimilarPosts failed, returning empty:', (error as Error).message);
