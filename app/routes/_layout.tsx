@@ -78,7 +78,7 @@ function renderDesktopHeader() {
         </div>
         <div className="h-[60px] px-4 flex flex-col justify-center">
           <ThemeSwitcher />
-          <a href="/bookmark">
+          <a href="/bookmark" aria-label="ブックマーク">
             <div className="avatar">
               {photoUrl ? (
                 <div className="w-7 h-7 ml-1 mt-2 rounded-full">
@@ -119,6 +119,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
               handleSearchModalOpen(true);
             }}
             type="button"
+            aria-label="検索する"
           >
             <SearchIcon />
           </button>
@@ -127,7 +128,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
           <div className="drawer drawer-end">
             <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content flex justify-end">
-              <label htmlFor="drawer-toggle" className="btn btn-ghost">
+              <label htmlFor="drawer-toggle" className="btn btn-ghost" aria-label="メニューを開く">
                 <MenuIcon />
               </label>
             </div>
@@ -291,13 +292,13 @@ export default function Component() {
         </div>
       </main>
       <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
-        <NavLink to="/post" viewTransition>
-          <button
-            className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
-            type="button"
-          >
-            <PostIcon />
-          </button>
+        <NavLink
+          to="/post"
+          viewTransition
+          className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
+          aria-label="投稿する"
+        >
+          <PostIcon />
         </NavLink>
       </div>
       <Footer />
