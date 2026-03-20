@@ -20,6 +20,8 @@ hpe-temp-downloader-key.json
 /blob-report/
 /playwright/.cache/
 coverage
+a11y-report.json
+a11y-results/
 
 # IDE
 .vscode
