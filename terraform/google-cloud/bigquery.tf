@@ -68,7 +68,7 @@ resource "google_bigquery_dataset" "ga4" {
     special_group = "projectReaders"
   }
   access {
-    role       = "OWNER"
+    role          = "OWNER"
     user_by_email = "firebase-measurement@system.gserviceaccount.com"
   }
 }
@@ -99,7 +99,7 @@ resource "google_bigquery_dataset" "searchconsole" {
     special_group = "projectReaders"
   }
   access {
-    role       = "OWNER"
+    role          = "OWNER"
     user_by_email = "search-console-data-export@system.gserviceaccount.com"
   }
 }
@@ -369,6 +369,30 @@ resource "google_bigquery_table" "report_pv" {
       )
 
       SELECT * FROM agg_ga4_data
+    SQL
+  }
+}
+
+# --- mv_post_page_views (Materialized View) ---
+# GA4 page_view イベントから記事別の累計PV数を集計
+resource "google_bigquery_table" "mv_post_page_views" {
+  dataset_id          = google_bigquery_dataset.hpe_reports.dataset_id
+  table_id            = "mv_post_page_views"
+  deletion_protection = false
+
+  materialized_view {
+    enable_refresh      = true
+    refresh_interval_ms = 3600000 # 1時間
+    query               = <<-SQL
+      SELECT
+        SAFE_CAST(REGEXP_EXTRACT(ep.value.string_value, r'/archives/(\d+)') AS INT64) AS post_id,
+        COUNT(*) AS total_page_views
+      FROM `healthy-person-emulator.analytics_353281755.events_*`
+      CROSS JOIN UNNEST(event_params) AS ep
+      WHERE event_name = 'page_view'
+        AND ep.key = 'page_location'
+        AND REGEXP_CONTAINS(ep.value.string_value, r'/archives/\d+')
+      GROUP BY 1
     SQL
   }
 }
