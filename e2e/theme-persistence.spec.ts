@@ -22,7 +22,7 @@ test.describe('テーマ永続化', () => {
     await page.click('[aria-label="テーマ切替"]');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await gotoApp(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark', { timeout: 15000 });
   });
 
@@ -33,7 +33,7 @@ test.describe('テーマ永続化', () => {
     await gotoApp(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await gotoApp(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark', { timeout: 15000 });
 
     await page.click('[aria-label="テーマ切替"]');
