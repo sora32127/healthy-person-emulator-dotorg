@@ -381,9 +381,10 @@ resource "google_bigquery_table" "mv_post_page_views" {
   deletion_protection = false
 
   materialized_view {
-    enable_refresh      = true
-    refresh_interval_ms = 3600000 # 1時間
-    query               = <<-SQL
+    allow_non_incremental_definition = true
+    enable_refresh                   = true
+    refresh_interval_ms              = 3600000 # 1時間
+    query                            = <<-SQL
       SELECT
         SAFE_CAST(REGEXP_EXTRACT(ep.value.string_value, r'/archives/(\d+)') AS INT64) AS post_id,
         COUNT(*) AS total_page_views
