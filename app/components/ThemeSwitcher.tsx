@@ -23,7 +23,12 @@ export default function ThemeSwitcher() {
   }, []);
 
   return (
-    <button onClick={handleToggleTheme} type="button" className="btn btn-ghost h-9 w-9 p-0">
+    <button
+      onClick={handleToggleTheme}
+      type="button"
+      className="btn btn-ghost h-9 w-9 p-0"
+      aria-label="テーマ切替"
+    >
       {isChanging ? (
         <Loader className="w-5 h-5 animate-spin" />
       ) : nowTheme === 'dark' ? (

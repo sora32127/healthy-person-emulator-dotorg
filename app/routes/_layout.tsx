@@ -76,9 +76,9 @@ function renderDesktopHeader() {
             </ul>
           </nav>
         </div>
-        <div className="h-[60px] px-4 flex flex-col justify-center">
+        <nav className="h-[60px] px-4 flex flex-col justify-center" aria-label="ユーティリティ">
           <ThemeSwitcher />
-          <a href="/bookmark">
+          <a href="/bookmark" aria-label="ブックマーク">
             <div className="avatar">
               {photoUrl ? (
                 <div className="w-7 h-7 ml-1 mt-2 rounded-full">
@@ -89,7 +89,7 @@ function renderDesktopHeader() {
               )}
             </div>
           </a>
-        </div>
+        </nav>
       </div>
     </>
   );
@@ -119,6 +119,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
               handleSearchModalOpen(true);
             }}
             type="button"
+            aria-label="検索する"
           >
             <SearchIcon />
           </button>
@@ -127,7 +128,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
           <div className="drawer drawer-end">
             <input id="drawer-toggle" type="checkbox" className="drawer-toggle" />
             <div className="drawer-content flex justify-end">
-              <label htmlFor="drawer-toggle" className="btn btn-ghost">
+              <label htmlFor="drawer-toggle" className="btn btn-ghost" aria-label="メニューを開く">
                 <MenuIcon />
               </label>
             </div>
@@ -286,20 +287,21 @@ export default function Component() {
       <main
         className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}
       >
+        <h1 className="sr-only hidden md:block">健常者エミュレータ事例集</h1>
         <div className="md:mx-10 lg:mx-20 xl:mx-32 2xl:mx-96">
           <Outlet />
         </div>
-      </main>
-      <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
-        <NavLink to="/post" viewTransition>
-          <button
+        <div className="tooltip tooltip-top fixed bottom-10 right-10" data-tip="投稿する">
+          <NavLink
+            to="/post"
+            viewTransition
             className={`btn btn-primary btn-circle btn-lg ${isInPostPage ? 'hidden inert' : ''}`}
-            type="button"
+            aria-label="投稿する"
           >
             <PostIcon />
-          </button>
-        </NavLink>
-      </div>
+          </NavLink>
+        </div>
+      </main>
       <Footer />
       <dialog id="search-modal" className={`modal ${isSearchModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box absolute top-[25%] transform -translate-y-1/2">
