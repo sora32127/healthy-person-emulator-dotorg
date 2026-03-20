@@ -261,3 +261,27 @@ export const fctUserBookmarkActivity = sqliteTable('fct_user_bookmark_activity',
   bookmarkDateGmt: text('bookmark_date_gmt').notNull(),
   bookmarkDateJst: text('bookmark_date_jst').notNull(),
 });
+
+// ============================================================
+// 15. post_merges
+// ============================================================
+export const postMerges = sqliteTable(
+  'post_merges',
+  {
+    mergeId: integer('merge_id').primaryKey({ autoIncrement: true }),
+    sourcePostId: integer('source_post_id')
+      .notNull()
+      .references(() => dimPosts.postId)
+      .unique(),
+    targetPostId: integer('target_post_id')
+      .notNull()
+      .references(() => dimPosts.postId),
+    mergedAtUtc: text('merged_at_utc').notNull(),
+    mergedAtJst: text('merged_at_jst').notNull(),
+    mergedByUserUuid: text('merged_by_user_uuid').notNull(),
+  },
+  (table) => [
+    index('idx_post_merges_source').on(table.sourcePostId),
+    index('idx_post_merges_target').on(table.targetPostId),
+  ],
+);
