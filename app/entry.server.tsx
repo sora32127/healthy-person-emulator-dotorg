@@ -12,7 +12,7 @@ function getThemeFromRequest(request: Request): string {
   return match?.[1] === 'dark' ? 'dark' : 'light';
 }
 
-const THEME_SCRIPT = `<script>(function(){var t=document.documentElement.getAttribute("data-theme")||"light";var el=document.documentElement;if(t!=="light"){var o=new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==="data-theme"&&el.getAttribute("data-theme")!==t){el.setAttribute("data-theme",t);o.disconnect()}})});o.observe(el,{attributes:true,attributeFilter:["data-theme"]})}})()</script>`;
+const THEME_SCRIPT = `<script>(function(){var t=document.documentElement.getAttribute("data-theme")||"light";var el=document.documentElement;if(t!=="light"){window.__themeObserver=new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==="data-theme"&&el.getAttribute("data-theme")!==t){el.setAttribute("data-theme",t)}})});window.__themeObserver.observe(el,{attributes:true,attributeFilter:["data-theme"]})}})()</script>`;
 
 function createThemeTransform(theme: string): TransformStream<Uint8Array, Uint8Array> {
   const decoder = new TextDecoder();
