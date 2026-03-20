@@ -74,6 +74,7 @@ export async function fetchPostPVMap(env: CloudflareEnv): Promise<Map<number, nu
           query,
           useLegacySql: false,
           maxResults: 10000,
+          timeoutMs: 30000,
         }),
       },
     );
