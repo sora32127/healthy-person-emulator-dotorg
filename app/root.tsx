@@ -36,6 +36,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta property="og:site_name" content="健常者エミュレータ事例集" />
         <Meta />
         <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )theme=([^;]*)/);if(m&&m[1]==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})()`,
+          }}
+        />
       </head>
       <body>
         <PageTransitionProgressBar />
