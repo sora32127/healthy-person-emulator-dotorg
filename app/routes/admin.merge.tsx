@@ -248,17 +248,10 @@ function PostTile({
   onToggle: () => void;
 }) {
   return (
-    <div
-      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition-colors ${
+    <label
+      className={`border-2 rounded-lg overflow-hidden cursor-pointer transition-colors block ${
         isSelected ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-base-content/30'
       }`}
-      onClick={onToggle}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onToggle();
-      }}
-      role="checkbox"
-      aria-checked={isSelected}
-      tabIndex={0}
     >
       <div className="p-3 border-b border-base-300 flex items-center gap-2 bg-base-200">
         <input
@@ -266,7 +259,6 @@ function PostTile({
           className="checkbox checkbox-sm checkbox-primary"
           checked={isSelected}
           onChange={onToggle}
-          onClick={(e) => e.stopPropagation()}
         />
         {post.score < 1.0 && (
           <span
@@ -289,7 +281,7 @@ function PostTile({
         className="p-3 text-xs max-h-48 overflow-y-auto postContent"
         dangerouslySetInnerHTML={{ __html: post.postContent }}
       />
-    </div>
+    </label>
   );
 }
 
