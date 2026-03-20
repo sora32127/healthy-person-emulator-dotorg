@@ -27,6 +27,9 @@ export default function AdminLayout() {
             <Link to="/admin/comments" className="btn btn-ghost btn-sm">
               コメント管理
             </Link>
+            <Link to="/admin/merge" className="btn btn-ghost btn-sm">
+              記事統合
+            </Link>
           </div>
         </div>
         <div className="flex-none gap-4">
