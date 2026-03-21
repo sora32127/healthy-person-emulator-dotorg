@@ -23,6 +23,17 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .claude/hooks/block-dangerous-push.sh",
+            "timeout": 5,
+            "statusMessage": "git pushの安全性を確認中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
             "command": "bash .claude/hooks/check-plan-files.sh",
             "timeout": 10,
             "statusMessage": "プランファイルの確認中..."
