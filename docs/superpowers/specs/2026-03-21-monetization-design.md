@@ -52,16 +52,21 @@
 
 ### API（フリーミアム）
 
-全エンドポイントがフリーミアムモデル。無料枠でアクセス可能、プレミアムで高レート+追加エンドポイント。
+全エンドポイントにAPIキーが必須。APIキーの発行自体は無料。無料枠のレートリミットに到達した場合、またはプレミアム専用エンドポイントを利用する場合にプレミアム課金が必要となる。
 
-**エンドポイント（無料枠あり）**:
+**APIキー**:
+- 発行: 無料（Google OAuth認証済みユーザーがWebから発行）
+- 全リクエストに `Authorization: Bearer <api-key>` ヘッダーが必要
+- APIキーなしのリクエストは `401 Unauthorized` で拒否
+
+**エンドポイント（無料枠）**:
 - `GET /api/posts` — 投稿一覧（ページネーション、ソート対応）
 - `GET /api/posts/:id` — 投稿の詳細取得
 - `GET /api/search?q=...` — 全文検索
 - `GET /api/tags` — タグ一覧
 - `GET /api/tags/:tagName/posts` — タグ別投稿一覧
 
-**プレミアム専用エンドポイント**（APIキー必須）:
+**プレミアム専用エンドポイント**（プレミアムAPIキーが必要）:
 - `GET /api/me/dashboard/summary` — 概要（累計投稿数、累計いいね数、累計閲覧数）
 - `GET /api/me/dashboard/posts` — 投稿ごとのパフォーマンス一覧
 - `GET /api/me/dashboard/highlights` — ハイライト（最も助けた投稿TOP3等）
@@ -70,21 +75,22 @@
 **レスポンス形式**: JSON（AIが加工する前提で、human-readableである必要はない）
 
 **Rate limit**:
-- 無料（APIキーなし）: 60req/min
-- プレミアム（APIキーあり）: 600req/min
+- 無料: 10req/min
+- プレミアム: 60req/min
+- レートリミット超過時は `429 Too Many Requests` + プレミアムへの導線を含むレスポンスを返す
 
 ### CLI（npmパッケージ）
 
-APIのラッパーとして配布。無料でもプレミアムでも同じCLIを使う。
+APIのラッパーとして配布。初回利用時にAPIキーの設定が必要。
 
 **無料で使える機能**:
 - 投稿の検索・取得
 - タグ一覧・タグ別投稿取得
 - 投稿の詳細表示
 
-**プレミアムで追加される機能**（APIキー設定後）:
+**プレミアムで追加される機能**:
 - **投稿者ダッシュボード**: 自分の投稿のパフォーマンス（PV、いいね、コメント、ブックマーク数）
-- **高レートリミット**: 600req/min
+- **高レートリミット**: 60req/min
 - **プレミアムバッジ**: Web上の投稿・コメントにバッジ表示
 
 **ダッシュボードのデータソース**:
@@ -249,18 +255,18 @@ Google検索「職場 暗黙のルール」
 
 ### 4. フリーミアムAPI
 
-- 既存の検索・投稿取得機能をREST APIとして公開
-- APIキーなし（無料）: 60req/min、APIキーあり（プレミアム）: 600req/min
-- Rate limit: Cloudflare Rate Limiting Rulesで実装。APIキーの有無で閾値を切り替え
+- 全エンドポイントにAPIキー必須
+- Rate limit: APIキーごとにD1でカウント管理。無料: 10req/min、プレミアム: 60req/min
 - レスポンス形式: JSON
 - **Stripeシークレットの保管**: Cloudflare Secrets Store を使用（コードベースの既存パターンに合わせる）
 
-### 5. プレミアムAPIキー発行・レートリミット制御
+### 5. APIキー発行・管理
 
-- プレミアムユーザーにAPIキーを発行
-- D1にAPIキーテーブル（userId、apiKey、createdAt、isActive）
-- APIキーはStripeサブスク状態と連動（解約時に無効化）
-- APIキー付きリクエスト: 600req/min、APIキーなし: 60req/min
+- 全ユーザーにAPIキーを無料発行（Google OAuth認証済みが前提）
+- Webの設定ページからAPIキーを発行・再生成
+- D1にAPIキーテーブル（userId、apiKey、createdAt、isPremium）
+- プレミアムユーザーのAPIキーは `isPremium = true` に設定（Stripeサブスク状態と連動）
+- 解約時は `isPremium = false` に戻る（APIキー自体は無効化しない。無料枠で引き続き利用可能）
 
 ### 6. 投稿者ダッシュボード（プレミアムAPI）
 
