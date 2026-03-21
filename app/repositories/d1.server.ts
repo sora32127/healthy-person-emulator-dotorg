@@ -1340,5 +1340,75 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         results,
       };
     },
+
+    // --- API Key management ---
+
+    async getApiKeyByUserId(userId: number) {
+      const rows = await db
+        .select({
+          apiKeyId: schema.dimApiKeys.apiKeyId,
+          apiKey: schema.dimApiKeys.apiKey,
+          isPremium: schema.dimApiKeys.isPremium,
+          createdAt: schema.dimApiKeys.createdAt,
+        })
+        .from(schema.dimApiKeys)
+        .where(eq(schema.dimApiKeys.userId, userId))
+        .limit(1);
+      if (rows.length === 0) return null;
+      return {
+        apiKeyId: rows[0].apiKeyId,
+        apiKey: rows[0].apiKey,
+        isPremium: rows[0].isPremium ?? false,
+        createdAt: rows[0].createdAt,
+      };
+    },
+
+    async createApiKey(userId: number) {
+      // Return existing key if one already exists
+      const existing = await db
+        .select({ apiKey: schema.dimApiKeys.apiKey })
+        .from(schema.dimApiKeys)
+        .where(eq(schema.dimApiKeys.userId, userId))
+        .limit(1);
+      if (existing.length > 0) {
+        return { apiKey: existing[0].apiKey };
+      }
+
+      const apiKey = `hpe_${crypto.randomUUID().replace(/-/g, '')}`;
+      await db.insert(schema.dimApiKeys).values({
+        userId,
+        apiKey,
+        createdAt: nowUTC(),
+      });
+      return { apiKey };
+    },
+
+    async regenerateApiKey(userId: number) {
+      await db.delete(schema.dimApiKeys).where(eq(schema.dimApiKeys.userId, userId));
+
+      const apiKey = `hpe_${crypto.randomUUID().replace(/-/g, '')}`;
+      await db.insert(schema.dimApiKeys).values({
+        userId,
+        apiKey,
+        createdAt: nowUTC(),
+      });
+      return { apiKey };
+    },
+
+    async findUserByApiKey(apiKey: string) {
+      const rows = await db
+        .select({
+          userId: schema.dimApiKeys.userId,
+          isPremium: schema.dimApiKeys.isPremium,
+        })
+        .from(schema.dimApiKeys)
+        .where(eq(schema.dimApiKeys.apiKey, apiKey))
+        .limit(1);
+      if (rows.length === 0) return null;
+      return {
+        userId: rows[0].userId,
+        isPremium: rows[0].isPremium ?? false,
+      };
+    },
   };
 }

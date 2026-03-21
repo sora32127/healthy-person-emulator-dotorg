@@ -282,6 +282,14 @@ export interface DatabaseRepository {
     pageSize: number,
   ): Promise<SearchPostsResult>;
 
+  // API Key management
+  getApiKeyByUserId(
+    userId: number,
+  ): Promise<{ apiKeyId: number; apiKey: string; isPremium: boolean; createdAt: string } | null>;
+  createApiKey(userId: number): Promise<{ apiKey: string }>;
+  regenerateApiKey(userId: number): Promise<{ apiKey: string }>;
+  findUserByApiKey(apiKey: string): Promise<{ userId: number; isPremium: boolean } | null>;
+
   // Internal functions used by ArchiveDataEntry
   getPostByPostId(postId: number): Promise<PostData>;
   getCommentsByPostId(postId: number): Promise<CommentData[]>;

@@ -110,6 +110,14 @@ export const createGoogleUser = (...args: Parameters<DatabaseRepository['createG
   getRepo().createGoogleUser(...args);
 export const searchPosts = (...args: Parameters<DatabaseRepository['searchPosts']>) =>
   getRepo().searchPosts(...args);
+export const getApiKeyByUserId = (...args: Parameters<DatabaseRepository['getApiKeyByUserId']>) =>
+  getRepo().getApiKeyByUserId(...args);
+export const createApiKey = (...args: Parameters<DatabaseRepository['createApiKey']>) =>
+  getRepo().createApiKey(...args);
+export const regenerateApiKey = (...args: Parameters<DatabaseRepository['regenerateApiKey']>) =>
+  getRepo().regenerateApiKey(...args);
+export const findUserByApiKey = (...args: Parameters<DatabaseRepository['findUserByApiKey']>) =>
+  getRepo().findUserByApiKey(...args);
 
 // --- getSimilarPosts: Cloudflare Vectorize, NOT part of Repository ---
 
