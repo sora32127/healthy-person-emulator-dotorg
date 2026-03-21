@@ -50,40 +50,42 @@
 
 プラットフォームへのプログラマティックなアクセス手段として公開APIとCLIを提供する。フリーミアムモデルで、基本機能は無料、追加機能をプレミアム（月額580円）で提供する。CLIの出力はJSON形式の構造化データとし、AIツール（Claude Code等）が加工する前提で設計する。
 
-### 公開API（無料・認証不要）
+### API（フリーミアム）
 
-事例検索APIをサイトのミッション（知識へのアクセス）の延長として公開する。
+全エンドポイントがフリーミアムモデル。無料枠でアクセス可能、プレミアムで高レート+追加エンドポイント。
 
-**エンドポイント**:
+**エンドポイント（無料枠あり）**:
 - `GET /api/posts` — 投稿一覧（ページネーション、ソート対応）
 - `GET /api/posts/:id` — 投稿の詳細取得
 - `GET /api/search?q=...` — 全文検索
 - `GET /api/tags` — タグ一覧
 - `GET /api/tags/:tagName/posts` — タグ別投稿一覧
 
-**レスポンス形式**: JSON（AIが加工する前提で、human-readableである必要はない）
-
-**Rate limit**: IP単位で60req/min（Cloudflare Rate Limiting Rules）
-
-### CLI（フリーミアム）
-
-npmパッケージとして配布。APIのラッパーとして動作する。
-
-**無料機能**（APIキー不要、公開APIのみ使用）:
-- 投稿の検索・取得
-- タグ一覧・タグ別投稿取得
-- 投稿の詳細表示
-
-**プレミアム機能**（APIキー認証、月額580円）:
-- **投稿者ダッシュボード**: 自分の投稿のパフォーマンス（PV、いいね、コメント、ブックマーク数）
-- **高レートリミット**: 60req/min → 600req/min
-- **プレミアムバッジ**: Web上の投稿・コメントにバッジ表示
-
-**プレミアムAPIエンドポイント**（APIキー必須）:
+**プレミアム専用エンドポイント**（APIキー必須）:
 - `GET /api/me/dashboard/summary` — 概要（累計投稿数、累計いいね数、累計閲覧数）
 - `GET /api/me/dashboard/posts` — 投稿ごとのパフォーマンス一覧
 - `GET /api/me/dashboard/highlights` — ハイライト（最も助けた投稿TOP3等）
 - `GET /api/me/dashboard/trends` — 月別トレンドデータ
+
+**レスポンス形式**: JSON（AIが加工する前提で、human-readableである必要はない）
+
+**Rate limit**:
+- 無料（APIキーなし）: 60req/min
+- プレミアム（APIキーあり）: 600req/min
+
+### CLI（npmパッケージ）
+
+APIのラッパーとして配布。無料でもプレミアムでも同じCLIを使う。
+
+**無料で使える機能**:
+- 投稿の検索・取得
+- タグ一覧・タグ別投稿取得
+- 投稿の詳細表示
+
+**プレミアムで追加される機能**（APIキー設定後）:
+- **投稿者ダッシュボード**: 自分の投稿のパフォーマンス（PV、いいね、コメント、ブックマーク数）
+- **高レートリミット**: 600req/min
+- **プレミアムバッジ**: Web上の投稿・コメントにバッジ表示
 
 **ダッシュボードのデータソース**:
 - PV: BigQuery（GA4）→ **日次バッチでD1に集計テーブルとして実体化**。API応答時はD1のみ参照
@@ -245,10 +247,11 @@ Google検索「職場 暗黙のルール」
 - ローダー/ミドルウェアでプレミアム判定
 - **支払い失敗時の挙動**: `invoice.payment_failed` 受信後、即座にプレミアムを停止せずStripeのDunning（自動リトライ、約3週間）に委ねる。`customer.subscription.updated` で `status` が `past_due` → `canceled` に変わった時点でプレミアムを停止する。`currentPeriodEnd` までは猶予期間としてプレミアム機能を維持
 
-### 4. 公開API
+### 4. フリーミアムAPI
 
-- 既存の検索・投稿取得機能をREST APIとして公開（認証不要）
-- Rate limit: IP単位で60req/min（Cloudflare Rate Limiting Rulesで実装）
+- 既存の検索・投稿取得機能をREST APIとして公開
+- APIキーなし（無料）: 60req/min、APIキーあり（プレミアム）: 600req/min
+- Rate limit: Cloudflare Rate Limiting Rulesで実装。APIキーの有無で閾値を切り替え
 - レスポンス形式: JSON
 - **Stripeシークレットの保管**: Cloudflare Secrets Store を使用（コードベースの既存パターンに合わせる）
 
