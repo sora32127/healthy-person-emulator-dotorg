@@ -278,3 +278,20 @@ export const dimDeletedPosts = sqliteTable('dim_deleted_posts', {
   blueskyPostUriOfFirstPost: text('bluesky_post_uri_of_first_post'),
   misskeyNoteIdOfFirstNote: text('misskey_note_id_of_first_note'),
 });
+
+// ============================================================
+// 16. dim_api_keys
+// ============================================================
+export const dimApiKeys = sqliteTable(
+  'dim_api_keys',
+  {
+    apiKeyId: integer('api_key_id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => dimUsers.userId, { onDelete: 'cascade' }),
+    apiKey: text('api_key').notNull().unique(),
+    isPremium: integer('is_premium', { mode: 'boolean' }).notNull().default(false),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [index('idx_dim_api_keys_user_id').on(table.userId)],
+);
