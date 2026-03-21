@@ -1384,14 +1384,11 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
     },
 
     async regenerateApiKey(userId: number) {
-      await db.delete(schema.dimApiKeys).where(eq(schema.dimApiKeys.userId, userId));
-
       const apiKey = `hpe_${crypto.randomUUID().replace(/-/g, '')}`;
-      await db.insert(schema.dimApiKeys).values({
-        userId,
-        apiKey,
-        createdAt: nowUTC(),
-      });
+      await db
+        .update(schema.dimApiKeys)
+        .set({ apiKey, createdAt: nowUTC() })
+        .where(eq(schema.dimApiKeys.userId, userId));
       return { apiKey };
     },
 

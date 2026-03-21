@@ -138,10 +138,14 @@ function ApiKeyDisplay({ apiKey }: { apiKey: string }) {
 
   const maskedKey = `${apiKey.slice(0, 8)}${'•'.repeat(20)}${apiKey.slice(-4)}`;
 
-  function handleCopy() {
-    navigator.clipboard.writeText(apiKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // HTTPS非環境や権限拒否時は何もしない
+    }
   }
 
   return (
