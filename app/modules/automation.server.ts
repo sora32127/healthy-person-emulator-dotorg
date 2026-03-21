@@ -103,10 +103,17 @@ export async function callContainer(
  * 1. Call container to generate OGP images for new posts
  * 2. For each processed post, create social_post_jobs and enqueue
  */
-export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> {
+export interface OgpAndSocialPostResult {
+  skipped: boolean;
+  reason?: string;
+  postsFound: number;
+  jobsEnqueued: number;
+}
+
+export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<OgpAndSocialPostResult> {
   if (env.ENQUEUE_ENABLED !== 'true') {
     console.log('[automation] ENQUEUE_ENABLED is not true, skipping');
-    return;
+    return { skipped: true, reason: 'ENQUEUE_ENABLED is not true', postsFound: 0, jobsEnqueued: 0 };
   }
 
   const db = drizzle(env.DB);
@@ -126,7 +133,7 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
 
   if (posts.length === 0) {
     console.log('[automation] No new posts to process');
-    return;
+    return { skipped: false, postsFound: 0, jobsEnqueued: 0 };
   }
 
   // Step 1.5: If container couldn't upload to R2, do it from Worker
@@ -149,6 +156,7 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
   }
 
   // Step 2: For each post, create jobs and enqueue
+  let jobsEnqueued = 0;
   const now = nowUTC();
   for (const post of posts) {
     for (const platform of PLATFORMS) {
@@ -183,8 +191,11 @@ export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<void> 
         og_url: post.ogp_url,
         message_type: 'new',
       });
+      jobsEnqueued++;
     }
   }
+
+  return { skipped: false, postsFound: posts.length, jobsEnqueued };
 }
 
 /**
@@ -354,8 +365,12 @@ export async function handleSocialPostConsumer(
  * Called by Cron to recover stale jobs.
  * Jobs stuck in "queued" for >10 min → reset to "pending" and re-enqueue.
  */
-export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
-  if (env.ENQUEUE_ENABLED !== 'true') return;
+export interface RecoverStaleJobsResult {
+  recovered: number;
+}
+
+export async function recoverStaleJobs(env: CloudflareEnv): Promise<RecoverStaleJobsResult> {
+  if (env.ENQUEUE_ENABLED !== 'true') return { recovered: 0 };
 
   const db = drizzle(env.DB);
 
@@ -367,6 +382,7 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
       sql`${socialPostJobs.status} = 'pending' OR (${socialPostJobs.status} = 'queued' AND ${socialPostJobs.updatedAt} < ${new Date(Date.now() - 10 * 60 * 1000).toISOString()})`,
     );
 
+  let recovered = 0;
   for (const job of jobsToRecover) {
     // If queued, reset to pending first
     if (job.status === 'queued') {
@@ -394,8 +410,11 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<void> {
         og_url: post.ogpImageUrl ?? '',
         message_type: 'new',
       });
+      recovered++;
     }
   }
+
+  return { recovered };
 }
 
 // ─── Helpers ────────────────────────────────────────────────
