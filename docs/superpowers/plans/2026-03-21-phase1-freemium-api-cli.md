@@ -261,7 +261,7 @@ git commit -m "feat: APIキー生成・検証モジュールを実装した"
 `app/modules/apiAuth.server.ts`:
 
 ```typescript
-import { findByApiKey } from './apiKey.server';
+import { findByApiKey } from '~/modules/db.server';
 import type { ApiKeyRecord } from '~/repositories/types';
 
 type ApiAuthResult =
@@ -281,7 +281,6 @@ function jsonError(message: string, status: number): Response {
  */
 export async function authenticateApiRequest(
   request: Request,
-  db: D1Database,
 ): Promise<ApiAuthResult> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -289,7 +288,7 @@ export async function authenticateApiRequest(
   }
 
   const token = authHeader.slice('Bearer '.length);
-  const record = await findByApiKey(db, token);
+  const record = await findByApiKey(token);
   if (!record) {
     return { ok: false, response: jsonError('Invalid API key', 401) };
   }
@@ -322,17 +321,16 @@ import { authenticateApiRequest } from '~/modules/apiAuth.server';
 import { getFeedPosts } from '~/modules/db.server';
 import type { FeedPostType } from '~/repositories/types';
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
-  const auth = await authenticateApiRequest(request, env.DB);
+export async function loader({ request }: LoaderFunctionArgs) {
+  const auth = await authenticateApiRequest(request);
   if (!auth.ok) return auth.response;
 
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get('pageSize')) || 10));
-  const sort = (url.searchParams.get('sort') as FeedPostType) || 'timeDesc';
+  const type = (url.searchParams.get('type') as FeedPostType) || 'timeDesc';
 
-  const data = await getFeedPosts(page, sort, pageSize);
+  const data = await getFeedPosts(page, type, pageSize);
 
   return new Response(JSON.stringify(data), {
     headers: { 'Content-Type': 'application/json' },
@@ -373,9 +371,8 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { authenticateApiRequest } from '~/modules/apiAuth.server';
 import { ArchiveDataEntry } from '~/modules/db.server';
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
-  const auth = await authenticateApiRequest(request, env.DB);
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const auth = await authenticateApiRequest(request);
   if (!auth.ok) return auth.response;
 
   const postId = Number(params.postId);
@@ -434,9 +431,8 @@ import { authenticateApiRequest } from '~/modules/apiAuth.server';
 import { searchPosts } from '~/modules/db.server';
 import type { SearchOrderBy } from '~/repositories/types';
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
-  const auth = await authenticateApiRequest(request, env.DB);
+export async function loader({ request }: LoaderFunctionArgs) {
+  const auth = await authenticateApiRequest(request);
   if (!auth.ok) return auth.response;
 
   const url = new URL(request.url);
@@ -478,9 +474,8 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { authenticateApiRequest } from '~/modules/apiAuth.server';
 import { getTagsCounts } from '~/modules/db.server';
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
-  const auth = await authenticateApiRequest(request, env.DB);
+export async function loader({ request }: LoaderFunctionArgs) {
+  const auth = await authenticateApiRequest(request);
   if (!auth.ok) return auth.response;
 
   const tags = await getTagsCounts();
@@ -500,9 +495,8 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { authenticateApiRequest } from '~/modules/apiAuth.server';
 import { searchPosts } from '~/modules/db.server';
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
-  const auth = await authenticateApiRequest(request, env.DB);
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const auth = await authenticateApiRequest(request);
   if (!auth.ok) return auth.response;
 
   const tagName = decodeURIComponent(params.tagName || '');
@@ -547,7 +541,7 @@ git commit -m "feat: GET /api/v1/tags, GET /api/v1/tags/:tagName/posts を実装
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from 'react-router';
 import { useLoaderData, Form } from 'react-router';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
-import { createApiKey, getApiKeyByUserId } from '~/modules/apiKey.server';
+import { createApiKey, getApiKeyByUserId } from '~/modules/db.server';
 import { getUserId } from '~/modules/db.server';
 import { H1 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
@@ -557,9 +551,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   if (!user) {
     return { authenticated: false, apiKey: null } as const;
   }
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
   const userId = await getUserId(user.userUuid);
-  const existing = await getApiKeyByUserId(env.DB, userId);
+  const existing = await getApiKeyByUserId(userId);
   return { authenticated: true, apiKey: existing?.apiKey ?? null } as const;
 }
 
@@ -568,9 +561,8 @@ export async function action({ request, context }: ActionFunctionArgs) {
   if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
   const userId = await getUserId(user.userUuid);
-  const record = await createApiKey(env.DB, userId);
+  const record = await createApiKey(userId);
   return { apiKey: record.apiKey };
 }
 
