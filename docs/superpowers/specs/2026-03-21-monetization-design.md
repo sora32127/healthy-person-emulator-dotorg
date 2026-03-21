@@ -60,11 +60,11 @@
 - APIキーなしのリクエストは `401 Unauthorized` で拒否
 
 **エンドポイント**:
-- `GET /api/posts` — 投稿一覧（ページネーション、ソート対応）
-- `GET /api/posts/:id` — 投稿の詳細取得
-- `GET /api/search?q=...` — 全文検索
-- `GET /api/tags` — タグ一覧
-- `GET /api/tags/:tagName/posts` — タグ別投稿一覧
+- `GET /api/v1/posts` — 投稿一覧（ページネーション、ソート対応）
+- `GET /api/v1/posts/:id` — 投稿の詳細取得
+- `GET /api/v1/search?q=...` — 全文検索
+- `GET /api/v1/tags` — タグ一覧
+- `GET /api/v1/tags/:tagName/posts` — タグ別投稿一覧
 
 **レスポンス形式**: JSON（AIが加工する前提で、human-readableである必要はない）
 
