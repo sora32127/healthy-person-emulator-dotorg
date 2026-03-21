@@ -19,7 +19,7 @@
 | ファイル | 責務 |
 |---|---|
 | `app/drizzle/schema.ts` | `dimApiKeys` テーブル定義を追加 |
-| `drizzle/XXXX_add_api_keys.sql` | D1マイグレーション |
+| `drizzle/migrations/XXXX_add_api_keys.sql` | D1マイグレーション（drizzle-kit生成） |
 | `app/modules/apiKey.server.ts` | APIキー生成・検証・レートリミット |
 | `app/routes/api.v1.posts._index.tsx` | `GET /api/v1/posts` |
 | `app/routes/api.v1.posts.$postId.tsx` | `GET /api/v1/posts/:postId` |
@@ -96,7 +96,7 @@ git commit -m "feat: APIキーテーブルのスキーマ定義を追加した"
 ## Task 2: D1マイグレーション生成・適用
 
 **Files:**
-- Create: `drizzle/XXXX_add_api_keys.sql`（drizzle-kitが生成）
+- Create: `drizzle/migrations/XXXX_add_api_keys.sql`（drizzle-kitが生成）
 
 - [ ] **Step 1: マイグレーション生成**
 
@@ -164,85 +164,72 @@ describe('generateApiKey', () => {
 Run: `pnpm test -- app/modules/apiKey.server.test.ts`
 Expected: FAIL（モジュールが存在しない）
 
-- [ ] **Step 3: APIキーモジュールを実装**
+- [ ] **Step 3: リポジトリにAPIキーCRUD関数を追加**
 
-`app/modules/apiKey.server.ts`:
+`app/repositories/d1.server.ts` の `createD1Repository` 関数内に以下を追加:
 
 ```typescript
-import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
-import * as schema from '~/drizzle/schema';
-import type { ApiKeyRecord } from '~/repositories/types';
+async createApiKey(userId: number): Promise<ApiKeyRecord> {
+  const apiKey = generateApiKey();
+  const now = new Date().toISOString();
+  await db.delete(schema.dimApiKeys).where(eq(schema.dimApiKeys.userId, userId));
+  const [row] = await db
+    .insert(schema.dimApiKeys)
+    .values({ userId, apiKey, createdAt: now })
+    .returning();
+  return { id: row.id, userId: row.userId, apiKey: row.apiKey, isPremium: row.isPremium, createdAt: row.createdAt };
+},
 
-export function generateApiKey(): string {
+async findByApiKey(apiKey: string): Promise<ApiKeyRecord | null> {
+  const rows = await db.select().from(schema.dimApiKeys).where(eq(schema.dimApiKeys.apiKey, apiKey)).limit(1);
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return { id: row.id, userId: row.userId, apiKey: row.apiKey, isPremium: row.isPremium, createdAt: row.createdAt };
+},
+
+async getApiKeyByUserId(userId: number): Promise<ApiKeyRecord | null> {
+  const rows = await db.select().from(schema.dimApiKeys).where(eq(schema.dimApiKeys.userId, userId)).limit(1);
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return { id: row.id, userId: row.userId, apiKey: row.apiKey, isPremium: row.isPremium, createdAt: row.createdAt };
+},
+```
+
+`generateApiKey` はファイル先頭にヘルパーとして追加:
+
+```typescript
+function generateApiKey(): string {
   const bytes = new Uint8Array(30);
   crypto.getRandomValues(bytes);
   const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   return `hpe_${hex}`;
 }
+```
 
-export async function createApiKey(db: D1Database, userId: number): Promise<ApiKeyRecord> {
-  const d1 = drizzle(db);
-  const apiKey = generateApiKey();
-  const now = new Date().toISOString();
+`app/repositories/types.ts` の `DatabaseRepository` interfaceに追加:
 
-  // 既存キーがあれば削除（1ユーザー1キー）
-  await d1.delete(schema.dimApiKeys).where(eq(schema.dimApiKeys.userId, userId));
+```typescript
+createApiKey(userId: number): Promise<ApiKeyRecord>;
+findByApiKey(apiKey: string): Promise<ApiKeyRecord | null>;
+getApiKeyByUserId(userId: number): Promise<ApiKeyRecord | null>;
+```
 
-  const [row] = await d1
-    .insert(schema.dimApiKeys)
-    .values({ userId, apiKey, createdAt: now })
-    .returning();
+`app/modules/db.server.ts` にre-exportを追加:
 
-  return {
-    id: row.id,
-    userId: row.userId,
-    apiKey: row.apiKey,
-    isPremium: row.isPremium,
-    createdAt: row.createdAt,
-  };
-}
+```typescript
+export const createApiKey = (...args: Parameters<DatabaseRepository['createApiKey']>) =>
+  getRepo().createApiKey(...args);
+export const findByApiKey = (...args: Parameters<DatabaseRepository['findByApiKey']>) =>
+  getRepo().findByApiKey(...args);
+export const getApiKeyByUserId = (...args: Parameters<DatabaseRepository['getApiKeyByUserId']>) =>
+  getRepo().getApiKeyByUserId(...args);
+```
 
-export async function findByApiKey(db: D1Database, apiKey: string): Promise<ApiKeyRecord | null> {
-  const d1 = drizzle(db);
-  const rows = await d1
-    .select()
-    .from(schema.dimApiKeys)
-    .where(eq(schema.dimApiKeys.apiKey, apiKey))
-    .limit(1);
+`app/modules/apiKey.server.ts` はヘルパーのみ残す:
 
-  if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id,
-    userId: row.userId,
-    apiKey: row.apiKey,
-    isPremium: row.isPremium,
-    createdAt: row.createdAt,
-  };
-}
+```typescript
+export { generateApiKey } from '~/repositories/d1.server';
 
-export async function getApiKeyByUserId(db: D1Database, userId: number): Promise<ApiKeyRecord | null> {
-  const d1 = drizzle(db);
-  const rows = await d1
-    .select()
-    .from(schema.dimApiKeys)
-    .where(eq(schema.dimApiKeys.userId, userId))
-    .limit(1);
-
-  if (rows.length === 0) return null;
-  const row = rows[0];
-  return {
-    id: row.id,
-    userId: row.userId,
-    apiKey: row.apiKey,
-    isPremium: row.isPremium,
-    createdAt: row.createdAt,
-  };
-}
-
-// レートリミット: KVやD1ではなくCloudflare Rate Limiting Rulesで実装するため、
-// ここではヘルパーのみ提供。実際の制御はwrangler.tomlまたはCloudflareダッシュボードで設定。
 const RATE_LIMITS = { free: 10, premium: 60 } as const;
 
 export function getRateLimit(isPremium: boolean): number {
