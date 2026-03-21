@@ -35,24 +35,13 @@ export default {
     if (controller.cron === '*/10 * * * *') {
       ctx.waitUntil(
         (async () => {
-          const start = Date.now();
           try {
             const { handleOgpAndSocialPost, recoverStaleJobs } =
               await import('./app/modules/automation.server');
-
-            const ogpResult = await handleOgpAndSocialPost(env);
-            const recoverResult = await recoverStaleJobs(env);
-
-            const elapsed = Date.now() - start;
-            console.log(
-              `[scheduled] cron=*/10 completed in ${elapsed}ms | ogp: posts=${ogpResult.postsFound} enqueued=${ogpResult.jobsEnqueued}${ogpResult.skipped ? ` skipped(${ogpResult.reason})` : ''} | recovery: recovered=${recoverResult.recovered}`,
-            );
+            await handleOgpAndSocialPost(env);
+            await recoverStaleJobs(env);
           } catch (err) {
-            const elapsed = Date.now() - start;
-            console.error(
-              `[scheduled] cron=*/10 FAILED after ${elapsed}ms:`,
-              err instanceof Error ? err.message : err,
-            );
+            console.error('[scheduled] OGP/social post flow failed:', err);
           }
         })(),
       );
@@ -61,16 +50,11 @@ export default {
     if (controller.cron === '0 12 * * *') {
       ctx.waitUntil(
         (async () => {
-          const start = Date.now();
           try {
             const { callContainer } = await import('./app/modules/automation.server');
             await callContainer(env, '/report-legendary', { api_key: env.INTERNAL_API_KEY });
-            console.log(`[scheduled] cron=0_12_daily completed in ${Date.now() - start}ms`);
           } catch (err) {
-            console.error(
-              `[scheduled] cron=0_12_daily FAILED after ${Date.now() - start}ms:`,
-              err instanceof Error ? err.message : err,
-            );
+            console.error('[scheduled] Legendary article report failed:', err);
           }
         })(),
       );
@@ -79,16 +63,11 @@ export default {
     if (controller.cron === '0 12 * * 1') {
       ctx.waitUntil(
         (async () => {
-          const start = Date.now();
           try {
             const { callContainer } = await import('./app/modules/automation.server');
             await callContainer(env, '/report-weekly', {});
-            console.log(`[scheduled] cron=0_12_weekly completed in ${Date.now() - start}ms`);
           } catch (err) {
-            console.error(
-              `[scheduled] cron=0_12_weekly FAILED after ${Date.now() - start}ms:`,
-              err instanceof Error ? err.message : err,
-            );
+            console.error('[scheduled] Weekly summary report failed:', err);
           }
         })(),
       );
@@ -97,18 +76,12 @@ export default {
     if (controller.cron === '0 16 * * *') {
       ctx.waitUntil(
         (async () => {
-          const start = Date.now();
           try {
             const { exportD1ToGCS } = await import('./app/modules/gcs-export.server');
             const result = await exportD1ToGCS(env);
-            console.log(
-              `[scheduled] cron=0_16_export completed in ${Date.now() - start}ms | tables=${result.tables_exported}`,
-            );
+            console.log(`[scheduled] GCS export complete: ${result.tables_exported} tables`);
           } catch (err) {
-            console.error(
-              `[scheduled] cron=0_16_export FAILED after ${Date.now() - start}ms:`,
-              err instanceof Error ? err.message : err,
-            );
+            console.error('[scheduled] GCS export failed:', err);
           }
         })(),
       );
