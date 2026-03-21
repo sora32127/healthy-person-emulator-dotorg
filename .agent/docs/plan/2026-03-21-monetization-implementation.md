@@ -1,6 +1,6 @@
 # 収益化 実装計画
 
-**Spec:** `docs/superpowers/specs/2026-03-21-monetization-design.md`
+**Spec:** `.agent/docs/plan/2026-03-21-monetization-design.md`
 
 ---
 
