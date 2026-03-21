@@ -224,25 +224,30 @@ Google検索「職場 暗黙のルール」
 
 現在、投稿は `postAuthorIpHash` で匿名化されておりユーザーIDと紐付いていない。
 
-- `dim_posts` に nullable な `userId` カラムを追加
+- `dim_posts` に nullable な `userId` カラムを追加（型は `integer` — `dim_users.userId` への外部キー参照）
+- 注: コードベース内で `now_editing_pages.userId` や `fct_post_edit_history.editor_user_id` は `text` 型だが、`dim_users.userId` は `integer` 型。新規カラムは `dim_users.userId`（integer）を参照する
 - 新規投稿: ログイン状態であれば `userId` を自動記録。匿名投稿も引き続き可能
 - 既存投稿: 紐付けなし（遡及しない）。将来的に「自分の投稿を紐付ける」機能を検討可能だが、初期スコープ外
 - 投稿の表示上は引き続き匿名（IPハッシュ表示）。`userId` はダッシュボード用の内部データとしてのみ使用
 
 ### 3. プレミアム状態管理
 
-- D1にサブスクリプション状態テーブル（userId、stripeCustomerId、stripeSubscriptionId、status、currentPeriodEnd）
+- D1にサブスクリプション状態テーブル（userId（integer）、stripeCustomerId、stripeSubscriptionId、status、currentPeriodEnd）
 - ローダー/ミドルウェアでプレミアム判定
+- **支払い失敗時の挙動**: `invoice.payment_failed` 受信後、即座にプレミアムを停止せずStripeのDunning（自動リトライ、約3週間）に委ねる。`customer.subscription.updated` で `status` が `past_due` → `canceled` に変わった時点でプレミアムを停止する。`currentPeriodEnd` までは猶予期間としてプレミアム機能を維持
 
 ### 4. AI事例検索
 
 - Vectorize + Cloudflare Workers AI（第一候補）
 - 月次利用回数カウントテーブル（D1）
+- **無料ユーザーの制限**: ログインユーザーのみ利用可能（月3回）。未ログインユーザーには利用不可（登録の導線として機能）。これによりIPベースのrate limitの複雑さを回避
+- **Stripeシークレットの保管**: Cloudflare Secrets Store を使用（コードベースの既存パターンに合わせる）
 
 ### 5. 投稿者ダッシュボード
 
 - PV集計の日次バッチ: Cron Trigger → BigQuery集計 → D1書き込み
 - D1に `post_daily_stats` テーブル（postId、date、pageviews）
+- **バッチ設計**: 前日分のPVのみを差分取得（全件フルスキャンしない）。GA4の `events_*` テーブルを前日の `_TABLE_SUFFIX` で絞り、`page_location` から `postId` を抽出してGROUP BY。結果は数百〜数千行程度でWorkers Cron Triggerの30秒CPU制限内に収まる
 - フロントエンド: モバイルファーストのグラフ表示
 
 ### 6. ライセンス管理
