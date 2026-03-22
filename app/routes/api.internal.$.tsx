@@ -6,7 +6,7 @@
  * 認証: X-API-Key ヘッダー (INTERNAL_API_KEY環境変数と照合)
  */
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router';
-import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '~/drizzle/schema';
 
@@ -97,6 +97,7 @@ async function handlePostsForOgp(db: ReturnType<typeof drizzle>) {
     })
     .from(schema.dimPosts)
     .where(and(eq(schema.dimPosts.isSnsShared, false), eq(schema.dimPosts.isWelcomed, true)))
+    .orderBy(desc(schema.dimPosts.postId))
     .limit(5);
 
   return jsonResponse({ posts });
