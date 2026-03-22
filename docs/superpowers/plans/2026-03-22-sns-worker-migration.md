@@ -108,11 +108,21 @@ export const TYPE_PREFIX: Record<string, string> = {
 };
 ```
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: env.tsにBIGQUERY_CREDENTIALSを追加**
+
+`app/types/env.ts` に追加（`GCS_CREDENTIALS`の近くに）:
+```typescript
+  // BigQuery (SA key JSON — used by report tasks)
+  BIGQUERY_CREDENTIALS: string;
+```
+
+注: `BIGQUERY_CREDENTIALS`はコンテナの環境変数として既に`resolveSecrets`で渡されているが、Worker secretとしても`wrangler secret put BIGQUERY_CREDENTIALS`で設定済みであることを確認すること。
+
+- [ ] **Step 4: Commit**
 
 ```bash
-git add app/modules/social/types.ts package.json pnpm-lock.yaml
-git commit -m "chore: oauth-1.0aを追加し、SNS共通型定義を作成した"
+git add app/modules/social/types.ts app/types/env.ts package.json pnpm-lock.yaml
+git commit -m "chore: oauth-1.0aを追加し、SNS共通型定義とBIGQUERY_CREDENTIALS型を作成した"
 ```
 
 ---
@@ -185,6 +195,21 @@ describe('postToTwitter', () => {
     expect(result.providerPostId).toBe('67890');
     expect(mockFetch).toHaveBeenCalledTimes(3);
   });
+
+  it('ogUrlが空の場合はテキストのみでツイートする', async () => {
+    // 1. ツイート作成 (v2) — メディアアップロードなし
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ data: { id: '11111' } }), { status: 201 }));
+
+    const result = await postToTwitter(creds, {
+      postTitle: 'テスト',
+      postUrl: 'https://example.com/archives/1',
+      ogUrl: '',
+      messageType: 'legendary',
+    });
+
+    expect(result.providerPostId).toBe('11111');
+    expect(mockFetch).toHaveBeenCalledTimes(1); // fetch for OGP image skipped
+  });
 });
 
 describe('deleteFromTwitter', () => {
@@ -223,6 +248,7 @@ Expected: FAIL — モジュールが存在しない
  */
 
 import OAuth from 'oauth-1.0a';
+import { createHmac } from 'node:crypto';
 import { TYPE_PREFIX } from './types';
 import type { TwitterCredentials, SocialPostResult } from './types';
 
@@ -232,22 +258,27 @@ export function createPostText(postTitle: string, postUrl: string, messageType: 
   return `[${prefix}] : ${postTitle} 健常者エミュレータ事例集\n${postUrl}`;
 }
 
-function createOAuth(creds: TwitterCredentials): OAuth {
-  // crypto.subtle.importKey is available in Workers
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+export function createOAuth(creds: TwitterCredentials): OAuth {
   return new OAuth({
     consumer: { key: creds.consumerKey, secret: creds.consumerSecret },
     signature_method: 'HMAC-SHA1',
     hash_function(baseString, key) {
-      // oauth-1.0a supports sync hash; Workers provide crypto
-      const encoder = new TextEncoder();
-      // Use Node.js crypto (available in Workers with nodejs_compat)
-      const { createHmac } = require('node:crypto');
       return createHmac('sha1', key).update(baseString).digest('base64');
     },
   });
 }
 
-function getAuthHeader(
+export function getAuthHeader(
   oauth: OAuth,
   creds: TwitterCredentials,
   request: { url: string; method: string },
@@ -261,7 +292,7 @@ async function uploadMedia(creds: TwitterCredentials, imageData: ArrayBuffer): P
   const oauth = createOAuth(creds);
 
   const formData = new FormData();
-  formData.append('media_data', btoa(String.fromCharCode(...new Uint8Array(imageData))));
+  formData.append('media_data', arrayBufferToBase64(imageData));
 
   const url = 'https://upload.twitter.com/1.1/media/upload.json';
   const authHeader = getAuthHeader(oauth, creds, { url, method: 'POST' });
@@ -281,24 +312,35 @@ async function uploadMedia(creds: TwitterCredentials, imageData: ArrayBuffer): P
   return data.media_id_string;
 }
 
+/**
+ * Create a tweet. If ogUrl is provided, uploads it as media.
+ * If ogUrl is empty/undefined, creates a text-only tweet.
+ */
 export async function postToTwitter(
   creds: TwitterCredentials,
-  params: { postTitle: string; postUrl: string; ogUrl: string; messageType: string },
+  params: { postTitle: string; postUrl: string; ogUrl?: string; messageType: string },
 ): Promise<SocialPostResult> {
   const text = createPostText(params.postTitle, params.postUrl, params.messageType);
 
-  // 1. Download OGP image
-  const imageRes = await fetch(params.ogUrl);
-  if (!imageRes.ok) throw new Error(`Failed to fetch OGP image: ${imageRes.status}`);
-  const imageData = await imageRes.arrayBuffer();
+  let mediaId: string | undefined;
+  if (params.ogUrl) {
+    // 1. Download OGP image
+    const imageRes = await fetch(params.ogUrl);
+    if (!imageRes.ok) throw new Error(`Failed to fetch OGP image: ${imageRes.status}`);
+    const imageData = await imageRes.arrayBuffer();
 
-  // 2. Upload media
-  const mediaId = await uploadMedia(creds, imageData);
+    // 2. Upload media
+    mediaId = await uploadMedia(creds, imageData);
+  }
 
   // 3. Create tweet (v2 API)
   const oauth = createOAuth(creds);
   const tweetUrl = 'https://api.x.com/2/tweets';
-  const body = JSON.stringify({ text, media: { media_ids: [mediaId] } });
+  const tweetBody: Record<string, unknown> = { text };
+  if (mediaId) {
+    tweetBody.media = { media_ids: [mediaId] };
+  }
+  const body = JSON.stringify(tweetBody);
   const authHeader = getAuthHeader(oauth, creds, { url: tweetUrl, method: 'POST' });
 
   const res = await fetch(tweetUrl, {
@@ -308,6 +350,33 @@ export async function postToTwitter(
       'Content-Type': 'application/json',
     },
     body,
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Twitter create tweet failed (${res.status}): ${errText}`);
+  }
+
+  const data = (await res.json()) as { data: { id: string } };
+  return { providerPostId: data.data.id };
+}
+
+/**
+ * Post a raw text tweet (no media, no formatting).
+ * Used by weekly summary and other custom-format tweets.
+ */
+export async function tweetRaw(creds: TwitterCredentials, text: string): Promise<SocialPostResult> {
+  const oauth = createOAuth(creds);
+  const tweetUrl = 'https://api.x.com/2/tweets';
+  const authHeader = getAuthHeader(oauth, creds, { url: tweetUrl, method: 'POST' });
+
+  const res = await fetch(tweetUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: authHeader,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
   });
 
   if (!res.ok) {
@@ -1215,8 +1284,15 @@ describe('reportLegendary', () => {
 
 import type { CloudflareEnv } from '~/types/env';
 import { queryBigQuery } from '~/modules/bigquery.server';
-import { postToTwitter } from './twitter.server';
+import { postToTwitter, tweetRaw } from './twitter.server';
 import type { TwitterCredentials } from './types';
+
+function requireBigQueryCredentials(env: CloudflareEnv): string {
+  if (!env.BIGQUERY_CREDENTIALS) {
+    throw new Error('BIGQUERY_CREDENTIALS is not configured');
+  }
+  return env.BIGQUERY_CREDENTIALS;
+}
 
 async function getTwitterCreds(env: CloudflareEnv): Promise<TwitterCredentials> {
   return {
@@ -1232,8 +1308,9 @@ async function getTwitterCreds(env: CloudflareEnv): Promise<TwitterCredentials> 
 export async function reportLegendary(
   env: CloudflareEnv,
 ): Promise<{ processed: number }> {
+  const bqCreds = requireBigQueryCredentials(env);
   const articles = await queryBigQuery(
-    env.BIGQUERY_CREDENTIALS ?? '{}',
+    bqCreds,
     'SELECT * FROM `healthy-person-emulator.HPE_REPORTS.report_new_legend_posts`',
   );
 
@@ -1261,17 +1338,16 @@ export async function reportLegendary(
     return { processed: articles.length };
   }
 
+  // Legendary tweets are text-only (no media), same as Python impl
   const creds = await getTwitterCreds(env);
   for (const article of articles) {
     const postId = article.post_id as number;
     const postTitle = article.post_title as string;
     const postUrl = `https://healthy-person-emulator.org/archives/${postId}`;
-    const text = `[殿堂入り] : ${postTitle} 健常者エミュレータ事例集 \n${postUrl}`;
 
     await postToTwitter(creds, {
       postTitle,
       postUrl,
-      ogUrl: '', // No OGP image for legendary tweets (text-only, same as Python impl)
       messageType: 'legendary',
     });
   }
@@ -1291,7 +1367,7 @@ export function createWeeklyTweetText(
     const postUrl = `https://healthy-person-emulator.org/archives/${post.post_id}`;
     text += `\n${i + 1} : ${post.post_title} \n${postUrl}\n`;
   }
-  // Last link for Twitter OG preview
+  // Duplicate first URL at end — triggers Twitter's OG card preview
   text += `\nhttps://healthy-person-emulator.org/archives/${weeklyData[0].post_id}`;
   return text;
 }
@@ -1299,8 +1375,9 @@ export function createWeeklyTweetText(
 export async function reportWeekly(
   env: CloudflareEnv,
 ): Promise<{ posted: boolean }> {
+  const bqCreds = requireBigQueryCredentials(env);
   const weeklyData = await queryBigQuery(
-    env.BIGQUERY_CREDENTIALS ?? '{}',
+    bqCreds,
     'SELECT * FROM `healthy-person-emulator.HPE_REPORTS.report_weekly_summary`',
   );
 
@@ -1316,40 +1393,9 @@ export async function reportWeekly(
     return { posted: false };
   }
 
+  // Weekly summary uses custom text format — use tweetRaw (text-only, no media)
   const creds = await getTwitterCreds(env);
-
-  // Weekly summary is text-only (no media upload)
-  // Use Twitter v2 API directly
-  const OAuth = (await import('oauth-1.0a')).default;
-  const { createHmac } = require('node:crypto');
-
-  const oauth = new OAuth({
-    consumer: { key: creds.consumerKey, secret: creds.consumerSecret },
-    signature_method: 'HMAC-SHA1',
-    hash_function(baseString: string, key: string) {
-      return createHmac('sha1', key).update(baseString).digest('base64');
-    },
-  });
-
-  const tweetUrl = 'https://api.x.com/2/tweets';
-  const token = { key: creds.accessToken, secret: creds.accessTokenSecret };
-  const authHeader = oauth.toHeader(
-    oauth.authorize({ url: tweetUrl, method: 'POST' }, token),
-  ).Authorization;
-
-  const res = await fetch(tweetUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: authHeader,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text: tweetText }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Twitter weekly tweet failed (${res.status}): ${errText}`);
-  }
+  await tweetRaw(creds, tweetText);
 
   return { posted: true };
 }
