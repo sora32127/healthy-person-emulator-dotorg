@@ -52,6 +52,8 @@ export interface CloudflareEnv {
   GCS_CREDENTIALS?: string;
   // BigQuery (SA key JSON — used by report tasks)
   BIGQUERY_CREDENTIALS: string;
+  // Healthcheck (e.g. https://hc-ping.com/xxxxx)
+  HEALTHCHECK_URL?: string;
   // Automation feature flags
   ENQUEUE_ENABLED?: string;
   SEND_ENABLED?: string;

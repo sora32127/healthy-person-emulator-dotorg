@@ -54,6 +54,15 @@ export default {
               err instanceof Error ? err.message : err,
             );
           }
+
+          // Heartbeat ping — signals "cron is alive" to external monitor
+          if (env.HEALTHCHECK_URL) {
+            try {
+              await fetch(env.HEALTHCHECK_URL, { method: 'GET' });
+            } catch {
+              // Best-effort: don't fail the cron if healthcheck ping fails
+            }
+          }
         })(),
       );
     }
