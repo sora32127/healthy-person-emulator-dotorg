@@ -117,3 +117,5 @@ new_sqlite_classes = ["AutomationContainer"]
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
 ADMIN_EMAILS = "sora32127@gmail.com"
+# Set HEALTHCHECK_URL via `wrangler secret put HEALTHCHECK_URL`
+# e.g. https://hc-ping.com/<uuid>

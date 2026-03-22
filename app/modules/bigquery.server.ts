@@ -56,6 +56,77 @@ interface BigQueryQueryResponse {
   schema?: { fields: Array<{ name: string; type: string }> };
 }
 
+export async function queryBigQuery(
+  credentialsJson: string,
+  query: string,
+): Promise<Record<string, unknown>[]> {
+  const creds = JSON.parse(credentialsJson) as {
+    client_email: string;
+    private_key: string;
+    private_key_id: string;
+    project_id: string;
+  };
+
+  const privateKey = await importPKCS8(creds.private_key, 'RS256');
+
+  const jwt = await new SignJWT({
+    scope: 'https://www.googleapis.com/auth/bigquery.readonly',
+  })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid: creds.private_key_id })
+    .setIssuer(creds.client_email)
+    .setSubject(creds.client_email)
+    .setAudience('https://oauth2.googleapis.com/token')
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(privateKey);
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+  });
+
+  if (!tokenRes.ok) {
+    const text = await tokenRes.text();
+    throw new Error(`BigQuery OAuth2 token failed (${tokenRes.status}): ${text}`);
+  }
+
+  const tokenData = (await tokenRes.json()) as { access_token: string };
+
+  const res = await fetch(
+    `https://bigquery.googleapis.com/bigquery/v2/projects/${creds.project_id}/queries`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, useLegacySql: false }),
+    },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`BigQuery query failed (${res.status}): ${text}`);
+  }
+
+  const data = (await res.json()) as {
+    schema: { fields: Array<{ name: string }> };
+    rows?: Array<{ f: Array<{ v: unknown }> }>;
+  };
+
+  if (!data.rows) return [];
+
+  const fieldNames = data.schema.fields.map((f) => f.name);
+  return data.rows.map((row) => {
+    const obj: Record<string, unknown> = {};
+    row.f.forEach((cell, i) => {
+      obj[fieldNames[i]] = cell.v;
+    });
+    return obj;
+  });
+}
+
 export async function fetchPostPVMap(
   env: CloudflareEnv,
   postIds: number[],

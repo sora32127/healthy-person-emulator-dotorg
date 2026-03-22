@@ -89,7 +89,6 @@ async function handleUpdateSocialIds(db: ReturnType<typeof drizzle>, body: any) 
 
 // GET /api/internal/posts-for-ogp
 async function handlePostsForOgp(db: ReturnType<typeof drizzle>) {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const posts = await db
     .select({
       postId: schema.dimPosts.postId,
@@ -97,13 +96,8 @@ async function handlePostsForOgp(db: ReturnType<typeof drizzle>) {
       postContent: schema.dimPosts.postContent,
     })
     .from(schema.dimPosts)
-    .where(
-      and(
-        gte(schema.dimPosts.postDateGmt, oneDayAgo),
-        eq(schema.dimPosts.isSnsShared, false),
-        eq(schema.dimPosts.isWelcomed, true),
-      ),
-    );
+    .where(and(eq(schema.dimPosts.isSnsShared, false), eq(schema.dimPosts.isWelcomed, true)))
+    .limit(5);
 
   return jsonResponse({ posts });
 }
