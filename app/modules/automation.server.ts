@@ -10,8 +10,9 @@ import { nowUTC } from '../drizzle/utils';
 import type { CloudflareEnv } from '../types/env';
 import { getContainer } from '@cloudflare/containers';
 
-const PLATFORMS = ['twitter', 'bluesky', 'activitypub'] as const;
-type Platform = (typeof PLATFORMS)[number];
+import { postToSocial } from './social/post.server';
+import { PLATFORMS } from './social/types';
+import type { Platform } from './social/types';
 
 interface QueueMessage {
   type: 'social_post';
@@ -291,21 +292,15 @@ export async function handleSocialPostConsumer(
 
   // Call container to post
   try {
-    const result = await callContainer(env, '/post-social', {
-      platform: payload.platform,
-      post_title: payload.post_title,
-      post_url: payload.post_url,
-      og_url: payload.og_url,
-      message_type: payload.message_type,
-      post_id: payload.post_id,
+    const result = await postToSocial(env, {
+      platform: payload.platform as Platform,
+      postTitle: payload.post_title,
+      postUrl: payload.post_url,
+      ogUrl: payload.og_url,
+      messageType: payload.message_type as 'new' | 'legendary' | 'random',
     });
 
-    // Extract provider post ID
-    const providerPostId =
-      (result.tweet_id as string) ??
-      (result.bluesky_post_uri as string) ??
-      (result.misskey_note_id as string) ??
-      null;
+    const providerPostId = result.providerPostId;
 
     // Mark as sent
     await db
