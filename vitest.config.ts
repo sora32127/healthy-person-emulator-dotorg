@@ -1,16 +1,14 @@
 import { defineConfig } from 'vite-plus';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '~': path.resolve(__dirname, './app'),
+    },
+  },
   test: {
-    exclude: [
-      'tests',
-      'node_modules',
-      'app/tests',
-      '.agent/**',
-      '.codex/**',
-      '.claude/**',
-      'e2e/**',
-    ],
+    exclude: ['node_modules', 'app/tests', '.agent/**', '.codex/**', '.claude/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json'],
