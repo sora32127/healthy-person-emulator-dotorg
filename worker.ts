@@ -63,9 +63,11 @@ export default {
         (async () => {
           const start = Date.now();
           try {
-            const { callContainer } = await import('./app/modules/automation.server');
-            await callContainer(env, '/report-legendary', { api_key: env.INTERNAL_API_KEY });
-            console.log(`[scheduled] cron=0_12_daily completed in ${Date.now() - start}ms`);
+            const { reportLegendary } = await import('./app/modules/social/report.server');
+            const result = await reportLegendary(env);
+            console.log(
+              `[scheduled] cron=0_12_daily completed in ${Date.now() - start}ms | processed=${result.processed}`,
+            );
           } catch (err) {
             console.error(
               `[scheduled] cron=0_12_daily FAILED after ${Date.now() - start}ms:`,
@@ -81,9 +83,11 @@ export default {
         (async () => {
           const start = Date.now();
           try {
-            const { callContainer } = await import('./app/modules/automation.server');
-            await callContainer(env, '/report-weekly', {});
-            console.log(`[scheduled] cron=0_12_weekly completed in ${Date.now() - start}ms`);
+            const { reportWeekly } = await import('./app/modules/social/report.server');
+            const result = await reportWeekly(env);
+            console.log(
+              `[scheduled] cron=0_12_weekly completed in ${Date.now() - start}ms | posted=${result.posted}`,
+            );
           } catch (err) {
             console.error(
               `[scheduled] cron=0_12_weekly FAILED after ${Date.now() - start}ms:`,
