@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { dimPosts, dimDeletedPosts, socialPostJobs } from '../drizzle/schema';
 import { nowUTC } from '../drizzle/utils';
 import { deleteVectors } from './cloudflare.server';
-import { callContainer } from './automation.server';
+import { deleteFromSocial } from './social/delete.server';
 import type { CloudflareEnv } from '../types/env';
 
 const PLATFORM_COLUMN_MAP = {
@@ -77,9 +77,9 @@ export async function deletePost(
 
   for (const entry of snsEntries) {
     try {
-      await callContainer(env, '/delete-social', {
+      await deleteFromSocial(env, {
         platform: entry.platform,
-        provider_post_id: entry.providerPostId,
+        providerPostId: entry.providerPostId,
       });
     } catch (err) {
       console.error(`[admin-delete] SNS削除失敗 (${entry.platform}, postId=${postId}):`, err);
