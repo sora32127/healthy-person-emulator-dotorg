@@ -239,6 +239,22 @@ def transform_url_impressions(rows: list[dict], target_date: date) -> list[dict]
     return result
 
 
+def get_bq_client():
+    """ADC を使って BigQuery クライアントを構築する."""
+    from google.cloud import bigquery
+    return bigquery.Client(project=PROJECT_ID)
+
+
+def load_to_bigquery(client, table_id: str, rows: list[dict]):
+    """行データを BigQuery テーブルに挿入する."""
+    if not rows:
+        return
+    full_table_id = f"{PROJECT_ID}.{DATASET_ID}.{table_id}"
+    errors = client.insert_rows_json(full_table_id, rows)
+    if errors:
+        raise RuntimeError(f"BigQuery insert errors for {full_table_id}: {errors}")
+
+
 def main():
     args = parse_args()
     print(f"期間: {args.start_date} 〜 {args.end_date}")
@@ -251,10 +267,34 @@ def main():
     service = build_search_console_service()
     print("Search Console API クライアント初期化完了")
 
+    bq_client = None
+    if not args.dry_run:
+        bq_client = get_bq_client()
+        print("BigQuery クライアント初期化完了")
+
+    total_site = 0
+    total_url = 0
+
     for i, d in enumerate(date_range(args.start_date, args.end_date), 1):
         site_rows = fetch_site_impressions(service, d)
         url_rows = fetch_url_impressions(service, d)
-        print(f"[{i}/{total_days}] {d}: site={len(site_rows)}行, url={len(url_rows)}行")
+
+        site_records = transform_site_impressions(site_rows, d)
+        url_records = transform_url_impressions(url_rows, d)
+
+        if not args.dry_run:
+            load_to_bigquery(bq_client, "searchdata_site_impression", site_records)
+            load_to_bigquery(bq_client, "searchdata_url_impression", url_records)
+
+        total_site += len(site_records)
+        total_url += len(url_records)
+        status = "[DRY RUN] " if args.dry_run else ""
+        print(
+            f"{status}[{i}/{total_days}] {d}: "
+            f"site={len(site_records)}行, url={len(url_records)}行"
+        )
+
+    print(f"\n完了: site_impression={total_site}行, url_impression={total_url}行")
 
 
 if __name__ == "__main__":
