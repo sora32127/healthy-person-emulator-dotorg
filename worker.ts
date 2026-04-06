@@ -32,7 +32,7 @@ export default {
   async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext) {
     console.log(`[scheduled] cron=${controller.cron} at ${new Date().toISOString()}`);
 
-    if (controller.cron === '*/10 * * * *') {
+    if (controller.cron === '*/30 * * * *') {
       ctx.waitUntil(
         (async () => {
           const start = Date.now();

@@ -13,7 +13,7 @@ module "prd" {
   hostname    = var.domain
 
   cron_schedules = [
-    { cron = "*/10 * * * *" }, # OGP生成 + ソーシャル投稿
+    { cron = "*/30 * * * *" }, # OGP生成 + ソーシャル投稿
     { cron = "0 12 * * *" },   # 殿堂入り記事レポート
     { cron = "0 12 * * 1" },   # 週間サマリーレポート
     { cron = "0 16 * * *" },   # BigQuery ETLエクスポート
