@@ -9,7 +9,7 @@ enabled = true
 
 # --- Cron Triggers ---
 [triggers]
-crons = ["*/10 * * * *", "0 12 * * *", "0 12 * * 1", "0 16 * * *"]
+crons = ["*/30 * * * *", "0 12 * * *", "0 12 * * 1", "0 16 * * *"]
 
 # --- Database ---
 [[d1_databases]]
@@ -104,7 +104,7 @@ secret_name = "AUTOMATION_DRY_RUN"
 class_name = "AutomationContainer"
 image = "./container/Dockerfile"
 max_instances = 2
-instance_type = "standard-1"
+instance_type = "basic"
 
 [[durable_objects.bindings]]
 name = "AUTOMATION_CONTAINER"

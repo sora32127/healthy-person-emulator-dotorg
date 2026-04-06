@@ -3,7 +3,7 @@ import type { CloudflareEnv } from './app/types/env';
 
 export class AutomationContainer extends Container<CloudflareEnv> {
   defaultPort = 8080;
-  sleepAfter = '5m';
+  sleepAfter = '1m';
 
   override onStart(): void {
     console.log('[AutomationContainer] Container started');
