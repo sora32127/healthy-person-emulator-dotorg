@@ -34,10 +34,22 @@ function renderDesktopHeader() {
     <>
       <div
         className={`fixed top-0 left-0 h-screen bg-base-100 border-r border-base-200 overflow-y-auto flex flex-col transition-all duration-300 z-50
-          w-16 hover:w-64 2xl:w-64 group py-32`}
+          w-16 hover:w-64 2xl:w-64 group pt-6 pb-32`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
+        <NavLink
+          to="/?referrer=fromHeader"
+          className="px-4 py-4 flex items-center justify-center 2xl:justify-start border-b border-base-200"
+          aria-label="健常者エミュレータ事例集 トップへ"
+        >
+          <img src="/logo-mark.svg" alt="" className="h-8 w-auto group-hover:hidden 2xl:hidden" />
+          <img
+            src="/logo-type.svg"
+            alt="健常者エミュレータ事例集"
+            className="h-4 w-auto hidden group-hover:block 2xl:block"
+          />
+        </NavLink>
         <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
             <ul className="flex flex-col gap-2">
@@ -286,7 +298,6 @@ export default function Component() {
       <main
         className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}
       >
-        <h1 className="sr-only hidden md:block">健常者エミュレータ事例集</h1>
         <div className="md:mx-10 lg:mx-20 xl:mx-32 2xl:mx-96">
           <Outlet />
         </div>
