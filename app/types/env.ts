@@ -1,13 +1,9 @@
-import type { Container } from '@cloudflare/containers';
-
 export interface CloudflareEnv {
   // Bindings
   DB: D1Database;
   STATIC_BUCKET: R2Bucket;
   AI: Ai;
   VECTORIZE: VectorizeIndex;
-  // Container (Durable Object)
-  AUTOMATION_CONTAINER: DurableObjectNamespace<Container<CloudflareEnv>>;
   // Queues
   SOCIAL_POST_QUEUE: Queue;
   // Secrets (set via wrangler secret put)
@@ -33,9 +29,6 @@ export interface CloudflareEnv {
   BLUESKY_USER?: string;
   BLUESKY_PASSWORD?: string;
   MISSKEY_TOKEN?: string;
-  R2_ENDPOINT?: string;
-  R2_ACCESS_KEY_ID?: string;
-  R2_SECRET_ACCESS_KEY?: string;
   // Secrets Store bindings (async .get())
   SS_TWITTER_CK: { get(): Promise<string> };
   SS_TWITTER_CS: { get(): Promise<string> };
@@ -44,9 +37,6 @@ export interface CloudflareEnv {
   SS_BLUESKY_USER: { get(): Promise<string> };
   SS_BLUESKY_PASSWORD: { get(): Promise<string> };
   SS_MISSKEY_TOKEN: { get(): Promise<string> };
-  SS_R2_ENDPOINT: { get(): Promise<string> };
-  SS_R2_ACCESS_KEY_ID: { get(): Promise<string> };
-  SS_R2_SECRET_ACCESS_KEY: { get(): Promise<string> };
   SS_AUTOMATION_DRY_RUN: { get(): Promise<string> };
   // GCS export (D1 → GCS Parquet) — SA key JSON stored as Worker Secret
   GCS_CREDENTIALS?: string;

@@ -4,15 +4,15 @@
  */
 
 import { drizzle } from 'drizzle-orm/d1';
-import { eq, and, sql, lt } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { socialPostJobs, dimPosts } from '../drizzle/schema';
 import { nowUTC } from '../drizzle/utils';
 import type { CloudflareEnv } from '../types/env';
-import { getContainer } from '@cloudflare/containers';
 
 import { postToSocial } from './social/post.server';
 import { PLATFORMS } from './social/types';
 import type { Platform } from './social/types';
+import { PROGRAM_TEST_PATTERN, ensureResvgWasm, generateOgpPng, parseTable } from './ogp.server';
 
 interface QueueMessage {
   type: 'social_post';
@@ -28,80 +28,18 @@ interface QueueMessage {
   };
 }
 
-// ─── Container helpers ───────────────────────────────────────
-
-async function resolveSecrets(env: CloudflareEnv): Promise<Record<string, string>> {
-  const [
-    twitterCk,
-    twitterCs,
-    twitterAt,
-    twitterAts,
-    blueskyUser,
-    blueskyPassword,
-    misskeyToken,
-    r2Endpoint,
-    r2AccessKeyId,
-    r2SecretAccessKey,
-    dryRun,
-  ] = await Promise.all([
-    env.SS_TWITTER_CK.get(),
-    env.SS_TWITTER_CS.get(),
-    env.SS_TWITTER_AT.get(),
-    env.SS_TWITTER_ATS.get(),
-    env.SS_BLUESKY_USER.get(),
-    env.SS_BLUESKY_PASSWORD.get(),
-    env.SS_MISSKEY_TOKEN.get(),
-    env.SS_R2_ENDPOINT.get(),
-    env.SS_R2_ACCESS_KEY_ID.get(),
-    env.SS_R2_SECRET_ACCESS_KEY.get(),
-    env.SS_AUTOMATION_DRY_RUN.get(),
-  ]);
-  return {
-    TWITTER_CK: twitterCk,
-    TWITTER_CS: twitterCs,
-    TWITTER_AT: twitterAt,
-    TWITTER_ATS: twitterAts,
-    BLUESKY_USER: blueskyUser,
-    BLUESKY_PASSWORD: blueskyPassword,
-    MISSKEY_TOKEN: misskeyToken,
-    R2_ENDPOINT: r2Endpoint,
-    R2_ACCESS_KEY_ID: r2AccessKeyId,
-    R2_SECRET_ACCESS_KEY: r2SecretAccessKey,
-    AUTOMATION_DRY_RUN: dryRun,
-    BIGQUERY_CREDENTIALS: env.BIGQUERY_CREDENTIALS ?? '',
-  };
-}
-
-export async function callContainer(
-  env: CloudflareEnv,
-  path: string,
-  body: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const container = getContainer(env.AUTOMATION_CONTAINER);
-
-  // Pass secrets via startAndWaitForPorts
-  const envVars = await resolveSecrets(env);
-  await container.startAndWaitForPorts({ startOptions: { envVars } });
-
-  const res = await container.fetch(
-    new Request(`http://container${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-  );
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Container ${path} returned ${res.status}: ${text}`);
-  }
-  return (await res.json()) as Record<string, unknown>;
-}
-
 // ─── OGP + Social Post flow ─────────────────────────────────
 
+interface ProcessedPost {
+  post_id: number;
+  post_title: string;
+  post_url: string;
+  ogp_url: string;
+}
+
 /**
- * Called by Cron every 10 minutes.
- * 1. Call container to generate OGP images for new posts
+ * Called by Cron every 30 minutes.
+ * 1. Generate OGP images for new posts in-Worker (SVG → resvg-wasm → PNG → R2)
  * 2. For each processed post, create social_post_jobs and enqueue
  */
 export interface OgpAndSocialPostResult {
@@ -111,52 +49,72 @@ export interface OgpAndSocialPostResult {
   jobsEnqueued: number;
 }
 
-export async function handleOgpAndSocialPost(env: CloudflareEnv): Promise<OgpAndSocialPostResult> {
+export interface OgpDeps {
+  fontBytes: Uint8Array;
+  resvgWasm: WebAssembly.Module;
+}
+
+export async function handleOgpAndSocialPost(
+  env: CloudflareEnv,
+  deps: OgpDeps,
+): Promise<OgpAndSocialPostResult> {
   if (env.ENQUEUE_ENABLED !== 'true') {
     console.log('[automation] ENQUEUE_ENABLED is not true, skipping');
     return { skipped: true, reason: 'ENQUEUE_ENABLED is not true', postsFound: 0, jobsEnqueued: 0 };
   }
 
   const db = drizzle(env.DB);
+  await ensureResvgWasm(deps.resvgWasm);
 
-  // Step 1: Call container to generate OGP
-  const ogpResult = await callContainer(env, '/create-ogp', {
-    api_key: env.INTERNAL_API_KEY,
-  });
+  // Step 1: Pull candidate posts (5W1H+Then content waiting for SNS share)
+  const candidates = await db
+    .select({
+      postId: dimPosts.postId,
+      postTitle: dimPosts.postTitle,
+      postContent: dimPosts.postContent,
+    })
+    .from(dimPosts)
+    .where(and(eq(dimPosts.isSnsShared, false), eq(dimPosts.isWelcomed, true)))
+    .orderBy(desc(dimPosts.postId))
+    .limit(5);
 
-  const posts = (ogpResult.posts ?? []) as Array<{
-    post_id: number;
-    post_title: string;
-    ogp_url: string;
-    image_b64?: string;
-    post_url: string;
-  }>;
-
-  if (posts.length === 0) {
-    console.log('[automation] No new posts to process');
-    return { skipped: false, postsFound: 0, jobsEnqueued: 0 };
-  }
-
-  // Step 1.5: If container couldn't upload to R2, do it from Worker
-  for (const post of posts) {
-    if (!post.ogp_url && post.image_b64) {
-      const key = `ogp/${post.post_id}.jpg`;
-      const imageBytes = Uint8Array.from(atob(post.image_b64), (c) => c.charCodeAt(0));
-      await env.STATIC_BUCKET.put(key, imageBytes, {
-        httpMetadata: { contentType: 'image/jpeg' },
+  // Step 2: Generate OGP per post, upload to R2, update ogpImageUrl in D1
+  const posts: ProcessedPost[] = [];
+  for (const c of candidates) {
+    if (PROGRAM_TEST_PATTERN.test(c.postTitle)) {
+      console.log(`[automation] Skipping test post: ${c.postId}`);
+      continue;
+    }
+    try {
+      const table = parseTable(c.postContent);
+      if (Object.keys(table).length === 0) {
+        console.warn(`[automation] post ${c.postId}: no parseable table, skipping`);
+        continue;
+      }
+      const png = generateOgpPng({ table, fontBytes: deps.fontBytes });
+      const key = `ogp/${c.postId}.png`;
+      await env.STATIC_BUCKET.put(key, png, {
+        httpMetadata: { contentType: 'image/png' },
       });
-      post.ogp_url = `https://static.healthy-person-emulator.org/${key}`;
-
-      // Update D1
-      await env.DB.prepare(`UPDATE dim_posts SET ogp_image_url = ? WHERE post_id = ?`)
-        .bind(post.ogp_url, post.post_id)
-        .run();
-
-      console.log(`[automation] Worker uploaded OGP to R2: ${key}`);
+      const ogpUrl = `https://static.healthy-person-emulator.org/${key}`;
+      await db.update(dimPosts).set({ ogpImageUrl: ogpUrl }).where(eq(dimPosts.postId, c.postId));
+      posts.push({
+        post_id: c.postId,
+        post_title: c.postTitle,
+        post_url: `https://healthy-person-emulator.org/archives/${c.postId}`,
+        ogp_url: ogpUrl,
+      });
+      console.log(`[automation] OGP generated for post ${c.postId}`);
+    } catch (err) {
+      console.error(`[automation] OGP failed for post ${c.postId}:`, err);
     }
   }
 
-  // Step 2: For each post, create jobs and enqueue
+  if (posts.length === 0) {
+    return { skipped: false, postsFound: 0, jobsEnqueued: 0 };
+  }
+
+  // Step 3: For each post, create jobs and enqueue
   let jobsEnqueued = 0;
   const now = nowUTC();
   for (const post of posts) {
