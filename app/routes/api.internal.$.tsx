@@ -6,7 +6,7 @@
  * 認証: X-API-Key ヘッダー (INTERNAL_API_KEY環境変数と照合)
  */
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router';
-import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '~/drizzle/schema';
 
@@ -87,35 +87,6 @@ async function handleUpdateSocialIds(db: ReturnType<typeof drizzle>, body: any) 
   return jsonResponse({ success: true });
 }
 
-// GET /api/internal/posts-for-ogp
-async function handlePostsForOgp(db: ReturnType<typeof drizzle>) {
-  const posts = await db
-    .select({
-      postId: schema.dimPosts.postId,
-      postTitle: schema.dimPosts.postTitle,
-      postContent: schema.dimPosts.postContent,
-    })
-    .from(schema.dimPosts)
-    .where(and(eq(schema.dimPosts.isSnsShared, false), eq(schema.dimPosts.isWelcomed, true)))
-    .orderBy(desc(schema.dimPosts.postId))
-    .limit(5);
-
-  return jsonResponse({ posts });
-}
-
-// POST /api/internal/update-ogp
-async function handleUpdateOgp(db: ReturnType<typeof drizzle>, body: any) {
-  const { postId, ogpImageUrl } = body;
-  if (!postId) return jsonResponse({ error: 'postId required' }, 400);
-
-  const updateData: Record<string, any> = { isSnsShared: true };
-  if (ogpImageUrl !== undefined) updateData.ogpImageUrl = ogpImageUrl;
-
-  await db.update(schema.dimPosts).set(updateData).where(eq(schema.dimPosts.postId, postId));
-
-  return jsonResponse({ success: true });
-}
-
 // POST /api/internal/add-tag-to-post
 async function handleAddTagToPost(db: ReturnType<typeof drizzle>, body: any) {
   const { postId, tagId } = body;
@@ -135,8 +106,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   switch (path) {
     case 'posts-for-pickup':
       return handlePostsForPickup(db);
-    case 'posts-for-ogp':
-      return handlePostsForOgp(db);
     default:
       return jsonResponse({ error: 'Not found' }, 404);
   }
@@ -156,8 +125,6 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
       return handleUpdateSocialIds(db, body);
     case 'add-tag-to-post':
       return handleAddTagToPost(db, body);
-    case 'update-ogp':
-      return handleUpdateOgp(db, body);
     default:
       return jsonResponse({ error: 'Not found' }, 404);
   }
