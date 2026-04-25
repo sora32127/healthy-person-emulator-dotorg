@@ -4,6 +4,8 @@ import PostIcon from '~/components/icons/PostIcon';
 import SearchIcon from '~/components/icons/SearchIcon';
 import LogoutIcon from '~/components/icons/LogoutIcon';
 import MenuIcon from '~/components/icons/MenuIcon';
+import LogoMark from '~/components/icons/LogoMark';
+import LogoType from '~/components/icons/LogoType';
 import ThemeSwitcher from '~/components/ThemeSwitcher';
 import { Footer } from '~/components/Footer';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -43,12 +45,8 @@ function renderDesktopHeader() {
           className="px-4 py-4 flex items-center justify-center 2xl:justify-start border-b border-base-200"
           aria-label="健常者エミュレータ事例集 トップへ"
         >
-          <img src="/logo-mark.svg" alt="" className="h-8 w-auto group-hover:hidden 2xl:hidden" />
-          <img
-            src="/logo-type.svg"
-            alt="健常者エミュレータ事例集"
-            className="h-4 w-auto hidden group-hover:block 2xl:block"
-          />
+          <LogoMark className="h-8 w-auto text-base-content group-hover:hidden 2xl:hidden" />
+          <LogoType className="h-4 w-auto text-base-content hidden group-hover:block 2xl:block" />
         </NavLink>
         <div className="p-4 flex-grow overflow-y-auto overflow-x-hidden">
           <nav>
@@ -118,7 +116,7 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
       <div>
         <h1>
           <NavLink to="/?referrer=fromHeader" aria-label="健常者エミュレータ事例集 トップへ">
-            <img src="/logo-type.svg" alt="健常者エミュレータ事例集" className="h-6 w-auto" />
+            <LogoType className="h-6 w-auto text-base-content" />
           </NavLink>
         </h1>
       </div>
