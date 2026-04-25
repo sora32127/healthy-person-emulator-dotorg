@@ -19,6 +19,7 @@
     "@cloudflare/containers": "^0.1.1",
     "@hookform/resolvers": "^5.2.2",
     "@marsidev/react-turnstile": "^1.4.2",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@tailwindcss/vite": "^4.2.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
