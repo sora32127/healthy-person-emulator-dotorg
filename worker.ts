@@ -6,8 +6,13 @@ import type { ServerBuild } from 'react-router';
 // @ts-ignore - this is the built server output
 import * as serverBuild from './build/server/index.js';
 
-// Re-export the Container class so wrangler can find it
-export { AutomationContainer } from './container-worker';
+// OGP rendering assets — bundled via wrangler [[rules]] (Data / CompiledWasm)
+// Imported in worker.ts (the wrangler entrypoint) so wrangler bundle resolves
+// them directly, rather than going through the React Router build pipeline.
+// @ts-expect-error  Data rule emits an ArrayBuffer
+import notoSansJpFont from './app/assets/NotoSansJP-Medium.ttf';
+// @ts-expect-error  CompiledWasm rule emits a WebAssembly.Module
+import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 
 const requestHandler = createRequestHandler(serverBuild as unknown as ServerBuild);
 
@@ -40,7 +45,10 @@ export default {
             const { handleOgpAndSocialPost, recoverStaleJobs } =
               await import('./app/modules/automation.server');
 
-            const ogpResult = await handleOgpAndSocialPost(env);
+            const ogpResult = await handleOgpAndSocialPost(env, {
+              fontBytes: new Uint8Array(notoSansJpFont as ArrayBuffer),
+              resvgWasm: resvgWasm as WebAssembly.Module,
+            });
             const recoverResult = await recoverStaleJobs(env);
 
             const elapsed = Date.now() - start;

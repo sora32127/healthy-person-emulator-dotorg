@@ -78,41 +78,31 @@ store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "MISSKEY_TOKEN"
 
 [[secrets_store_secrets]]
-binding = "SS_R2_ENDPOINT"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_ENDPOINT"
-
-[[secrets_store_secrets]]
-binding = "SS_R2_ACCESS_KEY_ID"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_ACCESS_KEY_ID"
-
-[[secrets_store_secrets]]
-binding = "SS_R2_SECRET_ACCESS_KEY"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_SECRET_ACCESS_KEY"
-
-[[secrets_store_secrets]]
 binding = "SS_AUTOMATION_DRY_RUN"
 store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "AUTOMATION_DRY_RUN"
 
 # GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
 
-# --- Container ---
-[[containers]]
-class_name = "AutomationContainer"
-image = "./container/Dockerfile"
-max_instances = 2
-instance_type = "basic"
-
-[[durable_objects.bindings]]
-name = "AUTOMATION_CONTAINER"
-class_name = "AutomationContainer"
-
+# --- Migrations: AutomationContainer は v3 で削除済み（OGP生成は Worker 内 SVG 生成に移行） ---
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["AutomationContainer"]
+
+[[migrations]]
+tag = "v3"
+deleted_classes = ["AutomationContainer"]
+
+# --- Module rules: resvg-wasm と NotoSansJP TTF を Worker バンドルに含める ---
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
