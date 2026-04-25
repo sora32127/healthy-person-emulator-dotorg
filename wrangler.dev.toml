@@ -79,37 +79,22 @@ store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "MISSKEY_TOKEN"
 
 [[secrets_store_secrets]]
-binding = "SS_R2_ENDPOINT"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_ENDPOINT"
-
-[[secrets_store_secrets]]
-binding = "SS_R2_ACCESS_KEY_ID"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_ACCESS_KEY_ID"
-
-[[secrets_store_secrets]]
-binding = "SS_R2_SECRET_ACCESS_KEY"
-store_id = "52f3d1be601046039169fad4f66570d1"
-secret_name = "R2_SECRET_ACCESS_KEY"
-
-[[secrets_store_secrets]]
 binding = "SS_AUTOMATION_DRY_RUN"
 store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "AUTOMATION_DRY_RUN"
 
 # GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
 
-# Container / Durable Objects はdev環境では不要（Docker buildが走るため）
-# deploy時は wrangler.toml を使用する
+# --- Module rules: resvg-wasm と NotoSansJP TTF を Worker バンドルに含める ---
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = true
 
-[[durable_objects.bindings]]
-name = "AUTOMATION_CONTAINER"
-class_name = "AutomationContainer"
-
-[[migrations]]
-tag = "v2"
-new_sqlite_classes = ["AutomationContainer"]
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
