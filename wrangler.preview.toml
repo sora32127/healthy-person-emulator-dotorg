@@ -84,6 +84,16 @@ secret_name = "AUTOMATION_DRY_RUN"
 
 # GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
 
+# --- Migrations: AutomationContainer は preview 環境にも DO 実体があったため、
+# 本番と同じく v3 で deleted_classes を実行して削除する ---
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AutomationContainer"]
+
+[[migrations]]
+tag = "v3"
+deleted_classes = ["AutomationContainer"]
+
 # --- Module rules: resvg-wasm と NotoSansJP TTF を Worker バンドルに含める ---
 [[rules]]
 type = "CompiledWasm"
