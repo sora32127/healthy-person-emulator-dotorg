@@ -18,6 +18,9 @@ import { FaSpinner } from 'react-icons/fa';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
+  { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+  { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+  { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   {
     rel: 'preload',
     href: '/fonts/NotoSansJP-Medium.ttf',
