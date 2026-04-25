@@ -104,12 +104,9 @@ function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
   return (
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
       <div>
-        <h1 className="text-xl font-bold">
-          <NavLink
-            to="/?referrer=fromHeader"
-            className="text-[clamp(0.875rem,3vw,1.25rem)] whitespace-nowrap"
-          >
-            健常者エミュレータ事例集
+        <h1>
+          <NavLink to="/?referrer=fromHeader" aria-label="健常者エミュレータ事例集 トップへ">
+            <img src="/logo-type.svg" alt="健常者エミュレータ事例集" className="h-6 w-auto" />
           </NavLink>
         </h1>
       </div>
