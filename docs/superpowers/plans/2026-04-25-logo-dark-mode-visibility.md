@@ -79,7 +79,7 @@ public/logo-mark.svg と等価な React コンポーネントを新設。"
 **Files:**
 - Create: `app/components/icons/LogoType.tsx`
 
-`public/logo-type.svg` には 12 個の `<path>` 要素がある。これらをすべて React コンポーネントに転記する。各 `<path>` について以下の変換を行う：
+`public/logo-type.svg` には 13 個の `<path>` 要素がある。これらをすべて React コンポーネントに転記する。各 `<path>` について以下の変換を行う：
 
 - `fill-rule` → `fillRule`
 - `clip-rule` → `clipRule`
@@ -108,9 +108,9 @@ export default function LogoType({ className }: Props) {
 }
 ```
 
-- [ ] **Step 2: 12 個の path 要素を転記**
+- [ ] **Step 2: 13 個の path 要素を転記**
 
-`public/logo-type.svg` を開き、ファイル内の 12 個の `<path>` 要素を順番にそのまま `<svg>` の中身として貼り付ける。貼り付け後、各 `<path>` について次の置換を行う：
+`public/logo-type.svg` を開き、ファイル内の 13 個の `<path>` 要素を順番にそのまま `<svg>` の中身として貼り付ける。貼り付け後、各 `<path>` について次の置換を行う：
 
 1. ` fill="#1B1718"` を削除
 2. `fill-rule="evenodd"` を `fillRule="evenodd"` に変更（該当する path のみ。最後の path に存在）

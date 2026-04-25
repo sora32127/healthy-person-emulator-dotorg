@@ -52,7 +52,7 @@ export default function LogoMark({ className }: Props) {
 
 #### `app/components/icons/LogoType.tsx`
 
-`viewBox="0 0 1887 163"`、12 個の `<path>` 要素を持つ同構造のコンポーネント。各 path の `d` は `public/logo-type.svg` から転記する。
+`viewBox="0 0 1887 163"`、13 個の `<path>` 要素を持つ同構造のコンポーネント。各 path の `d` は `public/logo-type.svg` から転記する。
 
 ### API
 
