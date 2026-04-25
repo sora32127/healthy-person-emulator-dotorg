@@ -1,0 +1,53 @@
+# Infisical 接続検証 (手動実行のみ)
+#
+# このワークフローは Infisical/secrets-action が GitHub Secrets に
+# 設定された Machine Identity 認証情報で Infisical に接続し、dev 環境の
+# シークレット名を取得できることを確認する。値そのものは出力しない。
+#
+# 既存 CI には影響しない (workflow_dispatch のみ)。
+# 利用するには下記を GitHub Repository Secrets に登録すること:
+#   - INFISICAL_CLIENT_ID
+#   - INFISICAL_CLIENT_SECRET
+#   - INFISICAL_PROJECT_SLUG (リポジトリ Variables でも可)
+name: Infisical Connection Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Infisical environment slug'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - preview
+          - prod
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fetch secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.9
+        with:
+          method: 'universal'
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          domain: 'https://app.infisical.com'
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
+          env-slug: ${{ inputs.env }}
+          secret-path: '/'
+          export-type: 'file'
+          file-output-path: '/tmp/infisical-keys.env'
+
+      - name: Show fetched key names (values masked)
+        run: |
+          echo "Infisical から取得した key 数: $(grep -c '^[A-Z]' /tmp/infisical-keys.env || echo 0)"
+          echo "key 一覧:"
+          grep -oE '^[A-Z_][A-Z0-9_]*' /tmp/infisical-keys.env | sort | sed 's/^/  - /'

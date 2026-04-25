@@ -13,7 +13,12 @@
     "lint": "vp lint",
     "format": "vp fmt --write .",
     "test": "vp test",
-    "test:a11y": "playwright test"
+    "test:a11y": "playwright test",
+    "secrets:pull:dev": "infisical export --env=dev --format=dotenv --output-file=.dev.vars.generated",
+    "secrets:scan": "infisical scan --verbose",
+    "secrets:scan:staged": "infisical scan git-changes --staged --verbose",
+    "start:local:infisical": "infisical run --env=dev --silent -- pnpm start:local",
+    "start:local:infisical:watch": "infisical run --env=dev --watch --silent -- pnpm start:local"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

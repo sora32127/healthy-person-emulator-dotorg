@@ -8,8 +8,12 @@ node_modules
 # Environment and secrets
 .env
 .dev.vars
+.dev.vars.generated
 hpe-temp-downloader-key.json
 /docs/secretvariables.md
+
+# Infisical (実体は `infisical init` で生成。`.infisical.example.json` のみコミット)
+.infisical.json
 
 # Deployment
 .vercel

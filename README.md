@@ -104,6 +104,7 @@
 4. コードの改善を行う
    - コードの改善を行う場合、GitHubからPull Requestを作成してください
    - ローカル開発環境のセットアップは下記を参照してください
+   - シークレット (API キーやトークン) の管理は [docs/secrets-management.md](./docs/secrets-management.md) を参照してください
 5. 経済的に支援する
    - 健常者エミュレータ事例集は、運営費用を管理人の自己負担で賄っています
    - サーバーの維持費用やドメインの更新費用など、運営費用を支援するため、[Pixiv FANBOX](https://contradiction29.fanbox.cc/)にて支援を受け付けています
