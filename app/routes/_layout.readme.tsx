@@ -214,8 +214,14 @@ export default function Component() {
 
       <H2>開発について</H2>
       <ul>
+        <li>健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。</li>
         <li>
-          健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。誰もが開発に参加することが可能です。
+          現在、本リポジトリではリポジトリオーナー（@sora32127）以外からのPull
+          Requestは受け付けていません。コードの改善やバグ修正の提案がある場合は、
+          <a href="https://github.com/sora32127/healthy-person-emulator-dotorg/issues">
+            GitHub Issue
+          </a>
+          としてご投稿ください。提案の検討・実装は管理人が行います。
         </li>
         <li>
           詳細は
