@@ -20,8 +20,8 @@ jobs:
             const message = [
               'ご投稿ありがとうございます。',
               '',
-              '本リポジトリは現在、リポジトリオーナー（@sora32127）以外からのPull Requestは受け付けておりません。',
-              'お手数ですが、改善提案やバグ報告は [Issue](https://github.com/${{ github.repository }}/issues) としてご投稿いただけますと幸いです。',
+              '本リポジトリは現在、リポジトリオーナー（@sora32127）以外からのPull Requestは受け付けておりません。また、Issueでの提案・バグ報告も受け付けていません。',
+              'お手数ですが、改善提案やバグ報告は [Discord](https://discord.com/invite/sQehNGTnSg) の #エンジニアリング議論 チャンネル、または管理人の [X DM](https://x.com/messages/compose?recipient_id=1249916069344473088) までお願いいたします。',
               '',
               '方針の詳細は [README](https://github.com/${{ github.repository }}#readme) をご覧ください。',
             ].join('\n');
