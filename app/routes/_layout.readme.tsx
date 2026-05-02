@@ -69,7 +69,7 @@ const faqData: FAQItem[] = [
   {
     question: 'サイトの表示が崩れているのを発見しました。どこに連絡すればよいでしょうか？',
     answer:
-      '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、[GitHub](https://github.com/sora32127/healthy-person-emulator-dotorg)上で直接Issueを立てていただけると助かります。',
+      '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、管理人の[XのDM](https://x.com/messages/compose?recipient_id=1249916069344473088)までご連絡ください。',
   },
 ];
 
@@ -214,8 +214,13 @@ export default function Component() {
 
       <H2>開発について</H2>
       <ul>
+        <li>健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。</li>
         <li>
-          健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。誰もが開発に参加することが可能です。
+          コードの改善やバグ修正の提案がある場合は、
+          <a href="https://discord.com/invite/sQehNGTnSg">Discord</a>
+          の「#エンジニアリング議論」チャンネル、または管理人の
+          <a href="https://x.com/messages/compose?recipient_id=1249916069344473088">XのDM</a>
+          までご連絡ください。提案の検討・実装は管理人が行います。
         </li>
         <li>
           詳細は
