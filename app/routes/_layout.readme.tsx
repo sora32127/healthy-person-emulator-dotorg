@@ -69,7 +69,7 @@ const faqData: FAQItem[] = [
   {
     question: 'サイトの表示が崩れているのを発見しました。どこに連絡すればよいでしょうか？',
     answer:
-      '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、管理人の[XのDM](https://x.com/messages/compose?recipient_id=1249916069344473088)までご連絡ください。なお、本リポジトリではPull RequestおよびIssueは外部から受け付けていません。',
+      '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、管理人の[XのDM](https://x.com/messages/compose?recipient_id=1249916069344473088)までご連絡ください。',
   },
 ];
 
@@ -216,8 +216,7 @@ export default function Component() {
       <ul>
         <li>健常者エミュレータ事例集のコードは、GPL-3.0ライセンスの元公開されています。</li>
         <li>
-          現在、本リポジトリではリポジトリオーナー（@sora32127）以外からのPull
-          RequestおよびIssueは受け付けていません。コードの改善やバグ修正の提案がある場合は、
+          コードの改善やバグ修正の提案がある場合は、
           <a href="https://discord.com/invite/sQehNGTnSg">Discord</a>
           の「#エンジニアリング議論」チャンネル、または管理人の
           <a href="https://x.com/messages/compose?recipient_id=1249916069344473088">XのDM</a>
