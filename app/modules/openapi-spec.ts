@@ -26,10 +26,6 @@ export const openApiSpec = {
       url: BASE_URL,
       description: '本番環境',
     },
-    {
-      url: 'https://preview.healthy-person-emulator.org',
-      description: 'プレビュー環境（PRごとに更新）',
-    },
   ],
   tags: [
     { name: 'search', description: '投稿検索' },

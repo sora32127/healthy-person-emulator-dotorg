@@ -165,21 +165,18 @@ export default function Component() {
         </li>
         <li>
           <strong>ベースURL:</strong> <code>{BASE_URL}</code>
-          （プレビュー環境は <code>https://preview.healthy-person-emulator.org</code>）
         </li>
         <li>
           <strong>認証:</strong> 不要（全エンドポイント公開）
         </li>
         <li>
           <strong>CORS:</strong> <code>Access-Control-Allow-Origin: *</code>
-          （ブラウザJSから直接呼び出し可能）
         </li>
         <li>
           <strong>レスポンス形式:</strong> <code>application/json; charset=utf-8</code>
         </li>
         <li>
           <strong>キャッシュ:</strong> <code>Cache-Control: public, max-age=60, s-maxage=300</code>
-          （CloudflareのCDNで5分キャッシュ）
         </li>
         <li>
           <strong>ライセンス:</strong> 投稿データは
@@ -567,10 +564,6 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
           投稿データは GPL-3.0
           ライセンスで公開されています。人間・機械の両方が自由に利用できますが、出典として{' '}
           <code>healthy-person-emulator.org</code> を明示してください。
-        </li>
-        <li>
-          仕様変更時は本ページと <code>/api/openapi.json</code> の両方を更新します。
-          破壊的変更を行う場合は事前にDiscord・XのDM等で告知します。
         </li>
         <li>
           バグ報告・要望は <a href="https://discord.com/invite/sQehNGTnSg">Discord</a>
