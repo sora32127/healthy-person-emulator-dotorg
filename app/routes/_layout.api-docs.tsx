@@ -12,10 +12,10 @@ const BASE_URL = 'https://healthy-person-emulator.org';
 
 function MethodBadge({ method }: { method: 'GET' | 'POST' | 'PUT' | 'DELETE' }) {
   const colors: Record<typeof method, string> = {
-    GET: 'bg-green-600',
-    POST: 'bg-blue-600',
-    PUT: 'bg-amber-600',
-    DELETE: 'bg-red-600',
+    GET: 'bg-green-800',
+    POST: 'bg-blue-800',
+    PUT: 'bg-amber-800',
+    DELETE: 'bg-red-800',
   };
   return (
     <span
@@ -28,9 +28,9 @@ function MethodBadge({ method }: { method: 'GET' | 'POST' | 'PUT' | 'DELETE' }) 
 
 function StatusBadge({ status }: { status: '2xx' | '4xx' | '5xx' }) {
   const colors: Record<typeof status, string> = {
-    '2xx': 'bg-green-600',
-    '4xx': 'bg-amber-600',
-    '5xx': 'bg-red-600',
+    '2xx': 'bg-green-800',
+    '4xx': 'bg-amber-800',
+    '5xx': 'bg-red-800',
   };
   return (
     <span
