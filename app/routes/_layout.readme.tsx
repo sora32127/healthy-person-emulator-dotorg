@@ -221,19 +221,25 @@ export default function Component() {
         <H2>AIから健常者エミュレータ事例集を検索する方法</H2>
         <p>
           ChatGPT・Claude・Gemini
-          などのAIエージェントから、健常者エミュレータ事例集の投稿を検索するためのJSON
-          APIを公開しています。スクレイピング不要で、検索結果をそのまま構造化データとして取得できます。
+          などのAIエージェントから、健常者エミュレータ事例集の投稿を検索・取得するためのJSON
+          APIを公開しています。スクレイピング不要で、検索結果や本文をそのまま構造化データとして取得できます。
         </p>
-        <H3>エンドポイント</H3>
+        <p>用意しているエンドポイントは2つです。</p>
         <ul>
           <li>
-            <code>GET https://healthy-person-emulator.org/api/search</code>
+            <code>GET /api/search</code> — キーワード・タグで投稿を検索する
           </li>
           <li>
-            認証不要・CORS対応・<code>Content-Type: application/json</code>
+            <code>GET /api/posts/:postId</code> — 投稿IDから本文・コメント・タグなどを取得する
           </li>
         </ul>
-        <H3>クエリパラメータ</H3>
+        <p>
+          どちらも認証不要・CORS対応・<code>Content-Type: application/json</code>。 ベースURLは{' '}
+          <code>https://healthy-person-emulator.org</code>。
+        </p>
+        <H3>検索API: GET /api/search</H3>
+        <p>キーワード・タグで投稿一覧（タイトル・メタデータ）を取得します。</p>
+        <p>クエリパラメータ:</p>
         <ul>
           <li>
             <code>q</code>: 検索キーワード（記事タイトル・本文を部分一致検索）。省略可
@@ -255,7 +261,7 @@ export default function Component() {
             <code>pageSize</code>: 1ページの件数（デフォルト10、最大50）
           </li>
         </ul>
-        <H3>使用例</H3>
+        <p>使用例:</p>
         <ul>
           <li>
             キーワード検索: <code>/api/search?q=挨拶&amp;pageSize=5</code>
@@ -268,7 +274,6 @@ export default function Component() {
             ページング: <code>/api/search?q=会話&amp;page=2&amp;pageSize=20</code>
           </li>
         </ul>
-        <H3>レスポンス形式</H3>
         <p>レスポンスは以下3つのフィールドからなるJSONオブジェクトです。</p>
         <ul>
           <li>
@@ -281,14 +286,13 @@ export default function Component() {
             <code>results</code>: 投稿の配列。各要素は以下のフィールドを持ちます
             <ul>
               <li>
-                <code>postId</code>: 投稿ID
+                <code>postId</code>: 投稿ID（本文取得APIに渡す値）
               </li>
               <li>
                 <code>postTitle</code>: タイトル
               </li>
               <li>
-                <code>postUrl</code>:
-                投稿の絶対URL（記事本文はこのURLをHTMLとして取得して読んでください）
+                <code>postUrl</code>: 投稿の絶対URL
               </li>
               <li>
                 <code>postDateGmt</code>: 投稿日時（ISO 8601, UTC）
@@ -303,11 +307,59 @@ export default function Component() {
             </ul>
           </li>
         </ul>
-        <H3>注意事項</H3>
+
+        <H3>本文取得API: GET /api/posts/:postId</H3>
+        <p>
+          検索APIで得た <code>postId</code>{' '}
+          を使い、個別投稿の本文・コメント・タグ・関連投稿等の詳細を取得します。
+        </p>
+        <p>パスパラメータ:</p>
         <ul>
           <li>
-            このAPIは検索結果（タイトル・メタデータ）のみを返します。本文はサイト上の記事ページから取得してください
+            <code>postId</code>:
+            投稿ID（正の整数）。不正な値の場合は400、該当投稿が存在しない場合は404を返します
           </li>
+        </ul>
+        <p>使用例:</p>
+        <ul>
+          <li>
+            <code>/api/posts/12345</code>
+          </li>
+        </ul>
+        <p>レスポンスは投稿の詳細を表すJSONオブジェクトです。主なフィールド:</p>
+        <ul>
+          <li>
+            <code>postTitle</code>: タイトル
+          </li>
+          <li>
+            <code>postContentHtml</code>: 投稿本文（HTML形式。サイト上の表示と同じマークアップ）
+          </li>
+          <li>
+            <code>postDateGmt</code>: 投稿日時（ISO 8601, UTC）
+          </li>
+          <li>
+            <code>tags</code>: 紐づくタグの配列（<code>tagName</code> / <code>tagId</code>）
+          </li>
+          <li>
+            <code>comments</code>: コメントの配列（投稿者名・本文・日時・親コメントID等）
+          </li>
+          <li>
+            <code>similarPosts</code>: 類似投稿の配列（Cloudflare Vectorize ベース）
+          </li>
+          <li>
+            <code>previousPost</code> / <code>nextPost</code>: 前後の投稿
+          </li>
+          <li>
+            <code>countLikes</code> / <code>countDislikes</code> / <code>countBookmarks</code> /{' '}
+            <code>countComments</code>: 各種カウント
+          </li>
+          <li>
+            <code>ogpImageUrl</code>: OGP画像URL
+          </li>
+        </ul>
+
+        <H3>注意事項</H3>
+        <ul>
           <li>
             短時間に過度なリクエストを送信した場合、Cloudflareにより制限される可能性があります
           </li>
