@@ -141,7 +141,7 @@ export const openApiSpec = {
         tags: ['posts'],
         summary: '投稿の本文・コメント・タグ等を取得する',
         description:
-          '個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿（Cloudflare Vectorize ベース）・前後の投稿等を取得する。',
+          '個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿・前後の投稿等を取得する。',
         parameters: [
           {
             name: 'postId',
@@ -333,7 +333,7 @@ export const openApiSpec = {
           },
           similarPosts: {
             type: 'array',
-            description: 'Cloudflare Vectorize による類似投稿。投稿によっては空配列のことがある。',
+            description: '類似した投稿',
             items: { $ref: '#/components/schemas/PostSummary' },
           },
           previousPost: {

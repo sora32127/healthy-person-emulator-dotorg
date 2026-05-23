@@ -350,10 +350,7 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
         <H2>
           <MethodBadge method="GET" /> /api/posts/{'{postId}'}
         </H2>
-        <p>
-          個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿（Cloudflare Vectorize
-          ベース）・前後の投稿を取得します。
-        </p>
+        <p>個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿・前後の投稿を取得します。</p>
 
         <H3>リクエスト</H3>
         <H4>パスパラメータ</H4>
@@ -427,7 +424,7 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
             {
               field: 'similarPosts',
               type: 'PostSummary[]',
-              description: 'Cloudflare Vectorize による類似投稿。埋め込みがない投稿の場合は空配列',
+              description: '類似した投稿',
             },
             {
               field: 'previousPost',
