@@ -317,11 +317,11 @@ export const openApiSpec = {
           },
           isWelcomed: {
             type: ['boolean', 'null'],
-            description: '管理人による「歓迎判定」の結果。未判定なら `null`',
+            description: 'AIによるコンテンツフィルターの結果',
           },
           isWelcomedExplanation: {
             type: ['string', 'null'],
-            description: '歓迎判定の理由。未判定なら `null`',
+            description: 'AIによるコンテンツフィルターの判定理由',
           },
           tags: {
             type: 'array',
