@@ -3,7 +3,6 @@
  * 機械可読版は `/api/openapi.json` で取得可能。
  */
 import type { MetaFunction } from 'react-router';
-import { NavLink } from 'react-router';
 import { H1, H2, H3, H4 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 import { openApiSpec } from '~/modules/openapi-spec';
@@ -555,25 +554,6 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
 
       <H3>Error</H3>
       <SchemaTable rows={[{ field: 'error', type: 'string', description: 'エラーメッセージ' }]} />
-
-      <H2>利用条件と問い合わせ</H2>
-      <ul>
-        <li>
-          投稿データは <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>{' '}
-          で公開されています（Wikipediaと同じライセンス）。人間・機械の両方が自由に利用できますが、出典として{' '}
-          <code>healthy-person-emulator.org</code>{' '}
-          を明示し、二次利用物にも同じライセンスを継承してください。
-        </li>
-        <li>
-          バグ報告・要望は <a href="https://discord.com/invite/sQehNGTnSg">Discord</a>
-          の「#エンジニアリング議論」チャンネル、または管理人の{' '}
-          <a href="https://x.com/messages/compose?recipient_id=1249916069344473088">XのDM</a>
-          まで。
-        </li>
-        <li>
-          サイト全体の概要は<NavLink to="/readme">サイト説明</NavLink>を参照してください。
-        </li>
-      </ul>
     </div>
   );
 }
