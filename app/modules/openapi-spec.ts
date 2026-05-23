@@ -16,10 +16,6 @@ export const openApiSpec = {
       name: '管理人',
       url: 'https://x.com/messages/compose?recipient_id=1249916069344473088',
     },
-    license: {
-      name: 'CC BY-SA 4.0',
-      url: 'https://creativecommons.org/licenses/by-sa/4.0/',
-    },
   },
   servers: [
     {
