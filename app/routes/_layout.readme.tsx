@@ -74,7 +74,7 @@ const faqData: FAQItem[] = [
   {
     question: 'AIから健常者エミュレータ事例集を検索できますか？',
     answer:
-      'できます。`/api/search` という公開JSON APIを用意しています。詳細はサイト説明の[「AIから健常者エミュレータ事例集を検索する方法」](/readme#ai-search)をご覧ください。',
+      'できます。公開JSON API `/api/search` を用意しています。詳細はサイト説明の[「AIから健常者エミュレータ事例集を検索する方法」](/readme#ai-search)をご覧ください。',
   },
 ];
 
