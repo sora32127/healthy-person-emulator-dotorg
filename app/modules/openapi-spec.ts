@@ -17,18 +17,14 @@ export const openApiSpec = {
       url: 'https://x.com/messages/compose?recipient_id=1249916069344473088',
     },
     license: {
-      name: 'GPL-3.0',
-      url: 'https://www.gnu.org/licenses/gpl-3.0.html',
+      name: 'CC BY-SA 4.0',
+      url: 'https://creativecommons.org/licenses/by-sa/4.0/',
     },
   },
   servers: [
     {
       url: BASE_URL,
       description: '本番環境',
-    },
-    {
-      url: 'https://preview.healthy-person-emulator.org',
-      description: 'プレビュー環境（PRごとに更新）',
     },
   ],
   tags: [
@@ -145,7 +141,7 @@ export const openApiSpec = {
         tags: ['posts'],
         summary: '投稿の本文・コメント・タグ等を取得する',
         description:
-          '個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿（Cloudflare Vectorize ベース）・前後の投稿等を取得する。',
+          '個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿・前後の投稿等を取得する。',
         parameters: [
           {
             name: 'postId',
@@ -321,11 +317,11 @@ export const openApiSpec = {
           },
           isWelcomed: {
             type: ['boolean', 'null'],
-            description: '管理人による「歓迎判定」の結果。未判定なら `null`',
+            description: 'AIによるコンテンツフィルターの結果',
           },
           isWelcomedExplanation: {
             type: ['string', 'null'],
-            description: '歓迎判定の理由。未判定なら `null`',
+            description: 'AIによるコンテンツフィルターの判定理由',
           },
           tags: {
             type: 'array',
@@ -337,7 +333,7 @@ export const openApiSpec = {
           },
           similarPosts: {
             type: 'array',
-            description: 'Cloudflare Vectorize による類似投稿。投稿によっては空配列のことがある。',
+            description: '類似した投稿',
             items: { $ref: '#/components/schemas/PostSummary' },
           },
           previousPost: {

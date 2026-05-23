@@ -3,7 +3,6 @@
  * 機械可読版は `/api/openapi.json` で取得可能。
  */
 import type { MetaFunction } from 'react-router';
-import { NavLink } from 'react-router';
 import { H1, H2, H3, H4 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 import { openApiSpec } from '~/modules/openapi-spec';
@@ -165,26 +164,24 @@ export default function Component() {
         </li>
         <li>
           <strong>ベースURL:</strong> <code>{BASE_URL}</code>
-          （プレビュー環境は <code>https://preview.healthy-person-emulator.org</code>）
         </li>
         <li>
           <strong>認証:</strong> 不要（全エンドポイント公開）
         </li>
         <li>
           <strong>CORS:</strong> <code>Access-Control-Allow-Origin: *</code>
-          （ブラウザJSから直接呼び出し可能）
         </li>
         <li>
           <strong>レスポンス形式:</strong> <code>application/json; charset=utf-8</code>
         </li>
         <li>
           <strong>キャッシュ:</strong> <code>Cache-Control: public, max-age=60, s-maxage=300</code>
-          （CloudflareのCDNで5分キャッシュ）
         </li>
         <li>
           <strong>ライセンス:</strong> 投稿データは
-          <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0</a>
-          。利用時は <code>healthy-person-emulator.org</code> を出典として明示してください。
+          <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
+          （Wikipediaと同じライセンス）。利用時は <code>healthy-person-emulator.org</code>{' '}
+          を出典として明示してください。
         </li>
       </ul>
 
@@ -353,10 +350,7 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
         <H2>
           <MethodBadge method="GET" /> /api/posts/{'{postId}'}
         </H2>
-        <p>
-          個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿（Cloudflare Vectorize
-          ベース）・前後の投稿を取得します。
-        </p>
+        <p>個別投稿の本文（HTML）・コメント一覧・タグ・類似投稿・前後の投稿を取得します。</p>
 
         <H3>リクエスト</H3>
         <H4>パスパラメータ</H4>
@@ -417,20 +411,20 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
               field: 'isWelcomed',
               type: 'boolean',
               nullable: true,
-              description: '管理人による「歓迎判定」の結果。未判定なら null',
+              description: 'AIによるコンテンツフィルターの結果',
             },
             {
               field: 'isWelcomedExplanation',
               type: 'string',
               nullable: true,
-              description: '歓迎判定の理由。未判定なら null',
+              description: 'AIによるコンテンツフィルターの判定理由',
             },
             { field: 'tags', type: 'Tag[]', description: '紐づくタグ' },
             { field: 'comments', type: 'Comment[]', description: 'コメント一覧' },
             {
               field: 'similarPosts',
               type: 'PostSummary[]',
-              description: 'Cloudflare Vectorize による類似投稿。埋め込みがない投稿の場合は空配列',
+              description: '類似した投稿',
             },
             {
               field: 'previousPost',
@@ -560,28 +554,6 @@ curl "${BASE_URL}/api/search?q=会話&page=2&pageSize=20"`}</CodeBlock>
 
       <H3>Error</H3>
       <SchemaTable rows={[{ field: 'error', type: 'string', description: 'エラーメッセージ' }]} />
-
-      <H2>利用条件と問い合わせ</H2>
-      <ul>
-        <li>
-          投稿データは GPL-3.0
-          ライセンスで公開されています。人間・機械の両方が自由に利用できますが、出典として{' '}
-          <code>healthy-person-emulator.org</code> を明示してください。
-        </li>
-        <li>
-          仕様変更時は本ページと <code>/api/openapi.json</code> の両方を更新します。
-          破壊的変更を行う場合は事前にDiscord・XのDM等で告知します。
-        </li>
-        <li>
-          バグ報告・要望は <a href="https://discord.com/invite/sQehNGTnSg">Discord</a>
-          の「#エンジニアリング議論」チャンネル、または管理人の{' '}
-          <a href="https://x.com/messages/compose?recipient_id=1249916069344473088">XのDM</a>
-          まで。
-        </li>
-        <li>
-          サイト全体の概要は<NavLink to="/readme">サイト説明</NavLink>を参照してください。
-        </li>
-      </ul>
     </div>
   );
 }
