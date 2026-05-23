@@ -11,45 +11,6 @@ import ReloadButton from '~/components/ReloadButton';
 import PostSection from '~/components/PostSection';
 import CommentSection from '~/components/CommentSection';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
-import { markdownResponse, wantsMarkdown } from '~/modules/markdown.server';
-
-function renderHomeMarkdown(data: {
-  latest: { postId: number; postTitle: string; postDateGmt: Date }[];
-  voted: { postId: number; postTitle: string; countLikes: number }[];
-}): string {
-  const lines: string[] = [];
-  lines.push('# 健常者エミュレータ事例集');
-  lines.push('');
-  lines.push(
-    '社会生活やコミュニケーションに関する暗黙知を言語化・集積し、知識のギャップを集団で補うためのプラットフォーム。',
-  );
-  lines.push('');
-  lines.push('- サイト: https://healthy-person-emulator.org');
-  lines.push('- フィード: https://healthy-person-emulator.org/feed.xml');
-  lines.push('- サイトマップ: https://healthy-person-emulator.org/sitemap.xml');
-  lines.push(
-    '- 各記事のMarkdown版: `https://healthy-person-emulator.org/archives/{postId}.md` または `Accept: text/markdown` ヘッダー付きで記事URLにリクエスト',
-  );
-  lines.push('');
-  lines.push('## 最新の投稿');
-  lines.push('');
-  for (const p of data.latest) {
-    const date = new Date(p.postDateGmt).toISOString().slice(0, 10);
-    lines.push(
-      `- [${p.postTitle}](https://healthy-person-emulator.org/archives/${p.postId}) — ${date}`,
-    );
-  }
-  lines.push('');
-  lines.push('## 最近いいねされた投稿');
-  lines.push('');
-  for (const p of data.voted) {
-    lines.push(
-      `- [${p.postTitle}](https://healthy-person-emulator.org/archives/${p.postId}) — 👍 ${p.countLikes}`,
-    );
-  }
-  lines.push('');
-  return lines.join('\n');
-}
 
 export const meta: MetaFunction = () => {
   const commonMeta = commonMetaFunction({
@@ -71,15 +32,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const mostRecentComments = await getFeedComments(1, 'timeDesc');
   const randomPosts = await getRandomPosts();
   const randomComments = await getRandomComments();
-
-  if (wantsMarkdown(request)) {
-    throw markdownResponse(
-      renderHomeMarkdown({
-        latest: mostRecentPosts.result,
-        voted: recentVotedPosts.result,
-      }),
-    );
-  }
 
   return {
     tab,
