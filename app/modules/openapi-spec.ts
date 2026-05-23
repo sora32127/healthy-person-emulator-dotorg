@@ -17,8 +17,8 @@ export const openApiSpec = {
       url: 'https://x.com/messages/compose?recipient_id=1249916069344473088',
     },
     license: {
-      name: 'GPL-3.0',
-      url: 'https://www.gnu.org/licenses/gpl-3.0.html',
+      name: 'CC BY-SA 4.0',
+      url: 'https://creativecommons.org/licenses/by-sa/4.0/',
     },
   },
   servers: [
