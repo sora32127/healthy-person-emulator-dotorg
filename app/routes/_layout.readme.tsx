@@ -71,6 +71,11 @@ const faqData: FAQItem[] = [
     answer:
       '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、管理人の[XのDM](https://x.com/messages/compose?recipient_id=1249916069344473088)までご連絡ください。',
   },
+  {
+    question: 'AIから健常者エミュレータ事例集を検索できますか？',
+    answer:
+      'できます。公開JSON API `/api/search` を用意しています。詳細はサイト説明の[「AIから健常者エミュレータ事例集を検索する方法」](/readme#ai-search)をご覧ください。',
+  },
 ];
 
 // FAQアイテムコンポーネント
@@ -211,6 +216,159 @@ export default function Component() {
         <li>SNSに投稿される際は、5W1H+Then状況説明の箇所が画像として表示されます</li>
         <li>10分に一回の頻度で更新されます</li>
       </ul>
+
+      <div id="ai-search">
+        <H2>AIから健常者エミュレータ事例集を検索する方法</H2>
+        <p>
+          ChatGPT・Claude・Gemini
+          などのAIエージェントから、健常者エミュレータ事例集の投稿を検索・取得するためのJSON
+          APIを公開しています。スクレイピング不要で、検索結果や本文をそのまま構造化データとして取得できます。
+        </p>
+        <p>用意しているエンドポイントは2つです。</p>
+        <ul>
+          <li>
+            <code>GET /api/search</code> — キーワード・タグで投稿を検索する
+          </li>
+          <li>
+            <code>GET /api/posts/:postId</code> — 投稿IDから本文・コメント・タグなどを取得する
+          </li>
+        </ul>
+        <p>
+          どちらも認証不要・CORS対応・<code>Content-Type: application/json</code>。 ベースURLは{' '}
+          <code>https://healthy-person-emulator.org</code>。
+        </p>
+        <H3>検索API: GET /api/search</H3>
+        <p>キーワード・タグで投稿一覧（タイトル・メタデータ）を取得します。</p>
+        <p>クエリパラメータ:</p>
+        <ul>
+          <li>
+            <code>q</code>: 検索キーワード（記事タイトル・本文を部分一致検索）。省略可
+          </li>
+          <li>
+            <code>tags</code>: タグ名をスペース区切りで指定（例:{' '}
+            <code>tags=コミュニケーション 対人関係</code>
+            ）。複数指定時はAND条件。省略可
+          </li>
+          <li>
+            <code>orderby</code>: 並び順。
+            <code>timeDesc</code>（新着順・デフォルト） /<code>timeAsc</code>（古い順） /
+            <code>like</code>（いいね順）
+          </li>
+          <li>
+            <code>page</code>: ページ番号（1始まり、デフォルト1）
+          </li>
+          <li>
+            <code>pageSize</code>: 1ページの件数（デフォルト10、最大50）
+          </li>
+        </ul>
+        <p>使用例:</p>
+        <ul>
+          <li>
+            キーワード検索: <code>/api/search?q=挨拶&amp;pageSize=5</code>
+          </li>
+          <li>
+            タグ絞り込み＋いいね順:{' '}
+            <code>/api/search?tags=コミュニケーション&amp;orderby=like</code>
+          </li>
+          <li>
+            ページング: <code>/api/search?q=会話&amp;page=2&amp;pageSize=20</code>
+          </li>
+        </ul>
+        <p>レスポンスは以下3つのフィールドからなるJSONオブジェクトです。</p>
+        <ul>
+          <li>
+            <code>metadata</code>: 検索条件のエコーバック・総件数・総ページ数・次ページの有無
+          </li>
+          <li>
+            <code>tagCounts</code>: 検索結果に含まれるタグごとの件数（タグ絞り込みの参考用）
+          </li>
+          <li>
+            <code>results</code>: 投稿の配列。各要素は以下のフィールドを持ちます
+            <ul>
+              <li>
+                <code>postId</code>: 投稿ID（本文取得APIに渡す値）
+              </li>
+              <li>
+                <code>postTitle</code>: タイトル
+              </li>
+              <li>
+                <code>postUrl</code>: 投稿の絶対URL
+              </li>
+              <li>
+                <code>postDateGmt</code>: 投稿日時（ISO 8601, UTC）
+              </li>
+              <li>
+                <code>countLikes</code> / <code>countDislikes</code> / <code>countComments</code>:
+                各種カウント
+              </li>
+              <li>
+                <code>tagNames</code>: 紐づくタグ名の配列
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <H3>本文取得API: GET /api/posts/:postId</H3>
+        <p>
+          検索APIで得た <code>postId</code>{' '}
+          を使い、個別投稿の本文・コメント・タグ・関連投稿等の詳細を取得します。
+        </p>
+        <p>パスパラメータ:</p>
+        <ul>
+          <li>
+            <code>postId</code>:
+            投稿ID（正の整数）。不正な値の場合は400、該当投稿が存在しない場合は404を返します
+          </li>
+        </ul>
+        <p>使用例:</p>
+        <ul>
+          <li>
+            <code>/api/posts/12345</code>
+          </li>
+        </ul>
+        <p>レスポンスは投稿の詳細を表すJSONオブジェクトです。主なフィールド:</p>
+        <ul>
+          <li>
+            <code>postTitle</code>: タイトル
+          </li>
+          <li>
+            <code>postContentHtml</code>: 投稿本文（HTML形式。サイト上の表示と同じマークアップ）
+          </li>
+          <li>
+            <code>postDateGmt</code>: 投稿日時（ISO 8601, UTC）
+          </li>
+          <li>
+            <code>tags</code>: 紐づくタグの配列（<code>tagName</code> / <code>tagId</code>）
+          </li>
+          <li>
+            <code>comments</code>: コメントの配列（投稿者名・本文・日時・親コメントID等）
+          </li>
+          <li>
+            <code>similarPosts</code>: 類似投稿の配列（Cloudflare Vectorize ベース）
+          </li>
+          <li>
+            <code>previousPost</code> / <code>nextPost</code>: 前後の投稿
+          </li>
+          <li>
+            <code>countLikes</code> / <code>countDislikes</code> / <code>countBookmarks</code> /{' '}
+            <code>countComments</code>: 各種カウント
+          </li>
+          <li>
+            <code>ogpImageUrl</code>: OGP画像URL
+          </li>
+        </ul>
+
+        <H3>注意事項</H3>
+        <ul>
+          <li>
+            短時間に過度なリクエストを送信した場合、Cloudflareにより制限される可能性があります
+          </li>
+          <li>
+            投稿データはGPL-3.0ライセンスの元、人間および機械の両方が自由に利用できますが、出典として{' '}
+            <code>healthy-person-emulator.org</code> を明示してください
+          </li>
+        </ul>
+      </div>
 
       <H2>開発について</H2>
       <ul>
