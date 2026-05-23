@@ -46,6 +46,7 @@ import { setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import { useSetAtom } from 'jotai';
 import { setVisitorCookieData } from '~/modules/visitor.server';
 import { Bookmark } from 'lucide-react';
+import { markdownResponse, renderArticleMarkdown, wantsMarkdown } from '~/modules/markdown.server';
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -62,6 +63,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const postId = Number(url.pathname.split('/')[2]);
   const data = await ArchiveDataEntry.getData(postId);
+
+  if (wantsMarkdown(request)) {
+    throw markdownResponse(renderArticleMarkdown(data));
+  }
+
   const { likedPages, dislikedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
   const isAuthenticated = await getAuthenticatedUser(request);
