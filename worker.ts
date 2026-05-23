@@ -16,6 +16,24 @@ import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 
 const requestHandler = createRequestHandler(serverBuild as unknown as ServerBuild);
 
+function rewriteForMarkdown(request: Request): Request {
+  if (request.method !== 'GET') return request;
+  const accept = request.headers.get('accept') ?? '';
+  if (!/\btext\/markdown\b/i.test(accept)) return request;
+
+  const url = new URL(request.url);
+  if (url.pathname === '/') {
+    url.pathname = '/index.md';
+    return new Request(url.toString(), request);
+  }
+  const article = url.pathname.match(/^\/archives\/(\d+)\/?$/);
+  if (article) {
+    url.pathname = `/archives/${article[1]}.md`;
+    return new Request(url.toString(), request);
+  }
+  return request;
+}
+
 export default {
   async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
     (globalThis as any).__cloudflareEnv = env;
@@ -31,7 +49,7 @@ export default {
         caches,
       },
     };
-    return requestHandler(request, loadContext);
+    return requestHandler(rewriteForMarkdown(request), loadContext);
   },
 
   async scheduled(controller: ScheduledController, env: CloudflareEnv, ctx: ExecutionContext) {
