@@ -372,16 +372,23 @@ export async function recoverStaleJobs(env: CloudflareEnv): Promise<RecoverStale
 
 // ─── Helpers ────────────────────────────────────────────────
 
-function classifyError(err: unknown): 'terminal' | 'retryable' | 'ambiguous' {
+export function classifyError(err: unknown): 'terminal' | 'retryable' | 'ambiguous' {
   const msg = err instanceof Error ? err.message : String(err);
 
-  // Terminal: auth failures
-  if (/401|403|Unauthorized|Forbidden/i.test(msg)) return 'terminal';
+  // Extract HTTP status from "(NNN)" — all SNS clients throw with this format
+  const statusMatch = msg.match(/\((\d{3})\)/);
+  const status = statusMatch ? Number(statusMatch[1]) : null;
 
-  // Retryable: rate limits, server errors
-  if (/429|500|502|503|504|rate.?limit|timeout/i.test(msg)) return 'retryable';
+  if (status !== null) {
+    // 408 (Request Timeout) and 429 (Too Many Requests) recover on their own
+    if (status === 408 || status === 429) return 'retryable';
+    // Other 4xx (auth, payment, validation, etc.) need human intervention
+    if (status >= 400 && status < 500) return 'terminal';
+    // 5xx: transient server-side issues
+    if (status >= 500 && status < 600) return 'retryable';
+  }
 
-  // Connection errors are ambiguous
+  // Network-level failures: request may or may not have been delivered
   if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|fetch failed/i.test(msg)) return 'ambiguous';
 
   return 'ambiguous';
