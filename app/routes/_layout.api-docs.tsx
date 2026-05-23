@@ -177,12 +177,6 @@ export default function Component() {
         <li>
           <strong>キャッシュ:</strong> <code>Cache-Control: public, max-age=60, s-maxage=300</code>
         </li>
-        <li>
-          <strong>ライセンス:</strong> 投稿データは
-          <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>
-          （Wikipediaと同じライセンス）。利用時は <code>healthy-person-emulator.org</code>{' '}
-          を出典として明示してください。
-        </li>
       </ul>
 
       <H3>レート制限</H3>
