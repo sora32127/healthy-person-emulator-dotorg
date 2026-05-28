@@ -10,6 +10,7 @@ import {
   LogIn,
   FilePlus,
   Bookmark,
+  Code2,
 } from 'lucide-react';
 
 export function getNavItems(isSignedIn: boolean) {
@@ -19,6 +20,7 @@ export function getNavItems(isSignedIn: boolean) {
     { to: '/?tab=random', text: 'ランダム', icon: Shuffle },
     { to: '/support', text: 'サポートする', icon: HandCoins },
     { to: '/readme', text: 'サイト説明', icon: BookText },
+    { to: '/api-docs', text: 'API仕様', icon: Code2 },
     {
       to: '/feed?p=1&type=unboundedLikes',
       text: '無期限いいね順',
