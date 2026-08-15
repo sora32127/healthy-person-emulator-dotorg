@@ -1,7 +1,7 @@
 import { useLoaderData, Link, useFetcher } from 'react-router';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router';
 import { drizzle } from 'drizzle-orm/d1';
-import { desc, count } from 'drizzle-orm';
+import { desc, count, eq } from 'drizzle-orm';
 import { dimPosts } from '~/drizzle/schema';
 import { requireAdmin } from '~/modules/admin.server';
 import { deletePost } from '~/modules/admin-delete.server';
@@ -26,6 +26,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         postTitle: dimPosts.postTitle,
         countLikes: dimPosts.countLikes,
         postDateGmt: dimPosts.postDateGmt,
+        isWelcomed: dimPosts.isWelcomed,
       })
       .from(dimPosts)
       .orderBy(desc(dimPosts.postId))
@@ -45,12 +46,38 @@ export async function action({ request }: ActionFunctionArgs) {
   const env = (globalThis as any).__cloudflareEnv as CloudflareEnv;
 
   const formData = await request.formData();
+  const intent = formData.get('intent');
   const postId = Number(formData.get('postId'));
-  const deletionReason = (formData.get('deletionReason') as string) || undefined;
 
   if (!postId || Number.isNaN(postId)) {
     return { error: '記事IDが不正です' };
   }
+
+  if (intent === 'updateWelcomed') {
+    const rawIsWelcomed = formData.get('isWelcomed');
+    if (rawIsWelcomed !== 'true' && rawIsWelcomed !== 'false') {
+      return { error: '歓迎判定が不正です' };
+    }
+
+    try {
+      const db = drizzle(env.DB);
+      await db
+        .update(dimPosts)
+        .set({ isWelcomed: rawIsWelcomed === 'true' })
+        .where(eq(dimPosts.postId, postId));
+
+      return { success: true, updatedPostId: postId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '歓迎判定の更新に失敗しました';
+      return { error: message };
+    }
+  }
+
+  if (intent !== 'deletePost') {
+    return { error: '操作が不正です' };
+  }
+
+  const deletionReason = (formData.get('deletionReason') as string) || undefined;
 
   try {
     await deletePost(env, postId, user.email, deletionReason);
@@ -94,6 +121,7 @@ function DeleteModal({
         </p>
 
         <fetcher.Form method="post" className="mt-4">
+          <input type="hidden" name="intent" value="deletePost" />
           <input type="hidden" name="postId" value={post.postId} />
           <div className="form-control mb-4">
             <label className="label" htmlFor="deletionReason">
@@ -130,6 +158,42 @@ function DeleteModal({
   );
 }
 
+function WelcomedForm({ postId, isWelcomed }: { postId: number; isWelcomed: boolean | null }) {
+  const fetcher = useFetcher<typeof action>();
+  const isSubmitting = fetcher.state !== 'idle';
+
+  return (
+    <fetcher.Form method="post" className="flex items-center gap-1 whitespace-nowrap">
+      <input type="hidden" name="intent" value="updateWelcomed" />
+      <input type="hidden" name="postId" value={postId} />
+      <select
+        name="isWelcomed"
+        aria-label={`記事${postId}の歓迎状態`}
+        className="select select-bordered select-xs"
+        defaultValue={isWelcomed === null ? '' : String(isWelcomed)}
+        required
+        disabled={isSubmitting}
+      >
+        {isWelcomed === null && (
+          <option value="" disabled>
+            未判定
+          </option>
+        )}
+        <option value="true">歓迎</option>
+        <option value="false">非歓迎</option>
+      </select>
+      <button type="submit" className="btn btn-outline btn-xs" disabled={isSubmitting}>
+        {isSubmitting ? '更新中' : '更新'}
+      </button>
+      {fetcher.data && 'error' in fetcher.data && (
+        <span className="text-error text-xs whitespace-normal" role="alert">
+          {fetcher.data.error}
+        </span>
+      )}
+    </fetcher.Form>
+  );
+}
+
 export default function AdminIndex() {
   const { posts, page, totalPages, total } = useLoaderData<typeof loader>();
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -157,6 +221,7 @@ export default function AdminIndex() {
               <th>いいね</th>
               <th>PV</th>
               <th>投稿日</th>
+              <th>歓迎状態</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -178,6 +243,9 @@ export default function AdminIndex() {
                   )}
                 </td>
                 <td className="text-sm opacity-70">{post.postDateGmt}</td>
+                <td>
+                  <WelcomedForm postId={post.postId} isWelcomed={post.isWelcomed} />
+                </td>
                 <td>
                   <button
                     type="button"
