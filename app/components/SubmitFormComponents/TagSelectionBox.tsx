@@ -67,13 +67,7 @@ export default function TagSelectionBox({
 
   return (
     <div className="mb-8 bg-base-200 p-6 rounded-lg shadow-md">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-        <h3 className="text-xl font-bold">タグを選択してください</h3>
-        <span className="text-sm text-base-content/70">
-          選択中:{' '}
-          <strong className="text-primary font-bold">{parentComponentStateValues.length}</strong> 件
-        </span>
-      </div>
+      <h3 className="text-xl font-bold mb-4">タグを選択してください</h3>
 
       {/* 検索 & ソート */}
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
@@ -82,8 +76,8 @@ export default function TagSelectionBox({
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="タグを検索（例: やってはいけないこと、学校、ADHD...）"
-            className="input input-bordered w-full py-2 pl-10 pr-3 placeholder-slate-500"
+            className="input input-bordered w-full py-2 pl-10 pr-3"
+            aria-label="タグを検索"
           />
           <svg
             className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-base-content/50"
@@ -132,12 +126,9 @@ export default function TagSelectionBox({
             {/* 1. 推奨事項分類の枠 */}
             {recommendationTags.length > 0 && (
               <div className="bg-base-200/50 p-3.5 rounded-lg border border-base-300">
-                <div className="flex items-center justify-between mb-2.5">
+                <div className="mb-2.5">
                   <span className="font-bold text-xs text-base-content/80 tracking-wide">
                     推奨事項分類
-                  </span>
-                  <span className="badge badge-xs badge-ghost text-xs">
-                    {recommendationTags.length} 件
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -178,54 +169,42 @@ export default function TagSelectionBox({
               </div>
             )}
 
-            {/* 2. その他のタグ */}
+            {/* 2. 一般タグ */}
             {otherTags.length > 0 && (
-              <div>
-                {recommendationTags.length > 0 && (
-                  <div className="flex items-center justify-between mb-2 pt-1">
-                    <span className="font-bold text-xs text-base-content/60 tracking-wide">
-                      その他のタグ
-                    </span>
-                    <span className="text-xs text-base-content/70">
-                      {otherTags.length} 件
-                    </span>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <AnimatePresence>
-                    {otherTags.map((tag) => {
-                      const isSelected = parentComponentStateValues.includes(tag.tagName);
-                      return (
-                        <motion.button
-                          key={tag.tagName}
-                          layout
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`px-3 py-1 rounded-full cursor-pointer text-sm transition-colors ${
-                            isSelected
-                              ? 'bg-primary text-primary-content font-medium shadow-sm'
-                              : 'bg-base-200 text-base-content hover:bg-base-300'
-                          }`}
-                          onClick={() => handleTagClick(tag.tagName)}
-                          type="button"
-                        >
-                          <span className="flex items-center">
-                            <span>{tag.tagName}</span>
-                            <span
-                              className={`ml-2 px-1.5 py-0.2 rounded-full text-xs ${
-                                isSelected
-                                  ? 'bg-primary-content/20 text-primary-content'
-                                  : 'bg-base-300 text-base-content/70'
-                              }`}
-                            >
-                              {tag.count}
-                            </span>
+              <div className="flex flex-wrap gap-2">
+                <AnimatePresence>
+                  {otherTags.map((tag) => {
+                    const isSelected = parentComponentStateValues.includes(tag.tagName);
+                    return (
+                      <motion.button
+                        key={tag.tagName}
+                        layout
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`px-3 py-1 rounded-full cursor-pointer text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-primary text-primary-content font-medium shadow-sm'
+                            : 'bg-base-200 text-base-content hover:bg-base-300'
+                        }`}
+                        onClick={() => handleTagClick(tag.tagName)}
+                        type="button"
+                      >
+                        <span className="flex items-center">
+                          <span>{tag.tagName}</span>
+                          <span
+                            className={`ml-2 px-1.5 py-0.2 rounded-full text-xs ${
+                              isSelected
+                                ? 'bg-primary-content/20 text-primary-content'
+                                : 'bg-base-300 text-base-content/70'
+                            }`}
+                          >
+                            {tag.count}
                           </span>
-                        </motion.button>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
           </>
@@ -247,42 +226,36 @@ export default function TagSelectionBox({
           )}
         </div>
         <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 bg-base-100 rounded-lg border border-base-300">
-          {parentComponentStateValues.length === 0 ? (
-            <span className="text-xs text-base-content/70 self-center pl-1">
-              タグが選択されていません（上のリストからクリックして選択）
-            </span>
-          ) : (
-            parentComponentStateValues.map((tag) => (
-              <motion.button
-                key={tag}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center px-3 py-1 text-sm font-medium bg-primary text-primary-content rounded-full cursor-pointer shadow-sm"
-                onClick={() => handleRemoveSelectedTag(tag)}
-                type="button"
+          {parentComponentStateValues.map((tag) => (
+            <motion.button
+              key={tag}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center px-3 py-1 text-sm font-medium bg-primary text-primary-content rounded-full cursor-pointer shadow-sm"
+              onClick={() => handleRemoveSelectedTag(tag)}
+              type="button"
+            >
+              {tag}
+              <svg
+                className="w-4 h-4 ml-1.5 text-primary-content/80 hover:text-primary-content"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                {tag}
-                <svg
-                  className="w-4 h-4 ml-1.5 text-primary-content/80 hover:text-primary-content"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <title>タグを削除</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </motion.button>
-            ))
-          )}
+                <title>タグを削除</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </motion.button>
+          ))}
         </div>
       </div>
     </div>
