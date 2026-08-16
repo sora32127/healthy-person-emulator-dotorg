@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface Tag {
+export interface Tag {
   tagName: string;
   count: number;
+  categoryName?: string | null;
 }
 
 interface TagSelectionBoxProps {
@@ -19,7 +20,6 @@ export default function TagSelectionBox({
 }: TagSelectionBoxProps) {
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<'count' | 'name'>('count');
-  const [highlightedTag, setHighlightedTag] = useState<string | null>(null);
 
   const handleTagClick = (tagName: string) => {
     if (parentComponentStateValues.includes(tagName)) {
@@ -27,34 +27,57 @@ export default function TagSelectionBox({
     } else {
       onTagsSelected([...parentComponentStateValues, tagName]);
     }
-    // ここでソートを強制的に適用
-    setSortBy((prevSort) => prevSort);
   };
 
   const handleRemoveSelectedTag = (tagName: string) => {
     onTagsSelected(parentComponentStateValues.filter((tag) => tag !== tagName));
   };
 
-  const filteredTags = allTagsOnlyForSearch
-    .filter((tag) => tag.tagName.toLowerCase().includes(searchText.toLowerCase()))
-    .sort((a, b) => {
+  // 検索 & ソート
+  const { recommendationTags, otherTags } = useMemo(() => {
+    const q = searchText.toLowerCase().trim();
+    const matches = (t: Tag) => !q || t.tagName.toLowerCase().includes(q);
+
+    const sortFn = (a: Tag, b: Tag) => {
       if (sortBy === 'count') {
         return b.count - a.count;
       }
       return a.tagName.localeCompare(b.tagName, 'ja');
-    });
+    };
+
+    const recs: Tag[] = [];
+    const others: Tag[] = [];
+
+    for (const tag of allTagsOnlyForSearch) {
+      if (!matches(tag)) continue;
+      if (tag.categoryName) {
+        recs.push(tag);
+      } else {
+        others.push(tag);
+      }
+    }
+
+    return {
+      recommendationTags: recs.sort(sortFn),
+      otherTags: others.sort(sortFn),
+    };
+  }, [allTagsOnlyForSearch, searchText, sortBy]);
+
+  const totalFilteredCount = recommendationTags.length + otherTags.length;
 
   return (
     <div className="mb-8 bg-base-200 p-6 rounded-lg shadow-md">
       <h3 className="text-xl font-bold mb-4">タグを選択してください</h3>
+
+      {/* 検索 & ソート */}
       <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
         <div className="relative flex-grow">
           <input
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="タグを検索"
-            className="input input-bordered w-full py-2 pl-10 pr-3 placeholder-slate-500"
+            className="input input-bordered w-full py-2 pl-10 pr-3"
+            aria-label="タグを検索"
           />
           <svg
             className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-base-content/50"
@@ -71,6 +94,15 @@ export default function TagSelectionBox({
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
+          {searchText && (
+            <button
+              type="button"
+              onClick={() => setSearchText('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-base-content/50 hover:text-base-content text-xs bg-base-300 rounded-full w-5 h-5 flex items-center justify-center"
+            >
+              ✕
+            </button>
+          )}
         </div>
         <select
           className="select select-bordered w-full sm:w-auto"
@@ -82,54 +114,133 @@ export default function TagSelectionBox({
           <option value="name">五十音順</option>
         </select>
       </div>
-      <div className="h-80 overflow-y-auto p-4 bg-base-100 rounded-lg">
-        <div className="flex flex-wrap gap-2">
-          <AnimatePresence>
-            {filteredTags.map((tag) => (
-              <motion.button
-                key={tag.tagName}
-                layout
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-3 py-1 rounded-full cursor-pointer text-sm ${
-                  parentComponentStateValues.includes(tag.tagName)
-                    ? 'bg-primary text-primary-content'
-                    : 'bg-base-200 text-base-content'
-                }`}
-                onClick={() => handleTagClick(tag.tagName)}
-                onMouseEnter={() => setHighlightedTag(tag.tagName)}
-                onMouseLeave={() => setHighlightedTag(null)}
-                type="button"
-              >
-                <span className="flex items-center">
-                  <span>{tag.tagName}</span>
-                  <span className="ml-2 bg-base-300 text-base-content px-2 py-0.5 rounded-full text-xs">
-                    {tag.count}
+
+      {/* タグ表示エリア */}
+      <div className="h-96 overflow-y-auto p-4 bg-base-100 rounded-lg space-y-4">
+        {totalFilteredCount === 0 ? (
+          <div className="text-center text-base-content/60 py-12">
+            該当するタグが見つかりませんでした
+          </div>
+        ) : (
+          <>
+            {/* 1. 推奨事項分類の枠 */}
+            {recommendationTags.length > 0 && (
+              <div className="bg-base-200/50 p-3.5 rounded-lg border border-base-300">
+                <div className="mb-2.5">
+                  <span className="font-bold text-xs text-base-content/80 tracking-wide">
+                    推奨事項分類
                   </span>
-                </span>
-              </motion.button>
-            ))}
-          </AnimatePresence>
-        </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <AnimatePresence>
+                    {recommendationTags.map((tag) => {
+                      const isSelected = parentComponentStateValues.includes(tag.tagName);
+                      return (
+                        <motion.button
+                          key={tag.tagName}
+                          layout
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`px-3 py-1 rounded-full cursor-pointer text-sm transition-colors ${
+                            isSelected
+                              ? 'bg-primary text-primary-content font-medium shadow-sm'
+                              : 'bg-base-100 text-base-content hover:bg-base-300 border border-base-300'
+                          }`}
+                          onClick={() => handleTagClick(tag.tagName)}
+                          type="button"
+                        >
+                          <span className="flex items-center">
+                            <span>{tag.tagName}</span>
+                            <span
+                              className={`ml-2 px-1.5 py-0.2 rounded-full text-xs ${
+                                isSelected
+                                  ? 'bg-primary-content/20 text-primary-content'
+                                  : 'bg-base-200 text-base-content/70'
+                              }`}
+                            >
+                              {tag.count}
+                            </span>
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* 2. 一般タグ */}
+            {otherTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <AnimatePresence>
+                  {otherTags.map((tag) => {
+                    const isSelected = parentComponentStateValues.includes(tag.tagName);
+                    return (
+                      <motion.button
+                        key={tag.tagName}
+                        layout
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`px-3 py-1 rounded-full cursor-pointer text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-primary text-primary-content font-medium shadow-sm'
+                            : 'bg-base-200 text-base-content hover:bg-base-300'
+                        }`}
+                        onClick={() => handleTagClick(tag.tagName)}
+                        type="button"
+                      >
+                        <span className="flex items-center">
+                          <span>{tag.tagName}</span>
+                          <span
+                            className={`ml-2 px-1.5 py-0.2 rounded-full text-xs ${
+                              isSelected
+                                ? 'bg-primary-content/20 text-primary-content'
+                                : 'bg-base-300 text-base-content/70'
+                            }`}
+                          >
+                            {tag.count}
+                          </span>
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {/* 選択したタグの一覧 */}
       <div className="mt-4">
-        <h4 className="font-semibold mb-2">選択したタグ:</h4>
-        <div className="flex flex-wrap gap-2 min-h-[2.5rem]">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="font-semibold text-sm">選択したタグ:</h4>
+          {parentComponentStateValues.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onTagsSelected([])}
+              className="text-xs text-error hover:underline"
+            >
+              すべてクリア
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 bg-base-100 rounded-lg border border-base-300">
           {parentComponentStateValues.map((tag) => (
             <motion.button
               key={tag}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="inline-flex items-center px-3 py-1 text-sm font-medium bg-primary text-primary-content rounded-full cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center px-3 py-1 text-sm font-medium bg-primary text-primary-content rounded-full cursor-pointer shadow-sm"
               onClick={() => handleRemoveSelectedTag(tag)}
               type="button"
             >
               {tag}
               <svg
-                className="w-4 h-4 ml-2"
+                className="w-4 h-4 ml-1.5 text-primary-content/80 hover:text-primary-content"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
