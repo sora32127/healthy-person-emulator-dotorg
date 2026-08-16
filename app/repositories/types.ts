@@ -151,7 +151,7 @@ export type SearchPostsResult = {
     orderby: SearchOrderBy;
     hasMore: boolean;
   };
-  tagCounts: Array<{ tagName: string; count: number }>;
+  tagCounts: TagCount[];
   results: Array<{
     postId: number;
     postTitle: string;
@@ -189,9 +189,20 @@ const CommentFeedDataSchema = z.object({
 });
 export type CommentFeedData = z.infer<typeof CommentFeedDataSchema>;
 
+const tagCategorySchema = z.object({
+  categoryId: z.number(),
+  categoryCode: z.string(),
+  categoryName: z.string(),
+  displayOrder: z.number(),
+});
+export type TagCategory = z.infer<typeof tagCategorySchema>;
+
 const tagCountSchema = z.object({
   tagName: z.string(),
   count: z.number(),
+  categoryCode: z.string().optional().nullable(),
+  categoryName: z.string().optional().nullable(),
+  displayOrder: z.number().optional().nullable(),
 });
 export type TagCount = z.infer<typeof tagCountSchema>;
 

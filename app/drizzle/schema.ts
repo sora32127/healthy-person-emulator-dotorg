@@ -278,3 +278,33 @@ export const dimDeletedPosts = sqliteTable('dim_deleted_posts', {
   blueskyPostUriOfFirstPost: text('bluesky_post_uri_of_first_post'),
   misskeyNoteIdOfFirstNote: text('misskey_note_id_of_first_note'),
 });
+
+// ============================================================
+// 16. dim_tag_categories
+// ============================================================
+export const dimTagCategories = sqliteTable('dim_tag_categories', {
+  categoryId: integer('category_id').primaryKey({ autoIncrement: true }),
+  categoryCode: text('category_code').notNull().unique(),
+  categoryName: text('category_name').notNull(),
+  displayOrder: integer('display_order').notNull(),
+});
+
+// ============================================================
+// 17. rel_tag_categories
+// ============================================================
+export const relTagCategories = sqliteTable(
+  'rel_tag_categories',
+  {
+    tagId: integer('tag_id')
+      .notNull()
+      .references(() => dimTags.tagId, { onDelete: 'cascade' }),
+    categoryId: integer('category_id')
+      .notNull()
+      .references(() => dimTagCategories.categoryId, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.tagId, table.categoryId] }),
+    index('idx_rel_tag_categories_tag_id').on(table.tagId),
+    index('idx_rel_tag_categories_category_id').on(table.categoryId),
+  ],
+);

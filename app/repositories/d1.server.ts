@@ -969,12 +969,26 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       const tags = await db
         .select({
           tagName: schema.dimTags.tagName,
-          count: count(),
+          count: count(schema.relPostTags.postId),
+          categoryCode: schema.dimTagCategories.categoryCode,
+          categoryName: schema.dimTagCategories.categoryName,
+          displayOrder: schema.dimTagCategories.displayOrder,
         })
         .from(schema.dimTags)
         .leftJoin(schema.relPostTags, eq(schema.dimTags.tagId, schema.relPostTags.tagId))
-        .groupBy(schema.dimTags.tagId, schema.dimTags.tagName)
-        .orderBy(desc(count()));
+        .leftJoin(schema.relTagCategories, eq(schema.dimTags.tagId, schema.relTagCategories.tagId))
+        .leftJoin(
+          schema.dimTagCategories,
+          eq(schema.relTagCategories.categoryId, schema.dimTagCategories.categoryId),
+        )
+        .groupBy(
+          schema.dimTags.tagId,
+          schema.dimTags.tagName,
+          schema.dimTagCategories.categoryCode,
+          schema.dimTagCategories.categoryName,
+          schema.dimTagCategories.displayOrder,
+        )
+        .orderBy(desc(count(schema.relPostTags.postId)));
 
       return tags;
     },
@@ -1299,10 +1313,26 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           .select({
             tagName: schema.dimTags.tagName,
             count: count(),
+            categoryCode: schema.dimTagCategories.categoryCode,
+            categoryName: schema.dimTagCategories.categoryName,
+            displayOrder: schema.dimTagCategories.displayOrder,
           })
           .from(schema.relPostTags)
           .innerJoin(schema.dimTags, eq(schema.relPostTags.tagId, schema.dimTags.tagId))
-          .groupBy(schema.dimTags.tagName)
+          .leftJoin(
+            schema.relTagCategories,
+            eq(schema.dimTags.tagId, schema.relTagCategories.tagId),
+          )
+          .leftJoin(
+            schema.dimTagCategories,
+            eq(schema.relTagCategories.categoryId, schema.dimTagCategories.categoryId),
+          )
+          .groupBy(
+            schema.dimTags.tagName,
+            schema.dimTagCategories.categoryCode,
+            schema.dimTagCategories.categoryName,
+            schema.dimTagCategories.displayOrder,
+          )
           .orderBy(desc(count()));
       } else {
         // With filters: count tags only for matching posts
@@ -1310,15 +1340,31 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           .select({
             tagName: schema.dimTags.tagName,
             count: count(),
+            categoryCode: schema.dimTagCategories.categoryCode,
+            categoryName: schema.dimTagCategories.categoryName,
+            displayOrder: schema.dimTagCategories.displayOrder,
           })
           .from(schema.relPostTags)
           .innerJoin(schema.dimTags, eq(schema.relPostTags.tagId, schema.dimTags.tagId))
+          .leftJoin(
+            schema.relTagCategories,
+            eq(schema.dimTags.tagId, schema.relTagCategories.tagId),
+          )
+          .leftJoin(
+            schema.dimTagCategories,
+            eq(schema.relTagCategories.categoryId, schema.dimTagCategories.categoryId),
+          )
           .where(
             sql`${schema.relPostTags.postId} IN (
               SELECT ${schema.dimPosts.postId} FROM ${schema.dimPosts} WHERE ${whereClause}
             )`,
           )
-          .groupBy(schema.dimTags.tagName)
+          .groupBy(
+            schema.dimTags.tagName,
+            schema.dimTagCategories.categoryCode,
+            schema.dimTagCategories.categoryName,
+            schema.dimTagCategories.displayOrder,
+          )
           .orderBy(desc(count()));
       }
 
@@ -1336,6 +1382,9 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         tagCounts: tagCountsQuery.map((t) => ({
           tagName: t.tagName,
           count: t.count,
+          categoryCode: t.categoryCode,
+          categoryName: t.categoryName,
+          displayOrder: t.displayOrder,
         })),
         results,
       };
