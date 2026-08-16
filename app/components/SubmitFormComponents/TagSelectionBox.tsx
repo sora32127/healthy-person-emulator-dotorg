@@ -186,7 +186,7 @@ export default function TagSelectionBox({
                     <span className="font-bold text-xs text-base-content/60 tracking-wide">
                       その他のタグ
                     </span>
-                    <span className="text-xs text-base-content/50">
+                    <span className="text-xs text-base-content/70">
                       {otherTags.length} 件
                     </span>
                   </div>
@@ -248,7 +248,7 @@ export default function TagSelectionBox({
         </div>
         <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 bg-base-100 rounded-lg border border-base-300">
           {parentComponentStateValues.length === 0 ? (
-            <span className="text-xs text-base-content/50 self-center pl-1">
+            <span className="text-xs text-base-content/70 self-center pl-1">
               タグが選択されていません（上のリストからクリックして選択）
             </span>
           ) : (
