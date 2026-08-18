@@ -5,7 +5,8 @@
 
 import type { CloudflareEnv } from '~/types/env';
 import { queryBigQuery } from '~/modules/bigquery.server';
-import { postToTwitter, tweetRaw } from './twitter.server';
+import { postToTwitter, tweetRaw, createPostText } from './twitter.server';
+import { postToXViaBuffer } from './buffer.server';
 import type { TwitterCredentials } from './types';
 
 function requireBigQueryCredentials(env: CloudflareEnv): string {
@@ -57,17 +58,25 @@ export async function reportLegendary(env: CloudflareEnv): Promise<{ processed: 
     return { processed: articles.length };
   }
 
-  const creds = await getTwitterCreds(env);
+  const bufferApiKey = ((await env.SS_BUFFER_API_KEY?.get()) ?? '').trim();
+  const creds = bufferApiKey ? null : await getTwitterCreds(env);
+
   for (const article of articles) {
     const postId = article.post_id as number;
     const postTitle = article.post_title as string;
     const postUrl = `https://healthy-person-emulator.org/archives/${postId}`;
 
-    await postToTwitter(creds, {
-      postTitle,
-      postUrl,
-      messageType: 'legendary',
-    });
+    if (bufferApiKey) {
+      await postToXViaBuffer(bufferApiKey, {
+        text: createPostText(postTitle, postUrl, 'legendary'),
+      });
+    } else {
+      await postToTwitter(creds!, {
+        postTitle,
+        postUrl,
+        messageType: 'legendary',
+      });
+    }
   }
 
   return { processed: articles.length };
@@ -106,8 +115,13 @@ export async function reportWeekly(env: CloudflareEnv): Promise<{ posted: boolea
     return { posted: false };
   }
 
-  const creds = await getTwitterCreds(env);
-  await tweetRaw(creds, tweetText);
+  const bufferApiKey = ((await env.SS_BUFFER_API_KEY?.get()) ?? '').trim();
+  if (bufferApiKey) {
+    await postToXViaBuffer(bufferApiKey, { text: tweetText });
+  } else {
+    const creds = await getTwitterCreds(env);
+    await tweetRaw(creds, tweetText);
+  }
 
   return { posted: true };
 }

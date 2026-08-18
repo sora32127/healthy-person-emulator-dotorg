@@ -5,9 +5,10 @@
 
 import type { CloudflareEnv } from '~/types/env';
 import type { SocialPostParams, SocialPostResult } from './types';
-import { postToTwitter } from './twitter.server';
+import { postToTwitter, createPostText } from './twitter.server';
 import { postToBluesky } from './bluesky.server';
 import { postToMisskey } from './misskey.server';
+import { postToXViaBuffer } from './buffer.server';
 
 export async function postToSocial(
   env: CloudflareEnv,
@@ -21,13 +22,7 @@ export async function postToSocial(
 
   switch (params.platform) {
     case 'twitter': {
-      const creds = {
-        consumerKey: await env.SS_TWITTER_CK.get(),
-        consumerSecret: await env.SS_TWITTER_CS.get(),
-        accessToken: await env.SS_TWITTER_AT.get(),
-        accessTokenSecret: await env.SS_TWITTER_ATS.get(),
-      };
-      return postToTwitter(creds, params);
+      return postToX(env, params);
     }
     case 'bluesky': {
       const creds = {
@@ -43,4 +38,31 @@ export async function postToSocial(
     default:
       throw new Error(`Unknown platform: ${params.platform}`);
   }
+}
+
+/**
+ * X (Twitter) 投稿。Buffer APIキーが設定されていれば Buffer 経由、
+ * なければ従来の X API 直接投稿にフォールバックする。
+ */
+async function postToX(env: CloudflareEnv, params: SocialPostParams): Promise<SocialPostResult> {
+  // SS_BUFFER_API_KEY binding が未設定の環境（テスト・一部環境）でも動くよう optional chaining で安全化
+  const bufferApiKey = ((await env.SS_BUFFER_API_KEY?.get()) ?? '').trim();
+
+  if (bufferApiKey) {
+    const text = createPostText(params.postTitle, params.postUrl, params.messageType);
+    const { bufferPostId } = await postToXViaBuffer(bufferApiKey, {
+      text,
+      imageUrl: params.ogUrl || undefined,
+    });
+    return { providerPostId: bufferPostId, viaBuffer: true };
+  }
+
+  // フォールバック: X API 直接投稿
+  const creds = {
+    consumerKey: await env.SS_TWITTER_CK.get(),
+    consumerSecret: await env.SS_TWITTER_CS.get(),
+    accessToken: await env.SS_TWITTER_AT.get(),
+    accessTokenSecret: await env.SS_TWITTER_ATS.get(),
+  };
+  return postToTwitter(creds, params);
 }

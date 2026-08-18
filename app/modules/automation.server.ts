@@ -10,6 +10,7 @@ import { nowUTC } from '../drizzle/utils';
 import type { CloudflareEnv } from '../types/env';
 
 import { postToSocial } from './social/post.server';
+import { waitForBufferPostSent } from './social/buffer.server';
 import { PLATFORMS } from './social/types';
 import type { Platform } from './social/types';
 import { PROGRAM_TEST_PATTERN, ensureResvgWasm, generateOgpPng, parseTable } from './ogp.server';
@@ -270,9 +271,36 @@ export async function handleSocialPostConsumer(
       })
       .where(eq(socialPostJobs.id, payload.job_id));
 
-    // Also update dim_posts with the provider post ID
+    // dim_posts の共有フラグ/投稿ID更新
+    // Buffer 経由 (X) は providerPostId が Buffer Post ID のため、
+    // dim_posts.tweet_id_of_first_tweet(実XツイートID) には書き込まない。
+    // 共有済みフラグのみ立て、実X ID は下の Buffer 送信完了待ちで回収する。
     if (providerPostId) {
-      await updateDimPostsSocialId(db, payload.post_id, payload.platform, providerPostId);
+      await updateDimPostsSocialId(
+        db,
+        payload.post_id,
+        payload.platform,
+        providerPostId,
+        result.viaBuffer === true,
+      );
+    }
+
+    // Buffer 経由 (X) のみ: Buffer 投稿が sent になるまで待ち、実XツイートIDを回収して
+    // 公開リンク (SNSLinks) 用の dim_posts.tweet_id_of_first_tweet を更新する。
+    if (result.viaBuffer === true && providerPostId) {
+      const bufferApiKey = ((await env.SS_BUFFER_API_KEY?.get()) ?? '').trim();
+      if (bufferApiKey) {
+        const xStatusId = await waitForBufferPostSent(bufferApiKey, providerPostId);
+        if (xStatusId) {
+          await db.run(
+            sql`UPDATE dim_posts SET tweet_id_of_first_tweet = ${xStatusId} WHERE post_id = ${payload.post_id} AND tweet_id_of_first_tweet IS NULL`,
+          );
+        } else {
+          console.log(
+            `[automation] Buffer 投稿 ${providerPostId} の実XツイートID回収に失敗（公開リンクは付与されません）`,
+          );
+        }
+      }
     }
 
     console.log(
@@ -399,12 +427,21 @@ async function updateDimPostsSocialId(
   postId: number,
   platform: Platform,
   providerPostId: string,
+  viaBuffer = false,
 ): Promise<void> {
   const columnMap: Record<Platform, string> = {
     twitter: 'tweet_id_of_first_tweet',
     bluesky: 'bluesky_post_uri_of_first_post',
     activitypub: 'misskey_note_id_of_first_note',
   };
+
+  if (viaBuffer) {
+    // Buffer 経由: 実XツイートIDは未確定なので、共有済みフラグのみ立てる
+    await db.run(
+      sql`UPDATE dim_posts SET is_sns_shared = 1 WHERE post_id = ${postId} AND is_sns_shared = 0`,
+    );
+    return;
+  }
 
   // Only update if not already set (first post only)
   await db.run(

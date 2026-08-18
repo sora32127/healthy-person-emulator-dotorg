@@ -82,6 +82,12 @@ binding = "SS_AUTOMATION_DRY_RUN"
 store_id = "52f3d1be601046039169fad4f66570d1"
 secret_name = "AUTOMATION_DRY_RUN"
 
+# Buffer API key (値は Cloudflare ダッシュボードの Secrets Store → BUFFER_API_KEY で設定)
+[[secrets_store_secrets]]
+binding = "SS_BUFFER_API_KEY"
+store_id = "52f3d1be601046039169fad4f66570d1"
+secret_name = "BUFFER_API_KEY"
+
 # GCS_CREDENTIALS is set via `wrangler secret put GCS_CREDENTIALS`
 
 # --- Migrations: AutomationContainer は v3 で削除済み（OGP生成は Worker 内 SVG 生成に移行） ---
