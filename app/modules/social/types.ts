@@ -11,6 +11,8 @@ export interface SocialPostParams {
 
 export interface SocialPostResult {
   providerPostId: string;
+  /** Buffer 経由での投稿 (X) かどうか。true なら providerPostId は Buffer の Post ID。 */
+  viaBuffer?: boolean;
 }
 
 export interface SocialDeleteParams {

@@ -37,6 +37,7 @@ export interface CloudflareEnv {
   SS_BLUESKY_USER: { get(): Promise<string> };
   SS_BLUESKY_PASSWORD: { get(): Promise<string> };
   SS_MISSKEY_TOKEN: { get(): Promise<string> };
+  SS_BUFFER_API_KEY: { get(): Promise<string> };
   SS_AUTOMATION_DRY_RUN: { get(): Promise<string> };
   // GCS export (D1 → GCS Parquet) — SA key JSON stored as Worker Secret
   GCS_CREDENTIALS?: string;

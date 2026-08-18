@@ -28,6 +28,21 @@ export async function deletePost(
     throw new Error(`記事 ID ${postId} が見つかりません`);
   }
 
+  // 2.0 social_post_jobs から投稿IDを取得する
+  // 下のバッチで social_post_jobs を削除してしまうため、先に Buffer Post ID を確保しておく
+  // （Buffer 経由の X 投稿は provider_post_id に Buffer Post ID が入る）
+  const jobRows = await db
+    .select({
+      platform: socialPostJobs.platform,
+      providerPostId: socialPostJobs.providerPostId,
+    })
+    .from(socialPostJobs)
+    .where(eq(socialPostJobs.postId, postId));
+  const jobProviderIds: Record<string, string | undefined> = {};
+  for (const r of jobRows) {
+    jobProviderIds[r.platform] = r.providerPostId ?? undefined;
+  }
+
   // 2. トランザクション内でDB操作
   await db.batch([
     // dim_deleted_posts に記録を挿入
@@ -65,8 +80,10 @@ export async function deletePost(
 
   // 5. SNS投稿削除
   const snsEntries: Array<{ platform: Platform; providerPostId: string }> = [];
-  if (post.tweetIdOfFirstTweet) {
-    snsEntries.push({ platform: 'twitter', providerPostId: post.tweetIdOfFirstTweet });
+  // twitter: Buffer Post ID があれば優先（Buffer 経由削除）。従来の X ID（実ツイートID）は従来APIで削除
+  const twitterDeleteId = jobProviderIds['twitter'] ?? post.tweetIdOfFirstTweet;
+  if (twitterDeleteId) {
+    snsEntries.push({ platform: 'twitter', providerPostId: twitterDeleteId });
   }
   if (post.blueskyPostUriOfFirstPost) {
     snsEntries.push({ platform: 'bluesky', providerPostId: post.blueskyPostUriOfFirstPost });
