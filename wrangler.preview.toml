@@ -103,4 +103,5 @@ fallthrough = true
 
 [vars]
 BASE_URL = "https://preview.healthy-person-emulator.org"
+BUFFER_CHANNEL_ID_X = ""
 ADMIN_EMAILS = "sora32127@gmail.com"

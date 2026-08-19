@@ -67,9 +67,11 @@ export async function reportLegendary(env: CloudflareEnv): Promise<{ processed: 
     const postUrl = `https://healthy-person-emulator.org/archives/${postId}`;
 
     if (bufferApiKey) {
-      await postToXViaBuffer(bufferApiKey, {
-        text: createPostText(postTitle, postUrl, 'legendary'),
-      });
+      await postToXViaBuffer(
+        bufferApiKey,
+        { text: createPostText(postTitle, postUrl, 'legendary') },
+        { channelId: env.BUFFER_CHANNEL_ID_X?.trim() || undefined },
+      );
     } else {
       await postToTwitter(creds!, {
         postTitle,
@@ -117,7 +119,11 @@ export async function reportWeekly(env: CloudflareEnv): Promise<{ posted: boolea
 
   const bufferApiKey = ((await env.SS_BUFFER_API_KEY?.get()) ?? '').trim();
   if (bufferApiKey) {
-    await postToXViaBuffer(bufferApiKey, { text: tweetText });
+    await postToXViaBuffer(
+    bufferApiKey,
+    { text: tweetText },
+    { channelId: env.BUFFER_CHANNEL_ID_X?.trim() || undefined },
+  );
   } else {
     const creds = await getTwitterCreds(env);
     await tweetRaw(creds, tweetText);

@@ -83,6 +83,17 @@ describe('postToXViaBuffer', () => {
     await expect(postToXViaBuffer(API_KEY, { text: 'x' })).rejects.toThrow(/Channel not found/);
   });
 
+  it('channelId 指定時はチャンネル解決をスキップし、createPost のみ呼ぶ', async () => {
+    const calls = mockFetchSequence([
+      { body: { data: { createPost: { post: { id: 'buf-cache-1' } } } } },
+    ]);
+    const res = await postToXViaBuffer(API_KEY, { text: 'x' }, { channelId: 'ch-x' });
+    expect(res.bufferPostId).toBe('buf-cache-1');
+    expect(calls.length).toBe(1); // 解決なし・createPost のみ
+    const body = JSON.parse(calls[0].init.body as string);
+    expect(body.variables.input.channelId).toBe('ch-x');
+  });
+
   it('Xチャンネルが見つからない場合は throw する', async () => {
     mockFetchSequence([
       { body: { data: { account: { organizations: [{ id: 'org1' }] } } } },
