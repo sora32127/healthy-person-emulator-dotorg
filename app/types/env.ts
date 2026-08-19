@@ -13,6 +13,8 @@ export interface CloudflareEnv {
   GOOGLE_CLIENT_SECRET: string;
   CLIENT_URL: string;
   BASE_URL: string;
+  /** Buffer X チャンネルID（設定済みなら毎回の解決をスキップして Buffer API 呼び出しを削減） */
+  BUFFER_CHANNEL_ID_X?: string;
   CF_TURNSTILE_SECRET_KEY: string;
   CF_TURNSTILE_SITEKEY: string;
 

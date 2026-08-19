@@ -95,12 +95,16 @@ export interface BufferPostResult {
 /**
  * Buffer 経由で X に即時投稿する。画像は公開URL (R2) を渡す。
  * 成功時は Buffer の Post ID を返す（X のツイートIDではない）。
+ *
+ * opts.channelId を渡すとチャンネル解決（Buffer API 2リクエスト）をスキップし、
+ * リクエスト数を削減できる（大量投稿時のレート制限対策）。
  */
 export async function postToXViaBuffer(
   apiKey: string,
   params: BufferPostParams,
+  opts?: { channelId?: string },
 ): Promise<BufferPostResult> {
-  const channelId = await resolveXChannelId(apiKey);
+  const channelId = opts?.channelId?.trim() || (await resolveXChannelId(apiKey));
 
   const assets = params.imageUrl
     ? [{ image: { url: params.imageUrl } }]

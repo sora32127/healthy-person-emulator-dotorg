@@ -50,10 +50,15 @@ async function postToX(env: CloudflareEnv, params: SocialPostParams): Promise<So
 
   if (bufferApiKey) {
     const text = createPostText(params.postTitle, params.postUrl, params.messageType);
-    const { bufferPostId } = await postToXViaBuffer(bufferApiKey, {
-      text,
-      imageUrl: params.ogUrl || undefined,
-    });
+    const { bufferPostId } = await postToXViaBuffer(
+      bufferApiKey,
+      {
+        text,
+        imageUrl: params.ogUrl || undefined,
+      },
+      // チャンネルIDが設定済みなら解決をスキップ（Buffer API リクエスト削減）
+      { channelId: env.BUFFER_CHANNEL_ID_X?.trim() || undefined },
+    );
     return { providerPostId: bufferPostId, viaBuffer: true };
   }
 
