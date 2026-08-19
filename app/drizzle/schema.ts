@@ -290,6 +290,18 @@ export const dimTagCategories = sqliteTable('dim_tag_categories', {
 });
 
 // ============================================================
+// 18. dim_faq_items
+// ============================================================
+export const dimFaqItems = sqliteTable('dim_faq_items', {
+  faqId: integer('faq_id').primaryKey({ autoIncrement: true }),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  displayOrder: integer('display_order').notNull().default(0),
+  createdAtUtc: text('created_at_utc').notNull(),
+  updatedAtUtc: text('updated_at_utc').notNull(),
+});
+
+// ============================================================
 // 17. rel_tag_categories
 // ============================================================
 export const relTagCategories = sqliteTable(
