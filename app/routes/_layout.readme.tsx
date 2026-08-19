@@ -1,8 +1,11 @@
-import type { MetaFunction } from 'react-router';
-import { NavLink } from 'react-router';
+import { NavLink, useLoaderData } from 'react-router';
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
 import ReactMarkdown from 'react-markdown';
 import { H1, H2, H3 } from '~/components/Headings';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
+import { drizzle } from 'drizzle-orm/d1';
+import { asc } from 'drizzle-orm';
+import { dimFaqItems } from '~/drizzle/schema';
 
 // FAQデータの型定義
 interface FAQItem {
@@ -10,72 +13,21 @@ interface FAQItem {
   answer: string;
 }
 
-// FAQデータを配列として管理
-const faqData: FAQItem[] = [
-  {
-    question: '「健常者エミュレータ事例集」の取り組みの根底にある考え方を簡単に説明してください',
-    answer: `管理人(contradiction29)は以下のようなことを考えています。
-- 社会生活やコミュニケーションに関する知識など、暗黙知に分類される知識は、社会的な生活を送る上で重要です。これらの知識は障害の有無・経歴・職業・社会的なステータスに関わらず、すべての人間にとって必要な知識であり、知識に対するアクセスは幸福を追求する上で必要な権利です。
-- 一方、暗黙知は「暗黙の了解」に止まることが多いため言語化される機会が少なく、仮に言語化されたとしても、近い属性を持つ仲間内など、閉鎖的なコミュニティの中で共有されるに止まるため、全体的に見れば供給が不足しています。この状態は、知識が欠乏した状態を固定化する方向に作用し、個人がすでに受けている阻害や社会生活環境の悪化を促進させてしまいます。
-- 健常者エミュレータ事例集は、社会的生活を送る上で重要な暗黙知を言語化する仕組みを提供し、暗黙知を共有するプラットフォームを構築することで、知識の欠乏を集団で補い、ユーザー全体でより良い生活を目指していく相互補完的な試みです。
-`,
-  },
-  {
-    question: 'ライフハックを投稿してもかまいませんか？',
-    answer:
-      '大丈夫です。ライフハックにより確保される「健康」は、健常者として生活するために必要な要素です',
-  },
-  {
-    question: '投稿しても大丈夫かどうか不安です',
-    answer:
-      'まずは投稿してみてください。あとから編集することが可能です。詳しくは当ガイドラインをご覧ください。',
-  },
-  {
-    question: 'ウケ狙いで書いている奴がいてキモいんですが...',
-    answer:
-      '集合知の構築という目的の前では、動機の違いなど電子顕微鏡で覗かないと気づかないようなミジンコ未満の些細な違いでしかありません。我々は書かれたものそれ自体のみを考慮するべきです。ウケ狙いで書かれた名文もあるし、正義のために書かれた駄文もあるのです。評価は歴史が行ってくれるでしょう。ウケ狙いでも気にせず投稿してください。それはそれとしてガイドラインに違反したものは管理人の方で削除します。',
-  },
-  {
-    question: '言論の自由を否定する自由はありますか？',
-    answer: 'ありません。言論の自由を否定するような投稿は管理人により削除されます。',
-  },
-  {
-    question: '人間から「健常性」を一つずつはぎ取っていくと何が残りますか？',
-    answer: '**悪**',
-  },
-  {
-    question: '投稿したページのタイトルを変えたいです。',
-    answer:
-      '編集することが可能です。ユーザー登録を実施し、編集を行ってください。詳しくは当ガイドラインをご覧ください。',
-  },
-  {
-    question: '投稿したページを削除したいです。',
-    answer: '管理人のXのDMにご一報ください。',
-  },
-  {
-    question: '経験をうまく整理できず、記事にできません。どうすればいいですか？',
-    answer:
-      '一案ですが、コミュニティで相談してみてはいかがでしょうか。詳しくは当ガイドラインをご覧ください。または、投稿フォームから「知識募集」のフォーマットで投稿してみるといいかもしれません。',
-  },
-  {
-    question: '荒らしに対してどのような対策を行っていますか？',
-    answer: `2024年12月31日現在、複数種類の対策を組み合わせて荒らし対策を実施しています。
+export async function loader({ request }: LoaderFunctionArgs) {
+  const env = (globalThis as any).__cloudflareEnv;
+  const db = drizzle(env.DB);
 
-- IPアドレスブロック：故意にガイドラインを違反する企図のある投稿が繰り返し行われた場合、投稿者のIPアドレスをブロックし、サイトへのアクセスを遮断します。
-- AIによるガイドライン違反の自動検知：投稿内容をAIにより自動的に分析し、ガイドライン違反と判断された場合、SNSへの自動投稿が停止されます。
-- 投稿フォームに対するストップワード機能：特定の単語が含まれている場合、投稿することができないようになっています。
-- リクエスト検証の実施：リクエストの正当性を確認するための検証を実施し、プログラマティックなPOSTリクエストを遮断します。`,
-  },
-  {
-    question: 'サイトの表示が崩れているのを発見しました。どこに連絡すればよいでしょうか？',
-    answer:
-      '発見ありがとうございます！[Discord](https://t.co/SOg8HEB1Ga)（当ガイドラインに招待リンクがあります）の「#エンジニアリング議論」チャンネルで連絡をいただくか、管理人の[XのDM](https://x.com/messages/compose?recipient_id=1249916069344473088)までご連絡ください。',
-  },
-  {
-    question: 'AIから健常者エミュレータ事例集を検索できますか？',
-    answer: 'できます。詳細は[公開API仕様](/api-docs)を参照してください。',
-  },
-];
+  const faqs = await db
+    .select({
+      question: dimFaqItems.question,
+      answer: dimFaqItems.answer,
+    })
+    .from(dimFaqItems)
+    .orderBy(asc(dimFaqItems.displayOrder));
+
+  return { faqs };
+}
+
 
 // FAQアイテムコンポーネント
 function FAQItem({ faq, isLast }: { faq: FAQItem; isLast: boolean }) {
@@ -95,18 +47,23 @@ function FAQItem({ faq, isLast }: { faq: FAQItem; isLast: boolean }) {
 }
 
 // FAQセクションコンポーネント
-function FAQSection() {
+function FAQSection({ faqs }: { faqs: FAQItem[] }) {
   return (
     <div>
       <H2>よくある質問</H2>
-      {faqData.map((faq, index) => (
-        <FAQItem key={index} faq={faq} isLast={index === faqData.length - 1} />
-      ))}
+      {faqs.length === 0 ? (
+        <p>現在よくある質問は登録されていません。</p>
+      ) : (
+        faqs.map((faq, index) => (
+          <FAQItem key={index} faq={faq} isLast={index === faqs.length - 1} />
+        ))
+      )}
     </div>
   );
 }
 
 export default function Component() {
+  const { faqs } = useLoaderData<typeof loader>();
   return (
     <div className="postContent">
       <H1>サイト説明</H1>
@@ -244,7 +201,7 @@ export default function Component() {
         </li>
       </ul>
 
-      <FAQSection />
+      <FAQSection faqs={faqs} />
     </div>
   );
 }
