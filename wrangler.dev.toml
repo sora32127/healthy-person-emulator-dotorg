@@ -104,4 +104,4 @@ fallthrough = true
 
 [vars]
 BASE_URL = "https://healthy-person-emulator.org"
-BUFFER_CHANNEL_ID_X = ""
+BUFFER_CHANNEL_ID_X = "6a84478accaf649a67cb60bc"
