@@ -10,8 +10,8 @@ interface SupportCheckoutModalProps {
   amountYen: number;
   supporterName: string;
   supportMessage: string;
+  onRequireTurnstile?: () => void;
 }
-
 
 /**
  * サポートページの投げ銭決済をモーダル内に埋め込む（Stripe Embedded Checkout）。
@@ -23,6 +23,7 @@ export function SupportCheckoutModal({
   amountYen,
   supporterName,
   supportMessage,
+  onRequireTurnstile,
 }: SupportCheckoutModalProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const checkoutRef = useRef<StripeEmbeddedCheckout | null>(null);
@@ -53,6 +54,12 @@ export function SupportCheckoutModal({
       };
 
       if (cancelledRef.current) return;
+      // 認証未完了（Turnstile未検証）の場合は Turnstile 認証を要求する
+      if (res.status === 401) {
+        setCheckoutStarted(false);
+        onRequireTurnstile?.();
+        return;
+      }
       if (!data.success || !data.clientSecret || !data.publishableKey) {
         toast.error(data.message || '決済セッションを生成できませんでした');
         setCheckoutStarted(false);
@@ -109,8 +116,8 @@ export function SupportCheckoutModal({
       {!checkoutStarted ? (
         <div className="my-2">
           <p className="text-sm">
-            <span className="font-bold">{supporterName}</span> さんとして ¥{amountYen.toLocaleString()}{' '}
-            を送付します。
+            <span className="font-bold">{supporterName}</span> さんとして ¥
+            {amountYen.toLocaleString()} を送付します。
           </p>
           {supportMessage && <p className="text-sm mt-1">メッセージ: {supportMessage}</p>}
           <div className="modal-action">

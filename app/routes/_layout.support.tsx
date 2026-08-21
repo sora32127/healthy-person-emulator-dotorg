@@ -1,30 +1,38 @@
 import type { MetaFunction } from 'react-router';
 import { useLoaderData } from 'react-router';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { TurnstileModal } from '~/components/TurnstileModal';
 import { H1 } from '~/components/Headings';
 import { SupportCheckoutModal } from '~/components/SupportCheckoutModal';
 import { getSupportMessages } from '~/modules/db.server';
+import { getTurnStileSiteKey } from '~/modules/security.server';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 
 export async function loader() {
-  const messages = await getSupportMessages();
-  return { messages };
+  const [messages, CF_TURNSTILE_SITEKEY] = await Promise.all([
+    getSupportMessages(),
+    getTurnStileSiteKey(),
+  ]);
+  return { messages, CF_TURNSTILE_SITEKEY };
 }
 
 type LoaderData = {
   messages: Awaited<ReturnType<typeof getSupportMessages>>;
+  CF_TURNSTILE_SITEKEY: string;
 };
 
 const NAME_MAX = 30;
 const MESSAGE_MAX = 200;
 
 export default function BeSponsor() {
-  const { messages } = useLoaderData<typeof loader>() as LoaderData;
+  const { messages, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>() as LoaderData;
 
   const [supporterName, setSupporterName] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
   const [amountYen, setAmountYen] = useState<number>(500);
   const [showModal, setShowModal] = useState(false);
+  const [showTurnstileModal, setShowTurnstileModal] = useState(false);
 
   const total = messages.reduce((sum, m) => sum + m.amountYen, 0);
   const isFormValid =
@@ -33,6 +41,27 @@ export default function BeSponsor() {
     supportMessage.length <= MESSAGE_MAX &&
     Number.isInteger(amountYen) &&
     amountYen >= 100;
+
+  // Turnstile検証成功後、isValidUser セッションを立てて決済確認画面へ戻す
+  const handleTurnstileSuccess = async (token: string) => {
+    const formData = new FormData();
+    formData.append('token', token);
+    try {
+      const response = await fetch('/api/turnstile-verify', { method: 'POST', body: formData });
+      const data = (await response.json()) as { success?: boolean; message?: string };
+      if (!response.ok || !data.success) {
+        toast.error(data.message || 'ユーザー認証に失敗しました');
+        return false;
+      }
+
+      setShowTurnstileModal(false);
+      setShowModal(true);
+      return true;
+    } catch {
+      toast.error('ユーザー認証に失敗しました');
+      return false;
+    }
+  };
 
   return (
     <div>
@@ -110,9 +139,14 @@ export default function BeSponsor() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {messages.map((m) => (
-              <div key={`${m.supporterName}-${m.paidAtUtc.toISOString()}`} className="bg-base-100 p-4 mb-4">
+              <div
+                key={`${m.supporterName}-${m.paidAtUtc.toISOString()}`}
+                className="bg-base-100 p-4 mb-4"
+              >
                 <div className="flex items-center gap-2">
-                  <span className="badge badge-primary text-sm">¥{m.amountYen.toLocaleString()}</span>
+                  <span className="badge badge-primary text-sm">
+                    ¥{m.amountYen.toLocaleString()}
+                  </span>
                   <p className="font-bold">{m.supporterName} さん</p>
                 </div>
                 {m.supportMessage && (
@@ -130,6 +164,18 @@ export default function BeSponsor() {
         amountYen={amountYen}
         supporterName={supporterName.trim()}
         supportMessage={supportMessage.trim()}
+        onRequireTurnstile={() => {
+          setShowModal(false);
+          setShowTurnstileModal(true);
+        }}
+      />
+
+      <TurnstileModal
+        isOpen={showTurnstileModal}
+        onClose={() => setShowTurnstileModal(false)}
+        siteKey={CF_TURNSTILE_SITEKEY}
+        onSuccess={handleTurnstileSuccess}
+        reloadOnSuccess={false}
       />
     </div>
   );
