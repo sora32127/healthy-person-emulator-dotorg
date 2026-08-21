@@ -12,8 +12,8 @@ export interface CloudflareEnv {
   // Stripe（1回限りの支払い / SuperComment）
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
-  /** クライアント側で Embedded Checkout を埋め込むための公開可能キー (pk_test_...) */
-  STRIPE_PUBLISHABLE_KEY?: string;
+  /** クライアント側で Embedded Checkout を埋め込むための公開可能キー */
+  STRIPE_PUBLISHABLE_KEY: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   CLIENT_URL: string;

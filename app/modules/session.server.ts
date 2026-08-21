@@ -22,7 +22,7 @@ export function initSessionStorage(sessionSecret: string) {
     cookie: {
       name: '__healthy_person_emulator',
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days (seconds)
       path: '/',
       sameSite: 'lax',
       secrets: [sessionSecret],
@@ -31,11 +31,22 @@ export function initSessionStorage(sessionSecret: string) {
   });
 }
 
+export function resolveSessionSecret(env: {
+  SESSION_SECRET?: string;
+  HPE_SESSION_SECRET?: string;
+}) {
+  const secret = env.SESSION_SECRET || env.HPE_SESSION_SECRET;
+  if (!secret) {
+    throw new Error('SESSION_SECRET or HPE_SESSION_SECRET is not set');
+  }
+  return secret;
+}
+
 function ensureStorage() {
   if (!_sessionStorage) {
     const env = (globalThis as any).__cloudflareEnv;
     if (env) {
-      initSessionStorage(env.SESSION_SECRET || env.HPE_SESSION_SECRET || 's3cr3t');
+      initSessionStorage(resolveSessionSecret(env));
     }
     if (!_sessionStorage) {
       throw new Error('Session storage not initialized and no env available.');

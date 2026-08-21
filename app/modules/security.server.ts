@@ -57,16 +57,12 @@ export async function validateRequest(token: string, ipAddress: string) {
   formData.append('response', token || '');
   formData.append('remoteip', ipAddress);
   formData.append('idempotency_key', idempotencyKey);
-  for (const [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
 
   const res = await fetch(CF_TURNSTILE_VERIFY_ENDPOINT, {
     method: 'POST',
     body: formData,
   });
   const outCome = (await res.json()) as { success: boolean };
-  console.log('outCome', outCome);
   if (outCome.success) {
     return true;
   }

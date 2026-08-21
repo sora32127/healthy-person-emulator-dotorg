@@ -24,6 +24,8 @@ type LoaderData = {
 
 const NAME_MAX = 30;
 const MESSAGE_MAX = 200;
+const AMOUNT_MIN_YEN = 50;
+const AMOUNT_MAX_YEN = 1_000_000;
 
 export default function BeSponsor() {
   const { messages, CF_TURNSTILE_SITEKEY } = useLoaderData<typeof loader>() as LoaderData;
@@ -40,7 +42,8 @@ export default function BeSponsor() {
     supporterName.trim().length <= NAME_MAX &&
     supportMessage.length <= MESSAGE_MAX &&
     Number.isInteger(amountYen) &&
-    amountYen >= 100;
+    amountYen >= AMOUNT_MIN_YEN &&
+    amountYen <= AMOUNT_MAX_YEN;
 
   // Turnstile検証成功後、isValidUser セッションを立てて決済確認画面へ戻す
   const handleTurnstileSuccess = async (token: string) => {
@@ -112,8 +115,9 @@ export default function BeSponsor() {
           <input
             id="support-amount"
             type="number"
-            min={100}
-            step={100}
+            min={AMOUNT_MIN_YEN}
+            max={AMOUNT_MAX_YEN}
+            step={1}
             value={amountYen}
             onChange={(e) => setAmountYen(Number(e.target.value))}
             className="input input-bordered w-full"
@@ -125,7 +129,7 @@ export default function BeSponsor() {
         </button>
         {!isFormValid && (
           <p className="text-error text-sm">
-            お名前を入力し、金額を{amountYen < 100 ? '100円以上' : '整数'}にしてください。
+            お名前を入力し、金額を50円以上1,000,000円以下の整数にしてください。
           </p>
         )}
       </form>

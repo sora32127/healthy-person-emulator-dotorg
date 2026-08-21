@@ -1,5 +1,5 @@
-import { getJudgeWelcomedByGenerativeAI, initSecurity } from './security.server';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { getJudgeWelcomedByGenerativeAI, initSecurity, validateRequest } from './security.server';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const WELCOMED_RESULT = {
   isWelcomed: true,
@@ -23,7 +23,25 @@ function initWithAI(response?: unknown) {
 
 describe('security.server', () => {
   beforeAll(() => vi.spyOn(console, 'warn').mockImplementation(() => {}));
+  afterEach(() => vi.unstubAllGlobals());
   afterAll(() => vi.restoreAllMocks());
+
+  it('Turnstileの秘密情報をログ出力しない', async () => {
+    initWithAI();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true }), {
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    await expect(validateRequest('turnstile-token', '192.0.2.1')).resolves.toBe(true);
+    expect(log).not.toHaveBeenCalled();
+    log.mockRestore();
+  });
 
   it('Mistralの構造化出力で非歓迎判定する', async () => {
     const result = {

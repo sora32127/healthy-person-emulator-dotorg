@@ -85,6 +85,7 @@ describe('stripe.server checkout session', () => {
     (globalThis as any).__cloudflareEnv = {
       STRIPE_SECRET_KEY: 'sk_test_secret',
       STRIPE_PUBLISHABLE_KEY: 'pk_test_public',
+      BASE_URL: 'https://preview.healthy-person-emulator.org',
     };
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -100,8 +101,7 @@ describe('stripe.server checkout session', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const session = await createSupportCheckoutSession({
-      origin: 'https://preview.healthy-person-emulator.org',
-      amountYen: 100,
+      amountYen: 51,
       supporterName: 'テスト',
       supportMessage: '応援しています',
     });
@@ -110,6 +110,10 @@ describe('stripe.server checkout session', () => {
     expect(requestBody).toContain('ui_mode=embedded_page');
     expect(requestBody).toContain('redirect_on_completion=if_required');
     expect(requestBody).toContain('integration_identifier=hpe_support_qmvzrxka');
+    expect(requestBody).toContain('line_items[0][price_data][unit_amount]=51');
+    expect(requestBody).toContain(
+      'return_url=https%3A%2F%2Fpreview.healthy-person-emulator.org%2Fsupport%3Fpaid%3Dsuccess',
+    );
     expect(session.clientSecret).toBe('cs_test_123_secret_456');
   });
 });

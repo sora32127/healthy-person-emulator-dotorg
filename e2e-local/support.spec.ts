@@ -49,12 +49,22 @@ test.describe('サポートページ', () => {
     expect(formBox!.y).toBeLessThan(historyBox!.y);
   });
 
-  test('金額を自由入力できる', async ({ page }) => {
+  test('Stripe下限以上の金額を1円刻みで入力できる', async ({ page }) => {
     await openSupport(page);
 
     const amountInput = page.locator('input[type="number"]').first();
-    await amountInput.fill('1500');
-    await expect(amountInput).toHaveValue('1500');
+    await expect(amountInput).toHaveAttribute('min', '50');
+    await expect(amountInput).toHaveAttribute('step', '1');
+
+    await page.locator('input[type="text"]').first().fill('E2Eサポーター');
+    const submit = page.locator('button[type="submit"]', { hasText: '応援する' });
+
+    await amountInput.fill('51');
+    await expect(amountInput).toHaveValue('51');
+    await expect(submit).toBeEnabled();
+
+    await amountInput.fill('49');
+    await expect(submit).toBeDisabled();
   });
 
   test('お名前を入れないと応援ボタンが無効', async ({ page }) => {

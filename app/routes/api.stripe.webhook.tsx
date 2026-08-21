@@ -5,7 +5,7 @@
  * - 冪等: stripe_session_id を unique キーにして二重処理を防ぐ
  */
 import type { ActionFunctionArgs } from 'react-router';
-import { verifyWebhookSignature } from '~/modules/stripe.server';
+import { getPaidSupportMessage, verifyWebhookSignature } from '~/modules/stripe.server';
 import { recordPaidSupportMessage } from '~/modules/db.server';
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -18,33 +18,23 @@ export async function action({ request }: ActionFunctionArgs) {
     return new Response('signature mismatch', { status: 400 });
   }
 
-  const event = JSON.parse(payload) as {
-    type?: string;
-    data?: {
-      object?: {
-        metadata?: Record<string, string> | null;
-        id?: string;
-        amount_total?: number;
-      };
-    };
-  };
+  const event = JSON.parse(payload);
+  const support = getPaidSupportMessage(event);
 
-  if (event.type === 'checkout.session.completed') {
-    const stripeSessionId = event.data?.object?.id;
-    const amountYen = Number(event.data?.object?.amount_total ?? 0);
-    const name = String(event.data?.object?.metadata?.supporterName ?? '').trim() || '匿名';
-    const message = String(event.data?.object?.metadata?.supportMessage ?? '').trim();
-
-    if (stripeSessionId && amountYen > 0) {
-      try {
-        const result = await recordPaidSupportMessage(name, message, amountYen, stripeSessionId);
-        if (!result.alreadyProcessed) {
-          console.log(`[stripe-webhook] support message saved (+${amountYen}yen)`);
-        }
-      } catch (error) {
-        console.error('[stripe-webhook] failed to save support message:', error);
-        return new Response('internal error', { status: 500 });
+  if (support) {
+    try {
+      const result = await recordPaidSupportMessage(
+        support.name,
+        support.message,
+        support.amountYen,
+        support.stripeSessionId,
+      );
+      if (!result.alreadyProcessed) {
+        console.log(`[stripe-webhook] support message saved (+${support.amountYen}yen)`);
       }
+    } catch (error) {
+      console.error('[stripe-webhook] failed to save support message:', error);
+      return new Response('internal error', { status: 500 });
     }
   }
 

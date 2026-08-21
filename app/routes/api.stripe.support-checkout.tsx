@@ -6,6 +6,7 @@ import type { ActionFunctionArgs } from 'react-router';
 import { isUserValid } from '~/modules/session.server';
 import {
   createSupportCheckoutSession,
+  SUPPORT_MAX_YEN,
   SUPPORT_MIN_YEN,
   SUPPORT_MAX_NAME_LENGTH,
   SUPPORT_MAX_MESSAGE_LENGTH,
@@ -17,11 +18,15 @@ export async function action({ request }: ActionFunctionArgs) {
   const supporterName = String(formData.get('supporterName') ?? '').trim();
   const supportMessage = String(formData.get('supportMessage') ?? '').trim();
 
-  if (!Number.isInteger(amountYen) || amountYen < SUPPORT_MIN_YEN || amountYen > 1000000) {
+  if (
+    !Number.isInteger(amountYen) ||
+    amountYen < SUPPORT_MIN_YEN ||
+    amountYen > SUPPORT_MAX_YEN
+  ) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: `金額は${SUPPORT_MIN_YEN}円以上、1000000円以下で指定してください`,
+        message: `金額は${SUPPORT_MIN_YEN}円以上、${SUPPORT_MAX_YEN}円以下の整数で指定してください`,
       }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
@@ -54,9 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    const origin = new URL(request.url).origin;
     const session = await createSupportCheckoutSession({
-      origin,
       amountYen,
       supporterName,
       supportMessage,
