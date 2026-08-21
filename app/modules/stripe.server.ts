@@ -54,7 +54,9 @@ export async function createSupportCheckoutSession({
 
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    ui_mode: 'embedded',
+    ui_mode: 'embedded_page',
+    redirect_on_completion: 'if_required',
+    integration_identifier: 'hpe_support_qmvzrxka',
     return_url: `${origin}/support?paid=success`,
     line_items: [
       {
