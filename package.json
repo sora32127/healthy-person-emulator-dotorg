@@ -48,6 +48,7 @@
     "remark-gfm": "^4.0.1",
     "remix-auth": "^4.2.0",
     "remix-auth-oauth2": "^3.4.1",
+    "stripe": "^22.5.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

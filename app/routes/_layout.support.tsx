@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
+import type { MetaFunction } from 'react-router';
 import { useLoaderData } from 'react-router';
 import { useState } from 'react';
 import { H1 } from '~/components/Headings';
@@ -6,7 +6,7 @@ import { SupportCheckoutModal } from '~/components/SupportCheckoutModal';
 import { getSupportMessages } from '~/modules/db.server';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
 
-export async function loader({}: LoaderFunctionArgs) {
+export async function loader() {
   const messages = await getSupportMessages();
   return { messages };
 }
@@ -40,7 +40,7 @@ export default function BeSponsor() {
 
       {/* フォームを履歴より上に */}
       <form
-        className="my-8 flex flex-col gap-4"
+        className="w-full my-8 flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
           if (isFormValid) setShowModal(true);
@@ -57,7 +57,7 @@ export default function BeSponsor() {
             maxLength={NAME_MAX}
             onChange={(e) => setSupporterName(e.target.value)}
             placeholder="例: 匿名応援者"
-            className="input input-bordered"
+            className="input input-bordered w-full"
           />
         </div>
 
@@ -71,7 +71,7 @@ export default function BeSponsor() {
             maxLength={MESSAGE_MAX}
             onChange={(e) => setSupportMessage(e.target.value)}
             placeholder="健常者エミュレータ事例集を応援しています！"
-            className="textarea textarea-bordered"
+            className="textarea textarea-bordered w-full"
             rows={3}
           />
         </div>
@@ -87,7 +87,7 @@ export default function BeSponsor() {
             step={100}
             value={amountYen}
             onChange={(e) => setAmountYen(Number(e.target.value))}
-            className="input input-bordered"
+            className="input input-bordered w-full"
           />
         </div>
 
@@ -109,8 +109,8 @@ export default function BeSponsor() {
           <p className="my-4">まだ応援メッセージはありません。初めての応援をぜひお願いします。</p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {messages.map((m, i) => (
-              <div key={i} className="bg-base-100 p-4 mb-4">
+            {messages.map((m) => (
+              <div key={`${m.supporterName}-${m.paidAtUtc.toISOString()}`} className="bg-base-100 p-4 mb-4">
                 <div className="flex items-center gap-2">
                   <span className="badge badge-primary text-sm">¥{m.amountYen.toLocaleString()}</span>
                   <p className="font-bold">{m.supporterName} さん</p>

@@ -108,6 +108,9 @@ importers:
       remix-auth-oauth2:
         specifier: ^3.4.1
         version: 3.4.1(remix-auth@4.2.0)
+      stripe:
+        specifier: ^22.5.0
+        version: 22.5.0(@types/node@25.5.0)
       zod:
         specifier: ^4.1.13
         version: 4.1.13
@@ -3378,6 +3381,15 @@ packages:
   strip-json-comments@5.0.3:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
+
+  stripe@22.5.0:
+    resolution: {integrity: sha512-QVwMwriC0bbySx6R4dpsvJ0W//GojC1kwWVS6rPSoVqDUIZX4Hy3TaUrd2AZeXEAaKbfWIjQjvo3vKAReHZ0vQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   style-to-object@1.0.8:
     resolution: {integrity: sha512-xT47I/Eo0rwJmaXC4oilDGDWLohVhR6o/xAQcPQN8q6QBuZVL8qMYL85kLmST5cPjAorwvqIA4qXTRQoYHaL6g==}
@@ -6774,6 +6786,10 @@ snapshots:
   strip-json-comments@2.0.1: {}
 
   strip-json-comments@5.0.3: {}
+
+  stripe@22.5.0(@types/node@25.5.0):
+    optionalDependencies:
+      '@types/node': 25.5.0
 
   style-to-object@1.0.8:
     dependencies:
