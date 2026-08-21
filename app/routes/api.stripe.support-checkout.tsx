@@ -4,7 +4,12 @@
  */
 import type { ActionFunctionArgs } from 'react-router';
 import { isUserValid } from '~/modules/session.server';
-import { createSupportCheckoutSession, SUPPORT_MIN_YEN, SUPPORT_MAX_NAME_LENGTH, SUPPORT_MAX_MESSAGE_LENGTH } from '~/modules/stripe.server';
+import {
+  createSupportCheckoutSession,
+  SUPPORT_MIN_YEN,
+  SUPPORT_MAX_NAME_LENGTH,
+  SUPPORT_MAX_MESSAGE_LENGTH,
+} from '~/modules/stripe.server';
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -14,29 +19,38 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (!Number.isInteger(amountYen) || amountYen < SUPPORT_MIN_YEN || amountYen > 1000000) {
     return new Response(
-      JSON.stringify({ success: false, message: `金額は${SUPPORT_MIN_YEN}円以上、1000000円以下で指定してください` }),
+      JSON.stringify({
+        success: false,
+        message: `金額は${SUPPORT_MIN_YEN}円以上、1000000円以下で指定してください`,
+      }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
   if (supporterName.length === 0 || supporterName.length > SUPPORT_MAX_NAME_LENGTH) {
     return new Response(
-      JSON.stringify({ success: false, message: `お名前は1〜${SUPPORT_MAX_NAME_LENGTH}文字で入力してください` }),
+      JSON.stringify({
+        success: false,
+        message: `お名前は1〜${SUPPORT_MAX_NAME_LENGTH}文字で入力してください`,
+      }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
   if (supportMessage.length > SUPPORT_MAX_MESSAGE_LENGTH) {
     return new Response(
-      JSON.stringify({ success: false, message: `メッセージは${SUPPORT_MAX_MESSAGE_LENGTH}文字以内で入力してください` }),
+      JSON.stringify({
+        success: false,
+        message: `メッセージは${SUPPORT_MAX_MESSAGE_LENGTH}文字以内で入力してください`,
+      }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
   // コメント投稿と同様、Turnstile 検証済みのユーザーのみ（bot 抑制）
   if (!(await isUserValid(request))) {
-    return new Response(
-      JSON.stringify({ success: false, message: 'ユーザー認証が必要です' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ success: false, message: 'ユーザー認証が必要です' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -57,9 +71,38 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   } catch (error) {
     console.error(error);
+    const isPreview = new URL(request.url).hostname === 'preview.healthy-person-emulator.org';
     return new Response(
-      JSON.stringify({ success: false, message: '決済セッションを生成できませんでした' }),
+      JSON.stringify({
+        success: false,
+        message: '決済セッションを生成できませんでした',
+        ...(isPreview ? { diagnostic: getSafeDiagnostic(error) } : {}),
+      }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
+}
+
+function getSafeDiagnostic(error: unknown) {
+  if (!(error instanceof Error)) return 'UnknownError';
+
+  const stripeError = error as Error & {
+    type?: string;
+    code?: string;
+    param?: string;
+    statusCode?: number;
+  };
+  const message = error.message
+    .replace(/\b(?:sk|rk|pk)_(?:test|live)_[A-Za-z0-9_]+\b/g, '[REDACTED_KEY]')
+    .replace(/\bwhsec_[A-Za-z0-9_]+\b/g, '[REDACTED_SECRET]')
+    .slice(0, 500);
+
+  return JSON.stringify({
+    name: error.name,
+    type: stripeError.type,
+    code: stripeError.code,
+    param: stripeError.param,
+    statusCode: stripeError.statusCode,
+    message,
+  });
 }
