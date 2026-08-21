@@ -71,38 +71,12 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   } catch (error) {
     console.error(error);
-    const isPreview = new URL(request.url).hostname === 'preview.healthy-person-emulator.org';
     return new Response(
       JSON.stringify({
         success: false,
         message: '決済セッションを生成できませんでした',
-        ...(isPreview ? { diagnostic: getSafeDiagnostic(error) } : {}),
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
-}
-
-function getSafeDiagnostic(error: unknown) {
-  if (!(error instanceof Error)) return 'UnknownError';
-
-  const stripeError = error as Error & {
-    type?: string;
-    code?: string;
-    param?: string;
-    statusCode?: number;
-  };
-  const message = error.message
-    .replace(/\b(?:sk|rk|pk)_(?:test|live)_[A-Za-z0-9_]+\b/g, '[REDACTED_KEY]')
-    .replace(/\bwhsec_[A-Za-z0-9_]+\b/g, '[REDACTED_SECRET]')
-    .slice(0, 500);
-
-  return JSON.stringify({
-    name: error.name,
-    type: stripeError.type,
-    code: stripeError.code,
-    param: stripeError.param,
-    statusCode: stripeError.statusCode,
-    message,
-  });
 }
