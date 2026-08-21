@@ -1,5 +1,5 @@
 import type { CloudflareEnv } from './types/env';
-import { initSessionStorage } from './modules/session.server';
+import { initSessionStorage, resolveSessionSecret } from './modules/session.server';
 import { initAuth } from './modules/auth.google.server';
 import { initSecurity } from './modules/security.server';
 import { initCloudflare } from './modules/cloudflare.server';
@@ -39,7 +39,7 @@ function resolveEnv(env?: CloudflareEnv): CloudflareEnv {
 export function initializeApp(envParam?: CloudflareEnv) {
   if (_initialized) return;
   const env = resolveEnv(envParam);
-  initSessionStorage(env.SESSION_SECRET || env.HPE_SESSION_SECRET || 's3cr3t');
+  initSessionStorage(resolveSessionSecret(env));
   initVisitorSession();
   initAuth({
     GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,

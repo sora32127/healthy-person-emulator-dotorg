@@ -240,6 +240,57 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
       }));
     },
 
+    async getSupportMessages() {
+      const rows = await db
+        .select({
+          supporterName: schema.dimSupportMessages.supporterName,
+          supportMessage: schema.dimSupportMessages.supportMessage,
+          amountYen: schema.dimSupportMessages.amountYen,
+          paidAtUtc: schema.dimSupportMessages.paidAtUtc,
+        })
+        .from(schema.dimSupportMessages)
+        .where(eq(schema.dimSupportMessages.status, 'paid'))
+        .orderBy(desc(schema.dimSupportMessages.paidAtUtc));
+
+      return rows.map((r) => ({
+        supporterName: r.supporterName,
+        supportMessage: r.supportMessage,
+        amountYen: r.amountYen,
+        paidAtUtc: toDate(r.paidAtUtc),
+      }));
+    },
+
+    async recordPaidSupportMessage(
+      name: string,
+      message: string,
+      amountYen: number,
+      stripeSessionId: string,
+    ) {
+      const [existing] = await db
+        .select({
+          supportMessageId: schema.dimSupportMessages.supportMessageId,
+        })
+        .from(schema.dimSupportMessages)
+        .where(eq(schema.dimSupportMessages.stripeSessionId, stripeSessionId))
+        .limit(1);
+
+      if (existing) {
+        return { alreadyProcessed: true };
+      }
+
+      await db.insert(schema.dimSupportMessages).values({
+        supporterName: name,
+        supportMessage: message,
+        amountYen,
+        stripeSessionId,
+        status: 'paid',
+        paidAtUtc: nowUTC(),
+        paidAtJst: nowJST(),
+      });
+
+      return { alreadyProcessed: false };
+    },
+
     async getPreviousPost(postId: number): Promise<PreviousOrNextPostData> {
       const [previousPost] = await db
         .select({

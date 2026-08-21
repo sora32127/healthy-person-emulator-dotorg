@@ -6,10 +6,17 @@ interface TurnstileModalProps {
   isOpen: boolean;
   onClose: () => void;
   siteKey: string;
-  onSuccess: (token: string) => void;
+  onSuccess: (token: string) => boolean | void | Promise<boolean | void>;
+  reloadOnSuccess?: boolean;
 }
 
-export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: TurnstileModalProps) {
+export function TurnstileModal({
+  isOpen,
+  onClose,
+  siteKey,
+  onSuccess,
+  reloadOnSuccess = true,
+}: TurnstileModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -21,11 +28,13 @@ export function TurnstileModal({ isOpen, onClose, siteKey, onSuccess }: Turnstil
     >
       <Turnstile
         siteKey={siteKey}
-        onSuccess={(token) => {
+        onSuccess={async (token) => {
+          const isSuccess = await onSuccess(token);
+          if (isSuccess === false) return;
+
           toast.success('再度アクションを実行してください。');
-          onSuccess(token);
           onClose();
-          window.location.reload();
+          if (reloadOnSuccess) window.location.reload();
         }}
         onError={() => {
           toast.error('時間をおいて再度お試しください。');

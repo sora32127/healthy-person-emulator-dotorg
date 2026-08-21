@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: ['node_modules', 'app/tests', '.agent/**', '.codex/**', '.claude/**', 'e2e/**'],
+    exclude: ['node_modules', 'app/tests', '.agent/**', '.codex/**', '.claude/**', 'e2e/**', 'e2e-local/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'json'],

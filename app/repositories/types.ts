@@ -234,6 +234,24 @@ export interface DatabaseRepository {
     voteUserIpHash: string,
   ): Promise<void>;
   createPostComment(input: CreateCommentInput): Promise<void>;
+  /** サポートページの応援メッセージ一覧を返す（新しい順） */
+  getSupportMessages(): Promise<
+    Array<{
+      supporterName: string;
+      supportMessage: string;
+      amountYen: number;
+      paidAtUtc: Date;
+    }>
+  >;
+  /** Stripe決済確定後、応援メッセージを保存する。冪等に動作する。 */
+  recordPaidSupportMessage(
+    name: string,
+    message: string,
+    amountYen: number,
+    stripeSessionId: string,
+  ): Promise<{
+    alreadyProcessed: boolean;
+  }>;
   judgeIsBookmarked(postId: number, userUuid: string | undefined): Promise<boolean>;
   getRecentPostsByTagId(tagId: number): Promise<PostCardData[]>;
   getRecentComments(chunkSize?: number, pageNumber?: number): Promise<CommentShowCardData[]>;
