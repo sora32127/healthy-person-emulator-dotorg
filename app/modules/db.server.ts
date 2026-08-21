@@ -71,6 +71,10 @@ export const recordCommentVote = (...args: Parameters<DatabaseRepository['record
   getRepo().recordCommentVote(...args);
 export const createPostComment = (...args: Parameters<DatabaseRepository['createPostComment']>) =>
   getRepo().createPostComment(...args);
+export const getSupportMessages = (...args: Parameters<DatabaseRepository['getSupportMessages']>) =>
+  getRepo().getSupportMessages(...args);
+export const recordPaidSupportMessage = (...args: Parameters<DatabaseRepository['recordPaidSupportMessage']>) =>
+  getRepo().recordPaidSupportMessage(...args);
 export const judgeIsBookmarked = (...args: Parameters<DatabaseRepository['judgeIsBookmarked']>) =>
   getRepo().judgeIsBookmarked(...args);
 export const getRecentPostsByTagId = (

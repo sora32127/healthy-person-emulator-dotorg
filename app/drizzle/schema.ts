@@ -302,6 +302,24 @@ export const dimFaqItems = sqliteTable('dim_faq_items', {
 });
 
 // ============================================================
+// 19. dim_support_messages (サポートページの支持メッセージ)
+// ============================================================
+export const dimSupportMessages = sqliteTable('dim_support_messages', {
+  supportMessageId: integer('support_message_id').primaryKey({ autoIncrement: true }),
+  /** 支持を表明した人の名前 */
+  supporterName: text('supporter_name').notNull().default('匿名'),
+  /** 支持メッセージ */
+  supportMessage: text('support_message').notNull().default(''),
+  /** 支持金額（円） */
+  amountYen: integer('amount_yen').notNull(),
+  /** Stripe決算セッションID（冪等キー） */
+  stripeSessionId: text('stripe_session_id').notNull().unique(),
+  status: text('status').notNull().default('paid'),
+  paidAtUtc: text('paid_at_utc').notNull(),
+  paidAtJst: text('paid_at_jst').notNull(),
+});
+
+// ============================================================
 // 17. rel_tag_categories
 // ============================================================
 export const relTagCategories = sqliteTable(
