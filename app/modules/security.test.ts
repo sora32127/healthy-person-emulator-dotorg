@@ -6,13 +6,30 @@ const WELCOMED_RESULT = {
   explanation: 'ガイドラインに準拠した投稿です',
 };
 
+function jevAnswers(opts: {
+  noul: number;
+  choice: string;
+  probabilities?: Record<string, number>;
+}) {
+  return {
+    model: 'jev-1.13.0',
+    answers: {
+      isWelcomed: { type: 'noul' as const, noul: opts.noul },
+      explanation: {
+        type: 'choice' as const,
+        choice: opts.choice,
+        confidence: 0.9,
+        probabilities: opts.probabilities,
+      },
+    },
+  };
+}
+
 function initWithAI(response?: unknown) {
   const run =
     response instanceof Error
       ? vi.fn().mockRejectedValue(response)
-      : vi.fn().mockResolvedValue({
-          response: typeof response === 'string' ? response : JSON.stringify(response),
-        });
+      : vi.fn().mockResolvedValue(response);
   initSecurity({
     CF_TURNSTILE_SECRET_KEY: 'test',
     CF_TURNSTILE_SITEKEY: 'test',
@@ -43,37 +60,86 @@ describe('security.server', () => {
     log.mockRestore();
   });
 
-  it('Mistralの構造化出力で非歓迎判定する', async () => {
+  it('typesafe/jev の noul/choice で非歓迎判定する', async () => {
     const result = {
       isWelcomed: false,
       explanation: '自身の経験に基づかない知識が記述されています',
     };
-    const run = initWithAI(result);
+    const run = initWithAI(
+      jevAnswers({
+        noul: 0.12,
+        choice: 'non_experiential',
+        probabilities: {
+          non_experiential: 0.8,
+          welcomed: 0.1,
+          test_post: 0.05,
+          spam: 0.05,
+          human_rights: 0,
+          illegal: 0,
+        },
+      }),
+    );
 
     await expect(getJudgeWelcomedByGenerativeAI(testPostHtml, '知識投稿')).resolves.toEqual(result);
     expect(run).toHaveBeenCalledWith(
-      '@cf/mistralai/mistral-small-3.1-24b-instruct',
+      'typesafe/jev',
       expect.objectContaining({
-        temperature: 0,
-        max_tokens: 128,
-        guided_json: expect.objectContaining({ additionalProperties: false }),
+        state: expect.objectContaining({
+          title: '知識投稿',
+          contentHtml: testPostHtml,
+        }),
+        questions: expect.objectContaining({
+          isWelcomed: expect.objectContaining({ type: 'noul' }),
+          explanation: expect.objectContaining({ type: 'choice' }),
+        }),
       }),
     );
-    const input = JSON.stringify(run.mock.calls[0]?.[1]);
-    expect(input).toContain(result.explanation);
-    expect(input).toContain('isWelcomedがtrueの場合');
+  });
+
+  it('typesafe/jev の object 応答で歓迎判定する（回帰: JSON.parse不要）', async () => {
+    const run = initWithAI(jevAnswers({ noul: 0.91, choice: 'welcomed' }));
+
+    await expect(getJudgeWelcomedByGenerativeAI(testPostHtml, '投稿')).resolves.toEqual(
+      WELCOMED_RESULT,
+    );
+    expect(run).toHaveBeenCalledWith('typesafe/jev', expect.any(Object));
+  });
+
+  it('noul>=0.5 なら choice が非歓迎でも歓迎に揃える', async () => {
+    initWithAI(jevAnswers({ noul: 0.55, choice: 'spam' }));
+    await expect(getJudgeWelcomedByGenerativeAI(testPostHtml, '投稿')).resolves.toEqual(
+      WELCOMED_RESULT,
+    );
+  });
+
+  it('noul<0.5 で choice が welcomed のとき確率から非歓迎理由を選ぶ', async () => {
+    initWithAI(
+      jevAnswers({
+        noul: 0.2,
+        choice: 'welcomed',
+        probabilities: {
+          welcomed: 0.4,
+          test_post: 0.35,
+          spam: 0.2,
+          non_experiential: 0.05,
+          human_rights: 0,
+          illegal: 0,
+        },
+      }),
+    );
+    await expect(getJudgeWelcomedByGenerativeAI(testPostHtml, '投稿')).resolves.toEqual({
+      isWelcomed: false,
+      explanation: 'テスト投稿です',
+    });
   });
 
   it.each([
     ['AI bindingなし', undefined],
-    ['JSONではない', 'not json'],
-    ['boolean型が不正', { ...WELCOMED_RESULT, isWelcomed: 'true' }],
-    ['未知の理由', { isWelcomed: false, explanation: '未知の理由' }],
-    ['trueと理由が矛盾', { isWelcomed: true, explanation: 'テスト投稿です' }],
-    ['falseと理由が矛盾', { isWelcomed: false, explanation: WELCOMED_RESULT.explanation }],
-    ['余分なキー付き', { ...WELCOMED_RESULT, extra: true }],
     ['AI呼び出し失敗', new Error('AI unavailable')],
-  ])('%sの応答は歓迎として扱う', async (_name, response) => {
+    ['answers欠落', { model: 'jev-1.13.0' }],
+    ['不正な choice キー', jevAnswers({ noul: 0.1, choice: 'unknown_reason' })],
+    ['noul 型不正', { answers: { isWelcomed: { type: 'noul', noul: 'yes' }, explanation: { type: 'choice', choice: 'spam' } } }],
+  ])('%sの応答は歓迎として扱う（fail-open）', async (_name, response) => {
     initWithAI(response);
     await expect(getJudgeWelcomedByGenerativeAI(testPostHtml, '投稿')).resolves.toEqual(
       WELCOMED_RESULT,
