@@ -17,6 +17,14 @@ type HistoryMutationResult = {
   error?: string;
 };
 
+const historyLabels = {
+  view: "閲覧",
+  like: "いいね",
+  dislike: "良くないね",
+  comment_like: "コメントを評価",
+  comment_dislike: "コメントを逆評価",
+};
+
 export const meta: MetaFunction = () => [
   { title: "履歴 | 健常者エミュレータ事例集" },
   { name: "robots", content: "noindex, nofollow" },
@@ -46,6 +54,7 @@ export default function History() {
   const [isComposing, setIsComposing] = useState(false);
   const settings = useFetcher<HistoryMutationResult>();
   const clear = useFetcher<HistoryMutationResult>();
+  const [entryToClear, setEntryToClear] = useState<(typeof entries)[number] | null>(null);
   const clearDialog = useRef<HTMLDialogElement>(null);
   const clearPending = useRef(false);
   const clearBusy = clear.state !== "idle";
@@ -79,6 +88,11 @@ export default function History() {
   function closeClearDialog() {
     if (clearPending.current || clearBusy) return;
     clearDialog.current?.close();
+  }
+
+  function openClearDialog(entry: (typeof entries)[number] | null) {
+    setEntryToClear(entry);
+    clearDialog.current?.showModal();
   }
 
   function pageUrl(nextPage: number) {
@@ -115,7 +129,7 @@ export default function History() {
           <button
             type="button"
             className="btn btn-ghost btn-sm shadow-none"
-            onClick={() => clearDialog.current?.showModal()}
+            onClick={() => openClearDialog(null)}
             disabled={settingsBusy}
           >
             履歴を消去
@@ -141,7 +155,9 @@ export default function History() {
               履歴を消去しますか？
             </h2>
             <p id="history-clear-description" className="py-2 text-sm opacity-70">
-              すべての履歴を消去します。
+              {entryToClear
+                ? `「${entryToClear.postTitle}」の履歴（${historyLabels[entryToClear.kind]} · ${formatDate(entryToClear.occurredAt)}）を消去します。`
+                : "すべての履歴を消去します。"}
             </p>
             <clear.Form
               method="post"
@@ -154,7 +170,14 @@ export default function History() {
                 clearPending.current = true;
               }}
             >
-              <input type="hidden" name="intent" value="clearHistory" />
+              <input type="hidden" name="intent" value={entryToClear ? "clearEntry" : "clearHistory"} />
+              {entryToClear && (
+                <>
+                  <input type="hidden" name="kind" value={entryToClear.kind} />
+                  <input type="hidden" name="targetId" value={entryToClear.commentId ?? entryToClear.postId} />
+                  <input type="hidden" name="occurredAt" value={entryToClear.occurredAt} />
+                </>
+              )}
               {clear.data?.success === false && (
                 <p role="alert" className="mt-2 text-sm text-error">
                   {clear.data.error}
@@ -213,24 +236,32 @@ export default function History() {
       ) : (
         <ul className="space-y-4">
           {entries.map((entry) => (
-            <li key={`${entry.kind}:${entry.postId}:${entry.commentId ?? ""}`}>
-              <p className="mb-1 text-xs opacity-60">
-                {{
-                  view: "閲覧",
-                  like: "いいね",
-                  dislike: "良くないね",
-                  comment_like: "コメントを評価",
-                  comment_dislike: "コメントを逆評価",
-                }[entry.kind]} ·{" "}
-                <time dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time>
-              </p>
-              <h2 className="text-lg font-bold break-words">
-                <CommonNavLink
-                  to={`/archives/${entry.postId}${entry.commentId ? `#comment-${entry.commentId}` : ""}`}
-                >
-                  {entry.postTitle}
-                </CommonNavLink>
-              </h2>
+            <li
+              key={`${entry.kind}:${entry.postId}:${entry.commentId ?? ""}`}
+              className="flex items-start justify-between gap-3"
+            >
+              <div className="min-w-0">
+                <p className="mb-1 text-xs opacity-60">
+                  {historyLabels[entry.kind]} ·{" "}
+                  <time dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time>
+                </p>
+                <h2 className="text-lg font-bold break-words">
+                  <CommonNavLink
+                    to={`/archives/${entry.postId}${entry.commentId ? `#comment-${entry.commentId}` : ""}`}
+                  >
+                    {entry.postTitle}
+                  </CommonNavLink>
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm shrink-0 shadow-none"
+                aria-label={`${entry.postTitle}の履歴を消去（${historyLabels[entry.kind]}）`}
+                onClick={() => openClearDialog(entry)}
+                disabled={settingsBusy}
+              >
+                消去
+              </button>
             </li>
           ))}
         </ul>

@@ -246,6 +246,51 @@ describe("personal history", () => {
     expect((await page()).total).toBe(2);
   });
 
+  it("記録停止中も選んだ履歴だけを消去し、他人・別イベント・更新後の履歴を保つ", async () => {
+    const occurredAt = "2026-10-10T00:00:00.000Z";
+    await mutate({ intent: "recordView", postId: "1" });
+    await mutate({ intent: "recordView", postId: "2" });
+    await react(1, "like");
+    await react(1, "dislike");
+    await react(2, "like");
+    await react(1, "like", 1);
+    await react(1, "dislike", 1);
+    await react(1, "like", 2);
+    auth.user = ADMIN_B;
+    await mutate({ intent: "recordView", postId: "1" });
+    await react(1, "like");
+    await react(1, "like", 1);
+    auth.user = ADMIN_A;
+    vi.setSystemTime(new Date("2026-10-10T00:30:00.000Z"));
+    await mutate({ intent: "recordView", postId: "2" });
+    await mutate({ intent: "setHistoryEnabled", enabled: "false" });
+    const before = (await page()).entries;
+    const tables = ["dim_posts", "dim_comments", "user_library_settings"];
+    const preserved = tables.map((table) => sqlite.prepare(`SELECT * FROM ${table}`).all());
+    for (const kind of ["view", "like", "comment_like"]) {
+      await mutate({ intent: "clearEntry", kind, targetId: "1", occurredAt, userUuid: ADMIN_B.userUuid });
+    }
+    await expect(mutate({ intent: "clearEntry", kind: "view", targetId: "1", occurredAt }))
+      .resolves.toEqual({ success: true });
+    await mutate({ intent: "clearEntry", kind: "view", targetId: "2", occurredAt });
+    await mutate({ intent: "clearEntry", kind: "like", targetId: "999", occurredAt });
+    for (const invalid of [{ kind: "save" }, { targetId: "1.5" }, { occurredAt: "invalid" }]) {
+      await expect(mutate({ intent: "clearEntry", kind: "view", targetId: "2", occurredAt, ...invalid }))
+        .rejects.toMatchObject({ status: 400 });
+    }
+    expect(await page()).toMatchObject({
+      entries: before.filter((entry) => !(entry.postId === 1 && (
+        entry.kind === "view" || entry.kind === "like" ||
+        (entry.kind === "comment_like" && entry.commentId === 1)
+      ))),
+      total: 5,
+      historyEnabled: false,
+    });
+    expect(tables.map((table) => sqlite.prepare(`SELECT * FROM ${table}`).all())).toEqual(preserved);
+    auth.user = ADMIN_B;
+    expect((await page()).total).toBe(3);
+  });
+
   it("90日を超えた履歴を表示せず、次の記録時に整理する", async () => {
     sqlite.exec(
       "INSERT INTO user_library_entries VALUES ('admin-a', 1, '2026-01-01T00:00:00.000Z'); INSERT INTO user_library_reactions VALUES ('admin-a', 1, NULL, 'like', 1, '2026-01-01T00:00:00.000Z');",

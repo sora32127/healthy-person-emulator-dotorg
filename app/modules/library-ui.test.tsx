@@ -269,6 +269,48 @@ describe("履歴の表示と検索", () => {
     fireEvent.click(within(outsideDialog).getByRole("button", { name: "確認を閉じる" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(action).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "テスト事例の履歴を消去（閲覧）" }));
+    const entryDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    expect(entryDialog).toHaveAccessibleDescription("「テスト事例」の履歴（閲覧 · 2026/10/10 9:01:00）を消去します。");
+    fireEvent.click(within(entryDialog).getByRole("button", { name: "キャンセル" }));
+    fireEvent.click(trigger);
+    expect(await screen.findByRole("dialog")).toHaveAccessibleDescription("すべての履歴を消去します。");
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it("選んだコメント評価だけを消去し、他の履歴と検索語を保つ", async () => {
+    let remaining = events;
+    vi.mocked(getLibraryPage).mockImplementation(async () => page(remaining, false));
+    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
+      const form = await request.formData();
+      expect(Object.fromEntries(form)).toEqual({
+        intent: "clearEntry",
+        kind: "comment_dislike",
+        targetId: "102",
+        occurredAt: events[0].occurredAt,
+      });
+      remaining = remaining.filter((event) => event !== events[0]);
+      return { success: true };
+    });
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history?q=%E6%9C%AC%E6%96%87"]} />);
+    fireEvent.click(await screen.findByRole("button", { name: "テスト事例の履歴を消去（コメントを逆評価）" }));
+    const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    expect(dialog).toHaveAccessibleDescription("「テスト事例」の履歴（コメントを逆評価 · 2026/10/10 9:05:00）を消去します。");
+    expect(action).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(action).toHaveBeenCalledOnce();
+    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(4);
+    expect(screen.queryByText(/^コメントを逆評価 ·/)).not.toBeInTheDocument();
+    expect(screen.getByText(/^コメントを評価 ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^閲覧 ·/)).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "履歴を検索" })).toHaveValue("本文");
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
   });
 
   it("確認後だけ消去を送り、送信中は閉じず、成功後に閉じて再度開ける", async () => {
