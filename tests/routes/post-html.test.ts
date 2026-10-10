@@ -45,6 +45,7 @@ function newPostRequest(action: string) {
       where: '家',
       why: '理由',
       how: '方法',
+      // eslint-disable-next-line unicorn/no-thenable -- Required article field, not a Promise.
       then: '結果',
       assumption: [],
     },
