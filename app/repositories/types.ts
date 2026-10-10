@@ -111,6 +111,7 @@ const PostCardDataSchema = z.object({
   postDateGmt: z.date(),
   countLikes: z.number(),
   countDislikes: z.number(),
+  countSupports: z.number(),
   ogpImageUrl: z.string().nullable(),
   tags: z.array(
     z.object({
@@ -159,6 +160,7 @@ export type SearchPostsResult = {
     postDateGmt: Date;
     countLikes: number;
     countDislikes: number;
+    countSupports: number;
     tagNames: string[];
     countComments: number;
   }>;

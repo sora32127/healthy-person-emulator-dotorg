@@ -377,6 +377,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -549,6 +550,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -608,6 +610,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -683,6 +686,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             postDateGmt: schema.dimPosts.postDateGmt,
             countLikes: schema.dimPosts.countLikes,
             countDislikes: schema.dimPosts.countDislikes,
+            countSupports: schema.dimPosts.countSupports,
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
@@ -701,6 +705,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: toDate(post.postDateGmt),
           countLikes: post.countLikes,
           countDislikes: post.countDislikes,
+          countSupports: post.countSupports,
           ogpImageUrl: post.ogpImageUrl,
           tags: allTags
             .filter((t) => t.postId === post.postId)
@@ -780,6 +785,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             postDateGmt: schema.dimPosts.postDateGmt,
             countLikes: schema.dimPosts.countLikes,
             countDislikes: schema.dimPosts.countDislikes,
+            countSupports: schema.dimPosts.countSupports,
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
@@ -1341,6 +1347,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
         })
         .from(schema.dimPosts)
         .where(whereClause)
@@ -1358,6 +1365,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         postDateGmt: toDate(post.postDateGmt),
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
+        countSupports: post.countSupports,
         tagNames: allTags.filter((t) => t.postId === post.postId).map((t) => t.tagName),
         countComments: commentCounts.find((c) => c.postId === post.postId)?.cnt || 0,
       }));
