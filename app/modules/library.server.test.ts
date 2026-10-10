@@ -58,9 +58,11 @@ function postRequest(origin = "https://example.test", body?: FormData) {
     body,
   });
 }
-function mutate(values: Record<string, string>, origin = "https://example.test") {
+function mutate(values: Record<string, string | string[]>, origin = "https://example.test") {
   const formData = new FormData();
-  for (const [key, value] of Object.entries(values)) formData.set(key, value);
+  for (const [key, value] of Object.entries(values)) {
+    for (const item of Array.isArray(value) ? value : [value]) formData.append(key, item);
+  }
   return mutateLibrary(postRequest(origin, formData));
 }
 function react(postId: number, voteType: "like" | "dislike", commentId?: number) {
@@ -267,17 +269,26 @@ describe("personal history", () => {
     const before = (await page()).entries;
     const tables = ["dim_posts", "dim_comments", "user_library_settings"];
     const preserved = tables.map((table) => sqlite.prepare(`SELECT * FROM ${table}`).all());
-    for (const kind of ["view", "like", "comment_like"]) {
-      await mutate({ intent: "clearEntry", kind, targetId: "1", occurredAt, userUuid: ADMIN_B.userUuid });
-    }
-    await expect(mutate({ intent: "clearEntry", kind: "view", targetId: "1", occurredAt }))
-      .resolves.toEqual({ success: true });
-    await mutate({ intent: "clearEntry", kind: "view", targetId: "2", occurredAt });
-    await mutate({ intent: "clearEntry", kind: "like", targetId: "999", occurredAt });
-    for (const invalid of [{ kind: "save" }, { targetId: "1.5" }, { occurredAt: "invalid" }]) {
-      await expect(mutate({ intent: "clearEntry", kind: "view", targetId: "2", occurredAt, ...invalid }))
+    const entries = ["view", "like", "comment_like"].map((kind) =>
+      JSON.stringify({ kind, targetId: 1, occurredAt }),
+    );
+    const invalidEntries = [
+      [], Array(51).fill(entries[0]), [entries[0], "invalid"],
+      ...[{ kind: "save" }, { targetId: 1.5 }, { occurredAt: "invalid" }].map((invalid) => [
+        entries[0], JSON.stringify({ kind: "view", targetId: 2, occurredAt, ...invalid }),
+      ]),
+    ];
+    for (const entries of invalidEntries) {
+      await expect(mutate({ intent: "clearEntries", entries }))
         .rejects.toMatchObject({ status: 400 });
     }
+    expect((await page()).entries).toEqual(before);
+    await mutate({ intent: "clearEntries", entries, userUuid: ADMIN_B.userUuid });
+    await expect(mutate({ intent: "clearEntries", entries })).resolves.toEqual({ success: true });
+    await mutate({ intent: "clearEntries", entries: [
+      JSON.stringify({ kind: "view", targetId: 2, occurredAt }),
+      JSON.stringify({ kind: "like", targetId: 999, occurredAt }),
+    ] });
     expect(await page()).toMatchObject({
       entries: before.filter((entry) => !(entry.postId === 1 && (
         entry.kind === "view" || entry.kind === "like" ||

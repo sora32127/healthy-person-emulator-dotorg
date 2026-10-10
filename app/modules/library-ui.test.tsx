@@ -65,11 +65,16 @@ describe("履歴の表示と検索", () => {
     expect(screen.queryByRole("button", { name: "表示する" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ }));
+    expect(screen.getByRole("button", { name: "選択した履歴を消去（1件）" })).toBeEnabled();
+
     fireEvent.change(search, { target: { value: "本文タグ" } });
     await waitFor(() =>
       expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(1),
     );
     expect(search).toHaveValue("本文タグ");
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
       query: "本文タグ",
     }));
@@ -157,8 +162,11 @@ describe("履歴の表示と検索", () => {
       "href",
       "/history?page=3&q=%E6%9C%AC%E6%96%87",
     );
+    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ }));
     fireEvent.click(screen.getByRole("link", { name: "次へ" }));
     await screen.findByText("3 / 3");
+    expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeChecked();
+    expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "次へ" })).not.toBeInTheDocument();
     expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
       query: "本文",
@@ -248,7 +256,7 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history"]} />);
-    const trigger = await screen.findByRole("button", { name: "履歴を消去" });
+    const trigger = await screen.findByRole("button", { name: "すべての履歴を消去" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
@@ -270,27 +278,33 @@ describe("履歴の表示と検索", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(action).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "テスト事例の履歴を消去（閲覧）" }));
+    const checkbox = screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ });
+    fireEvent.click(checkbox);
+    fireEvent.click(checkbox);
+    expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件）" }));
     const entryDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
-    expect(entryDialog).toHaveAccessibleDescription("「テスト事例」の履歴（閲覧 · 2026/10/10 9:01:00）を消去します。");
+    expect(entryDialog).toHaveAccessibleDescription("1件の履歴を消去します。");
+    expect(within(entryDialog).getByText("閲覧 · 2026/10/10 9:01:00")).toBeInTheDocument();
     fireEvent.click(within(entryDialog).getByRole("button", { name: "キャンセル" }));
+    expect(checkbox).toBeChecked();
     fireEvent.click(trigger);
     expect(await screen.findByRole("dialog")).toHaveAccessibleDescription("すべての履歴を消去します。");
     expect(action).not.toHaveBeenCalled();
   });
 
-  it("選んだコメント評価だけを消去し、他の履歴と検索語を保つ", async () => {
+  it("選んだ閲覧とコメント評価をまとめて消去し、他の履歴と検索語を保つ", async () => {
     let remaining = events;
     vi.mocked(getLibraryPage).mockImplementation(async () => page(remaining, false));
     const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
       const form = await request.formData();
-      expect(Object.fromEntries(form)).toEqual({
-        intent: "clearEntry",
-        kind: "comment_dislike",
-        targetId: "102",
-        occurredAt: events[0].occurredAt,
-      });
-      remaining = remaining.filter((event) => event !== events[0]);
+      expect(form.get("intent")).toBe("clearEntries");
+      expect(form.getAll("entries").map((value) => JSON.parse(String(value)))).toEqual([
+        { kind: "comment_dislike", targetId: 102, occurredAt: events[0].occurredAt },
+        { kind: "view", targetId: 42, occurredAt: events[4].occurredAt },
+      ]);
+      remaining = remaining.filter((event) => event !== events[0] && event !== events[4]);
       return { success: true };
     });
     const Stub = createRoutesStub([
@@ -298,17 +312,23 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history?q=%E6%9C%AC%E6%96%87"]} />);
-    fireEvent.click(await screen.findByRole("button", { name: "テスト事例の履歴を消去（コメントを逆評価）" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（2件）" }));
     const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
-    expect(dialog).toHaveAccessibleDescription("「テスト事例」の履歴（コメントを逆評価 · 2026/10/10 9:05:00）を消去します。");
+    expect(dialog).toHaveAccessibleDescription("2件の履歴を消去します。");
+    expect(within(dialog).getAllByText("テスト事例")).toHaveLength(2);
+    expect(within(dialog).getByText("コメントを逆評価 · 2026/10/10 9:05:00")).toBeInTheDocument();
     expect(action).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(action).toHaveBeenCalledOnce();
-    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(4);
-    expect(screen.queryByText(/^コメントを逆評価 ·/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(3);
+    expect(screen.queryByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ })).not.toBeInTheDocument();
     expect(screen.getByText(/^コメントを評価 ·/)).toBeInTheDocument();
-    expect(screen.getByText(/^閲覧 ·/)).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
+    expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "履歴を検索" })).toHaveValue("本文");
     expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
   });
@@ -329,7 +349,7 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history"]} />);
-    const trigger = await screen.findByRole("button", { name: "履歴を消去" });
+    const trigger = await screen.findByRole("button", { name: "すべての履歴を消去" });
     fireEvent.click(trigger);
     const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
     const form = within(dialog).getByRole("button", { name: "消去する" }).closest("form")!;
@@ -339,6 +359,7 @@ describe("履歴の表示と検索", () => {
     expect(within(dialog).getByRole("button", { name: "消去中..." })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "確認を閉じる" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/, hidden: true })).toBeDisabled();
     fireEvent(dialog, new Event("cancel", { cancelable: true }));
     fireEvent.click(within(dialog).getByRole("button", { name: "確認を閉じる" }));
     expect(dialog).toHaveAttribute("open");
@@ -366,13 +387,14 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history"]} />);
-    fireEvent.click(await screen.findByRole("button", { name: "履歴を消去" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: /履歴を選択（閲覧/ }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件）" }));
     const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
     fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("履歴を消去できませんでした");
     expect(dialog).toHaveAttribute("open");
     const retry = within(dialog).getByRole("button", { name: "消去する" });
-    expect(retry).toBeEnabled();
+    await waitFor(() => expect(retry).toBeEnabled());
     expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeEnabled();
 
     fireEvent.click(retry);
