@@ -30,9 +30,6 @@ export default function AdminLayout() {
             <Link to="/admin/faq" className="btn btn-ghost btn-sm">
               FAQ管理
             </Link>
-            <Link to="/admin/library" className="btn btn-ghost btn-sm">
-              自分用の事例集
-            </Link>
           </div>
         </div>
         <div className="flex-none gap-4">

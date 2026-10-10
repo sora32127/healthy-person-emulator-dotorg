@@ -11,20 +11,31 @@ import { Footer } from '~/components/Footer';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { getAuthStateAtom, isSignedInAtom, setAuthStateAtom } from '~/stores/auth';
 import { getNavItems } from '~/utils/itemMenu';
-import type { LoaderFunctionArgs } from 'react-router';
+import { data, type HeadersFunction, type LoaderFunctionArgs } from 'react-router';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
+import { isLibraryEnabledForUser } from '~/modules/feature-flags.server';
 import { Modal } from '~/components/Modal';
 import GoogleLoginButton from '~/components/GoogleAuthButton';
 import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userObject = await getAuthenticatedUser(request);
-  return { userObject };
+  const libraryEnabled = isLibraryEnabledForUser(userObject);
+  return data({ userObject, libraryEnabled }, {
+    headers: libraryEnabled ? { 'Cache-Control': 'private, no-store' } : undefined,
+  });
 }
 
-function renderDesktopHeader() {
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+  const result = new Headers(parentHeaders);
+  const cacheControl = loaderHeaders.get('Cache-Control');
+  if (cacheControl) result.set('Cache-Control', cacheControl);
+  return result;
+};
+
+function renderDesktopHeader(libraryEnabled: boolean) {
   const [isSignedIn] = useAtom(isSignedInAtom);
-  const navItems = getNavItems(isSignedIn);
+  const navItems = getNavItems(isSignedIn, libraryEnabled);
   const location = useLocation();
   const currentLocation = `${location.pathname}${location.search ? `${location.search}` : ''}`;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -52,7 +63,8 @@ function renderDesktopHeader() {
           <nav>
             <ul className="flex flex-col gap-2">
               {navItems.map((item) => {
-                const isActive = item.to === currentLocation;
+                const isActive = item.to === currentLocation ||
+                  (item.to === '/history' && location.pathname === '/history');
                 const isLoginButton = item.to === '/login';
 
                 return (
@@ -107,9 +119,9 @@ function renderDesktopHeader() {
   );
 }
 
-function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void) {
+function renderMobileHeader(handleSearchModalOpen: (status: boolean) => void, libraryEnabled: boolean) {
   const [isSignedIn] = useAtom(isSignedInAtom);
-  const navItems = getNavItems(isSignedIn);
+  const navItems = getNavItems(isSignedIn, libraryEnabled);
   const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
   return (
     <header className="navbar fixed z-40 border-b border-base-200 bg-base-100 flex justify-between p-4">
@@ -215,7 +227,7 @@ export default function Component() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [_, setAuthState] = useAtom(setAuthStateAtom);
-  const { userObject } = useLoaderData<typeof loader>();
+  const { userObject, libraryEnabled } = useLoaderData<typeof loader>();
   const isLoginModalOpen = useAtomValue(getIsLoginModalOpenAtom);
   const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
 
@@ -291,8 +303,8 @@ export default function Component() {
           <span>ログインしました</span>
         </div>
       )}
-      <div className="hidden md:block">{renderDesktopHeader()}</div>
-      <div className="block md:hidden">{renderMobileHeader(handleSearchModalOpen)}</div>
+      <div className="hidden md:block">{renderDesktopHeader(libraryEnabled)}</div>
+      <div className="block md:hidden">{renderMobileHeader(handleSearchModalOpen, libraryEnabled)}</div>
       <main
         className={`p-4 md:ml-16 2xl:ml-64 mt-16 flex-grow ${isSidebarExpanded ? 'md:ml-64' : ''}`}
       >

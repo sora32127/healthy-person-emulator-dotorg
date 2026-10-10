@@ -46,8 +46,8 @@ import { setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import { useSetAtom } from 'jotai';
 import { setVisitorCookieData } from '~/modules/visitor.server';
 import { Bookmark } from 'lucide-react';
-import { isAdminUser } from '~/modules/admin.server';
-import AdminLibraryArticle from '~/components/AdminLibraryArticle';
+import { isLibraryEnabledForUser } from '~/modules/feature-flags.server';
+import LibraryArticle from '~/components/LibraryArticle';
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -73,7 +73,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const isAuthenticated = await getAuthenticatedUser(request);
   const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
-  const isLibraryAdmin = isAdminUser(isAuthenticated);
+  const libraryEnabled = isLibraryEnabledForUser(isAuthenticated);
 
   return data({
     data: archiveData,
@@ -84,8 +84,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
-    isLibraryAdmin,
-  }, { headers: isLibraryAdmin ? { 'Cache-Control': 'private, no-store' } : undefined });
+    libraryEnabled,
+  }, { headers: libraryEnabled ? { 'Cache-Control': 'private, no-store' } : undefined });
 }
 
 export default function Component() {
@@ -98,7 +98,7 @@ export default function Component() {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
-    isLibraryAdmin,
+    libraryEnabled,
   } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
@@ -426,7 +426,7 @@ export default function Component() {
             </button>
           </div>
         </div>
-        {isLibraryAdmin && <AdminLibraryArticle key={POSTID} postId={POSTID} />}
+        {libraryEnabled && <LibraryArticle key={POSTID} postId={POSTID} />}
         <div className="my-6">
           <button
             onClick={() => {

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import AdminLibraryEntryEditor from "~/components/AdminLibraryEntryEditor";
-import type { LibraryMutationResult } from "~/components/AdminLibraryEntryEditor";
-import { requireAdmin } from "~/modules/admin.server";
+import LibraryEntryEditor from "~/components/LibraryEntryEditor";
+import type { LibraryMutationResult } from "~/components/LibraryEntryEditor";
 import { getLibraryPage } from "~/modules/library.server";
+import { H1 } from "~/components/Headings";
+import { CommonNavLink } from "~/components/CommonNavLink";
 
 export const meta: MetaFunction = () => [
-  { title: "自分用の事例集 | 管理画面" },
+  { title: "履歴 | 健常者エミュレータ事例集" },
   { name: "robots", content: "noindex, nofollow" },
 ];
 
@@ -16,9 +17,8 @@ export function headers() {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireAdmin(request);
   const url = new URL(request.url);
-  const view = url.searchParams.get("view") === "history" ? "history" : "saved";
+  const view = url.searchParams.get("view") === "saved" ? "saved" : "history";
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
   const requestedPage = Number(url.searchParams.get("page"));
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -33,7 +33,7 @@ function formatDate(value: string | null) {
   return date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", hour12: false });
 }
 
-export default function AdminLibrary() {
+export default function History() {
   const { entries, page, totalPages, total, historyEnabled, view, query } =
     useLoaderData<typeof loader>();
   const settings = useFetcher<LibraryMutationResult>();
@@ -47,23 +47,23 @@ export default function AdminLibrary() {
   }, [clear.state, clear.data]);
 
   function pageUrl(nextPage: number) {
-    return `/admin/library?${new URLSearchParams({ view, q: query, page: String(nextPage) })}`;
+    return `/history?${new URLSearchParams({ view, q: query, page: String(nextPage) })}`;
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">自分用の事例集 ({total}件)</h1>
-      <p className="mb-4 text-sm opacity-70">
-        管理者限定の試作です。保存した事例・メモ・閲覧履歴は、自分のアカウントに保存されます。
+      <H1>履歴</H1>
+      <p className="mb-4 text-sm text-base-content/70">
+        {view === "history" ? "閲覧履歴" : "保存した事例・メモ"} ({total}件)
       </p>
 
-      <div className="mb-6 border border-base-300 bg-base-100 p-4">
+      <div className="mb-6 rounded-lg border border-base-300 p-4">
         <h2 className="mb-2 font-bold">閲覧履歴</h2>
         <p className="mb-3 text-sm opacity-70">
-          有効にすると、これから開く事例をクラウドに記録し、直近90日・最大500件を表示します。無効にしても保存済みの事例やメモは残ります。
+          事例ページを開くと履歴に追加します。直近90日・最大500件まで表示します。記録を停止しても、保存した事例やメモは残ります。
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <settings.Form method="post" action="/api/admin-library">
+          <settings.Form method="post" action="/api/library">
             <input type="hidden" name="intent" value="setHistoryEnabled" />
             <input type="hidden" name="enabled" value={String(!enabled)} />
             <button type="submit" className="btn btn-secondary btn-sm" disabled={settingsBusy}>
@@ -97,7 +97,7 @@ export default function AdminLibrary() {
           </p>
         )}
         {confirmClear && (
-          <clear.Form method="post" action="/api/admin-library" className="mt-3 space-y-2">
+          <clear.Form method="post" action="/api/library" className="mt-3 space-y-2">
             <input type="hidden" name="intent" value="clearHistory" />
             <p className="text-sm">閲覧履歴をすべて消去しますか？ 保存した事例とメモは残ります。</p>
             <div className="flex gap-2">
@@ -131,8 +131,8 @@ export default function AdminLibrary() {
         <label className="space-y-1">
           <span className="block text-sm">表示</span>
           <select name="view" defaultValue={view} className="select select-bordered">
-            <option value="saved">保存・メモ</option>
             <option value="history">閲覧履歴</option>
+            <option value="saved">保存・メモ</option>
           </select>
         </label>
         <label className="flex-1 min-w-48 space-y-1">
@@ -161,11 +161,11 @@ export default function AdminLibrary() {
       ) : (
         <ul className="space-y-4">
           {entries.map((entry) => (
-            <li key={entry.postId} className="border border-base-300 bg-base-100 p-4">
+            <li key={entry.postId} className="rounded-lg border border-base-300 p-4">
               <h2 className="mb-2 text-lg font-bold break-words">
-                <Link to={`/archives/${entry.postId}`} className="link link-hover">
+                <CommonNavLink to={`/archives/${entry.postId}`}>
                   {entry.postTitle}
-                </Link>
+                </CommonNavLink>
               </h2>
               <p className="mb-3 text-xs opacity-60">
                 {view === "history"
@@ -174,14 +174,14 @@ export default function AdminLibrary() {
                     ? `保存日時: ${formatDate(entry.savedAt)}（日本時間）`
                     : "メモ付きの事例"}
               </p>
-              <AdminLibraryEntryEditor postId={entry.postId} initialEntry={entry} />
+              <LibraryEntryEditor postId={entry.postId} initialEntry={entry} />
             </li>
           ))}
         </ul>
       )}
 
       {totalPages > 1 && (
-        <nav aria-label="事例集のページ" className="join mt-4 flex justify-center">
+        <nav aria-label="履歴のページ" className="join mt-4 flex justify-center">
           {page > 1 && (
             <Link to={pageUrl(page - 1)} className="join-item btn btn-sm">
               前へ

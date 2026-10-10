@@ -6,7 +6,7 @@ export type LibraryMutationResult =
   | { success: true; entry?: LibraryEntry | null; historyEnabled?: boolean }
   | { success: false; error: string };
 
-export default function AdminLibraryEntryEditor({
+export default function LibraryEntryEditor({
   postId,
   initialEntry,
 }: {
@@ -56,7 +56,7 @@ export default function AdminLibraryEntryEditor({
     <div className="space-y-3">
       <saved.Form
         method="post"
-        action="/api/admin-library"
+        action="/api/library"
         className="flex flex-wrap items-center gap-2"
       >
         <input type="hidden" name="intent" value="setSaved" />
@@ -82,7 +82,7 @@ export default function AdminLibraryEntryEditor({
         )}
       </saved.Form>
 
-      <memo.Form method="post" action="/api/admin-library" className="space-y-2">
+      <memo.Form method="post" action="/api/library" className="space-y-2">
         <input type="hidden" name="intent" value="saveNote" />
         <input type="hidden" name="postId" value={postId} />
         <label htmlFor={noteId} className="block text-sm font-medium">

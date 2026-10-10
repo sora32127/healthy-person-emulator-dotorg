@@ -16,7 +16,7 @@ async function respond(operation: () => Promise<unknown>) {
         headers: PRIVATE_HEADERS,
       });
     }
-    console.error("Admin library request failed");
+    console.error("Library request failed");
     return new Response(
       JSON.stringify({ success: false, error: "処理に失敗しました。再度お試しください" }),
       {

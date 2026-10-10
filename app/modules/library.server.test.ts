@@ -50,14 +50,14 @@ function createD1Adapter(): D1Database {
 }
 
 function request() {
-  return new Request("https://example.test/api/admin-library");
+  return new Request("https://example.test/api/library");
 }
 
 function mutate(values: Record<string, string>, origin = "https://example.test") {
   const formData = new FormData();
   for (const [key, value] of Object.entries(values)) formData.set(key, value);
   return mutateLibrary(
-    new Request("https://example.test/api/admin-library", {
+    new Request("https://example.test/api/library", {
       method: "POST",
       headers: { Origin: origin },
     }),
@@ -100,7 +100,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("admin personal library", () => {
+describe("personal library", () => {
   it.each([
     [null, 401],
     [{ email: "regular@example.test", userUuid: "regular" }, 403],
@@ -111,14 +111,38 @@ describe("admin personal library", () => {
     expect(prepares).toBe(0);
   });
 
-  it("ページ一覧も独立して管理者権限を確認する", async () => {
-    auth.user = null;
-    const result = await getLibraryPage(request(), { view: "saved", query: "", page: 1 }).catch(
+  it.each([null, { email: "regular@example.test", userUuid: "regular" }])(
+    "ページ一覧も独立して公開対象を確認する",
+    async (user) => {
+      auth.user = user;
+      const result = await getLibraryPage(request(), { view: "saved", query: "", page: 1 }).catch(
+        (error) => error,
+      );
+      expect(result).toBeInstanceOf(Response);
+      expect(result.status).toBe(302);
+      expect(result.headers.get("Location")).toBe("/");
+      expect(prepares).toBe(0);
+    },
+  );
+
+  it("公開対象から外れたセッションはAPI・ページの両方で拒否し、保存データに触れない", async () => {
+    await mutate({ intent: "setSaved", postId: "1", isSaved: "true" });
+    const writesBefore = writes;
+    (globalThis as any).__cloudflareEnv.ADMIN_EMAILS = "";
+    prepares = 0;
+
+    await expect(getLibraryEntry(request(), 1)).rejects.toMatchObject({ status: 403 });
+    await expect(mutate({ intent: "recordView", postId: "1" })).rejects.toMatchObject({ status: 403 });
+    const result = await getLibraryPage(request(), { view: "history", query: "", page: 1 }).catch(
       (error) => error,
     );
     expect(result).toBeInstanceOf(Response);
     expect(result.status).toBe(302);
     expect(prepares).toBe(0);
+    expect(writes).toBe(writesBefore);
+    expect(
+      sqlite.prepare("SELECT is_saved FROM user_library_entries WHERE user_uuid = ?").get(ADMIN_A.userUuid),
+    ).toEqual({ is_saved: 1 });
   });
 
   it("送信された所有者を無視し、管理者間の保存とメモを分離する", async () => {

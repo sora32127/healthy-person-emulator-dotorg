@@ -1,4 +1,5 @@
-import { isAdminUser, requireAdmin } from "./admin.server";
+import { redirect } from "react-router";
+import { isLibraryEnabledForUser } from "./feature-flags.server";
 import { getAuthenticatedUser } from "./auth.google.server";
 
 export type LibraryEntry = {
@@ -34,7 +35,7 @@ function getDb(): D1Database {
 async function requireLibraryUser(request: Request) {
   const user = await getAuthenticatedUser(request);
   if (!user) throw new LibraryError(401, "ログインが必要です");
-  if (!isAdminUser(user)) throw new LibraryError(403, "管理者のみ利用できます");
+  if (!isLibraryEnabledForUser(user)) throw new LibraryError(403, "この機能は現在利用できません");
   return user;
 }
 
@@ -120,7 +121,8 @@ export async function getLibraryPage(
   request: Request,
   options: { view: "saved" | "history"; query: string; page: number },
 ) {
-  const user = await requireAdmin(request);
+  const user = await getAuthenticatedUser(request);
+  if (!user || !isLibraryEnabledForUser(user)) throw redirect("/");
   const db = getDb();
   const view = options.view === "history" ? "history" : "saved";
   const query = options.query.trim().slice(0, 200);

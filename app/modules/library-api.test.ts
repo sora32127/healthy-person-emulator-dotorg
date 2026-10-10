@@ -1,7 +1,7 @@
 // @vitest-environment node
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { action, loader } from "../routes/api.admin-library";
+import { action, loader } from "../routes/api.library";
 
 const auth = vi.hoisted(() => ({ user: null as null | { email: string; userUuid: string } }));
 vi.mock("~/modules/auth.google.server", () => ({
@@ -20,13 +20,13 @@ afterEach(() => vi.unstubAllGlobals());
 
 function get(postId = "1") {
   return loader({
-    request: new Request(`https://example.test/api/admin-library?postId=${postId}`),
+    request: new Request(`https://example.test/api/library?postId=${postId}`),
   } as LoaderFunctionArgs);
 }
 
 function post(values: Record<string, string>, origin = "https://example.test") {
   return action({
-    request: new Request("https://example.test/api/admin-library", {
+    request: new Request("https://example.test/api/library", {
       method: "POST",
       headers: { Origin: origin },
       body: new URLSearchParams(values),
@@ -34,7 +34,7 @@ function post(values: Record<string, string>, origin = "https://example.test") {
   } as ActionFunctionArgs);
 }
 
-describe("admin library API", () => {
+describe("library API", () => {
   it("管理者のGET結果をprivateなJSONとして返す", async () => {
     auth.user = { email: "admin@example.test", userUuid: "admin" };
     prepare.mockImplementation((sql: string) => ({
@@ -94,7 +94,7 @@ describe("admin library API", () => {
   it("認証後のフォーム破損は400を返す", async () => {
     auth.user = { email: "admin@example.test", userUuid: "admin" };
     const response = await action({
-      request: new Request("https://example.test/api/admin-library", {
+      request: new Request("https://example.test/api/library", {
         method: "POST",
         headers: { Origin: "https://example.test", "Content-Type": "application/json" },
         body: "{}",

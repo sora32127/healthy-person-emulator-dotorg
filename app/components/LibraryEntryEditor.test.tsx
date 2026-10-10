@@ -3,8 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import { createRoutesStub, useLoaderData, useRevalidator } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import AdminLibraryEntryEditor from "./AdminLibraryEntryEditor";
-import type { LibraryMutationResult } from "./AdminLibraryEntryEditor";
+import LibraryEntryEditor from "./LibraryEntryEditor";
+import type { LibraryMutationResult } from "./LibraryEntryEditor";
 import type { LibraryEntry } from "~/modules/library.server";
 
 const entry: LibraryEntry = {
@@ -33,7 +33,7 @@ function renderEditor(
     const revalidator = useRevalidator();
     return (
       <>
-        <AdminLibraryEntryEditor postId={42} initialEntry={entry} />
+        <LibraryEntryEditor postId={42} initialEntry={entry} />
         <button
           type="button"
           disabled={revalidator.state !== "idle"}
@@ -47,7 +47,7 @@ function renderEditor(
 
   const Stub = createRoutesStub([
     { path: "/test", loader, Component: EditorPage },
-    { path: "/api/admin-library", action },
+    { path: "/api/library", action },
   ]);
   render(<Stub initialEntries={["/test"]} />);
   return {
@@ -59,7 +59,7 @@ function renderEditor(
   };
 }
 
-describe("AdminLibraryEntryEditor", () => {
+describe("LibraryEntryEditor", () => {
   afterEach(() => {
     cleanup();
   });
