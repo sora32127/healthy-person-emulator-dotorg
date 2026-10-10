@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { createRoutesStub, useNavigate } from "react-router";
+import { createRoutesStub, useNavigate, useRevalidator } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import History, { loader } from "~/routes/_layout.history";
@@ -8,30 +8,29 @@ import { getLibraryPage } from "./library.server";
 
 vi.mock("~/modules/library.server", () => ({ getLibraryPage: vi.fn() }));
 
-const entry = {
-  postId: 42,
-  postTitle: "テスト事例",
-  commentId: null,
-};
 const events = [
   {
-    ...entry,
     kind: "comment_dislike" as const,
     occurredAt: "2026-10-10T00:05:00.000Z",
     commentId: 102,
   },
   {
-    ...entry,
     kind: "comment_like" as const,
     occurredAt: "2026-10-10T00:04:00.000Z",
     commentId: 101,
   },
-  { ...entry, kind: "dislike" as const, occurredAt: "2026-10-10T00:03:00.000Z" },
-  { ...entry, kind: "like" as const, occurredAt: "2026-10-10T00:02:00.000Z" },
-  { ...entry, kind: "view" as const, occurredAt: "2026-10-10T00:01:00.000Z" },
+  { kind: "dislike" as const, occurredAt: "2026-10-10T00:03:00.000Z", commentId: null },
+  { kind: "like" as const, occurredAt: "2026-10-10T00:02:00.000Z", commentId: null },
+  { kind: "view" as const, occurredAt: "2026-10-10T00:01:00.000Z", commentId: null },
 ];
+const entry = {
+  postId: 42,
+  postTitle: "テスト事例",
+  occurredAt: events[0].occurredAt,
+  events,
+};
 
-function page(entries = events, historyEnabled = true) {
+function page(entries = [entry], historyEnabled = true) {
   return { entries, page: 1, totalPages: 1, total: entries.length, historyEnabled };
 }
 
@@ -42,46 +41,59 @@ describe("履歴の表示と検索", () => {
     vi.restoreAllMocks();
   });
 
-  it("すべての種類を並べ、検索窓だけで絞り込みと解除ができる", async () => {
+  it("記事ごとに1行と選択欄へまとめ、各アクションとコメントリンクを表示する", async () => {
     vi.mocked(getLibraryPage).mockImplementation(async (_request, options) =>
-      page(options.query === "本文タグ" ? [events[0]] : events),
+      page(options.query === "本文タグ" ? [{ ...entry, events: [events[0]] }] : [entry]),
     );
     const Stub = createRoutesStub([{ path: "/history", loader, Component: History }]);
     render(<Stub initialEntries={["/history"]} />);
 
     const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
-    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5);
-    expect(screen.getByText(/^コメントを逆評価 ·/)).toBeInTheDocument();
-    expect(screen.getByText(/^コメントを評価 ·/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(1);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+    expect(screen.getByText("1件の記事")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "コメントを逆評価" })).toHaveAttribute(
+      "href",
+      "/archives/42#comment-102",
+    );
+    expect(screen.getByRole("link", { name: "コメントを評価" })).toHaveAttribute(
+      "href",
+      "/archives/42#comment-101",
+    );
     expect(screen.getByText(/^良くないね ·/)).toBeInTheDocument();
     expect(screen.getByText(/^いいね ·/)).toBeInTheDocument();
     expect(screen.getByText(/^閲覧 ·/)).toBeInTheDocument();
-    const links = screen.getAllByRole("link", { name: "テスト事例" });
-    expect(links[0]).toHaveAttribute("href", "/archives/42#comment-102");
-    expect(links[1]).toHaveAttribute("href", "/archives/42#comment-101");
-    expect(links[4]).toHaveAttribute("href", "/archives/42");
+    const article = screen.getByRole("link", { name: "テスト事例" });
+    expect(article).toHaveAttribute("href", "/archives/42");
+    expect(within(article.closest("li")!).getAllByRole("listitem")).toHaveLength(5);
+    expect(
+      Array.from(article.closest("li")!.querySelectorAll("time"), (time) => time.dateTime),
+    ).toEqual(events.map((event) => event.occurredAt));
     expect(screen.queryByText(/保存|メモ/)).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "表示する" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ }));
-    expect(screen.getByRole("button", { name: "選択した履歴を消去（1件）" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "テスト事例の履歴を選択" }));
+    expect(screen.getByRole("button", { name: "選択した履歴を消去（1件の記事）" })).toBeEnabled();
 
     fireEvent.change(search, { target: { value: "本文タグ" } });
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(1),
+      expect(screen.queryByRole("link", { name: "コメントを評価" })).not.toBeInTheDocument(),
     );
     expect(search).toHaveValue("本文タグ");
     expect(screen.getByRole("checkbox")).not.toBeChecked();
     expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
-    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
-      query: "本文タグ",
-    }));
+    expect(getLibraryPage).toHaveBeenLastCalledWith(
+      expect.any(Request),
+      expect.objectContaining({
+        query: "本文タグ",
+      }),
+    );
 
     fireEvent.change(search, { target: { value: "" } });
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5),
+      expect(screen.getByRole("link", { name: "コメントを評価" })).toBeInTheDocument(),
     );
     expect(search).toHaveValue("");
     expect(screen.queryByText(/管理者限定|管理画面/)).not.toBeInTheDocument();
@@ -162,10 +174,10 @@ describe("履歴の表示と検索", () => {
       "href",
       "/history?page=3&q=%E6%9C%AC%E6%96%87",
     );
-    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "テスト事例の履歴を選択" }));
     fireEvent.click(screen.getByRole("link", { name: "次へ" }));
     await screen.findByText("3 / 3");
-    expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "テスト事例の履歴を選択" })).not.toBeChecked();
     expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "次へ" })).not.toBeInTheDocument();
     expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
@@ -278,15 +290,15 @@ describe("履歴の表示と検索", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(action).not.toHaveBeenCalled();
 
-    const checkbox = screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ });
+    const checkbox = screen.getByRole("checkbox", { name: "テスト事例の履歴を選択" });
     fireEvent.click(checkbox);
     fireEvent.click(checkbox);
     expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     fireEvent.click(checkbox);
-    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件）" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件の記事）" }));
     const entryDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
-    expect(entryDialog).toHaveAccessibleDescription("1件の履歴を消去します。");
-    expect(within(entryDialog).getByText("閲覧 · 2026/10/10 9:01:00")).toBeInTheDocument();
+    expect(entryDialog).toHaveAccessibleDescription("1件の記事に表示されている履歴を消去します。");
+    expect(within(entryDialog).getByText(/^閲覧 ·/)).toHaveTextContent("閲覧 · 2026/10/10 9:01:00");
     fireEvent.click(within(entryDialog).getByRole("button", { name: "キャンセル" }));
     expect(checkbox).toBeChecked();
     fireEvent.click(trigger);
@@ -294,17 +306,21 @@ describe("履歴の表示と検索", () => {
     expect(action).not.toHaveBeenCalled();
   });
 
-  it("選んだ閲覧とコメント評価をまとめて消去し、他の履歴と検索語を保つ", async () => {
-    let remaining = events;
+  it("選んだ記事の全アクションを消去し、他の記事と検索語を保つ", async () => {
+    const otherEntry = { ...entry, postId: 43, postTitle: "別の事例", events: [events[4]] };
+    let remaining = [entry, otherEntry];
     vi.mocked(getLibraryPage).mockImplementation(async () => page(remaining, false));
     const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
       const form = await request.formData();
       expect(form.get("intent")).toBe("clearEntries");
-      expect(form.getAll("entries").map((value) => JSON.parse(String(value)))).toEqual([
-        { kind: "comment_dislike", targetId: 102, occurredAt: events[0].occurredAt },
-        { kind: "view", targetId: 42, occurredAt: events[4].occurredAt },
-      ]);
-      remaining = remaining.filter((event) => event !== events[0] && event !== events[4]);
+      expect(form.getAll("entries").map((value) => JSON.parse(String(value)))).toEqual(
+        events.map((event) => ({
+          kind: event.kind,
+          targetId: event.commentId ?? 42,
+          occurredAt: event.occurredAt,
+        })),
+      );
+      remaining = [otherEntry];
       return { success: true };
     });
     const Stub = createRoutesStub([
@@ -312,25 +328,138 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history?q=%E6%9C%AC%E6%96%87"]} />);
-    fireEvent.click(await screen.findByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ }));
-    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（2件）" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "テスト事例の履歴を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件の記事）" }));
     const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
-    expect(dialog).toHaveAccessibleDescription("2件の履歴を消去します。");
-    expect(within(dialog).getAllByText("テスト事例")).toHaveLength(2);
-    expect(within(dialog).getByText("コメントを逆評価 · 2026/10/10 9:05:00")).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription("1件の記事に表示されている履歴を消去します。");
+    expect(within(dialog).getAllByText("テスト事例")).toHaveLength(1);
+    expect(
+      within(dialog).getByRole("link", { name: "コメントを逆評価" }).closest("li"),
+    ).toHaveTextContent("コメントを逆評価 · 2026/10/10 9:05:00");
     expect(action).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(action).toHaveBeenCalledOnce();
-    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(3);
-    expect(screen.queryByRole("checkbox", { name: /履歴を選択（コメントを逆評価/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/^コメントを評価 ·/)).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked)).toBe(true);
+    expect(screen.queryByRole("link", { name: "テスト事例" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "別の事例" })).toHaveAttribute("href", "/archives/43");
+    expect(screen.queryByRole("link", { name: "コメントを評価" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: "テスト事例の履歴を選択" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("checkbox").every((checkbox) => !(checkbox as HTMLInputElement).checked),
+    ).toBe(true);
     expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "履歴を検索" })).toHaveValue("本文");
     expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
+  });
+
+  it("コメントだけに一致した記事では、検索結果に表示された評価だけを消去する", async () => {
+    let commentPresent = true;
+    vi.mocked(getLibraryPage).mockImplementation(async (_request, options) =>
+      page(
+        options.query
+          ? commentPresent
+            ? [{ ...entry, events: [events[0]] }]
+            : []
+          : [
+              {
+                ...entry,
+                occurredAt: events[commentPresent ? 0 : 1].occurredAt,
+                events: commentPresent ? events : events.slice(1),
+              },
+            ],
+      ),
+    );
+    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
+      const form = await request.formData();
+      expect(form.get("intent")).toBe("clearEntries");
+      expect(form.getAll("entries").map((value) => JSON.parse(String(value)))).toEqual([
+        { kind: "comment_dislike", targetId: 102, occurredAt: events[0].occurredAt },
+      ]);
+      commentPresent = false;
+      return { success: true };
+    });
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history?q=%E3%82%B3%E3%83%A1%E3%83%B3%E3%83%88"]} />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "テスト事例の履歴を選択" }));
+    expect(screen.queryByText(/^閲覧 ·/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件の記事）" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getAllByRole("link")).toHaveLength(1);
+    fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
+    await screen.findByText("該当する履歴はありません。");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(action).toHaveBeenCalledOnce();
+    expect(screen.getByRole("searchbox")).toHaveValue("コメント");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "" } });
+    await screen.findByText(/^閲覧 ·/);
+    expect(screen.getByRole("link", { name: "テスト事例" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "コメントを逆評価" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "コメントを評価" })).toBeInTheDocument();
+  });
+
+  it("複数記事の消去確認後に新しい履歴を取得しても、確認時の履歴だけを送信する", async () => {
+    const otherEntry = { ...entry, postId: 43, postTitle: "別の事例", events: [events[4]] };
+    const updatedEvent = { ...events[4], occurredAt: "2026-10-10T01:00:00.000Z" };
+    let currentEntry = entry;
+    vi.mocked(getLibraryPage).mockImplementation(async () => page([currentEntry, otherEntry]));
+    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
+      const form = await request.formData();
+      expect(form.get("intent")).toBe("clearEntries");
+      expect(form.getAll("entries").map((value) => JSON.parse(String(value)))).toEqual([
+        ...events.map((event) => ({
+          kind: event.kind,
+          targetId: event.commentId ?? 42,
+          occurredAt: event.occurredAt,
+        })),
+        { kind: "view", targetId: 43, occurredAt: events[4].occurredAt },
+      ]);
+      return { success: true };
+    });
+    function WithRefresh() {
+      const revalidator = useRevalidator();
+      return (
+        <>
+          <button type="button" onClick={() => void revalidator.revalidate()}>
+            再取得
+          </button>
+          <History />
+        </>
+      );
+    }
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: WithRefresh },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history"]} />);
+    fireEvent.click(await screen.findByRole("checkbox", { name: "テスト事例の履歴を選択" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "別の事例の履歴を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（2件の記事）" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveAccessibleDescription("2件の記事に表示されている履歴を消去します。");
+    expect(within(dialog).getByText("テスト事例")).toBeInTheDocument();
+    expect(within(dialog).getByText("別の事例")).toBeInTheDocument();
+    currentEntry = {
+      ...entry,
+      occurredAt: updatedEvent.occurredAt,
+      events: [updatedEvent, ...events.slice(0, 4)],
+    };
+    fireEvent.click(screen.getByText("再取得"));
+    await waitFor(() =>
+      expect(
+        document.querySelector(`time[datetime="${updatedEvent.occurredAt}"]`),
+      ).toBeInTheDocument(),
+    );
+    for (const view of within(dialog).getAllByText(/^閲覧 ·/)) {
+      expect(view).toHaveTextContent("閲覧 · 2026/10/10 9:01:00");
+    }
+    fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(action).toHaveBeenCalledOnce();
   });
 
   it("確認後だけ消去を送り、送信中は閉じず、成功後に閉じて再度開ける", async () => {
@@ -359,7 +488,9 @@ describe("履歴の表示と検索", () => {
     expect(within(dialog).getByRole("button", { name: "消去中..." })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeDisabled();
     expect(within(dialog).getByRole("button", { name: "確認を閉じる" })).toBeDisabled();
-    expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/, hidden: true })).toBeDisabled();
+    expect(
+      screen.getByRole("checkbox", { name: "テスト事例の履歴を選択", hidden: true }),
+    ).toBeDisabled();
     fireEvent(dialog, new Event("cancel", { cancelable: true }));
     fireEvent.click(within(dialog).getByRole("button", { name: "確認を閉じる" }));
     expect(dialog).toHaveAttribute("open");
@@ -387,8 +518,8 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history"]} />);
-    fireEvent.click(await screen.findByRole("checkbox", { name: /履歴を選択（閲覧/ }));
-    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件）" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "テスト事例の履歴を選択" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択した履歴を消去（1件の記事）" }));
     const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
     fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("履歴を消去できませんでした");
