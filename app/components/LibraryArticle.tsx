@@ -10,7 +10,7 @@ export default function LibraryArticle({ postId }: { postId: number }) {
     recordedPostId.current = postId;
     fetcher.submit(
       { intent: "recordView", postId: String(postId) },
-      { method: "post", action: "/api/library" },
+      { method: "post", action: "/api/library", defaultShouldRevalidate: false },
     );
   }, [postId, fetcher.submit]);
 

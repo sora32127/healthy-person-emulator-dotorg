@@ -26,21 +26,10 @@ function createD1Adapter(): D1Database {
         values = parameters;
         return statement;
       },
-      async first() {
-        return sqlite.prepare(sql).get(...values) ?? null;
-      },
-      async all() {
-        return { results: sqlite.prepare(sql).all(...values) };
-      },
       async raw() {
         return sqlite.prepare(sql).raw().all(...values);
       },
-      async run() {
-        writes++;
-        const result = sqlite.prepare(sql).run(...values);
-        return { success: true, results: [], meta: { changes: result.changes } };
-      },
-      execute() {
+      run() {
         writes++;
         const result = sqlite.prepare(sql).run(...values);
         return { success: true, results: [], meta: { changes: result.changes } };
@@ -50,8 +39,8 @@ function createD1Adapter(): D1Database {
   }
   return {
     prepare,
-    async batch(statements: { execute(): unknown }[]) {
-      return sqlite.transaction(() => statements.map((statement) => statement.execute()))();
+    async batch(statements: { run(): unknown }[]) {
+      return sqlite.transaction(() => statements.map((statement) => statement.run()))();
     },
   } as unknown as D1Database;
 }

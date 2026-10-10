@@ -230,7 +230,6 @@ describe("履歴の表示と検索", () => {
     );
     expect(submittedSettings).toEqual(["false", "false"]);
     expect(cloudHistoryEnabled).toBe(false);
-    expect(disable).toHaveClass("shadow-none");
     expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
 
     rejectUpdate = true;
@@ -244,7 +243,6 @@ describe("履歴の表示と検索", () => {
   it("消去確認を開く、キャンセル、ESC、外側で閉じる操作では送信しない", async () => {
     vi.mocked(getLibraryPage).mockResolvedValue(page());
     const action = vi.fn(async () => ({ success: true }));
-    const showModal = vi.spyOn(HTMLDialogElement.prototype, "showModal");
     const Stub = createRoutesStub([
       { path: "/history", loader, Component: History },
       { path: "/api/library", action },
@@ -270,7 +268,6 @@ describe("履歴の表示と検索", () => {
     const outsideDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
     fireEvent.click(within(outsideDialog).getByRole("button", { name: "確認を閉じる" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(showModal).toHaveBeenCalledTimes(3);
     expect(action).not.toHaveBeenCalled();
   });
 

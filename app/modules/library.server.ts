@@ -13,13 +13,7 @@ import {
 import { isLibraryEnabledForUser } from "./feature-flags.server";
 import { getAuthenticatedUser } from "./auth.google.server";
 
-export type LibraryTimelineEvent = {
-  postId: number;
-  postTitle: string;
-  kind: "view" | "like" | "dislike" | "comment_like" | "comment_dislike";
-  occurredAt: string;
-  commentId: number | null;
-};
+type HistoryKind = "view" | (typeof userLibraryReactions.$inferSelect)["kind"];
 
 const PAGE_SIZE = 50;
 const HISTORY_LIMIT = 500;
@@ -69,22 +63,13 @@ async function readHistoryEnabled(db: LibraryDb, userUuid: string): Promise<bool
   return setting?.enabled ?? true;
 }
 
-async function assertPostExists(db: LibraryDb, postId: number) {
-  const post = await db
-    .select({ postId: dimPosts.postId })
-    .from(dimPosts)
-    .where(eq(dimPosts.postId, postId))
-    .get();
-  if (!post) throw new LibraryError(404, "記事が見つかりません");
-}
-
 function historyEvents(db: LibraryDb, userUuid: string, cutoff: string) {
   return db.$with("history_events").as(
     db
       .select({
         postId: userLibraryEntries.postId,
-        kind: sql<LibraryTimelineEvent["kind"]>`'view'`.as("event_kind"),
-        occurredAt: sql<string>`${userLibraryEntries.lastViewedAt}`.as("event_occurred_at"),
+        kind: sql<HistoryKind>`'view'`.as("event_kind"),
+        occurredAt: userLibraryEntries.lastViewedAt,
         targetId: sql<number>`${userLibraryEntries.postId}`.as("event_target_id"),
         commentId: sql<number | null>`NULL`.as("event_comment_id"),
       })
@@ -360,19 +345,24 @@ export async function mutateLibrary(request: Request) {
 
   const postId = Number(formData.get("postId"));
   if (!Number.isSafeInteger(postId) || postId <= 0) throw new LibraryError(400, "記事IDが不正です");
-  await assertPostExists(db, postId);
+  const post = await db
+    .select({
+      historyEnabled: userLibrarySettings.historyEnabled,
+      viewedAt: userLibraryEntries.lastViewedAt,
+    })
+    .from(dimPosts)
+    .leftJoin(userLibrarySettings, eq(userLibrarySettings.userUuid, userUuid))
+    .leftJoin(
+      userLibraryEntries,
+      and(eq(userLibraryEntries.postId, dimPosts.postId), eq(userLibraryEntries.userUuid, userUuid)),
+    )
+    .where(eq(dimPosts.postId, postId))
+    .get();
+  if (!post) throw new LibraryError(404, "記事が見つかりません");
   const now = new Date();
-  const [historyEnabled, viewed] = await Promise.all([
-    readHistoryEnabled(db, userUuid),
-    db
-      .select({ viewedAt: userLibraryEntries.lastViewedAt })
-      .from(userLibraryEntries)
-      .where(and(eq(userLibraryEntries.userUuid, userUuid), eq(userLibraryEntries.postId, postId)))
-      .get(),
-  ]);
   if (
-    !historyEnabled ||
-    (viewed?.viewedAt && now.getTime() - Date.parse(viewed.viewedAt) < VIEW_INTERVAL_MS)
+    post.historyEnabled === false ||
+    (post.viewedAt && now.getTime() - Date.parse(post.viewedAt) < VIEW_INTERVAL_MS)
   ) {
     return { success: true as const };
   }

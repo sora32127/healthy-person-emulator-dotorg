@@ -46,12 +46,10 @@ export default function History() {
   const [isComposing, setIsComposing] = useState(false);
   const settings = useFetcher<HistoryMutationResult>();
   const clear = useFetcher<HistoryMutationResult>();
-  const [confirmClear, setConfirmClear] = useState(false);
   const clearDialog = useRef<HTMLDialogElement>(null);
   const clearPending = useRef(false);
   const clearBusy = clear.state !== "idle";
   const settingsBusy = settings.state !== "idle" || clearBusy;
-  const enabled = historyEnabled;
 
   useEffect(() => {
     if (navigationType !== "REPLACE") setSearch(query);
@@ -71,22 +69,16 @@ export default function History() {
   }, [isComposing, search, query, navigate]);
 
   useEffect(() => {
-    if (confirmClear && !clearDialog.current?.open) clearDialog.current?.showModal();
-  }, [confirmClear]);
-
-  useEffect(() => {
     if (clear.state !== "idle") return;
     clearPending.current = false;
     if (clear.data?.success) {
       clearDialog.current?.close();
-      setConfirmClear(false);
     }
   }, [clear.state, clear.data]);
 
   function closeClearDialog() {
     if (clearPending.current || clearBusy) return;
     clearDialog.current?.close();
-    setConfirmClear(false);
   }
 
   function pageUrl(nextPage: number) {
@@ -103,11 +95,11 @@ export default function History() {
       <div className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <p role="status" className="text-sm">
-            履歴の記録：<strong>{enabled ? "有効" : "無効"}</strong>
+            履歴の記録：<strong>{historyEnabled ? "有効" : "無効"}</strong>
           </p>
           <settings.Form method="post" action="/api/library">
             <input type="hidden" name="intent" value="setHistoryEnabled" />
-            <input type="hidden" name="enabled" value={String(!enabled)} />
+            <input type="hidden" name="enabled" value={String(!historyEnabled)} />
             <button
               type="submit"
               className="btn btn-ghost btn-sm shadow-none"
@@ -115,7 +107,7 @@ export default function History() {
             >
               {settings.state !== "idle"
                 ? "更新中..."
-                : enabled
+                : historyEnabled
                   ? "履歴を無効にする"
                   : "履歴を有効にする"}
             </button>
@@ -123,7 +115,7 @@ export default function History() {
           <button
             type="button"
             className="btn btn-ghost btn-sm shadow-none"
-            onClick={() => setConfirmClear(true)}
+            onClick={() => clearDialog.current?.showModal()}
             disabled={settingsBusy}
           >
             履歴を消去
@@ -134,74 +126,71 @@ export default function History() {
             {settings.data.error}
           </p>
         )}
-        {confirmClear && (
-          <dialog
-            ref={clearDialog}
-            className="modal"
-            aria-labelledby="history-clear-title"
-            aria-describedby="history-clear-description"
-            onCancel={(event) => {
-              event.preventDefault();
-              closeClearDialog();
-            }}
-            onClose={() => setConfirmClear(false)}
-          >
-            <div className="modal-box shadow-none">
-              <h2 id="history-clear-title" className="font-bold text-lg">
-                履歴を消去しますか？
-              </h2>
-              <p id="history-clear-description" className="py-2 text-sm opacity-70">
-                すべての履歴を消去します。
-              </p>
-              <clear.Form
-                method="post"
-                action="/api/library"
-                onSubmit={(event) => {
-                  if (clearPending.current || settingsBusy) {
-                    event.preventDefault();
-                    return;
-                  }
-                  clearPending.current = true;
-                }}
-              >
-                <input type="hidden" name="intent" value="clearHistory" />
-                {clear.data?.success === false && (
-                  <p role="alert" className="mt-2 text-sm text-error">
-                    {clear.data.error}
-                  </p>
-                )}
-                <div className="modal-action">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm shadow-none"
-                    onClick={closeClearDialog}
-                    disabled={clearBusy}
-                    autoFocus
-                  >
-                    キャンセル
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-error btn-sm shadow-none"
-                    disabled={settingsBusy}
-                  >
-                    {clearBusy ? "消去中..." : "消去する"}
-                  </button>
-                </div>
-              </clear.Form>
-            </div>
-            <div className="modal-backdrop">
-              <button
-                type="button"
-                aria-label="確認を閉じる"
-                onClick={closeClearDialog}
-                disabled={clearBusy}
-              >
-                閉じる
-              </button>
-            </div>
-          </dialog>
-        )}
+        <dialog
+          ref={clearDialog}
+          className="modal"
+          aria-labelledby="history-clear-title"
+          aria-describedby="history-clear-description"
+          onCancel={(event) => {
+            event.preventDefault();
+            closeClearDialog();
+          }}
+        >
+          <div className="modal-box shadow-none">
+            <h2 id="history-clear-title" className="font-bold text-lg">
+              履歴を消去しますか？
+            </h2>
+            <p id="history-clear-description" className="py-2 text-sm opacity-70">
+              すべての履歴を消去します。
+            </p>
+            <clear.Form
+              method="post"
+              action="/api/library"
+              onSubmit={(event) => {
+                if (clearPending.current || settingsBusy) {
+                  event.preventDefault();
+                  return;
+                }
+                clearPending.current = true;
+              }}
+            >
+              <input type="hidden" name="intent" value="clearHistory" />
+              {clear.data?.success === false && (
+                <p role="alert" className="mt-2 text-sm text-error">
+                  {clear.data.error}
+                </p>
+              )}
+              <div className="modal-action">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm shadow-none"
+                  onClick={closeClearDialog}
+                  disabled={clearBusy}
+                  autoFocus
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-error btn-sm shadow-none"
+                  disabled={settingsBusy}
+                >
+                  {clearBusy ? "消去中..." : "消去する"}
+                </button>
+              </div>
+            </clear.Form>
+          </div>
+          <div className="modal-backdrop">
+            <button
+              type="button"
+              aria-label="確認を閉じる"
+              onClick={closeClearDialog}
+              disabled={clearBusy}
+            >
+              閉じる
+            </button>
+          </div>
+        </dialog>
       </div>
 
       <input
