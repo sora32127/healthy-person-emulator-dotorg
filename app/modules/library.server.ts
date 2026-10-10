@@ -317,7 +317,7 @@ export async function mutateLibrary(request: Request) {
     throw new LibraryError(400, "フォームが不正です");
   }
   const intent = formData.get("intent");
-  if (!["recordView", "setHistoryEnabled", "clearHistory"].includes(String(intent))) {
+  if (!["recordView", "setHistoryEnabled", "clearHistory", "clearEntries"].includes(String(intent))) {
     throw new LibraryError(400, "操作が不正です");
   }
   const db = getDb();
@@ -340,6 +340,54 @@ export async function mutateLibrary(request: Request) {
       db.delete(userLibraryEntries).where(eq(userLibraryEntries.userUuid, userUuid)),
       db.delete(userLibraryReactions).where(eq(userLibraryReactions.userUuid, userUuid)),
     ]);
+    return { success: true as const };
+  }
+  if (intent === "clearEntries") {
+    const values = formData.getAll("entries");
+    if (!values.length || values.length > PAGE_SIZE) {
+      throw new LibraryError(400, "履歴の指定が不正です");
+    }
+    let entries: { kind: HistoryKind; targetId: number; occurredAt: string }[];
+    try {
+      entries = values.map((value) => {
+        const { kind, targetId, occurredAt } = JSON.parse(String(value));
+        if (
+          (kind !== "view" &&
+            kind !== "like" &&
+            kind !== "dislike" &&
+            kind !== "comment_like" &&
+            kind !== "comment_dislike") ||
+          !Number.isSafeInteger(targetId) ||
+          targetId <= 0 ||
+          typeof occurredAt !== "string" ||
+          !Number.isFinite(Date.parse(occurredAt))
+        ) {
+          throw new Error();
+        }
+        return { kind, targetId, occurredAt };
+      });
+    } catch {
+      throw new LibraryError(400, "履歴の指定が不正です");
+    }
+    const [first, ...rest] = entries.map(({ kind, targetId, occurredAt }) =>
+      kind === "view"
+        ? db.delete(userLibraryEntries).where(
+            and(
+              eq(userLibraryEntries.userUuid, userUuid),
+              eq(userLibraryEntries.postId, targetId),
+              eq(userLibraryEntries.lastViewedAt, occurredAt),
+            ),
+          )
+        : db.delete(userLibraryReactions).where(
+            and(
+              eq(userLibraryReactions.userUuid, userUuid),
+              eq(userLibraryReactions.kind, kind),
+              eq(userLibraryReactions.targetId, targetId),
+              eq(userLibraryReactions.occurredAt, occurredAt),
+            ),
+          ),
+    );
+    await db.batch([first!, ...rest]);
     return { success: true as const };
   }
 
