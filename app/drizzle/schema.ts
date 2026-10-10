@@ -349,6 +349,7 @@ export const userLibraryEntries = sqliteTable(
       .notNull()
       .references(() => dimPosts.postId, { onDelete: 'cascade' }),
     note: text('note').notNull().default(''),
+    noteUpdatedAt: text('note_updated_at'),
     isSaved: integer('is_saved', { mode: 'boolean' }).notNull().default(false),
     savedAt: text('saved_at'),
     lastViewedAt: text('last_viewed_at'),

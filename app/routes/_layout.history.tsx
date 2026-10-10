@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import { data, Form, Link, useFetcher, useLoaderData } from "react-router";
+import {
+  data,
+  Link,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useNavigationType,
+} from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import LibraryEntryEditor from "~/components/LibraryEntryEditor";
 import type { LibraryMutationResult } from "~/components/LibraryEntryEditor";
 import { getLibraryPage } from "~/modules/library.server";
 import { H1 } from "~/components/Headings";
@@ -18,24 +24,27 @@ export function headers() {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
-  const view = url.searchParams.get("view") === "saved" ? "saved" : "history";
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
   const requestedPage = Number(url.searchParams.get("page"));
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const library = await getLibraryPage(request, { view, query, page });
-  return data({ ...library, view, query }, { headers: { "Cache-Control": "private, no-store" } });
+  const library = await getLibraryPage(request, { query, page });
+  return data({ ...library, query }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "—";
+  if (!value) return "日時不明";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "日時不明";
   return date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", hour12: false });
 }
 
 export default function History() {
-  const { entries, page, totalPages, total, historyEnabled, view, query } =
+  const { entries, page, totalPages, total, historyEnabled, query } =
     useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const [search, setSearch] = useState(query);
+  const [isComposing, setIsComposing] = useState(false);
   const settings = useFetcher<LibraryMutationResult>();
   const clear = useFetcher<LibraryMutationResult>();
   const [confirmClear, setConfirmClear] = useState(false);
@@ -43,30 +52,47 @@ export default function History() {
   const enabled = historyEnabled;
 
   useEffect(() => {
+    if (navigationType !== "REPLACE") setSearch(query);
+  }, [navigationType, query]);
+
+  useEffect(() => {
+    if (isComposing || search.trim() === query) return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("q", search.trim());
+      void navigate(`/history${params.size ? `?${params}` : ""}`, {
+        replace: true,
+        preventScrollReset: true,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [isComposing, search, query, navigate]);
+
+  useEffect(() => {
     if (clear.state === "idle" && clear.data?.success) setConfirmClear(false);
   }, [clear.state, clear.data]);
 
   function pageUrl(nextPage: number) {
-    return `/history?${new URLSearchParams({ view, q: query, page: String(nextPage) })}`;
+    const params = new URLSearchParams({ page: String(nextPage) });
+    if (query) params.set("q", query);
+    return `/history?${params}`;
   }
 
   return (
     <div>
       <H1>履歴</H1>
-      <p className="mb-4 text-sm text-base-content/70">
-        {view === "history" ? "閲覧履歴" : "保存した事例・メモ"} ({total}件)
-      </p>
+      <p className="mb-4 text-sm text-base-content/70">{total}件</p>
 
-      <div className="mb-6 rounded-lg border border-base-300 p-4">
-        <h2 className="mb-2 font-bold">閲覧履歴</h2>
-        <p className="mb-3 text-sm opacity-70">
-          事例ページを開くと履歴に追加します。直近90日・最大500件まで表示します。記録を停止しても、保存した事例やメモは残ります。
-        </p>
+      <div className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <settings.Form method="post" action="/api/library">
             <input type="hidden" name="intent" value="setHistoryEnabled" />
             <input type="hidden" name="enabled" value={String(!enabled)} />
-            <button type="submit" className="btn btn-secondary btn-sm" disabled={settingsBusy}>
+            <button
+              type="submit"
+              className="btn btn-ghost btn-sm shadow-none"
+              disabled={settingsBusy}
+            >
               {settings.state !== "idle"
                 ? "更新中..."
                 : enabled
@@ -74,11 +100,10 @@ export default function History() {
                   : "履歴を有効にする"}
             </button>
           </settings.Form>
-          <span className="text-sm">現在: {enabled ? "有効" : "無効"}</span>
           {!confirmClear && (
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm shadow-none"
               onClick={() => setConfirmClear(true)}
               disabled={settingsBusy}
             >
@@ -91,22 +116,21 @@ export default function History() {
             {settings.data.error}
           </p>
         )}
-        {settings.state === "idle" && settings.data?.success && (
-          <p role="status" className="mt-2 text-sm opacity-70">
-            履歴の設定を更新しました。
-          </p>
-        )}
         {confirmClear && (
           <clear.Form method="post" action="/api/library" className="mt-3 space-y-2">
             <input type="hidden" name="intent" value="clearHistory" />
             <p className="text-sm">閲覧履歴をすべて消去しますか？ 保存した事例とメモは残ります。</p>
             <div className="flex gap-2">
-              <button type="submit" className="btn btn-error btn-sm" disabled={settingsBusy}>
+              <button
+                type="submit"
+                className="btn btn-error btn-sm shadow-none"
+                disabled={settingsBusy}
+              >
                 {clear.state !== "idle" ? "消去中..." : "履歴をすべて消去する"}
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm shadow-none"
                 onClick={() => setConfirmClear(false)}
                 disabled={settingsBusy}
               >
@@ -120,61 +144,39 @@ export default function History() {
             {clear.data.error}
           </p>
         )}
-        {clear.state === "idle" && clear.data?.success && !confirmClear && (
-          <p role="status" className="mt-2 text-sm opacity-70">
-            閲覧履歴を消去しました。
-          </p>
-        )}
       </div>
 
-      <Form method="get" className="mb-4 flex flex-wrap items-end gap-3" key={`${view}:${query}`}>
-        <label className="space-y-1">
-          <span className="block text-sm">表示</span>
-          <select name="view" defaultValue={view} className="select select-bordered">
-            <option value="history">閲覧履歴</option>
-            <option value="saved">保存・メモ</option>
-          </select>
-        </label>
-        <label className="flex-1 min-w-48 space-y-1">
-          <span className="block text-sm">タイトル・メモから検索</span>
-          <input
-            name="q"
-            type="search"
-            defaultValue={query}
-            maxLength={200}
-            className="input input-bordered w-full"
-          />
-        </label>
-        <button type="submit" className="btn btn-primary">
-          表示する
-        </button>
-      </Form>
+      <input
+        name="q"
+        type="search"
+        aria-label="履歴を検索"
+        placeholder="検索"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={() => setIsComposing(false)}
+        maxLength={200}
+        className="input input-bordered mb-4 w-full shadow-none"
+      />
 
       {entries.length === 0 ? (
         <p className="py-4 text-sm opacity-70">
-          {query
-            ? "検索条件に一致する事例はありません。"
-            : view === "saved"
-              ? "保存した事例やメモはありません。事例ページから追加できます。"
-              : "閲覧履歴はありません。履歴を有効にして事例ページを開くと追加されます。"}
+          {query ? "該当する履歴はありません。" : "履歴はありません。"}
         </p>
       ) : (
         <ul className="space-y-4">
           {entries.map((entry) => (
-            <li key={entry.postId} className="rounded-lg border border-base-300 p-4">
-              <h2 className="mb-2 text-lg font-bold break-words">
-                <CommonNavLink to={`/archives/${entry.postId}`}>
-                  {entry.postTitle}
-                </CommonNavLink>
-              </h2>
-              <p className="mb-3 text-xs opacity-60">
-                {view === "history"
-                  ? `最終閲覧: ${formatDate(entry.lastViewedAt)}（日本時間）`
-                  : entry.isSaved
-                    ? `保存日時: ${formatDate(entry.savedAt)}（日本時間）`
-                    : "メモ付きの事例"}
+            <li key={`${entry.kind}:${entry.postId}`}>
+              <p className="mb-1 text-xs opacity-60">
+                {{ view: "閲覧", saved: "保存", note: "メモ" }[entry.kind]} ·{" "}
+                <time dateTime={entry.occurredAt ?? undefined}>{formatDate(entry.occurredAt)}</time>
               </p>
-              <LibraryEntryEditor postId={entry.postId} initialEntry={entry} />
+              <h2 className="text-lg font-bold break-words">
+                <CommonNavLink to={`/archives/${entry.postId}`}>{entry.postTitle}</CommonNavLink>
+              </h2>
+              {entry.kind === "note" && (
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm">{entry.note}</p>
+              )}
             </li>
           ))}
         </ul>
@@ -183,15 +185,15 @@ export default function History() {
       {totalPages > 1 && (
         <nav aria-label="履歴のページ" className="join mt-4 flex justify-center">
           {page > 1 && (
-            <Link to={pageUrl(page - 1)} className="join-item btn btn-sm">
+            <Link to={pageUrl(page - 1)} className="join-item btn btn-sm shadow-none">
               前へ
             </Link>
           )}
-          <span className="join-item btn btn-sm btn-disabled">
+          <span className="join-item btn btn-sm btn-disabled shadow-none">
             {page} / {totalPages}
           </span>
           {page < totalPages && (
-            <Link to={pageUrl(page + 1)} className="join-item btn btn-sm">
+            <Link to={pageUrl(page + 1)} className="join-item btn btn-sm shadow-none">
               次へ
             </Link>
           )}

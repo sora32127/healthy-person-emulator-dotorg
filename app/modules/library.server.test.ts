@@ -72,7 +72,9 @@ beforeEach(() => {
   sqlite.pragma("foreign_keys = ON");
   sqlite.exec(`
     CREATE TABLE dim_users (user_uuid TEXT PRIMARY KEY);
-    CREATE TABLE dim_posts (post_id INTEGER PRIMARY KEY, post_title TEXT NOT NULL);
+    CREATE TABLE dim_posts (post_id INTEGER PRIMARY KEY, post_title TEXT NOT NULL, post_content TEXT NOT NULL);
+    CREATE TABLE dim_tags (tag_id INTEGER PRIMARY KEY, tag_name TEXT NOT NULL);
+    CREATE TABLE rel_post_tags (post_id INTEGER NOT NULL REFERENCES dim_posts(post_id) ON DELETE CASCADE, tag_id INTEGER NOT NULL REFERENCES dim_tags(tag_id) ON DELETE CASCADE, PRIMARY KEY(post_id, tag_id));
     INSERT INTO dim_users VALUES ('admin-a'), ('admin-b');
   `);
   sqlite.exec(
@@ -81,9 +83,20 @@ beforeEach(() => {
       "utf8",
     ),
   );
-  const insertPost = sqlite.prepare("INSERT INTO dim_posts VALUES (?, ?)");
+  sqlite.exec(
+    readFileSync(
+      new URL("../../drizzle/migrations/0008_add_library_note_timestamp.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  const insertPost = sqlite.prepare("INSERT INTO dim_posts VALUES (?, ?, ?)");
   sqlite.transaction(() => {
-    for (let i = 1; i <= 550; i++) insertPost.run(i, i === 1 ? "会議での事例 100%" : `事例 ${i}`);
+    for (let i = 1; i <= 550; i++)
+      insertPost.run(
+        i,
+        i === 1 ? "会議での事例 100%" : `事例 ${i}`,
+        i === 2 ? "本文だけに含まれる相談の事例" : "本文",
+      );
   })();
   writes = 0;
   prepares = 0;
@@ -101,6 +114,49 @@ afterEach(() => {
 });
 
 describe("personal library", () => {
+  it("メモ日時の移行では既存の保存・メモ・閲覧日時を変更しない", () => {
+    const legacy = new Database(":memory:");
+    try {
+      legacy.exec(`CREATE TABLE dim_users (user_uuid TEXT PRIMARY KEY);
+                   CREATE TABLE dim_posts (post_id INTEGER PRIMARY KEY);
+                   INSERT INTO dim_users VALUES ('admin-a');
+                   INSERT INTO dim_posts VALUES (1);`);
+      legacy.exec(
+        readFileSync(
+          new URL("../../drizzle/migrations/0007_add_user_library.sql", import.meta.url),
+          "utf8",
+        ),
+      );
+      legacy
+        .prepare("INSERT INTO user_library_entries VALUES (?, ?, ?, ?, ?, ?)")
+        .run(
+          ADMIN_A.userUuid,
+          1,
+          "既存メモ",
+          1,
+          "2026-10-08T00:00:00.000Z",
+          "2026-10-09T00:00:00.000Z",
+        );
+      legacy.exec(
+        readFileSync(
+          new URL("../../drizzle/migrations/0008_add_library_note_timestamp.sql", import.meta.url),
+          "utf8",
+        ),
+      );
+      expect(legacy.prepare("SELECT * FROM user_library_entries").get()).toEqual({
+        user_uuid: ADMIN_A.userUuid,
+        post_id: 1,
+        note: "既存メモ",
+        is_saved: 1,
+        saved_at: "2026-10-08T00:00:00.000Z",
+        last_viewed_at: "2026-10-09T00:00:00.000Z",
+        note_updated_at: null,
+      });
+    } finally {
+      legacy.close();
+    }
+  });
+
   it.each([
     [null, 401],
     [{ email: "regular@example.test", userUuid: "regular" }, 403],
@@ -115,7 +171,7 @@ describe("personal library", () => {
     "ページ一覧も独立して公開対象を確認する",
     async (user) => {
       auth.user = user;
-      const result = await getLibraryPage(request(), { view: "saved", query: "", page: 1 }).catch(
+      const result = await getLibraryPage(request(), { query: "", page: 1 }).catch(
         (error) => error,
       );
       expect(result).toBeInstanceOf(Response);
@@ -132,16 +188,18 @@ describe("personal library", () => {
     prepares = 0;
 
     await expect(getLibraryEntry(request(), 1)).rejects.toMatchObject({ status: 403 });
-    await expect(mutate({ intent: "recordView", postId: "1" })).rejects.toMatchObject({ status: 403 });
-    const result = await getLibraryPage(request(), { view: "history", query: "", page: 1 }).catch(
-      (error) => error,
-    );
+    await expect(mutate({ intent: "recordView", postId: "1" })).rejects.toMatchObject({
+      status: 403,
+    });
+    const result = await getLibraryPage(request(), { query: "", page: 1 }).catch((error) => error);
     expect(result).toBeInstanceOf(Response);
     expect(result.status).toBe(302);
     expect(prepares).toBe(0);
     expect(writes).toBe(writesBefore);
     expect(
-      sqlite.prepare("SELECT is_saved FROM user_library_entries WHERE user_uuid = ?").get(ADMIN_A.userUuid),
+      sqlite
+        .prepare("SELECT is_saved FROM user_library_entries WHERE user_uuid = ?")
+        .get(ADMIN_A.userUuid),
     ).toEqual({ is_saved: 1 });
   });
 
@@ -165,11 +223,88 @@ describe("personal library", () => {
 
   it("GETは履歴や初期設定を書き込まない", async () => {
     expect(await getLibraryEntry(request(), 1)).toEqual({ entry: null, historyEnabled: true });
-    await getLibraryPage(request(), { view: "history", query: "", page: 1 });
+    await getLibraryPage(request(), { query: "", page: 1 });
     expect(writes).toBe(0);
     expect(sqlite.prepare("SELECT COUNT(*) AS n FROM user_library_settings").get()).toEqual({
       n: 0,
     });
+  });
+
+  it("閲覧・保存・メモを一つの時系列にし、メモ編集で日時を更新する", async () => {
+    await mutate({ intent: "setSaved", postId: "1", isSaved: "true" });
+    vi.setSystemTime(new Date("2026-10-10T00:01:00.000Z"));
+    await mutate({ intent: "recordView", postId: "1" });
+    vi.setSystemTime(new Date("2026-10-10T00:02:00.000Z"));
+    await mutate({ intent: "saveNote", postId: "2", note: "メモ2" });
+    vi.setSystemTime(new Date("2026-10-10T00:03:00.000Z"));
+    await mutate({ intent: "saveNote", postId: "1", note: "メモ1" });
+    vi.setSystemTime(new Date("2026-10-10T00:04:00.000Z"));
+    await mutate({ intent: "saveNote", postId: "2", note: "更新したメモ2" });
+
+    const writesBefore = writes;
+    const page = await getLibraryPage(request(), { query: "", page: 1 });
+    expect(page.total).toBe(4);
+    expect(
+      page.entries.map(({ postId, kind, occurredAt }) => ({ postId, kind, occurredAt })),
+    ).toEqual([
+      { postId: 2, kind: "note", occurredAt: "2026-10-10T00:04:00.000Z" },
+      { postId: 1, kind: "note", occurredAt: "2026-10-10T00:03:00.000Z" },
+      { postId: 1, kind: "view", occurredAt: "2026-10-10T00:01:00.000Z" },
+      { postId: 1, kind: "saved", occurredAt: "2026-10-10T00:00:00.000Z" },
+    ]);
+    expect(writes).toBe(writesBefore);
+
+    vi.setSystemTime(new Date("2026-10-10T00:05:00.000Z"));
+    await mutate({ intent: "saveNote", postId: "2", note: "更新したメモ2" });
+    expect((await getLibraryPage(request(), { query: "", page: 1 })).entries[0].occurredAt).toBe(
+      "2026-10-10T00:04:00.000Z",
+    );
+    await mutate({ intent: "saveNote", postId: "2", note: "" });
+    expect(
+      (await getLibraryPage(request(), { query: "", page: 1 })).entries.some(
+        ({ postId, kind }) => postId === 2 && kind === "note",
+      ),
+    ).toBe(false);
+  });
+
+  it("既存メモは日時を捏造せずに残し、日時のあるイベントの後に並べる", async () => {
+    sqlite
+      .prepare("INSERT INTO user_library_entries (user_uuid, post_id, note) VALUES (?, ?, ?)")
+      .run(ADMIN_A.userUuid, 1, "移行前のメモ");
+    await mutate({ intent: "recordView", postId: "2" });
+    const page = await getLibraryPage(request(), { query: "", page: 1 });
+    expect(
+      page.entries.map(({ postId, kind, occurredAt }) => ({ postId, kind, occurredAt })),
+    ).toEqual([
+      { postId: 2, kind: "view", occurredAt: "2026-10-10T00:00:00.000Z" },
+      { postId: 1, kind: "note", occurredAt: null },
+    ]);
+    expect(page.entries[1].note).toBe("移行前のメモ");
+  });
+
+  it("本文・タグも同じ検索で絞り込み、複数タグや別管理者のメモで重複・漏洩しない", async () => {
+    sqlite.exec(
+      "INSERT INTO dim_tags VALUES (1, '職場'), (2, '職場の相談'); INSERT INTO rel_post_tags VALUES (1, 1), (1, 2);",
+    );
+    await mutate({ intent: "recordView", postId: "1" });
+    await mutate({ intent: "setSaved", postId: "1", isSaved: "true" });
+    await mutate({ intent: "recordView", postId: "2" });
+    expect(
+      (await getLibraryPage(request(), { query: "本文だけ", page: 1 })).entries.map(
+        ({ postId, kind }) => [postId, kind],
+      ),
+    ).toEqual([[2, "view"]]);
+    const byTag = await getLibraryPage(request(), { query: "職場", page: 1 });
+    expect(byTag.total).toBe(2);
+    expect(byTag.entries.map(({ postId, kind }) => [postId, kind])).toEqual([
+      [1, "view"],
+      [1, "saved"],
+    ]);
+
+    auth.user = ADMIN_B;
+    await mutate({ intent: "saveNote", postId: "1", note: "別管理者の限定キーワード" });
+    auth.user = ADMIN_A;
+    expect((await getLibraryPage(request(), { query: "限定キーワード", page: 1 })).total).toBe(0);
   });
 
   it.each(["https://attacker.test", "null", ""])(
@@ -227,20 +362,31 @@ describe("personal library", () => {
       lastViewedAt: null,
     });
     expect((await getLibraryEntry(request(), 3)).entry).toBeNull();
+    expect(
+      (await getLibraryPage(request(), { query: "", page: 1 })).entries.map(({ postId, kind }) => [
+        postId,
+        kind,
+      ]),
+    ).toEqual([
+      [2, "note"],
+      [1, "saved"],
+    ]);
     auth.user = ADMIN_B;
     expect((await getLibraryEntry(request(), 3)).entry?.lastViewedAt).not.toBeNull();
   });
 
   it("90日を超えた履歴を表示せず、次の記録時に保存とメモを残して整理する", async () => {
     sqlite
-      .prepare(`INSERT INTO user_library_entries VALUES ('admin-a', 1, 'メモ', 1, ?, ?)`)
+      .prepare(
+        `INSERT INTO user_library_entries (user_uuid, post_id, note, is_saved, saved_at, last_viewed_at) VALUES ('admin-a', 1, 'メモ', 1, ?, ?)`,
+      )
       .run("2026-01-01T00:00:00.000Z", "2026-01-01T00:00:00.000Z");
     sqlite
-      .prepare(`INSERT INTO user_library_entries VALUES ('admin-a', 2, '', 0, NULL, ?)`)
+      .prepare(
+        `INSERT INTO user_library_entries (user_uuid, post_id, note, is_saved, saved_at, last_viewed_at) VALUES ('admin-a', 2, '', 0, NULL, ?)`,
+      )
       .run("2026-01-01T00:00:00.000Z");
-    expect((await getLibraryPage(request(), { view: "history", query: "", page: 1 })).total).toBe(
-      0,
-    );
+    expect((await getLibraryPage(request(), { query: "", page: 1 })).total).toBe(2);
     expect((await getLibraryEntry(request(), 1)).entry?.lastViewedAt).toBeNull();
     await mutate({ intent: "recordView", postId: "3" });
     expect((await getLibraryEntry(request(), 1)).entry).toMatchObject({
@@ -253,7 +399,7 @@ describe("personal library", () => {
 
   it("最新500件に制限し、除外された記事の保存とメモは保持する", async () => {
     const insert = sqlite.prepare(
-      `INSERT INTO user_library_entries VALUES ('admin-a', ?, ?, ?, ?, ?)`,
+      `INSERT INTO user_library_entries (user_uuid, post_id, note, is_saved, saved_at, last_viewed_at) VALUES ('admin-a', ?, ?, ?, ?, ?)`,
     );
     sqlite.transaction(() => {
       for (let i = 1; i <= 501; i++) {
@@ -267,8 +413,15 @@ describe("personal library", () => {
       }
     })();
     await mutate({ intent: "recordView", postId: "502" });
-    const page = await getLibraryPage(request(), { view: "history", query: "", page: 1 });
-    expect(page).toMatchObject({ total: 500, totalPages: 10 });
+    const page = await getLibraryPage(request(), { query: "", page: 1 });
+    expect(page).toMatchObject({ total: 502, totalPages: 11 });
+    expect(
+      sqlite
+        .prepare(
+          "SELECT COUNT(*) AS n FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at IS NOT NULL",
+        )
+        .get(ADMIN_A.userUuid),
+    ).toEqual({ n: 500 });
     expect(page.entries).toHaveLength(50);
     expect(page.entries[0].postId).toBe(502);
     expect((await getLibraryEntry(request(), 1)).entry).toMatchObject({
@@ -279,24 +432,22 @@ describe("personal library", () => {
     expect((await getLibraryEntry(request(), 2)).entry).toBeNull();
   });
 
-  it("保存とメモを検索でき、SQLのワイルドカードを文字として扱う", async () => {
+  it("タイトルとメモを検索でき、SQLのワイルドカードを文字として扱う", async () => {
     await mutate({ intent: "setSaved", postId: "1", isSaved: "true" });
     await mutate({ intent: "saveNote", postId: "2", note: "聞き返す_練習" });
     await mutate({ intent: "recordView", postId: "3" });
-    expect((await getLibraryPage(request(), { view: "saved", query: "", page: 1 })).total).toBe(2);
+    expect((await getLibraryPage(request(), { query: "", page: 1 })).total).toBe(3);
     expect(
-      (await getLibraryPage(request(), { view: "saved", query: "%", page: 1 })).entries.map(
+      (await getLibraryPage(request(), { query: "%", page: 1 })).entries.map(
         (entry) => entry.postId,
       ),
     ).toEqual([1]);
     expect(
-      (await getLibraryPage(request(), { view: "saved", query: "_", page: 1 })).entries.map(
+      (await getLibraryPage(request(), { query: "_", page: 1 })).entries.map(
         (entry) => entry.postId,
       ),
     ).toEqual([2]);
-    expect(
-      (await getLibraryPage(request(), { view: "saved", query: "会議", page: 999 })).page,
-    ).toBe(1);
+    expect((await getLibraryPage(request(), { query: "会議", page: 999 })).page).toBe(1);
   });
 
   it("空のメモと保存解除で履歴がないエントリを残さない", async () => {

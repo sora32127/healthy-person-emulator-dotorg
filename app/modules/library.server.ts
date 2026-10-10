@@ -11,7 +11,13 @@ export type LibraryEntry = {
   lastViewedAt: string | null;
 };
 
+export type LibraryTimelineEvent = LibraryEntry & {
+  kind: "view" | "saved" | "note";
+  occurredAt: string | null;
+};
+
 type StoredEntry = Omit<LibraryEntry, "isSaved"> & { isSaved: number };
+type StoredTimelineEvent = StoredEntry & Pick<LibraryTimelineEvent, "kind" | "occurredAt">;
 const PAGE_SIZE = 50;
 const HISTORY_LIMIT = 500;
 const HISTORY_DAYS = 90;
@@ -117,33 +123,38 @@ export async function getLibraryEntry(request: Request, rawPostId: number | stri
   return { entry, historyEnabled };
 }
 
-export async function getLibraryPage(
-  request: Request,
-  options: { view: "saved" | "history"; query: string; page: number },
-) {
+export async function getLibraryPage(request: Request, options: { query: string; page: number }) {
   const user = await getAuthenticatedUser(request);
   if (!user || !isLibraryEnabledForUser(user)) throw redirect("/");
   const db = getDb();
-  const view = options.view === "history" ? "history" : "saved";
   const query = options.query.trim().slice(0, 200);
   const bindings: (string | number)[] = [user.userUuid];
   const conditions = ["e.user_uuid = ?"];
-  if (view === "history") {
-    conditions.push("e.last_viewed_at >= ?");
-    bindings.push(historyCutoff());
-  } else {
-    conditions.push("(e.is_saved = 1 OR e.note <> '')");
-  }
   if (query) {
-    conditions.push("(p.post_title LIKE ? ESCAPE '\\' OR e.note LIKE ? ESCAPE '\\')");
+    conditions.push(`(p.post_title LIKE ? ESCAPE '\\' OR p.post_content LIKE ? ESCAPE '\\'
+                     OR e.note LIKE ? ESCAPE '\\' OR EXISTS (
+                       SELECT 1 FROM rel_post_tags pt INNER JOIN dim_tags t ON t.tag_id = pt.tag_id
+                       WHERE pt.post_id = e.post_id AND t.tag_name LIKE ? ESCAPE '\\'))`);
     const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
-    bindings.push(pattern, pattern);
+    bindings.push(pattern, pattern, pattern, pattern);
   }
-  const fromWhere = `FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
-                     WHERE ${conditions.join(" AND ")}`;
+  bindings.push(historyCutoff());
+  const eventsCte = `WITH filtered_entries AS (
+    SELECT e.post_id AS postId, p.post_title AS postTitle, e.note,
+           e.is_saved AS isSaved, e.saved_at AS savedAt, e.last_viewed_at AS lastViewedAt,
+           e.note_updated_at AS noteUpdatedAt
+    FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
+    WHERE ${conditions.join(" AND ")}
+  ), events AS (
+    SELECT *, 'view' AS kind, lastViewedAt AS occurredAt FROM filtered_entries WHERE lastViewedAt >= ?
+    UNION ALL
+    SELECT *, 'saved' AS kind, savedAt AS occurredAt FROM filtered_entries WHERE isSaved = 1
+    UNION ALL
+    SELECT *, 'note' AS kind, noteUpdatedAt AS occurredAt FROM filtered_entries WHERE note <> ''
+  )`;
   const [count, historyEnabled] = await Promise.all([
     db
-      .prepare(`SELECT COUNT(*) AS total ${fromWhere}`)
+      .prepare(`${eventsCte} SELECT COUNT(*) AS total FROM events`)
       .bind(...bindings)
       .first<{ total: number }>(),
     readHistoryEnabled(db, user.userUuid),
@@ -154,16 +165,25 @@ export async function getLibraryPage(
     totalPages,
     Number.isSafeInteger(options.page) && options.page > 0 ? options.page : 1,
   );
-  const orderBy = view === "history" ? "e.last_viewed_at" : "e.saved_at";
   const rows = await db
     .prepare(
-      `SELECT e.post_id AS postId, p.post_title AS postTitle, e.note,
-              e.is_saved AS isSaved, e.saved_at AS savedAt, e.last_viewed_at AS lastViewedAt
-       ${fromWhere} ORDER BY ${orderBy} DESC, e.post_id DESC LIMIT ? OFFSET ?`,
+      `${eventsCte}
+       SELECT postId, postTitle, note, isSaved, savedAt, lastViewedAt, kind, occurredAt FROM events
+       ORDER BY occurredAt DESC, postId DESC, kind DESC LIMIT ? OFFSET ?`,
     )
     .bind(...bindings, PAGE_SIZE, (page - 1) * PAGE_SIZE)
-    .all<StoredEntry>();
-  return { entries: rows.results.map(toEntry), page, totalPages, total, historyEnabled };
+    .all<StoredTimelineEvent>();
+  return {
+    entries: rows.results.map((row): LibraryTimelineEvent => ({
+      ...toEntry(row),
+      kind: row.kind,
+      occurredAt: row.occurredAt,
+    })),
+    page,
+    totalPages,
+    total,
+    historyEnabled,
+  };
 }
 
 function removeEmptyEntries(db: D1Database, userUuid: string) {
@@ -245,10 +265,14 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
     await db.batch([
       db
         .prepare(
-          `INSERT INTO user_library_entries (user_uuid, post_id, note) VALUES (?, ?, ?)
-           ON CONFLICT(user_uuid, post_id) DO UPDATE SET note = excluded.note`,
+          `INSERT INTO user_library_entries (user_uuid, post_id, note, note_updated_at) VALUES (?, ?, ?, ?)
+           ON CONFLICT(user_uuid, post_id) DO UPDATE SET
+             note = excluded.note,
+             note_updated_at = CASE WHEN excluded.note = '' THEN NULL
+                                   WHEN user_library_entries.note = excluded.note THEN user_library_entries.note_updated_at
+                                   ELSE excluded.note_updated_at END`,
         )
-        .bind(userUuid, postId, note),
+        .bind(userUuid, postId, note, note ? timestamp : null),
       removeEmptyEntries(db, userUuid),
     ]);
   } else {
