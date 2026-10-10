@@ -48,6 +48,7 @@ import { setVisitorCookieData } from '~/modules/visitor.server';
 import { Bookmark } from 'lucide-react';
 import { isLibraryEnabledForUser } from '~/modules/feature-flags.server';
 import LibraryArticle from '~/components/LibraryArticle';
+import { recordLibraryReaction } from '~/modules/library.server';
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -599,11 +600,13 @@ async function handleVotePost(
     } else if (voteType === 'dislike') {
       session.set('dislikedPages', [...(session.get('dislikedPages') || []), postId]);
     }
+    const sessionCookie = await commitSession(session);
+    await recordReactionHistory(request, { postId, voteType });
     return data(
       { message: '投稿を評価しました', success: true },
       {
         headers: {
-          'Set-Cookie': await commitSession(session),
+          'Set-Cookie': sessionCookie,
         },
       },
     );
@@ -629,17 +632,34 @@ async function handleVoteComment(
     } else if (voteType === 'dislike') {
       session.set('dislikedComments', [...(session.get('dislikedComments') || []), commentId]);
     }
+    const sessionCookie = await commitSession(session);
+    await recordReactionHistory(request, {
+      postId,
+      commentId,
+      voteType: voteType as 'like' | 'dislike',
+    });
     return data(
       { message: 'コメントを評価しました', success: true },
       {
         headers: {
-          'Set-Cookie': await commitSession(session),
+          'Set-Cookie': sessionCookie,
         },
       },
     );
   } catch (error) {
     console.error(error);
     return data({ message: 'Internal Server Error', success: false }, { status: 500 });
+  }
+}
+
+async function recordReactionHistory(
+  request: Request,
+  reaction: Parameters<typeof recordLibraryReaction>[1],
+) {
+  try {
+    await recordLibraryReaction(request, reaction);
+  } catch {
+    console.error('Reaction history could not be recorded');
   }
 }
 

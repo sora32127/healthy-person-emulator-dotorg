@@ -8,10 +8,15 @@ import {
   useNavigationType,
 } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import type { LibraryMutationResult } from "~/components/LibraryEntryEditor";
 import { getLibraryPage } from "~/modules/library.server";
 import { H1 } from "~/components/Headings";
 import { CommonNavLink } from "~/components/CommonNavLink";
+
+type HistoryMutationResult = {
+  success: boolean;
+  historyEnabled?: boolean;
+  error?: string;
+};
 
 export const meta: MetaFunction = () => [
   { title: "履歴 | 健常者エミュレータ事例集" },
@@ -45,8 +50,8 @@ export default function History() {
   const navigationType = useNavigationType();
   const [search, setSearch] = useState(query);
   const [isComposing, setIsComposing] = useState(false);
-  const settings = useFetcher<LibraryMutationResult>();
-  const clear = useFetcher<LibraryMutationResult>();
+  const settings = useFetcher<HistoryMutationResult>();
+  const clear = useFetcher<HistoryMutationResult>();
   const [confirmClear, setConfirmClear] = useState(false);
   const settingsBusy = settings.state !== "idle" || clear.state !== "idle";
   const enabled = historyEnabled;
@@ -119,7 +124,7 @@ export default function History() {
         {confirmClear && (
           <clear.Form method="post" action="/api/library" className="mt-3 space-y-2">
             <input type="hidden" name="intent" value="clearHistory" />
-            <p className="text-sm">閲覧履歴をすべて消去しますか？ 保存した事例とメモは残ります。</p>
+            <p className="text-sm">履歴をすべて消去しますか？</p>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -166,16 +171,26 @@ export default function History() {
       ) : (
         <ul className="space-y-4">
           {entries.map((entry) => (
-            <li key={`${entry.kind}:${entry.postId}`}>
+            <li key={`${entry.kind}:${entry.postId}:${entry.commentId ?? ""}`}>
               <p className="mb-1 text-xs opacity-60">
-                {{ view: "閲覧", saved: "保存", note: "メモ" }[entry.kind]} ·{" "}
+                {{
+                  view: "閲覧",
+                  like: "いいね",
+                  dislike: "良くないね",
+                  comment_like: "コメントを評価",
+                  comment_dislike: "コメントを逆評価",
+                }[entry.kind]} ·{" "}
                 <time dateTime={entry.occurredAt ?? undefined}>{formatDate(entry.occurredAt)}</time>
               </p>
               <h2 className="text-lg font-bold break-words">
-                <CommonNavLink to={`/archives/${entry.postId}`}>{entry.postTitle}</CommonNavLink>
+                <CommonNavLink
+                  to={`/archives/${entry.postId}${entry.commentId ? `#comment-${entry.commentId}` : ""}`}
+                >
+                  {entry.postTitle}
+                </CommonNavLink>
               </h2>
-              {entry.kind === "note" && (
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm">{entry.note}</p>
+              {entry.commentContent && (
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm">{entry.commentContent}</p>
               )}
             </li>
           ))}

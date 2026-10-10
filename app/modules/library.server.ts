@@ -5,19 +5,18 @@ import { getAuthenticatedUser } from "./auth.google.server";
 export type LibraryEntry = {
   postId: number;
   postTitle: string;
-  note: string;
-  isSaved: boolean;
-  savedAt: string | null;
-  lastViewedAt: string | null;
+  lastViewedAt: string;
 };
 
-export type LibraryTimelineEvent = LibraryEntry & {
-  kind: "view" | "saved" | "note";
-  occurredAt: string | null;
+export type LibraryTimelineEvent = {
+  postId: number;
+  postTitle: string;
+  kind: "view" | "like" | "dislike" | "comment_like" | "comment_dislike";
+  occurredAt: string;
+  commentId: number | null;
+  commentContent: string | null;
 };
 
-type StoredEntry = Omit<LibraryEntry, "isSaved"> & { isSaved: number };
-type StoredTimelineEvent = StoredEntry & Pick<LibraryTimelineEvent, "kind" | "occurredAt">;
 const PAGE_SIZE = 50;
 const HISTORY_LIMIT = 500;
 const HISTORY_DAYS = 90;
@@ -66,6 +65,13 @@ function parseBoolean(value: FormDataEntryValue | null): boolean {
   return value === "true";
 }
 
+function assertSameOriginPost(request: Request) {
+  if (request.method !== "POST") throw new LibraryError(405, "POSTで送信してください");
+  if (request.headers.get("Origin") !== new URL(request.url).origin) {
+    throw new LibraryError(403, "送信元が不正です");
+  }
+}
+
 function historyCutoff(now = new Date()): string {
   return new Date(now.getTime() - HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
@@ -76,14 +82,6 @@ async function readHistoryEnabled(db: D1Database, userUuid: string): Promise<boo
     .bind(userUuid)
     .first<{ enabled: number }>();
   return setting?.enabled !== 0;
-}
-
-function toEntry(row: StoredEntry): LibraryEntry {
-  return {
-    ...row,
-    isSaved: row.isSaved === 1,
-    lastViewedAt: row.lastViewedAt && row.lastViewedAt >= historyCutoff() ? row.lastViewedAt : null,
-  };
 }
 
 async function assertPostExists(db: D1Database, postId: number) {
@@ -99,16 +97,14 @@ async function readEntry(
   userUuid: string,
   postId: number,
 ): Promise<LibraryEntry | null> {
-  const entry = await db
+  return db
     .prepare(
-      `SELECT e.post_id AS postId, p.post_title AS postTitle, e.note,
-              e.is_saved AS isSaved, e.saved_at AS savedAt, e.last_viewed_at AS lastViewedAt
+      `SELECT e.post_id AS postId, p.post_title AS postTitle, e.last_viewed_at AS lastViewedAt
        FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
-       WHERE e.user_uuid = ? AND e.post_id = ?`,
+       WHERE e.user_uuid = ? AND e.post_id = ? AND e.last_viewed_at >= ?`,
     )
-    .bind(userUuid, postId)
-    .first<StoredEntry>();
-  return entry ? toEntry(entry) : null;
+    .bind(userUuid, postId, historyCutoff())
+    .first<LibraryEntry>();
 }
 
 export async function getLibraryEntry(request: Request, rawPostId: number | string) {
@@ -127,34 +123,35 @@ export async function getLibraryPage(request: Request, options: { query: string;
   const user = await getAuthenticatedUser(request);
   if (!user || !isLibraryEnabledForUser(user)) throw redirect("/");
   const db = getDb();
+  const cutoff = historyCutoff();
   const query = options.query.trim().slice(0, 200);
-  const bindings: (string | number)[] = [user.userUuid];
-  const conditions = ["e.user_uuid = ?"];
+  const bindings: (string | number)[] = [user.userUuid, cutoff, user.userUuid, cutoff];
+  let filter = "";
   if (query) {
-    conditions.push(`(p.post_title LIKE ? ESCAPE '\\' OR p.post_content LIKE ? ESCAPE '\\'
-                     OR e.note LIKE ? ESCAPE '\\' OR EXISTS (
-                       SELECT 1 FROM rel_post_tags pt INNER JOIN dim_tags t ON t.tag_id = pt.tag_id
-                       WHERE pt.post_id = e.post_id AND t.tag_name LIKE ? ESCAPE '\\'))`);
+    filter = `WHERE (e.postTitle LIKE ? ESCAPE '\\' OR e.postContent LIKE ? ESCAPE '\\'
+                    OR e.commentContent LIKE ? ESCAPE '\\' OR EXISTS (
+                      SELECT 1 FROM rel_post_tags pt INNER JOIN dim_tags t ON t.tag_id = pt.tag_id
+                      WHERE pt.post_id = e.postId AND t.tag_name LIKE ? ESCAPE '\\'))`;
     const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
     bindings.push(pattern, pattern, pattern, pattern);
   }
-  bindings.push(historyCutoff());
-  const eventsCte = `WITH filtered_entries AS (
-    SELECT e.post_id AS postId, p.post_title AS postTitle, e.note,
-           e.is_saved AS isSaved, e.saved_at AS savedAt, e.last_viewed_at AS lastViewedAt,
-           e.note_updated_at AS noteUpdatedAt
+  const eventsCte = `WITH events AS (
+    SELECT e.post_id AS postId, p.post_title AS postTitle, p.post_content AS postContent,
+           'view' AS kind, e.last_viewed_at AS occurredAt, e.post_id AS targetId,
+           NULL AS commentId, NULL AS commentContent
     FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
-    WHERE ${conditions.join(" AND ")}
-  ), events AS (
-    SELECT *, 'view' AS kind, lastViewedAt AS occurredAt FROM filtered_entries WHERE lastViewedAt >= ?
+    WHERE e.user_uuid = ? AND e.last_viewed_at >= ?
     UNION ALL
-    SELECT *, 'saved' AS kind, savedAt AS occurredAt FROM filtered_entries WHERE isSaved = 1
-    UNION ALL
-    SELECT *, 'note' AS kind, noteUpdatedAt AS occurredAt FROM filtered_entries WHERE note <> ''
+    SELECT r.post_id AS postId, p.post_title AS postTitle, p.post_content AS postContent,
+           r.kind, r.occurred_at AS occurredAt, r.target_id AS targetId,
+           r.comment_id AS commentId, c.comment_content AS commentContent
+    FROM user_library_reactions r INNER JOIN dim_posts p ON p.post_id = r.post_id
+    LEFT JOIN dim_comments c ON c.comment_id = r.comment_id AND c.post_id = r.post_id
+    WHERE r.user_uuid = ? AND r.occurred_at >= ?
   )`;
   const [count, historyEnabled] = await Promise.all([
     db
-      .prepare(`${eventsCte} SELECT COUNT(*) AS total FROM events`)
+      .prepare(`${eventsCte} SELECT COUNT(*) AS total FROM events e ${filter}`)
       .bind(...bindings)
       .first<{ total: number }>(),
     readHistoryEnabled(db, user.userUuid),
@@ -168,22 +165,12 @@ export async function getLibraryPage(request: Request, options: { query: string;
   const rows = await db
     .prepare(
       `${eventsCte}
-       SELECT postId, postTitle, note, isSaved, savedAt, lastViewedAt, kind, occurredAt FROM events
-       ORDER BY occurredAt DESC, postId DESC, kind DESC LIMIT ? OFFSET ?`,
+       SELECT postId, postTitle, kind, occurredAt, commentId, commentContent FROM events e ${filter}
+       ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ? OFFSET ?`,
     )
     .bind(...bindings, PAGE_SIZE, (page - 1) * PAGE_SIZE)
-    .all<StoredTimelineEvent>();
-  return {
-    entries: rows.results.map((row): LibraryTimelineEvent => ({
-      ...toEntry(row),
-      kind: row.kind,
-      occurredAt: row.occurredAt,
-    })),
-    page,
-    totalPages,
-    total,
-    historyEnabled,
-  };
+    .all<LibraryTimelineEvent>();
+  return { entries: rows.results, page, totalPages, total, historyEnabled };
 }
 
 function removeEmptyEntries(db: D1Database, userUuid: string) {
@@ -195,12 +182,95 @@ function removeEmptyEntries(db: D1Database, userUuid: string) {
     .bind(userUuid);
 }
 
+function pruneHistory(db: D1Database, userUuid: string, now: Date) {
+  const keepCte = `WITH events AS (
+    SELECT 'view' AS kind, post_id AS postId, post_id AS targetId, last_viewed_at AS occurredAt
+    FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at IS NOT NULL
+    UNION ALL
+    SELECT kind, post_id AS postId, target_id AS targetId, occurred_at AS occurredAt
+    FROM user_library_reactions WHERE user_uuid = ?
+  ), keep AS (
+    SELECT kind, targetId FROM events
+    ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ?
+  )`;
+  return [
+    db
+      .prepare(
+        `${keepCte} UPDATE user_library_entries SET last_viewed_at = NULL
+         WHERE user_uuid = ? AND last_viewed_at IS NOT NULL AND (last_viewed_at < ? OR NOT EXISTS (
+           SELECT 1 FROM keep WHERE keep.kind = 'view' AND keep.targetId = user_library_entries.post_id))`,
+      )
+      .bind(userUuid, userUuid, HISTORY_LIMIT, userUuid, historyCutoff(now)),
+    db
+      .prepare(
+        `${keepCte} DELETE FROM user_library_reactions
+         WHERE user_uuid = ? AND (occurred_at < ? OR NOT EXISTS (
+           SELECT 1 FROM keep WHERE keep.kind = user_library_reactions.kind
+           AND keep.targetId = user_library_reactions.target_id))`,
+      )
+      .bind(userUuid, userUuid, HISTORY_LIMIT, userUuid, historyCutoff(now)),
+    removeEmptyEntries(db, userUuid),
+  ];
+}
+
+export async function recordLibraryReaction(
+  request: Request,
+  reaction: { postId: number; voteType: "like" | "dislike"; commentId?: number },
+): Promise<void> {
+  const user = await getAuthenticatedUser(request);
+  if (!user || !isLibraryEnabledForUser(user)) return;
+  assertSameOriginPost(request);
+  if (reaction.voteType !== "like" && reaction.voteType !== "dislike") {
+    throw new LibraryError(400, "評価が不正です");
+  }
+  const postId = parsePostId(reaction.postId);
+  const commentId = reaction.commentId === undefined ? null : parsePostId(reaction.commentId);
+  const db = getDb();
+  if (!(await readHistoryEnabled(db, user.userUuid))) return;
+  await assertPostExists(db, postId);
+  if (commentId !== null) {
+    const comment = await db
+      .prepare("SELECT comment_id FROM dim_comments WHERE comment_id = ? AND post_id = ?")
+      .bind(commentId, postId)
+      .first();
+    if (!comment) throw new LibraryError(404, "コメントが見つかりません");
+  }
+  const kind = commentId === null ? reaction.voteType : `comment_${reaction.voteType}`;
+  const targetId = commentId ?? postId;
+  const current = await db
+    .prepare(
+      "SELECT occurred_at AS occurredAt FROM user_library_reactions WHERE user_uuid = ? AND kind = ? AND target_id = ?",
+    )
+    .bind(user.userUuid, kind, targetId)
+    .first<{ occurredAt: string }>();
+  const now = new Date();
+  if (current && now.getTime() - Date.parse(current.occurredAt) < VIEW_INTERVAL_MS) return;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO user_library_reactions (user_uuid, post_id, comment_id, kind, target_id, occurred_at)
+         SELECT ?, ?, ?, ?, ?, ? WHERE COALESCE(
+           (SELECT history_enabled FROM user_library_settings WHERE user_uuid = ?), 1) = 1
+         ON CONFLICT(user_uuid, kind, target_id) DO UPDATE SET occurred_at = excluded.occurred_at
+         WHERE user_library_reactions.occurred_at <= ?`,
+      )
+      .bind(
+        user.userUuid,
+        postId,
+        commentId,
+        kind,
+        targetId,
+        now.toISOString(),
+        user.userUuid,
+        new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
+      ),
+    ...pruneHistory(db, user.userUuid, now),
+  ]);
+}
+
 export async function mutateLibrary(request: Request, suppliedFormData?: FormData) {
   const user = await requireLibraryUser(request);
-  if (request.method !== "POST") throw new LibraryError(405, "POSTで送信してください");
-  if (request.headers.get("Origin") !== new URL(request.url).origin) {
-    throw new LibraryError(403, "送信元が不正です");
-  }
+  assertSameOriginPost(request);
   let formData: FormData;
   try {
     formData = suppliedFormData ?? (await request.formData());
@@ -208,11 +278,7 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
     throw new LibraryError(400, "フォームが不正です");
   }
   const intent = formData.get("intent");
-  if (
-    !["recordView", "setSaved", "saveNote", "setHistoryEnabled", "clearHistory"].includes(
-      String(intent),
-    )
-  ) {
+  if (!["recordView", "setHistoryEnabled", "clearHistory"].includes(String(intent))) {
     throw new LibraryError(400, "操作が不正です");
   }
   const db = getDb();
@@ -234,6 +300,7 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
       db
         .prepare("UPDATE user_library_entries SET last_viewed_at = NULL WHERE user_uuid = ?")
         .bind(userUuid),
+      db.prepare("DELETE FROM user_library_reactions WHERE user_uuid = ?").bind(userUuid),
       removeEmptyEntries(db, userUuid),
     ]);
     return { success: true as const, historyEnabled: await readHistoryEnabled(db, userUuid) };
@@ -242,72 +309,34 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
   const postId = parsePostId(formData.get("postId"));
   await assertPostExists(db, postId);
   const now = new Date();
-  const timestamp = now.toISOString();
-  if (intent === "setSaved") {
-    const isSaved = parseBoolean(formData.get("isSaved"));
-    await db.batch([
-      db
-        .prepare(
-          `INSERT INTO user_library_entries (user_uuid, post_id, is_saved, saved_at) VALUES (?, ?, ?, ?)
-           ON CONFLICT(user_uuid, post_id) DO UPDATE SET
-             is_saved = excluded.is_saved,
-             saved_at = CASE WHEN excluded.is_saved = 0 THEN NULL
-                             ELSE COALESCE(user_library_entries.saved_at, excluded.saved_at) END`,
-        )
-        .bind(userUuid, postId, isSaved ? 1 : 0, isSaved ? timestamp : null),
-      removeEmptyEntries(db, userUuid),
-    ]);
-  } else if (intent === "saveNote") {
-    const note = formData.get("note");
-    if (typeof note !== "string" || note.length > 2000) {
-      throw new LibraryError(400, "メモは2000文字以内で入力してください");
-    }
-    await db.batch([
-      db
-        .prepare(
-          `INSERT INTO user_library_entries (user_uuid, post_id, note, note_updated_at) VALUES (?, ?, ?, ?)
-           ON CONFLICT(user_uuid, post_id) DO UPDATE SET
-             note = excluded.note,
-             note_updated_at = CASE WHEN excluded.note = '' THEN NULL
-                                   WHEN user_library_entries.note = excluded.note THEN user_library_entries.note_updated_at
-                                   ELSE excluded.note_updated_at END`,
-        )
-        .bind(userUuid, postId, note, note ? timestamp : null),
-      removeEmptyEntries(db, userUuid),
-    ]);
-  } else {
-    const [historyEnabled, entry] = await Promise.all([
-      readHistoryEnabled(db, userUuid),
-      readEntry(db, userUuid, postId),
-    ]);
-    if (
-      !historyEnabled ||
-      (entry?.lastViewedAt && now.getTime() - Date.parse(entry.lastViewedAt) < VIEW_INTERVAL_MS)
-    ) {
-      return { success: true as const, entry, historyEnabled };
-    }
-    const intervalCutoff = new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString();
-    await db.batch([
-      db
-        .prepare(
-          `INSERT INTO user_library_entries (user_uuid, post_id, last_viewed_at)
-           SELECT ?, ?, ? WHERE COALESCE(
-             (SELECT history_enabled FROM user_library_settings WHERE user_uuid = ?), 1) = 1
-           ON CONFLICT(user_uuid, post_id) DO UPDATE SET last_viewed_at = excluded.last_viewed_at
-           WHERE user_library_entries.last_viewed_at IS NULL OR user_library_entries.last_viewed_at <= ?`,
-        )
-        .bind(userUuid, postId, timestamp, userUuid, intervalCutoff),
-      db
-        .prepare(
-          `UPDATE user_library_entries SET last_viewed_at = NULL WHERE user_uuid = ?
-           AND last_viewed_at IS NOT NULL AND (last_viewed_at < ? OR post_id NOT IN (
-             SELECT post_id FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at IS NOT NULL
-             ORDER BY last_viewed_at DESC, post_id DESC LIMIT ?))`,
-        )
-        .bind(userUuid, historyCutoff(now), userUuid, HISTORY_LIMIT),
-      removeEmptyEntries(db, userUuid),
-    ]);
+  const [historyEnabled, entry] = await Promise.all([
+    readHistoryEnabled(db, userUuid),
+    readEntry(db, userUuid, postId),
+  ]);
+  if (
+    !historyEnabled ||
+    (entry && now.getTime() - Date.parse(entry.lastViewedAt) < VIEW_INTERVAL_MS)
+  ) {
+    return { success: true as const, entry, historyEnabled };
   }
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO user_library_entries (user_uuid, post_id, last_viewed_at)
+         SELECT ?, ?, ? WHERE COALESCE(
+           (SELECT history_enabled FROM user_library_settings WHERE user_uuid = ?), 1) = 1
+         ON CONFLICT(user_uuid, post_id) DO UPDATE SET last_viewed_at = excluded.last_viewed_at
+         WHERE user_library_entries.last_viewed_at IS NULL OR user_library_entries.last_viewed_at <= ?`,
+      )
+      .bind(
+        userUuid,
+        postId,
+        now.toISOString(),
+        userUuid,
+        new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
+      ),
+    ...pruneHistory(db, userUuid, now),
+  ]);
   return {
     success: true as const,
     entry: await readEntry(db, userUuid, postId),

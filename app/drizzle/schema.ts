@@ -367,3 +367,25 @@ export const userLibrarySettings = sqliteTable('user_library_settings', {
     .references(() => dimUsers.userUuid, { onDelete: 'cascade' }),
   historyEnabled: integer('history_enabled', { mode: 'boolean' }).notNull().default(true),
 });
+
+export const userLibraryReactions = sqliteTable(
+  'user_library_reactions',
+  {
+    userUuid: text('user_uuid')
+      .notNull()
+      .references(() => dimUsers.userUuid, { onDelete: 'cascade' }),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => dimPosts.postId, { onDelete: 'cascade' }),
+    commentId: integer('comment_id').references(() => dimComments.commentId, {
+      onDelete: 'cascade',
+    }),
+    kind: text('kind', { enum: ['like', 'dislike', 'comment_like', 'comment_dislike'] }).notNull(),
+    targetId: integer('target_id').notNull(),
+    occurredAt: text('occurred_at').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userUuid, table.kind, table.targetId] }),
+    index('idx_user_library_reactions_history').on(table.userUuid, table.occurredAt),
+  ],
+);

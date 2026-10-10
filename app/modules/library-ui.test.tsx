@@ -11,14 +11,26 @@ vi.mock("~/modules/library.server", () => ({ getLibraryPage: vi.fn() }));
 const entry = {
   postId: 42,
   postTitle: "テスト事例",
-  isSaved: true,
-  note: "読み返したいメモ",
-  savedAt: "2026-10-10T00:00:00.000Z",
-  lastViewedAt: "2026-10-10T00:00:00.000Z",
+  commentId: null,
+  commentContent: null,
 };
 const events = [
-  { ...entry, kind: "note" as const, occurredAt: "2026-10-10T00:03:00.000Z" },
-  { ...entry, kind: "saved" as const, occurredAt: "2026-10-10T00:02:00.000Z" },
+  {
+    ...entry,
+    kind: "comment_dislike" as const,
+    occurredAt: "2026-10-10T00:05:00.000Z",
+    commentId: 102,
+    commentContent: "逆評価したコメント",
+  },
+  {
+    ...entry,
+    kind: "comment_like" as const,
+    occurredAt: "2026-10-10T00:04:00.000Z",
+    commentId: 101,
+    commentContent: "評価したコメント",
+  },
+  { ...entry, kind: "dislike" as const, occurredAt: "2026-10-10T00:03:00.000Z" },
+  { ...entry, kind: "like" as const, occurredAt: "2026-10-10T00:02:00.000Z" },
   { ...entry, kind: "view" as const, occurredAt: "2026-10-10T00:01:00.000Z" },
 ];
 
@@ -40,11 +52,19 @@ describe("履歴の表示と検索", () => {
     render(<Stub initialEntries={["/history?view=saved"]} />);
 
     const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
-    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(3);
-    expect(screen.getByText(/^メモ ·/)).toBeInTheDocument();
-    expect(screen.getByText(/^保存 ·/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5);
+    expect(screen.getByText(/^コメントを逆評価 ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^コメントを評価 ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^良くないね ·/)).toBeInTheDocument();
+    expect(screen.getByText(/^いいね ·/)).toBeInTheDocument();
     expect(screen.getByText(/^閲覧 ·/)).toBeInTheDocument();
-    expect(screen.getByText("読み返したいメモ")).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: "テスト事例" });
+    expect(links[0]).toHaveAttribute("href", "/archives/42#comment-102");
+    expect(links[1]).toHaveAttribute("href", "/archives/42#comment-101");
+    expect(links[4]).toHaveAttribute("href", "/archives/42");
+    expect(screen.getByText("逆評価したコメント")).toBeInTheDocument();
+    expect(screen.getByText("評価したコメント")).toBeInTheDocument();
+    expect(screen.queryByText(/保存|メモ/)).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "表示する" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
@@ -62,7 +82,7 @@ describe("履歴の表示と検索", () => {
 
     fireEvent.change(search, { target: { value: "" } });
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(3),
+      expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5),
     );
     expect(search).toHaveValue("");
     expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), { query: "", page: 1 });
