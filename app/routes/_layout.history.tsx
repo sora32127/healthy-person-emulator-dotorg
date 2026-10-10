@@ -189,9 +189,6 @@ export default function History() {
                   {entry.postTitle}
                 </CommonNavLink>
               </h2>
-              {entry.commentContent && (
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm">{entry.commentContent}</p>
-              )}
             </li>
           ))}
         </ul>

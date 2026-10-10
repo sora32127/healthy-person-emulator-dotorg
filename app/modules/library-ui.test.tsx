@@ -62,8 +62,8 @@ describe("履歴の表示と検索", () => {
     expect(links[0]).toHaveAttribute("href", "/archives/42#comment-102");
     expect(links[1]).toHaveAttribute("href", "/archives/42#comment-101");
     expect(links[4]).toHaveAttribute("href", "/archives/42");
-    expect(screen.getByText("逆評価したコメント")).toBeInTheDocument();
-    expect(screen.getByText("評価したコメント")).toBeInTheDocument();
+    expect(screen.queryByText("逆評価したコメント")).not.toBeInTheDocument();
+    expect(screen.queryByText("評価したコメント")).not.toBeInTheDocument();
     expect(screen.queryByText(/保存|メモ/)).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "表示する" })).not.toBeInTheDocument();
@@ -164,6 +164,56 @@ describe("履歴の表示と検索", () => {
       "href",
       "/history?page=2&q=%E6%9C%80%E5%88%9D",
     );
+  });
+
+  it("前後のページに検索語を引き継ぎ、検索を変更すると先頭ページに戻る", async () => {
+    vi.mocked(getLibraryPage).mockImplementation(async (_request, options) => ({
+      ...page(),
+      page: options.page,
+      total: 105,
+      totalPages: 3,
+    }));
+    const Stub = createRoutesStub([{ path: "/history", loader, Component: History }]);
+    render(<Stub initialEntries={["/history?page=2&q=%E6%9C%AC%E6%96%87"]} />);
+
+    const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
+    expect(search).toHaveValue("本文");
+    expect(screen.getByRole("link", { name: "前へ" })).toHaveAttribute(
+      "href",
+      "/history?page=1&q=%E6%9C%AC%E6%96%87",
+    );
+    expect(screen.getByRole("link", { name: "次へ" })).toHaveAttribute(
+      "href",
+      "/history?page=3&q=%E6%9C%AC%E6%96%87",
+    );
+    fireEvent.click(screen.getByRole("link", { name: "次へ" }));
+    await screen.findByText("3 / 3");
+    expect(screen.queryByRole("link", { name: "次へ" })).not.toBeInTheDocument();
+    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+      query: "本文",
+      page: 3,
+    });
+
+    fireEvent.click(screen.getByRole("link", { name: "前へ" }));
+    await screen.findByText("2 / 3");
+    expect(search).toHaveValue("本文");
+    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+      query: "本文",
+      page: 2,
+    });
+
+    fireEvent.change(search, { target: { value: "コメント" } });
+    await screen.findByText("1 / 3");
+    expect(screen.queryByRole("link", { name: "前へ" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "次へ" })).toHaveAttribute(
+      "href",
+      "/history?page=2&q=%E3%82%B3%E3%83%A1%E3%83%B3%E3%83%88",
+    );
+    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+      query: "コメント",
+      page: 1,
+    });
+    expect(search).toHaveValue("コメント");
   });
 
   it("再取得した設定を表示し、次の設定変更も最新値から切り替える", async () => {
