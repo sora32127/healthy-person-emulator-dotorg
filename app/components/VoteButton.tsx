@@ -1,4 +1,4 @@
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, HandHeart } from 'lucide-react';
 
 export function VoteButton({
   type,
@@ -8,13 +8,16 @@ export function VoteButton({
   disabled,
   onClick,
 }: {
-  type: 'like' | 'dislike';
+  type: 'like' | 'dislike' | 'support';
   count: number;
   isAnimating: boolean;
   isVoted: boolean;
   disabled: boolean;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
+  const label = type === 'like' ? 'いいね' : type === 'dislike' ? '良くないね' : '力になりたい';
+  const Icon = type === 'like' ? ThumbsUp : type === 'dislike' ? ThumbsDown : HandHeart;
+
   return (
     <div>
       <button
@@ -23,17 +26,16 @@ export function VoteButton({
           isAnimating
             ? 'animate-voteSpin bg-base-300'
             : isVoted
-              ? `${type === 'like' ? 'text-secondary' : 'text-error'} font-bold bg-base-300`
+              ? `${type === 'support' ? 'text-info' : type === 'dislike' ? 'text-error' : 'text-secondary'} font-bold bg-base-300`
               : 'bg-base-300 hover:bg-base-200'
         }`}
+        aria-label={`${label} ${count}件`}
+        aria-pressed={isVoted}
+        title={label}
         disabled={disabled}
         onClick={onClick}
       >
-        {type === 'like' ? (
-          <ThumbsUp className="fill-none stroke-current" />
-        ) : (
-          <ThumbsDown className="fill-none stroke-current" />
-        )}
+        <Icon className="fill-none stroke-current" aria-hidden="true" />
         <p className="ml-2">{count}</p>
       </button>
     </div>

@@ -24,11 +24,11 @@ describe('VoteButton', () => {
     expect(screen.getByText('0')).toBeInTheDocument();
   });
 
-  it('いいねボタンがクリックされたときにonClickが呼ばれる', () => {
+  it.each(['like', 'dislike', 'support'] as const)('%sボタンがクリックされたときにonClickが呼ばれる', (type) => {
     const mockOnClick = vi.fn();
     render(
       <VoteButton
-        type="like"
+        type={type}
         count={0}
         isAnimating={false}
         isVoted={false}
@@ -40,11 +40,11 @@ describe('VoteButton', () => {
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
-  it('disabledの場合はクリックできない', () => {
+  it.each(['like', 'dislike', 'support'] as const)('%sボタンがdisabledの場合はクリックできない', (type) => {
     const mockOnClick = vi.fn();
     render(
       <VoteButton
-        type="like"
+        type={type}
         count={0}
         isAnimating={false}
         isVoted={false}
@@ -55,6 +55,28 @@ describe('VoteButton', () => {
     expect(screen.getByRole('button')).toBeDisabled();
     fireEvent.click(screen.getByRole('button'));
     expect(mockOnClick).not.toHaveBeenCalled();
+  });
+
+  it('力になりたいボタンは意味と件数、押下状態を伝える', () => {
+    const props = {
+      type: 'support' as const,
+      count: 3,
+      isAnimating: false,
+      isVoted: false,
+      disabled: false,
+      onClick: () => {},
+    };
+    const { rerender } = render(<VoteButton {...props} />);
+
+    const button = screen.getByRole('button', { name: '力になりたい 3件' });
+    expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(button).toHaveAttribute('title', '力になりたい');
+    expect(screen.getByText('3')).toBeVisible();
+
+    rerender(<VoteButton {...props} count={4} isVoted={true} />);
+
+    expect(screen.getByRole('button', { name: '力になりたい 4件' })).toHaveAttribute('aria-pressed', 'true');
+    expect(button).toHaveClass('text-info font-bold bg-base-300');
   });
 
   it('アニメーション中は適切なクラスが適用される', () => {
