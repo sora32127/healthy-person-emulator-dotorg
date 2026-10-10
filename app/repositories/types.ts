@@ -64,6 +64,7 @@ const PostDataSchema = z.object({
   postDateGmt: z.date(),
   countLikes: z.number(),
   countDislikes: z.number(),
+  countSupports: z.number(),
   commentStatus: z.string(),
   ogpImageUrl: z.string().nullable(),
   tags: z.array(
@@ -224,7 +225,7 @@ export interface DatabaseRepository {
   ): Promise<{ message: string; success: boolean }>;
   recordPostVote(
     postId: number,
-    voteType: 'like' | 'dislike',
+    voteType: 'like' | 'dislike' | 'support',
     voteUserIpHash: string,
   ): Promise<void>;
   recordCommentVote(
