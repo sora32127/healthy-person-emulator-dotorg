@@ -32,6 +32,9 @@ function createD1Adapter(): D1Database {
       async all() {
         return { results: sqlite.prepare(sql).all(...values) };
       },
+      async raw() {
+        return sqlite.prepare(sql).raw().all(...values);
+      },
       async run() {
         writes++;
         const result = sqlite.prepare(sql).run(...values);

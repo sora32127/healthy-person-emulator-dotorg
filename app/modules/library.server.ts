@@ -1,4 +1,15 @@
 import { redirect } from "react-router";
+import { and, count, desc, eq, exists, gte, isNull, lte, notExists, or, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import {
+  dimComments,
+  dimPosts,
+  dimTags,
+  relPostTags,
+  userLibraryEntries,
+  userLibraryReactions,
+  userLibrarySettings,
+} from "../drizzle/schema";
 import { isLibraryEnabledForUser } from "./feature-flags.server";
 import { getAuthenticatedUser } from "./auth.google.server";
 
@@ -14,6 +25,7 @@ const PAGE_SIZE = 50;
 const HISTORY_LIMIT = 500;
 const HISTORY_DAYS = 90;
 const VIEW_INTERVAL_MS = 30 * 60 * 1000;
+type LibraryDb = ReturnType<typeof drizzle>;
 
 export class LibraryError extends Error {
   constructor(
@@ -24,10 +36,10 @@ export class LibraryError extends Error {
   }
 }
 
-function getDb(): D1Database {
+function getDb() {
   const db = (globalThis as any).__cloudflareEnv?.DB as D1Database | undefined;
   if (!db) throw new Error("DB is not configured");
-  return db;
+  return drizzle(db);
 }
 
 async function requireLibraryUser(request: Request) {
@@ -48,104 +60,200 @@ function historyCutoff(now = new Date()): string {
   return new Date(now.getTime() - HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString();
 }
 
-async function readHistoryEnabled(db: D1Database, userUuid: string): Promise<boolean> {
+async function readHistoryEnabled(db: LibraryDb, userUuid: string): Promise<boolean> {
   const setting = await db
-    .prepare("SELECT history_enabled AS enabled FROM user_library_settings WHERE user_uuid = ?")
-    .bind(userUuid)
-    .first<{ enabled: number }>();
-  return setting?.enabled !== 0;
+    .select({ enabled: userLibrarySettings.historyEnabled })
+    .from(userLibrarySettings)
+    .where(eq(userLibrarySettings.userUuid, userUuid))
+    .get();
+  return setting?.enabled ?? true;
 }
 
-async function assertPostExists(db: D1Database, postId: number) {
+async function assertPostExists(db: LibraryDb, postId: number) {
   const post = await db
-    .prepare("SELECT post_id FROM dim_posts WHERE post_id = ?")
-    .bind(postId)
-    .first();
+    .select({ postId: dimPosts.postId })
+    .from(dimPosts)
+    .where(eq(dimPosts.postId, postId))
+    .get();
   if (!post) throw new LibraryError(404, "記事が見つかりません");
+}
+
+function historyEvents(db: LibraryDb, userUuid: string, cutoff: string) {
+  return db.$with("history_events").as(
+    db
+      .select({
+        postId: userLibraryEntries.postId,
+        kind: sql<LibraryTimelineEvent["kind"]>`'view'`.as("event_kind"),
+        occurredAt: sql<string>`${userLibraryEntries.lastViewedAt}`.as("event_occurred_at"),
+        targetId: sql<number>`${userLibraryEntries.postId}`.as("event_target_id"),
+        commentId: sql<number | null>`NULL`.as("event_comment_id"),
+      })
+      .from(userLibraryEntries)
+      .where(
+        and(
+          eq(userLibraryEntries.userUuid, userUuid),
+          gte(userLibraryEntries.lastViewedAt, cutoff),
+        ),
+      )
+      .unionAll(
+        db
+          .select({
+            postId: userLibraryReactions.postId,
+            kind: userLibraryReactions.kind,
+            occurredAt: userLibraryReactions.occurredAt,
+            targetId: userLibraryReactions.targetId,
+            commentId: userLibraryReactions.commentId,
+          })
+          .from(userLibraryReactions)
+          .where(
+            and(
+              eq(userLibraryReactions.userUuid, userUuid),
+              gte(userLibraryReactions.occurredAt, cutoff),
+            ),
+          ),
+      ),
+  );
 }
 
 export async function getLibraryPage(request: Request, options: { query: string; page: number }) {
   const user = await getAuthenticatedUser(request);
   if (!user || !isLibraryEnabledForUser(user)) throw redirect("/");
   const db = getDb();
-  const cutoff = historyCutoff();
-  const query = options.query;
-  const bindings: (string | number)[] = [user.userUuid, cutoff, user.userUuid, cutoff];
-  let filter = "";
-  if (query) {
-    filter = `WHERE (e.postTitle LIKE ? ESCAPE '\\' OR e.postContent LIKE ? ESCAPE '\\'
-                    OR e.commentContent LIKE ? ESCAPE '\\' OR EXISTS (
-                      SELECT 1 FROM rel_post_tags pt INNER JOIN dim_tags t ON t.tag_id = pt.tag_id
-                      WHERE pt.post_id = e.postId AND t.tag_name LIKE ? ESCAPE '\\'))`;
-    const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
-    bindings.push(pattern, pattern, pattern, pattern);
-  }
-  const eventsCte = `WITH events AS (
-    SELECT e.post_id AS postId, p.post_title AS postTitle, p.post_content AS postContent,
-           'view' AS kind, e.last_viewed_at AS occurredAt, e.post_id AS targetId,
-           NULL AS commentId, NULL AS commentContent
-    FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
-    WHERE e.user_uuid = ? AND e.last_viewed_at >= ?
-    UNION ALL
-    SELECT r.post_id AS postId, p.post_title AS postTitle, p.post_content AS postContent,
-           r.kind, r.occurred_at AS occurredAt, r.target_id AS targetId,
-           r.comment_id AS commentId, c.comment_content AS commentContent
-    FROM user_library_reactions r INNER JOIN dim_posts p ON p.post_id = r.post_id
-    LEFT JOIN dim_comments c ON c.comment_id = r.comment_id AND c.post_id = r.post_id
-    WHERE r.user_uuid = ? AND r.occurred_at >= ?
-  )`;
-  const [count, historyEnabled] = await Promise.all([
-    db
-      .prepare(`${eventsCte} SELECT COUNT(*) AS total FROM events e ${filter}`)
-      .bind(...bindings)
-      .first<{ total: number }>(),
+  const events = historyEvents(db, user.userUuid, historyCutoff());
+  const pattern = `%${options.query.replace(/[\\%_]/g, "\\$&")}%`;
+  const filteredEvents = db
+    .select({
+      postId: events.postId,
+      postTitle: dimPosts.postTitle,
+      kind: events.kind,
+      occurredAt: events.occurredAt,
+      commentId: events.commentId,
+      targetId: events.targetId,
+    })
+    .from(events)
+    .innerJoin(dimPosts, eq(dimPosts.postId, events.postId))
+    .leftJoin(
+      dimComments,
+      and(eq(dimComments.commentId, events.commentId), eq(dimComments.postId, events.postId)),
+    )
+    .where(
+      options.query
+        ? or(
+            sql`${dimPosts.postTitle} LIKE ${pattern} ESCAPE '\\'`,
+            sql`${dimPosts.postContent} LIKE ${pattern} ESCAPE '\\'`,
+            sql`${dimComments.commentContent} LIKE ${pattern} ESCAPE '\\'`,
+            exists(
+              db
+                .select({ tagId: dimTags.tagId })
+                .from(relPostTags)
+                .innerJoin(dimTags, eq(dimTags.tagId, relPostTags.tagId))
+                .where(
+                  and(
+                    eq(relPostTags.postId, events.postId),
+                    sql`${dimTags.tagName} LIKE ${pattern} ESCAPE '\\'`,
+                  ),
+                ),
+            ),
+          )
+        : undefined,
+    )
+    .as("filtered_events");
+  const [result, historyEnabled] = await Promise.all([
+    db.with(events).select({ total: count() }).from(filteredEvents).get(),
     readHistoryEnabled(db, user.userUuid),
   ]);
-  const total = count?.total ?? 0;
+  const total = result?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(
     totalPages,
     Number.isSafeInteger(options.page) && options.page > 0 ? options.page : 1,
   );
   const rows = await db
-    .prepare(
-      `${eventsCte}
-       SELECT postId, postTitle, kind, occurredAt, commentId FROM events e ${filter}
-       ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ? OFFSET ?`,
+    .with(events)
+    .select({
+      postId: filteredEvents.postId,
+      postTitle: filteredEvents.postTitle,
+      kind: filteredEvents.kind,
+      occurredAt: filteredEvents.occurredAt,
+      commentId: filteredEvents.commentId,
+    })
+    .from(filteredEvents)
+    .orderBy(
+      desc(filteredEvents.occurredAt),
+      desc(filteredEvents.postId),
+      desc(filteredEvents.kind),
+      desc(filteredEvents.targetId),
     )
-    .bind(...bindings, PAGE_SIZE, (page - 1) * PAGE_SIZE)
-    .all<LibraryTimelineEvent>();
-  return { entries: rows.results, page, totalPages, total, historyEnabled };
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
+  return { entries: rows, page, totalPages, total, historyEnabled };
 }
 
-function pruneHistory(db: D1Database, userUuid: string, now: Date) {
-  const keepCte = `WITH events AS (
-    SELECT 'view' AS kind, post_id AS postId, post_id AS targetId, last_viewed_at AS occurredAt
-    FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at >= ?
-    UNION ALL
-    SELECT kind, post_id AS postId, target_id AS targetId, occurred_at AS occurredAt
-    FROM user_library_reactions WHERE user_uuid = ? AND occurred_at >= ?
-  ), keep AS (
-    SELECT kind, targetId FROM events
-    ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ?
-  )`;
+function pruneHistory(db: LibraryDb, userUuid: string, now: Date) {
+  const events = historyEvents(db, userUuid, historyCutoff(now));
+  const keep = db
+    .$with("retained_history")
+    .as(
+      db
+        .select({ kind: events.kind, targetId: events.targetId })
+        .from(events)
+        .orderBy(
+          desc(events.occurredAt),
+          desc(events.postId),
+          desc(events.kind),
+          desc(events.targetId),
+        )
+        .limit(HISTORY_LIMIT),
+    );
   return [
     db
-      .prepare(
-        `${keepCte} DELETE FROM user_library_entries
-         WHERE user_uuid = ? AND NOT EXISTS (
-           SELECT 1 FROM keep WHERE keep.kind = 'view' AND keep.targetId = user_library_entries.post_id)`,
-      )
-      .bind(userUuid, historyCutoff(now), userUuid, historyCutoff(now), HISTORY_LIMIT, userUuid),
+      .with(events, keep)
+      .delete(userLibraryEntries)
+      .where(
+        and(
+          eq(userLibraryEntries.userUuid, userUuid),
+          notExists(
+            db
+              .select()
+              .from(keep)
+              .where(and(eq(keep.kind, "view"), eq(keep.targetId, userLibraryEntries.postId))),
+          ),
+        ),
+      ),
     db
-      .prepare(
-        `${keepCte} DELETE FROM user_library_reactions
-         WHERE user_uuid = ? AND NOT EXISTS (
-           SELECT 1 FROM keep WHERE keep.kind = user_library_reactions.kind
-           AND keep.targetId = user_library_reactions.target_id)`,
-      )
-      .bind(userUuid, historyCutoff(now), userUuid, historyCutoff(now), HISTORY_LIMIT, userUuid),
-  ];
+      .with(events, keep)
+      .delete(userLibraryReactions)
+      .where(
+        and(
+          eq(userLibraryReactions.userUuid, userUuid),
+          notExists(
+            db
+              .select()
+              .from(keep)
+              .where(
+                and(
+                  eq(keep.kind, userLibraryReactions.kind),
+                  eq(keep.targetId, userLibraryReactions.targetId),
+                ),
+              ),
+          ),
+        ),
+      ),
+  ] as const;
+}
+
+function historyRecordingAllowed(db: LibraryDb, userUuid: string) {
+  return notExists(
+    db
+      .select({ userUuid: userLibrarySettings.userUuid })
+      .from(userLibrarySettings)
+      .where(
+        and(
+          eq(userLibrarySettings.userUuid, userUuid),
+          eq(userLibrarySettings.historyEnabled, false),
+        ),
+      ),
+  );
 }
 
 export async function recordLibraryReaction(
@@ -161,40 +269,55 @@ export async function recordLibraryReaction(
   if (!(await readHistoryEnabled(db, user.userUuid))) return;
   if (commentId !== null) {
     const comment = await db
-      .prepare("SELECT comment_id FROM dim_comments WHERE comment_id = ? AND post_id = ?")
-      .bind(commentId, postId)
-      .first();
+      .select({ commentId: dimComments.commentId })
+      .from(dimComments)
+      .where(and(eq(dimComments.commentId, commentId), eq(dimComments.postId, postId)))
+      .get();
     if (!comment) throw new LibraryError(404, "コメントが見つかりません");
   }
-  const kind = commentId === null ? voteType : `comment_${voteType}`;
+  const kind = commentId === null ? voteType : (`comment_${voteType}` as const);
   const targetId = commentId ?? postId;
   const current = await db
-    .prepare(
-      "SELECT occurred_at AS occurredAt FROM user_library_reactions WHERE user_uuid = ? AND kind = ? AND target_id = ?",
+    .select({ occurredAt: userLibraryReactions.occurredAt })
+    .from(userLibraryReactions)
+    .where(
+      and(
+        eq(userLibraryReactions.userUuid, user.userUuid),
+        eq(userLibraryReactions.kind, kind),
+        eq(userLibraryReactions.targetId, targetId),
+      ),
     )
-    .bind(user.userUuid, kind, targetId)
-    .first<{ occurredAt: string }>();
+    .get();
   const now = new Date();
   if (current && now.getTime() - Date.parse(current.occurredAt) < VIEW_INTERVAL_MS) return;
   await db.batch([
     db
-      .prepare(
-        `INSERT INTO user_library_reactions (user_uuid, post_id, comment_id, kind, target_id, occurred_at)
-         SELECT ?, ?, ?, ?, ?, ? WHERE COALESCE(
-           (SELECT history_enabled FROM user_library_settings WHERE user_uuid = ?), 1) = 1
-         ON CONFLICT(user_uuid, kind, target_id) DO UPDATE SET occurred_at = excluded.occurred_at
-         WHERE user_library_reactions.occurred_at <= ?`,
+      .insert(userLibraryReactions)
+      .select(
+        db
+          .select({
+            userUuid: sql<string>`${user.userUuid}`.as("user_uuid"),
+            postId: dimPosts.postId,
+            commentId: sql<number | null>`${commentId}`.as("comment_id"),
+            kind: sql<typeof kind>`${kind}`.as("kind"),
+            targetId: sql<number>`${targetId}`.as("target_id"),
+            occurredAt: sql<string>`${now.toISOString()}`.as("occurred_at"),
+          })
+          .from(dimPosts)
+          .where(and(eq(dimPosts.postId, postId), historyRecordingAllowed(db, user.userUuid))),
       )
-      .bind(
-        user.userUuid,
-        postId,
-        commentId,
-        kind,
-        targetId,
-        now.toISOString(),
-        user.userUuid,
-        new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
-      ),
+      .onConflictDoUpdate({
+        target: [
+          userLibraryReactions.userUuid,
+          userLibraryReactions.kind,
+          userLibraryReactions.targetId,
+        ],
+        set: { occurredAt: now.toISOString() },
+        setWhere: lte(
+          userLibraryReactions.occurredAt,
+          new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
+        ),
+      }),
     ...pruneHistory(db, user.userUuid, now),
   ]);
 }
@@ -219,20 +342,18 @@ export async function mutateLibrary(request: Request) {
     const enabled = formData.get("enabled");
     if (enabled !== "true" && enabled !== "false") throw new LibraryError(400, "設定値が不正です");
     await db
-      .prepare(
-        `INSERT INTO user_library_settings (user_uuid, history_enabled) VALUES (?, ?)
-         ON CONFLICT(user_uuid) DO UPDATE SET history_enabled = excluded.history_enabled`,
-      )
-      .bind(userUuid, enabled === "true" ? 1 : 0)
-      .run();
+      .insert(userLibrarySettings)
+      .values({ userUuid, historyEnabled: enabled === "true" })
+      .onConflictDoUpdate({
+        target: userLibrarySettings.userUuid,
+        set: { historyEnabled: enabled === "true" },
+      });
     return { success: true as const };
   }
   if (intent === "clearHistory") {
     await db.batch([
-      db
-        .prepare("DELETE FROM user_library_entries WHERE user_uuid = ?")
-        .bind(userUuid),
-      db.prepare("DELETE FROM user_library_reactions WHERE user_uuid = ?").bind(userUuid),
+      db.delete(userLibraryEntries).where(eq(userLibraryEntries.userUuid, userUuid)),
+      db.delete(userLibraryReactions).where(eq(userLibraryReactions.userUuid, userUuid)),
     ]);
     return { success: true as const };
   }
@@ -244,11 +365,10 @@ export async function mutateLibrary(request: Request) {
   const [historyEnabled, viewed] = await Promise.all([
     readHistoryEnabled(db, userUuid),
     db
-      .prepare(
-        "SELECT last_viewed_at AS viewedAt FROM user_library_entries WHERE user_uuid = ? AND post_id = ?",
-      )
-      .bind(userUuid, postId)
-      .first<{ viewedAt: string }>(),
+      .select({ viewedAt: userLibraryEntries.lastViewedAt })
+      .from(userLibraryEntries)
+      .where(and(eq(userLibraryEntries.userUuid, userUuid), eq(userLibraryEntries.postId, postId)))
+      .get(),
   ]);
   if (
     !historyEnabled ||
@@ -258,20 +378,28 @@ export async function mutateLibrary(request: Request) {
   }
   await db.batch([
     db
-      .prepare(
-        `INSERT INTO user_library_entries (user_uuid, post_id, last_viewed_at)
-         SELECT ?, ?, ? WHERE COALESCE(
-           (SELECT history_enabled FROM user_library_settings WHERE user_uuid = ?), 1) = 1
-         ON CONFLICT(user_uuid, post_id) DO UPDATE SET last_viewed_at = excluded.last_viewed_at
-         WHERE user_library_entries.last_viewed_at IS NULL OR user_library_entries.last_viewed_at <= ?`,
+      .insert(userLibraryEntries)
+      .select(
+        db
+          .select({
+            userUuid: sql<string>`${userUuid}`.as("user_uuid"),
+            postId: dimPosts.postId,
+            lastViewedAt: sql<string>`${now.toISOString()}`.as("last_viewed_at"),
+          })
+          .from(dimPosts)
+          .where(and(eq(dimPosts.postId, postId), historyRecordingAllowed(db, userUuid))),
       )
-      .bind(
-        userUuid,
-        postId,
-        now.toISOString(),
-        userUuid,
-        new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
-      ),
+      .onConflictDoUpdate({
+        target: [userLibraryEntries.userUuid, userLibraryEntries.postId],
+        set: { lastViewedAt: now.toISOString() },
+        setWhere: or(
+          isNull(userLibraryEntries.lastViewedAt),
+          lte(
+            userLibraryEntries.lastViewedAt,
+            new Date(now.getTime() - VIEW_INTERVAL_MS).toISOString(),
+          ),
+        ),
+      }),
     ...pruneHistory(db, userUuid, now),
   ]);
   return { success: true as const };
