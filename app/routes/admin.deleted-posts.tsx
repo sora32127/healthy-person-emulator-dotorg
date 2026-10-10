@@ -3,10 +3,13 @@ import type { LoaderFunctionArgs } from 'react-router';
 import { drizzle } from 'drizzle-orm/d1';
 import { desc, count } from 'drizzle-orm';
 import { dimDeletedPosts } from '~/drizzle/schema';
+import { requireAdmin } from '~/modules/admin.server';
 
 const PAGE_SIZE = 50;
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  await requireAdmin(request);
+
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 
