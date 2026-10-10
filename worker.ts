@@ -1,4 +1,4 @@
-import { createRequestHandler } from 'react-router';
+import { createRequestHandler, RouterContextProvider } from 'react-router';
 import type { CloudflareEnv } from './app/types/env';
 
 // Import the server build output
@@ -9,9 +9,7 @@ import * as serverBuild from './build/server/index.js';
 // OGP rendering assets — bundled via wrangler [[rules]] (Data / CompiledWasm)
 // Imported in worker.ts (the wrangler entrypoint) so wrangler bundle resolves
 // them directly, rather than going through the React Router build pipeline.
-// @ts-expect-error  Data rule emits an ArrayBuffer
-import notoSansJpFont from './app/assets/NotoSansJP-Medium.ttf';
-// @ts-expect-error  CompiledWasm rule emits a WebAssembly.Module
+import notoSansJpFont from '~/assets/NotoSansJP-Medium.ttf';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 
 const requestHandler = createRequestHandler(serverBuild as unknown as ServerBuild);
@@ -35,20 +33,10 @@ function rewriteForMarkdown(request: Request): Request {
 }
 
 export default {
-  async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
+  async fetch(request: Request, env: CloudflareEnv) {
     (globalThis as any).__cloudflareEnv = env;
 
-    const loadContext = {
-      cloudflare: {
-        env,
-        ctx: {
-          waitUntil: ctx.waitUntil.bind(ctx),
-          passThroughOnException: ctx.passThroughOnException.bind(ctx),
-        },
-        cf: request.cf,
-        caches,
-      },
-    };
+    const loadContext = new RouterContextProvider();
     return requestHandler(rewriteForMarkdown(request), loadContext);
   },
 
@@ -64,8 +52,8 @@ export default {
               await import('./app/modules/automation.server');
 
             const ogpResult = await handleOgpAndSocialPost(env, {
-              fontBytes: new Uint8Array(notoSansJpFont as ArrayBuffer),
-              resvgWasm: resvgWasm as WebAssembly.Module,
+              fontBytes: new Uint8Array(notoSansJpFont),
+              resvgWasm,
             });
             const recoverResult = await recoverStaleJobs(env);
 

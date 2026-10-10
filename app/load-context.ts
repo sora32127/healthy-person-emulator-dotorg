@@ -5,7 +5,7 @@ import { initSecurity } from './modules/security.server';
 import { initCloudflare } from './modules/cloudflare.server';
 import { initVisitorSession } from './modules/visitor.server';
 import { initDb } from './modules/db.server';
-import type { AppLoadContext } from 'react-router';
+import { RouterContextProvider } from 'react-router';
 type Cloudflare = {
   env: CloudflareEnv;
   ctx: {
@@ -15,12 +15,6 @@ type Cloudflare = {
   cf: Request['cf'];
   caches: typeof caches;
 };
-
-declare module 'react-router' {
-  interface AppLoadContext {
-    cloudflare: Cloudflare;
-  }
-}
 
 let _initialized = false;
 
@@ -64,7 +58,8 @@ export function getLoadContext({
   context,
 }: {
   context: { cloudflare: Cloudflare };
-}): AppLoadContext {
+}): RouterContextProvider {
+  (globalThis as any).__cloudflareEnv = context.cloudflare.env;
   initializeApp(context.cloudflare.env);
-  return context;
+  return new RouterContextProvider();
 }

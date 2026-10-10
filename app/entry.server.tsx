@@ -1,4 +1,4 @@
-import type { AppLoadContext, EntryContext } from 'react-router';
+import type { RouterContextProvider, EntryContext } from 'react-router';
 import { ServerRouter } from 'react-router';
 import { isbot } from 'isbot';
 import { renderToReadableStream } from 'react-dom/server';
@@ -27,10 +27,10 @@ export default async function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext,
-  loadContext: AppLoadContext,
+  _loadContext: RouterContextProvider,
 ) {
-  // Initialize all server modules (env resolved from globalThis or loadContext)
-  initializeApp((loadContext as any).cloudflare?.env);
+  // Worker entrypoints set the env bridge before React Router runs.
+  initializeApp();
   const body = await renderToReadableStream(
     <ServerRouter context={remixContext} url={request.url} />,
     {

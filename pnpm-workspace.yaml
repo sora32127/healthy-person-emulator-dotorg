@@ -1,4 +1,46 @@
-onlyBuiltDependencies:
-  - bcrypt
-  - better-sqlite3
-  - esbuild
+allowBuilds:
+  bcrypt: true
+  better-sqlite3: true
+  esbuild: true
+  workerd: true
+  '@prisma/client': false
+  '@prisma/engines': false
+  prisma: false
+
+nodeOptions: --no-experimental-require-module
+
+peerDependencyRules:
+  allowedVersions:
+    vite: '1.1.0'
+
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types'
+  - "@types/node@26.6.5"
+  - framer-motion@14.1.0
+  - knip@6.41.0
+  - lucide-react@1.54.0
+  - motion-dom@14.1.0
+  - motion-utils@14.1.0
+  - p-map@7.1.0
+  - smol-toml@1.9.1
+
+overrides:
+  "@babel/core": "7.29.7"
+  "@babel/runtime": "7.29.10"
+  "brace-expansion@>=2 <3": "2.1.7"
+  "esbuild@<=0.24.2": "0.25.12"
+  "flatted": "3.4.4"
+  "lodash": "4.18.1"
+  "mdast-util-to-hast": "13.2.1"
+  "micromatch>picomatch": "2.3.2"
+  "minimatch@>=9 <10": "9.0.9"
+  "knip>picomatch": "4.0.7"
+  "postcss": "8.5.29"
+  "smol-toml": "1.9.1"
+  "tinyglobby>picomatch": "4.0.7"
+  "undici@>=7 <8": "7.30.0"
+  "valibot": "1.5.0"
+  "yaml": "2.9.1"
+  "nanoid@>=3 <4": "3.3.20"
+  "vite@*": "npm:@voidzero-dev/vite-plus-core@1.1.0"
+  "vitest@*": "5.0.3"
