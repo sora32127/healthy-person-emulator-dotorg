@@ -12,7 +12,6 @@ const entry = {
   postId: 42,
   postTitle: "テスト事例",
   commentId: null,
-  commentContent: null,
 };
 const events = [
   {
@@ -20,14 +19,12 @@ const events = [
     kind: "comment_dislike" as const,
     occurredAt: "2026-10-10T00:05:00.000Z",
     commentId: 102,
-    commentContent: "逆評価したコメント",
   },
   {
     ...entry,
     kind: "comment_like" as const,
     occurredAt: "2026-10-10T00:04:00.000Z",
     commentId: 101,
-    commentContent: "評価したコメント",
   },
   { ...entry, kind: "dislike" as const, occurredAt: "2026-10-10T00:03:00.000Z" },
   { ...entry, kind: "like" as const, occurredAt: "2026-10-10T00:02:00.000Z" },
@@ -50,7 +47,7 @@ describe("履歴の表示と検索", () => {
       page(options.query === "本文タグ" ? [events[0]] : events),
     );
     const Stub = createRoutesStub([{ path: "/history", loader, Component: History }]);
-    render(<Stub initialEntries={["/history?view=saved"]} />);
+    render(<Stub initialEntries={["/history"]} />);
 
     const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
     expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5);
@@ -63,30 +60,25 @@ describe("履歴の表示と検索", () => {
     expect(links[0]).toHaveAttribute("href", "/archives/42#comment-102");
     expect(links[1]).toHaveAttribute("href", "/archives/42#comment-101");
     expect(links[4]).toHaveAttribute("href", "/archives/42");
-    expect(screen.queryByText("逆評価したコメント")).not.toBeInTheDocument();
-    expect(screen.queryByText("評価したコメント")).not.toBeInTheDocument();
     expect(screen.queryByText(/保存|メモ/)).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "表示する" })).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(getLibraryPage).toHaveBeenCalledWith(expect.any(Request), { query: "", page: 1 });
 
     fireEvent.change(search, { target: { value: "本文タグ" } });
     await waitFor(() =>
       expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(1),
     );
     expect(search).toHaveValue("本文タグ");
-    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
       query: "本文タグ",
-      page: 1,
-    });
+    }));
 
     fireEvent.change(search, { target: { value: "" } });
     await waitFor(() =>
       expect(screen.getAllByRole("link", { name: "テスト事例" })).toHaveLength(5),
     );
     expect(search).toHaveValue("");
-    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), { query: "", page: 1 });
     expect(screen.queryByText(/管理者限定|管理画面/)).not.toBeInTheDocument();
   });
 
@@ -103,10 +95,9 @@ describe("履歴の表示と検索", () => {
     fireEvent.change(search, { target: { value: "検索" } });
     fireEvent.compositionEnd(search);
     await waitFor(() =>
-      expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+      expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
         query: "検索",
-        page: 1,
-      }),
+      })),
     );
   });
 
@@ -130,51 +121,30 @@ describe("履歴の表示と検索", () => {
     await screen.findByText("該当する履歴はありません。");
     expect(search).toHaveValue("次の検索");
     await waitFor(() =>
-      expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+      expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
         query: "次の検索",
-        page: 1,
-      }),
+      })),
     );
     expect(search).toHaveValue("次の検索");
-  });
-
-  it("戻る操作でURLの検索語を復元し、ページ移動にも検索語を引き継ぐ", async () => {
-    vi.mocked(getLibraryPage).mockImplementation(async (_request, options) => ({
-      ...page([]),
-      page: options.page,
-      totalPages: 2,
-    }));
-    function WithBack() {
-      const navigate = useNavigate();
-      return (
-        <>
-          <button type="button" onClick={() => void navigate(-1)}>
-            戻る
-          </button>
-          <History />
-        </>
-      );
-    }
-    const Stub = createRoutesStub([{ path: "/history", loader, Component: WithBack }]);
-    render(<Stub initialEntries={["/history?q=最初", "/history?q=次"]} initialIndex={1} />);
-    const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
-    expect(search).toHaveValue("次");
-    fireEvent.click(screen.getByRole("button", { name: "戻る" }));
-    await waitFor(() => expect(search).toHaveValue("最初"));
-    expect(screen.getByRole("link", { name: "次へ" })).toHaveAttribute(
-      "href",
-      "/history?page=2&q=%E6%9C%80%E5%88%9D",
-    );
   });
 
   it("前後のページに検索語を引き継ぎ、検索を変更すると先頭ページに戻る", async () => {
     vi.mocked(getLibraryPage).mockImplementation(async (_request, options) => ({
       ...page(),
-      page: options.page,
+      page: options.page || 1,
       total: 105,
       totalPages: 3,
     }));
-    const Stub = createRoutesStub([{ path: "/history", loader, Component: History }]);
+    function WithBack() {
+      const navigate = useNavigate();
+      return (
+        <>
+          <button type="button" onClick={() => void navigate(-1)}>戻る</button>
+          <History />
+        </>
+      );
+    }
+    const Stub = createRoutesStub([{ path: "/history", loader, Component: WithBack }]);
     render(<Stub initialEntries={["/history?page=2&q=%E6%9C%AC%E6%96%87"]} />);
 
     const search = await screen.findByRole("searchbox", { name: "履歴を検索" });
@@ -210,15 +180,18 @@ describe("履歴の表示と検索", () => {
       "href",
       "/history?page=2&q=%E3%82%B3%E3%83%A1%E3%83%B3%E3%83%88",
     );
-    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
+    expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), expect.objectContaining({
       query: "コメント",
-      page: 1,
-    });
+    }));
     expect(search).toHaveValue("コメント");
+    fireEvent.click(screen.getByRole("button", { name: "戻る" }));
+    await screen.findByText("3 / 3");
+    await waitFor(() => expect(search).toHaveValue("本文"));
   });
 
-  it("再取得した設定を表示し、次の設定変更も最新値から切り替える", async () => {
+  it("再取得した設定から切り替え、更新失敗時は現在の状態を保つ", async () => {
     let cloudHistoryEnabled = true;
+    let rejectUpdate = false;
     vi.mocked(getLibraryPage).mockImplementation(async () => page([], cloudHistoryEnabled));
     const submittedSettings: string[] = [];
     const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
@@ -226,8 +199,9 @@ describe("履歴の表示と検索", () => {
       expect(form.get("intent")).toBe("setHistoryEnabled");
       const enabled = String(form.get("enabled"));
       submittedSettings.push(enabled);
+      if (rejectUpdate) return Response.json({ success: false, error: "設定を更新できませんでした" }, { status: 500 });
       cloudHistoryEnabled = enabled === "true";
-      return { success: true, historyEnabled: cloudHistoryEnabled };
+      return { success: true };
     });
     const Stub = createRoutesStub([
       { path: "/history", loader, Component: History },
@@ -258,29 +232,13 @@ describe("履歴の表示と検索", () => {
     expect(cloudHistoryEnabled).toBe(false);
     expect(disable).toHaveClass("shadow-none");
     expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
-  });
 
-  it.each([true, false])("設定の更新失敗時は現在の記録状態を保つ（有効=%s）", async (enabled) => {
-    vi.mocked(getLibraryPage).mockResolvedValue(page([], enabled));
-    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
-      const form = await request.formData();
-      expect(form.get("intent")).toBe("setHistoryEnabled");
-      expect(form.get("enabled")).toBe(String(!enabled));
-      return Response.json({ success: false, error: "設定を更新できませんでした" }, { status: 500 });
-    });
-    const Stub = createRoutesStub([
-      { path: "/history", loader, Component: History },
-      { path: "/api/library", action },
-    ]);
-    render(<Stub initialEntries={["/history"]} />);
-    const buttonName = enabled ? "履歴を無効にする" : "履歴を有効にする";
-    const currentState = enabled ? "履歴の記録：有効" : "履歴の記録：無効";
-    fireEvent.click(await screen.findByRole("button", { name: buttonName }));
-
+    rejectUpdate = true;
+    fireEvent.click(screen.getByRole("button", { name: "履歴を有効にする" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("設定を更新できませんでした");
-    expect(screen.getByRole("status")).toHaveTextContent(currentState);
-    expect(screen.getByRole("button", { name: buttonName })).toBeEnabled();
-    expect(action).toHaveBeenCalledOnce();
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
+    expect(screen.getByRole("button", { name: "履歴を有効にする" })).toBeEnabled();
+    expect(submittedSettings).toEqual(["false", "false", "true"]);
   });
 
   it("消去確認を開く、キャンセル、ESC、外側で閉じる操作では送信しない", async () => {

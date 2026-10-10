@@ -2,19 +2,12 @@ import { redirect } from "react-router";
 import { isLibraryEnabledForUser } from "./feature-flags.server";
 import { getAuthenticatedUser } from "./auth.google.server";
 
-export type LibraryEntry = {
-  postId: number;
-  postTitle: string;
-  lastViewedAt: string;
-};
-
 export type LibraryTimelineEvent = {
   postId: number;
   postTitle: string;
   kind: "view" | "like" | "dislike" | "comment_like" | "comment_dislike";
   occurredAt: string;
   commentId: number | null;
-  commentContent: string | null;
 };
 
 const PAGE_SIZE = 50;
@@ -44,27 +37,6 @@ async function requireLibraryUser(request: Request) {
   return user;
 }
 
-function parsePostId(value: unknown): number {
-  if (typeof value !== "string" && typeof value !== "number") {
-    throw new LibraryError(400, "記事IDが不正です");
-  }
-  if (typeof value === "string" && !/^\d+$/.test(value)) {
-    throw new LibraryError(400, "記事IDが不正です");
-  }
-  const postId = Number(value);
-  if (!Number.isSafeInteger(postId) || postId <= 0) {
-    throw new LibraryError(400, "記事IDが不正です");
-  }
-  return postId;
-}
-
-function parseBoolean(value: FormDataEntryValue | null): boolean {
-  if (value !== "true" && value !== "false") {
-    throw new LibraryError(400, "設定値が不正です");
-  }
-  return value === "true";
-}
-
 function assertSameOriginPost(request: Request) {
   if (request.method !== "POST") throw new LibraryError(405, "POSTで送信してください");
   if (request.headers.get("Origin") !== new URL(request.url).origin) {
@@ -92,39 +64,12 @@ async function assertPostExists(db: D1Database, postId: number) {
   if (!post) throw new LibraryError(404, "記事が見つかりません");
 }
 
-async function readEntry(
-  db: D1Database,
-  userUuid: string,
-  postId: number,
-): Promise<LibraryEntry | null> {
-  return db
-    .prepare(
-      `SELECT e.post_id AS postId, p.post_title AS postTitle, e.last_viewed_at AS lastViewedAt
-       FROM user_library_entries e INNER JOIN dim_posts p ON p.post_id = e.post_id
-       WHERE e.user_uuid = ? AND e.post_id = ? AND e.last_viewed_at >= ?`,
-    )
-    .bind(userUuid, postId, historyCutoff())
-    .first<LibraryEntry>();
-}
-
-export async function getLibraryEntry(request: Request, rawPostId: number | string) {
-  const user = await requireLibraryUser(request);
-  const postId = parsePostId(rawPostId);
-  const db = getDb();
-  await assertPostExists(db, postId);
-  const [entry, historyEnabled] = await Promise.all([
-    readEntry(db, user.userUuid, postId),
-    readHistoryEnabled(db, user.userUuid),
-  ]);
-  return { entry, historyEnabled };
-}
-
 export async function getLibraryPage(request: Request, options: { query: string; page: number }) {
   const user = await getAuthenticatedUser(request);
   if (!user || !isLibraryEnabledForUser(user)) throw redirect("/");
   const db = getDb();
   const cutoff = historyCutoff();
-  const query = options.query.trim().slice(0, 200);
+  const query = options.query;
   const bindings: (string | number)[] = [user.userUuid, cutoff, user.userUuid, cutoff];
   let filter = "";
   if (query) {
@@ -165,7 +110,7 @@ export async function getLibraryPage(request: Request, options: { query: string;
   const rows = await db
     .prepare(
       `${eventsCte}
-       SELECT postId, postTitle, kind, occurredAt, commentId, commentContent FROM events e ${filter}
+       SELECT postId, postTitle, kind, occurredAt, commentId FROM events e ${filter}
        ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ? OFFSET ?`,
     )
     .bind(...bindings, PAGE_SIZE, (page - 1) * PAGE_SIZE)
@@ -173,22 +118,13 @@ export async function getLibraryPage(request: Request, options: { query: string;
   return { entries: rows.results, page, totalPages, total, historyEnabled };
 }
 
-function removeEmptyEntries(db: D1Database, userUuid: string) {
-  return db
-    .prepare(
-      `DELETE FROM user_library_entries
-       WHERE user_uuid = ? AND is_saved = 0 AND note = '' AND last_viewed_at IS NULL`,
-    )
-    .bind(userUuid);
-}
-
 function pruneHistory(db: D1Database, userUuid: string, now: Date) {
   const keepCte = `WITH events AS (
     SELECT 'view' AS kind, post_id AS postId, post_id AS targetId, last_viewed_at AS occurredAt
-    FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at IS NOT NULL
+    FROM user_library_entries WHERE user_uuid = ? AND last_viewed_at >= ?
     UNION ALL
     SELECT kind, post_id AS postId, target_id AS targetId, occurred_at AS occurredAt
-    FROM user_library_reactions WHERE user_uuid = ?
+    FROM user_library_reactions WHERE user_uuid = ? AND occurred_at >= ?
   ), keep AS (
     SELECT kind, targetId FROM events
     ORDER BY occurredAt DESC, postId DESC, kind DESC, targetId DESC LIMIT ?
@@ -196,20 +132,19 @@ function pruneHistory(db: D1Database, userUuid: string, now: Date) {
   return [
     db
       .prepare(
-        `${keepCte} UPDATE user_library_entries SET last_viewed_at = NULL
-         WHERE user_uuid = ? AND last_viewed_at IS NOT NULL AND (last_viewed_at < ? OR NOT EXISTS (
-           SELECT 1 FROM keep WHERE keep.kind = 'view' AND keep.targetId = user_library_entries.post_id))`,
+        `${keepCte} DELETE FROM user_library_entries
+         WHERE user_uuid = ? AND NOT EXISTS (
+           SELECT 1 FROM keep WHERE keep.kind = 'view' AND keep.targetId = user_library_entries.post_id)`,
       )
-      .bind(userUuid, userUuid, HISTORY_LIMIT, userUuid, historyCutoff(now)),
+      .bind(userUuid, historyCutoff(now), userUuid, historyCutoff(now), HISTORY_LIMIT, userUuid),
     db
       .prepare(
         `${keepCte} DELETE FROM user_library_reactions
-         WHERE user_uuid = ? AND (occurred_at < ? OR NOT EXISTS (
+         WHERE user_uuid = ? AND NOT EXISTS (
            SELECT 1 FROM keep WHERE keep.kind = user_library_reactions.kind
-           AND keep.targetId = user_library_reactions.target_id))`,
+           AND keep.targetId = user_library_reactions.target_id)`,
       )
-      .bind(userUuid, userUuid, HISTORY_LIMIT, userUuid, historyCutoff(now)),
-    removeEmptyEntries(db, userUuid),
+      .bind(userUuid, historyCutoff(now), userUuid, historyCutoff(now), HISTORY_LIMIT, userUuid),
   ];
 }
 
@@ -220,14 +155,10 @@ export async function recordLibraryReaction(
   const user = await getAuthenticatedUser(request);
   if (!user || !isLibraryEnabledForUser(user)) return;
   assertSameOriginPost(request);
-  if (reaction.voteType !== "like" && reaction.voteType !== "dislike") {
-    throw new LibraryError(400, "評価が不正です");
-  }
-  const postId = parsePostId(reaction.postId);
-  const commentId = reaction.commentId === undefined ? null : parsePostId(reaction.commentId);
+  const { postId, voteType } = reaction;
+  const commentId = reaction.commentId ?? null;
   const db = getDb();
   if (!(await readHistoryEnabled(db, user.userUuid))) return;
-  await assertPostExists(db, postId);
   if (commentId !== null) {
     const comment = await db
       .prepare("SELECT comment_id FROM dim_comments WHERE comment_id = ? AND post_id = ?")
@@ -235,7 +166,7 @@ export async function recordLibraryReaction(
       .first();
     if (!comment) throw new LibraryError(404, "コメントが見つかりません");
   }
-  const kind = commentId === null ? reaction.voteType : `comment_${reaction.voteType}`;
+  const kind = commentId === null ? voteType : `comment_${voteType}`;
   const targetId = commentId ?? postId;
   const current = await db
     .prepare(
@@ -268,12 +199,12 @@ export async function recordLibraryReaction(
   ]);
 }
 
-export async function mutateLibrary(request: Request, suppliedFormData?: FormData) {
+export async function mutateLibrary(request: Request) {
   const user = await requireLibraryUser(request);
   assertSameOriginPost(request);
   let formData: FormData;
   try {
-    formData = suppliedFormData ?? (await request.formData());
+    formData = await request.formData();
   } catch {
     throw new LibraryError(400, "フォームが不正です");
   }
@@ -285,39 +216,45 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
   const userUuid = user.userUuid;
 
   if (intent === "setHistoryEnabled") {
-    const enabled = parseBoolean(formData.get("enabled"));
+    const enabled = formData.get("enabled");
+    if (enabled !== "true" && enabled !== "false") throw new LibraryError(400, "設定値が不正です");
     await db
       .prepare(
         `INSERT INTO user_library_settings (user_uuid, history_enabled) VALUES (?, ?)
          ON CONFLICT(user_uuid) DO UPDATE SET history_enabled = excluded.history_enabled`,
       )
-      .bind(userUuid, enabled ? 1 : 0)
+      .bind(userUuid, enabled === "true" ? 1 : 0)
       .run();
-    return { success: true as const, historyEnabled: enabled };
+    return { success: true as const };
   }
   if (intent === "clearHistory") {
     await db.batch([
       db
-        .prepare("UPDATE user_library_entries SET last_viewed_at = NULL WHERE user_uuid = ?")
+        .prepare("DELETE FROM user_library_entries WHERE user_uuid = ?")
         .bind(userUuid),
       db.prepare("DELETE FROM user_library_reactions WHERE user_uuid = ?").bind(userUuid),
-      removeEmptyEntries(db, userUuid),
     ]);
-    return { success: true as const, historyEnabled: await readHistoryEnabled(db, userUuid) };
+    return { success: true as const };
   }
 
-  const postId = parsePostId(formData.get("postId"));
+  const postId = Number(formData.get("postId"));
+  if (!Number.isSafeInteger(postId) || postId <= 0) throw new LibraryError(400, "記事IDが不正です");
   await assertPostExists(db, postId);
   const now = new Date();
-  const [historyEnabled, entry] = await Promise.all([
+  const [historyEnabled, viewed] = await Promise.all([
     readHistoryEnabled(db, userUuid),
-    readEntry(db, userUuid, postId),
+    db
+      .prepare(
+        "SELECT last_viewed_at AS viewedAt FROM user_library_entries WHERE user_uuid = ? AND post_id = ?",
+      )
+      .bind(userUuid, postId)
+      .first<{ viewedAt: string }>(),
   ]);
   if (
     !historyEnabled ||
-    (entry && now.getTime() - Date.parse(entry.lastViewedAt) < VIEW_INTERVAL_MS)
+    (viewed?.viewedAt && now.getTime() - Date.parse(viewed.viewedAt) < VIEW_INTERVAL_MS)
   ) {
-    return { success: true as const, entry, historyEnabled };
+    return { success: true as const };
   }
   await db.batch([
     db
@@ -337,9 +274,5 @@ export async function mutateLibrary(request: Request, suppliedFormData?: FormDat
       ),
     ...pruneHistory(db, userUuid, now),
   ]);
-  return {
-    success: true as const,
-    entry: await readEntry(db, userUuid, postId),
-    historyEnabled: await readHistoryEnabled(db, userUuid),
-  };
+  return { success: true as const };
 }

@@ -1,3 +1,17 @@
+CREATE TABLE IF NOT EXISTS user_library_entries (
+  user_uuid TEXT NOT NULL REFERENCES dim_users(user_uuid) ON DELETE CASCADE,
+  post_id INTEGER NOT NULL REFERENCES dim_posts(post_id) ON DELETE CASCADE,
+  last_viewed_at TEXT NOT NULL,
+  PRIMARY KEY (user_uuid, post_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_library_history
+  ON user_library_entries (user_uuid, last_viewed_at);
+
+CREATE TABLE IF NOT EXISTS user_library_settings (
+  user_uuid TEXT NOT NULL PRIMARY KEY REFERENCES dim_users(user_uuid) ON DELETE CASCADE,
+  history_enabled INTEGER NOT NULL DEFAULT 1 CHECK (history_enabled IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS user_library_reactions (
   user_uuid TEXT NOT NULL REFERENCES dim_users(user_uuid) ON DELETE CASCADE,
   post_id INTEGER NOT NULL REFERENCES dim_posts(post_id) ON DELETE CASCADE,

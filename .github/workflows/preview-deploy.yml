@@ -11,8 +11,7 @@ on:
 
 concurrency:
   group: preview-deploy
-  cancel-in-progress: false
-  queue: max
+  cancel-in-progress: true
 
 jobs:
   deploy:

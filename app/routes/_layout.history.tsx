@@ -14,7 +14,6 @@ import { CommonNavLink } from "~/components/CommonNavLink";
 
 type HistoryMutationResult = {
   success: boolean;
-  historyEnabled?: boolean;
   error?: string;
 };
 
@@ -30,17 +29,12 @@ export function headers() {
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
-  const requestedPage = Number(url.searchParams.get("page"));
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const library = await getLibraryPage(request, { query, page });
-  return data({ ...library, query }, { headers: { "Cache-Control": "private, no-store" } });
+  const library = await getLibraryPage(request, { query, page: Number(url.searchParams.get("page")) });
+  return data({ ...library, query }, { headers: headers() });
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "日時不明";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "日時不明";
-  return date.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", hour12: false });
+function formatDate(value: string) {
+  return new Date(value).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", hour12: false });
 }
 
 export default function History() {
@@ -196,7 +190,7 @@ export default function History() {
                 </div>
               </clear.Form>
             </div>
-            <form method="dialog" className="modal-backdrop">
+            <div className="modal-backdrop">
               <button
                 type="button"
                 aria-label="確認を閉じる"
@@ -205,7 +199,7 @@ export default function History() {
               >
                 閉じる
               </button>
-            </form>
+            </div>
           </dialog>
         )}
       </div>
@@ -239,7 +233,7 @@ export default function History() {
                   comment_like: "コメントを評価",
                   comment_dislike: "コメントを逆評価",
                 }[entry.kind]} ·{" "}
-                <time dateTime={entry.occurredAt ?? undefined}>{formatDate(entry.occurredAt)}</time>
+                <time dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time>
               </p>
               <h2 className="text-lg font-bold break-words">
                 <CommonNavLink

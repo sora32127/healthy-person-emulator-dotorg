@@ -349,15 +349,10 @@ export const userLibraryEntries = sqliteTable(
     postId: integer('post_id')
       .notNull()
       .references(() => dimPosts.postId, { onDelete: 'cascade' }),
-    note: text('note').notNull().default(''),
-    noteUpdatedAt: text('note_updated_at'),
-    isSaved: integer('is_saved', { mode: 'boolean' }).notNull().default(false),
-    savedAt: text('saved_at'),
-    lastViewedAt: text('last_viewed_at'),
+    lastViewedAt: text('last_viewed_at').notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.userUuid, table.postId] }),
-    index('idx_user_library_saved').on(table.userUuid, table.isSaved, table.savedAt),
     index('idx_user_library_history').on(table.userUuid, table.lastViewedAt),
   ],
 );

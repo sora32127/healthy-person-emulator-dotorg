@@ -443,7 +443,7 @@ export default function Component() {
             </button>
           </div>
         </div>
-        {libraryEnabled && <LibraryArticle key={POSTID} postId={POSTID} />}
+        {libraryEnabled && <LibraryArticle postId={POSTID} />}
         <div className="my-6">
           <button
             onClick={() => {
