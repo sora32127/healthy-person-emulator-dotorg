@@ -16,6 +16,7 @@ const ADMIN_B = { email: "admin-b@example.test", userUuid: "admin-b" };
 let sqlite: InstanceType<typeof Database>;
 let writes: number;
 let prepares: number;
+let maxBindings: number;
 
 function createD1Adapter(): D1Database {
   function prepare(sql: string) {
@@ -24,6 +25,7 @@ function createD1Adapter(): D1Database {
     const statement = {
       bind(...parameters: unknown[]) {
         values = parameters;
+        maxBindings = Math.max(maxBindings, parameters.length);
         return statement;
       },
       async raw() {
@@ -101,6 +103,7 @@ beforeEach(() => {
   );
   writes = 0;
   prepares = 0;
+  maxBindings = 0;
   auth.user = ADMIN_A;
   vi.stubGlobal("__cloudflareEnv", {
     ADMIN_EMAILS: " admin-a@example.test, admin-b@example.test ",
@@ -122,9 +125,8 @@ describe("personal history", () => {
     expect((await page()).total).toBe(0);
     await react(2, "dislike");
     auth.user = ADMIN_A;
-    expect((await page()).entries.map(({ postId, kind }) => [postId, kind])).toEqual([
-      [1, "view"],
-      [1, "comment_like"],
+    expect((await page()).entries).toMatchObject([
+      { postId: 1, events: [{ kind: "view" }, { kind: "comment_like", commentId: 1 }] },
     ]);
   });
 
@@ -144,7 +146,7 @@ describe("personal history", () => {
     expect(writes).toBe(before);
   });
 
-  it("5種類のイベントを日時順に返し、一覧の取得では書き込まない", async () => {
+  it("記事ごとに5種類のイベントをまとめ、最新日時順に返して一覧取得では書き込まない", async () => {
     await mutate({ intent: "recordView", postId: "1" });
     vi.setSystemTime(new Date("2026-10-10T00:01:00.000Z"));
     await react(1, "like");
@@ -156,15 +158,27 @@ describe("personal history", () => {
     await react(2, "dislike", 3);
     const before = writes;
     const result = await page();
-    expect(result.total).toBe(5);
-    expect(result.entries.map(({ postId, kind, occurredAt, commentId }) => ({
-      postId, kind, occurredAt, commentId,
-    }))).toEqual([
-      { postId: 2, kind: "comment_dislike", occurredAt: "2026-10-10T00:04:00.000Z", commentId: 3 },
-      { postId: 1, kind: "comment_like", occurredAt: "2026-10-10T00:03:00.000Z", commentId: 1 },
-      { postId: 2, kind: "dislike", occurredAt: "2026-10-10T00:02:00.000Z", commentId: null },
-      { postId: 1, kind: "like", occurredAt: "2026-10-10T00:01:00.000Z", commentId: null },
-      { postId: 1, kind: "view", occurredAt: "2026-10-10T00:00:00.000Z", commentId: null },
+    expect(result.total).toBe(2);
+    expect(result.entries).toEqual([
+      {
+        postId: 2,
+        postTitle: "事例 2",
+        occurredAt: "2026-10-10T00:04:00.000Z",
+        events: [
+          { kind: "comment_dislike", occurredAt: "2026-10-10T00:04:00.000Z", commentId: 3 },
+          { kind: "dislike", occurredAt: "2026-10-10T00:02:00.000Z", commentId: null },
+        ],
+      },
+      {
+        postId: 1,
+        postTitle: "会議での事例 100%",
+        occurredAt: "2026-10-10T00:03:00.000Z",
+        events: [
+          { kind: "comment_like", occurredAt: "2026-10-10T00:03:00.000Z", commentId: 1 },
+          { kind: "like", occurredAt: "2026-10-10T00:01:00.000Z", commentId: null },
+          { kind: "view", occurredAt: "2026-10-10T00:00:00.000Z", commentId: null },
+        ],
+      },
     ]);
     expect(writes).toBe(before);
   });
@@ -177,9 +191,10 @@ describe("personal history", () => {
     await react(1, "like");
     await react(2, "dislike", 3);
     expect((await page("本文だけ")).entries.map(({ postId }) => postId)).toEqual([2]);
-    expect((await page("職場")).total).toBe(2);
-    expect((await page("%")).total).toBe(2);
-    expect((await page("コメントの限定キーワード")).entries.map(({ kind }) => kind)).toEqual([
+    expect((await page("職場")).total).toBe(1);
+    expect((await page("%")).total).toBe(1);
+    expect((await page("職場")).entries[0].events.map(({ kind }) => kind)).toEqual(["view", "like"]);
+    expect((await page("コメントの限定キーワード")).entries[0].events.map(({ kind }) => kind)).toEqual([
       "comment_dislike",
     ]);
     auth.user = ADMIN_B;
@@ -187,6 +202,34 @@ describe("personal history", () => {
     auth.user = ADMIN_A;
     expect((await page("聞き返す")).total).toBe(0);
     expect((await page("no-match")).total).toBe(0);
+  });
+
+  it("同じ記事の複数コメント評価を保ち、検索に一致したイベントだけをまとめる", async () => {
+    await mutate({ intent: "recordView", postId: "1" });
+    vi.setSystemTime(new Date("2026-10-10T00:01:00.000Z"));
+    await react(1, "like", 1);
+    vi.setSystemTime(new Date("2026-10-10T00:02:00.000Z"));
+    await react(1, "like", 2);
+    vi.setSystemTime(new Date("2026-10-10T00:03:00.000Z"));
+    await mutate({ intent: "recordView", postId: "2" });
+    const before = writes;
+    const result = await page();
+    expect(result.entries.map(({ postId }) => postId)).toEqual([2, 1]);
+    expect(result.entries[1].events).toEqual([
+      { kind: "comment_like", commentId: 2, occurredAt: "2026-10-10T00:02:00.000Z" },
+      { kind: "comment_like", commentId: 1, occurredAt: "2026-10-10T00:01:00.000Z" },
+      { kind: "view", commentId: null, occurredAt: "2026-10-10T00:00:00.000Z" },
+    ]);
+    expect(await page("聞き返す_")).toMatchObject({
+      total: 1,
+      entries: [{
+        postId: 1,
+        occurredAt: "2026-10-10T00:01:00.000Z",
+        events: [{ kind: "comment_like", commentId: 1 }],
+      }],
+    });
+    expect((await page("聞き返す_")).entries[0].events).toHaveLength(1);
+    expect(writes).toBe(before);
   });
 
   it("評価履歴は別origin・別記事のコメントへの記録を受け付けない", async () => {
@@ -210,8 +253,9 @@ describe("personal history", () => {
     vi.setSystemTime(new Date("2026-10-10T00:30:00.000Z"));
     await record();
     const result = await page();
-    expect(result.total).toBe(3);
-    expect(result.entries.every(({ occurredAt }) => occurredAt === "2026-10-10T00:30:00.000Z")).toBe(true);
+    expect(result.total).toBe(1);
+    expect(result.entries[0].events).toHaveLength(3);
+    expect(result.entries[0].events.every(({ occurredAt }) => occurredAt === "2026-10-10T00:30:00.000Z")).toBe(true);
     expect(writes).toBeGreaterThan(before);
   });
 
@@ -245,7 +289,7 @@ describe("personal history", () => {
     await mutate({ intent: "clearHistory" });
     expect((await page()).total).toBe(0);
     auth.user = ADMIN_B;
-    expect((await page()).total).toBe(2);
+    expect((await page()).total).toBe(1);
   });
 
   it("記録停止中も選んだ履歴だけを消去し、他人・別イベント・更新後の履歴を保つ", async () => {
@@ -273,7 +317,7 @@ describe("personal history", () => {
       JSON.stringify({ kind, targetId: 1, occurredAt }),
     );
     const invalidEntries = [
-      [], Array(51).fill(entries[0]), [entries[0], "invalid"],
+      [], Array(501).fill(entries[0]), [entries[0], "invalid"],
       ...[{ kind: "save" }, { targetId: 1.5 }, { occurredAt: "invalid" }].map((invalid) => [
         entries[0], JSON.stringify({ kind: "view", targetId: 2, occurredAt, ...invalid }),
       ]),
@@ -290,16 +334,65 @@ describe("personal history", () => {
       JSON.stringify({ kind: "like", targetId: 999, occurredAt }),
     ] });
     expect(await page()).toMatchObject({
-      entries: before.filter((entry) => !(entry.postId === 1 && (
-        entry.kind === "view" || entry.kind === "like" ||
-        (entry.kind === "comment_like" && entry.commentId === 1)
-      ))),
-      total: 5,
+      entries: before.map((entry) => ({
+        ...entry,
+        events: entry.events.filter((event) => !(entry.postId === 1 && (
+          event.kind === "view" || event.kind === "like" ||
+          (event.kind === "comment_like" && event.commentId === 1)
+        ))),
+      })),
+      total: 2,
       historyEnabled: false,
     });
     expect(tables.map((table) => sqlite.prepare(`SELECT * FROM ${table}`).all())).toEqual(preserved);
     auth.user = ADMIN_B;
-    expect((await page()).total).toBe(3);
+    expect((await page()).total).toBe(1);
+  });
+
+  it("50記事にまとめた最大500イベントを一度に選択消去できる", async () => {
+    const timestamp = "2026-10-09T00:00:00.000Z";
+    const insertPost = sqlite.prepare("INSERT INTO dim_posts VALUES (?, ?, '本文')");
+    const insertView = sqlite.prepare("INSERT INTO user_library_entries VALUES ('admin-a', ?, ?)");
+    const insertComment = sqlite.prepare("INSERT INTO dim_comments VALUES (?, ?, 'コメント')");
+    const insertReaction = sqlite.prepare(
+      "INSERT INTO user_library_reactions VALUES ('admin-a', ?, ?, 'comment_like', ?, ?)",
+    );
+    sqlite.transaction(() => {
+      for (let postId = 1; postId <= 50; postId++) {
+        if (postId > 3) insertPost.run(postId, `事例 ${postId}`);
+        insertView.run(postId, timestamp);
+        for (let index = 1; index <= 9; index++) {
+          const commentId = 1000 + postId * 10 + index;
+          insertComment.run(commentId, postId);
+          insertReaction.run(postId, commentId, commentId, timestamp);
+        }
+      }
+    })();
+    sqlite.prepare("INSERT INTO user_library_entries VALUES ('admin-b', 1, ?)").run(timestamp);
+    const result = await page();
+    expect(result).toMatchObject({ total: 50, totalPages: 1 });
+    expect(result.entries).toHaveLength(50);
+    expect(result.entries.every(({ events }) => events.length === 10)).toBe(true);
+    const entries = result.entries.flatMap((entry) =>
+      entry.events.map((event) => JSON.stringify({
+        kind: event.kind,
+        targetId: event.commentId ?? entry.postId,
+        occurredAt: event.occurredAt,
+      })),
+    );
+    expect(entries).toHaveLength(500);
+    prepares = 0;
+    maxBindings = 0;
+    const before = writes;
+    await mutate({ intent: "clearEntries", entries });
+    expect(writes - before).toBe(17);
+    expect(prepares).toBeLessThanOrEqual(18);
+    expect(maxBindings).toBe(97);
+    expect((await page()).total).toBe(0);
+    expect(sqlite.prepare("SELECT COUNT(*) AS n FROM dim_posts").get()).toEqual({ n: 50 });
+    expect(sqlite.prepare("SELECT COUNT(*) AS n FROM dim_comments").get()).toEqual({ n: 453 });
+    auth.user = ADMIN_B;
+    expect((await page()).total).toBe(1);
   });
 
   it("90日を超えた履歴を表示せず、次の記録時に整理する", async () => {
@@ -314,7 +407,7 @@ describe("personal history", () => {
     expect(sqlite.prepare("SELECT COUNT(*) AS n FROM user_library_reactions").get()).toEqual({ n: 1 });
   });
 
-  it("閲覧と評価を合わせて最新500件を保ち、50件ずつ同じ順でページ表示する", async () => {
+  it("最新500イベントの記録を保ち、同じ記事を分割せず50記事ずつページ表示する", async () => {
     const timestamp = "2026-10-09T00:00:00.000Z";
     const insertPost = sqlite.prepare("INSERT INTO dim_posts VALUES (?, ?, '本文')");
     const insertView = sqlite.prepare("INSERT INTO user_library_entries VALUES ('admin-a', ?, ?)");
@@ -328,11 +421,24 @@ describe("personal history", () => {
     })();
     await react(550, "dislike");
     const result = await page();
-    expect(result).toMatchObject({ total: 500, totalPages: 10 });
+    expect(result).toMatchObject({ total: 250, totalPages: 5 });
     expect(result.entries).toHaveLength(50);
-    expect(result.entries[0]).toMatchObject({ postId: 550, kind: "dislike" });
-    const last = await page("", 10);
-    expect(last.entries.at(-1)).toMatchObject({ postId: 301, kind: "view" });
-    expect((await page("", 999)).page).toBe(10);
+    expect(result.entries.map(({ postId }) => postId)).toEqual(
+      Array.from({ length: 50 }, (_, index) => 550 - index),
+    );
+    expect(result.entries[0]).toMatchObject({
+      postId: 550,
+      events: [{ kind: "dislike" }, { kind: "view" }, { kind: "like" }],
+    });
+    const next = await page("", 2);
+    expect(next.entries[0].postId).toBe(500);
+    expect(next.entries.every(({ events }) => events.length === 2)).toBe(true);
+    const last = await page("", 5);
+    expect(last.entries.at(-1)).toMatchObject({ postId: 301, events: [{ kind: "view" }] });
+    expect((await page("", 999)).page).toBe(5);
+    expect((await page("", 0)).page).toBe(1);
+    expect((await page("", Number.NaN)).page).toBe(1);
+    expect(sqlite.prepare("SELECT COUNT(*) AS n FROM user_library_entries").get()).toEqual({ n: 250 });
+    expect(sqlite.prepare("SELECT COUNT(*) AS n FROM user_library_reactions").get()).toEqual({ n: 250 });
   });
 });

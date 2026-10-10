@@ -18,12 +18,16 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-function post(values: Record<string, string>, origin = "https://example.test") {
+function post(values: Record<string, string | string[]>, origin = "https://example.test") {
+  const body = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    for (const item of Array.isArray(value) ? value : [value]) body.append(key, item);
+  }
   return action({
     request: new Request("https://example.test/api/library", {
       method: "POST",
       headers: { Origin: origin },
-      body: new URLSearchParams(values),
+      body,
     }),
   } as ActionFunctionArgs);
 }
@@ -36,6 +40,35 @@ describe("library API", () => {
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ success: true });
     expect(batch).toHaveBeenCalledOnce();
+  });
+
+  it.each([[51, 2], [500, 16]])("記事にまとめた%d件の記録を少ないクエリで選択消去できる", async (count, queries) => {
+    auth.user = { email: "admin@example.test", userUuid: "admin" };
+    const entries = Array.from({ length: count }, (_, index) => JSON.stringify({
+      kind: "view",
+      targetId: index + 1,
+      occurredAt: "2026-10-10T00:00:00.000Z",
+    }));
+    const response = await post({ intent: "clearEntries", entries });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ success: true });
+    expect(batch).toHaveBeenCalledOnce();
+    expect(batch.mock.calls[0][0]).toHaveLength(queries);
+  });
+
+  it("保持上限500件を超えた選択消去は書き込まず拒否する", async () => {
+    auth.user = { email: "admin@example.test", userUuid: "admin" };
+    const entry = JSON.stringify({
+      kind: "view",
+      targetId: 1,
+      occurredAt: "2026-10-10T00:00:00.000Z",
+    });
+    const response = await post({ intent: "clearEntries", entries: Array(501).fill(entry) });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ success: false });
+    expect(prepare).not.toHaveBeenCalled();
+    expect(batch).not.toHaveBeenCalled();
   });
 
   it.each([
