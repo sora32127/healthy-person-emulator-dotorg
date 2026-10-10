@@ -64,6 +64,7 @@ const PostDataSchema = z.object({
   postDateGmt: z.date(),
   countLikes: z.number(),
   countDislikes: z.number(),
+  countSupports: z.number(),
   commentStatus: z.string(),
   ogpImageUrl: z.string().nullable(),
   tags: z.array(
@@ -110,6 +111,7 @@ const PostCardDataSchema = z.object({
   postDateGmt: z.date(),
   countLikes: z.number(),
   countDislikes: z.number(),
+  countSupports: z.number(),
   ogpImageUrl: z.string().nullable(),
   tags: z.array(
     z.object({
@@ -158,6 +160,7 @@ export type SearchPostsResult = {
     postDateGmt: Date;
     countLikes: number;
     countDislikes: number;
+    countSupports: number;
     tagNames: string[];
     countComments: number;
   }>;
@@ -224,7 +227,7 @@ export interface DatabaseRepository {
   ): Promise<{ message: string; success: boolean }>;
   recordPostVote(
     postId: number,
-    voteType: 'like' | 'dislike',
+    voteType: 'like' | 'dislike' | 'support',
     voteUserIpHash: string,
   ): Promise<void>;
   recordCommentVote(

@@ -1,0 +1,1 @@
+ALTER TABLE dim_posts ADD COLUMN count_supports INTEGER NOT NULL DEFAULT 0;

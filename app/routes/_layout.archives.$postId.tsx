@@ -57,7 +57,7 @@ export const commentVoteSchema = z.object({
 export type CommentVoteSchema = z.infer<typeof commentVoteSchema>;
 
 export const postVoteSchema = z.object({
-  voteType: z.enum(['like', 'dislike']),
+  voteType: z.enum(['like', 'dislike', 'support']),
 });
 export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
@@ -69,7 +69,7 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => {
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const postId = Number(params.postId);
   const archiveData = await ArchiveDataEntry.getData(postId);
-  const { likedPages, dislikedPages, likedComments, dislikedComments } =
+  const { likedPages, dislikedPages, supportedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
   const isAuthenticated = await getAuthenticatedUser(request);
   const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
@@ -80,6 +80,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     data: archiveData,
     likedPages,
     dislikedPages,
+    supportedPages,
     likedComments,
     dislikedComments,
     CF_TURNSTILE_SITEKEY,
@@ -94,6 +95,7 @@ export default function Component() {
     data,
     likedPages,
     dislikedPages,
+    supportedPages,
     likedComments,
     dislikedComments,
     CF_TURNSTILE_SITEKEY,
@@ -111,11 +113,15 @@ export default function Component() {
   const POSTID = data.postId;
   const isLiked = likedPages.includes(POSTID);
   const isDisliked = dislikedPages.includes(POSTID);
+  const isSupported = supportedPages.includes(POSTID);
 
   // URLが変わってほしいわけではないので、以降のハンドラではfetcherを使用する
   // https://remix.run/docs/ja/main/discussion/form-vs-fetcher
 
   const postVoteFetcher = useFetcher();
+  const isPostVotePending = postVoteFetcher.state !== 'idle';
+  const isSupportPending =
+    isPostVotePending && postVoteFetcher.formData?.get('voteType') === 'support';
   const handlePostVote = async (data: PostVoteSchema) => {
     setIsValificationFailed(false);
     const voteType = data.voteType;
@@ -397,13 +403,13 @@ export default function Component() {
         </div>
         <div className="postContent" dangerouslySetInnerHTML={{ __html: data.postContent }} />
         <div className="flex justify">
-          <div className="flex items-center p-2 rounded">
+          <div className="flex flex-wrap items-center gap-y-2 p-2 rounded">
             <VoteButton
               type="like"
               count={data.countLikes}
               isAnimating={isLikeAnimating}
               isVoted={isLiked}
-              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating}
+              disabled={isPageLikeButtonPushed || isLiked || isLikeAnimating || isPostVotePending}
               onClick={() => handlePostVote({ voteType: 'like' })}
             />
             <VoteButton
@@ -411,8 +417,18 @@ export default function Component() {
               count={data.countDislikes}
               isAnimating={isDislikeAnimating}
               isVoted={isDisliked}
-              disabled={isPageDislikeButtonPushed || isDisliked || isDislikeAnimating}
+              disabled={
+                isPageDislikeButtonPushed || isDisliked || isDislikeAnimating || isPostVotePending
+              }
               onClick={() => handlePostVote({ voteType: 'dislike' })}
+            />
+            <VoteButton
+              type="support"
+              count={data.countSupports}
+              isAnimating={isSupportPending}
+              isVoted={isSupported}
+              disabled={isSupported || isPostVotePending}
+              onClick={() => handlePostVote({ voteType: 'support' })}
             />
             <button
               type="button"
@@ -590,20 +606,33 @@ async function handleVotePost(
 ) {
   try {
     const voteType = formData.get('voteType')?.toString();
-    if (voteType !== 'like' && voteType !== 'dislike') {
+    if (voteType !== 'like' && voteType !== 'dislike' && voteType !== 'support') {
       return data({ message: 'Invalid vote type', success: false }, { status: 400 });
     }
-    await recordPostVote(postId, voteType, userIpHashString);
     const session = await getSession(request.headers.get('Cookie'));
+    if (voteType === 'support' && (session.get('supportedPages') || []).includes(postId)) {
+      return data(
+        { message: 'この記事にはすでに「力になりたい」を伝えています', success: false },
+        { status: 409 },
+      );
+    }
+    await recordPostVote(postId, voteType, userIpHashString);
     if (voteType === 'like') {
       session.set('likedPages', [...(session.get('likedPages') || []), postId]);
     } else if (voteType === 'dislike') {
       session.set('dislikedPages', [...(session.get('dislikedPages') || []), postId]);
+    } else if (voteType === 'support') {
+      session.set('supportedPages', [...(session.get('supportedPages') || []), postId]);
     }
     const sessionCookie = await commitSession(session);
-    await recordReactionHistory(request, { postId, voteType });
+    if (voteType === 'like' || voteType === 'dislike') {
+      await recordReactionHistory(request, { postId, voteType });
+    }
     return data(
-      { message: '投稿を評価しました', success: true },
+      {
+        message: voteType === 'support' ? '「力になりたい」の気持ちを伝えました' : '投稿を評価しました',
+        success: true,
+      },
       {
         headers: {
           'Set-Cookie': sessionCookie,

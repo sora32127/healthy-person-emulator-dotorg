@@ -5,7 +5,7 @@ import { recordPostVote, recordCommentVote } from '~/modules/db.server';
 import { recordLibraryReaction } from '~/modules/library.server';
 import { commitSession, isUserValid } from '~/modules/session.server';
 
-const session = vi.hoisted(() => ({ get: vi.fn(() => []), set: vi.fn() }));
+const session = vi.hoisted(() => ({ get: vi.fn((): number[] => []), set: vi.fn() }));
 vi.mock('~/modules/db.server', () => ({
   ArchiveDataEntry: {},
   getUserId: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('~/modules/security.server', () => ({
   validateRequest: vi.fn(),
 }));
 
-function vote(target: 'post' | 'comment', voteType: 'like' | 'dislike') {
+function vote(target: 'post' | 'comment', voteType: 'like' | 'dislike' | 'support') {
   const request = new Request('https://example.test/archives/42', {
     method: 'POST',
     headers: { Origin: 'https://example.test' },
@@ -44,6 +44,7 @@ function vote(target: 'post' | 'comment', voteType: 'like' | 'dislike') {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  session.get.mockReturnValue([]);
   vi.mocked(recordPostVote).mockResolvedValue(undefined);
   vi.mocked(recordCommentVote).mockResolvedValue(undefined);
   vi.mocked(recordLibraryReaction).mockResolvedValue(undefined);
@@ -55,6 +56,25 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('既存の評価操作と自動履歴', () => {
+  it('main の「力になりたい」の成功とセッション保存を維持する', async () => {
+    const response = await vote('post', 'support').result;
+    expect(response.data).toMatchObject({ success: true });
+    expect(recordPostVote).toHaveBeenCalledWith(42, 'support', 'fixture-ip-hash');
+    expect(session.set).toHaveBeenCalledWith('supportedPages', [42]);
+    expect(new Headers(response.init?.headers).get('Set-Cookie')).toBe('fixture-session');
+    expect(recordLibraryReaction).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('main の「力になりたい」の重複防止を維持する', async () => {
+    session.get.mockReturnValue([42]);
+    const response = await vote('post', 'support').result;
+    expect(response.init?.status).toBe(409);
+    expect(recordPostVote).not.toHaveBeenCalled();
+    expect(commitSession).not.toHaveBeenCalled();
+    expect(recordLibraryReaction).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['post', 'like'],
     ['post', 'dislike'],

@@ -57,6 +57,22 @@ describe('VoteButton', () => {
     expect(mockOnClick).not.toHaveBeenCalled();
   });
 
+  it('力になりたいボタンはアイコンと件数を表示する', () => {
+    render(
+      <VoteButton
+        type="support"
+        count={3}
+        isAnimating={false}
+        isVoted={false}
+        disabled={false}
+        onClick={() => {}}
+      />,
+    );
+    const button = screen.getByRole('button', { name: '力になりたい 3件' });
+    expect(button.querySelector('svg')).toBeInTheDocument();
+    expect(button.textContent).toBe('3');
+  });
+
   it('アニメーション中は適切なクラスが適用される', () => {
     render(
       <VoteButton

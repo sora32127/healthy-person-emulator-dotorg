@@ -7,7 +7,7 @@ import {
   type BookmarkPostCardData,
 } from '~/modules/db.server';
 import { commonMetaFunction } from '~/utils/commonMetafunction';
-import { ThumbsUp, ThumbsDown, MessageSquareText } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, HandHeart, MessageSquareText } from 'lucide-react';
 import { H1 } from '~/components/Headings';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -62,6 +62,14 @@ function BookMarkView({ bookmarkPosts }: { bookmarkPosts: BookmarkPostCardData[]
               <div className="flex items-center gap-x-1">
                 <ThumbsDown className="w-4 h-4 fill-none stroke-current" />
                 <span>{post.countDislikes}</span>
+              </div>
+              <div className="flex items-center gap-x-1" title="力になりたい">
+                <HandHeart
+                  className="w-4 h-4 fill-none stroke-current"
+                  role="img"
+                  aria-label="力になりたい"
+                />
+                <span>{post.countSupports}</span>
               </div>
               <div className="flex items-center gap-x-1">
                 <MessageSquareText className="w-4 h-4 fill-none stroke-current" />
