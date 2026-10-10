@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { RouterContextProvider } from 'react-router';
 import { action } from '~/routes/_layout.archives.edit.$postId';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { updatePostWithTagsAndHistory } from '~/modules/db.server';
@@ -40,7 +41,13 @@ function editRequest(userId?: string) {
 }
 
 function submitEdit(request: Request) {
-  return action({ request, params: { postId: '42' }, context: {} });
+  return action({
+    request,
+    url: new URL(request.url),
+    pattern: '/archives/edit/:postId',
+    params: { postId: '42' },
+    context: new RouterContextProvider(),
+  });
 }
 
 describe('article edit action authentication', () => {
