@@ -58,9 +58,8 @@ export const postVoteSchema = z.object({
 });
 export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const postId = Number(url.pathname.split('/')[2]);
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const postId = Number(params.postId);
   const data = await ArchiveDataEntry.getData(postId);
   const { likedPages, dislikedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
@@ -652,7 +651,7 @@ async function handleSubmitComment(formData: FormData, postId: number, userIpHas
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
   if (!data) {
     return [{ title: 'Loading...' }];
   }

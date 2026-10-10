@@ -10,8 +10,8 @@ import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '~/drizzle/schema';
 
-function getEnvAndDb(context: any) {
-  const env = context.cloudflare?.env || (globalThis as any).__cloudflareEnv;
+function getEnvAndDb() {
+  const env = (globalThis as any).__cloudflareEnv;
   if (!env?.DB) throw new Error('D1 not available');
   return { env, db: drizzle(env.DB) };
 }
@@ -97,8 +97,8 @@ async function handleAddTagToPost(db: ReturnType<typeof drizzle>, body: any) {
   return jsonResponse({ success: true });
 }
 
-export async function loader({ request, params, context }: LoaderFunctionArgs) {
-  const { env, db } = getEnvAndDb(context);
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const { env, db } = getEnvAndDb();
   if (!authenticate(request, env)) return unauthorized();
 
   const path = params['*'];
@@ -111,8 +111,8 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request, params, context }: ActionFunctionArgs) {
-  const { env, db } = getEnvAndDb(context);
+export async function action({ request, params }: ActionFunctionArgs) {
+  const { env, db } = getEnvAndDb();
   if (!authenticate(request, env)) return unauthorized();
 
   const path = params['*'];
