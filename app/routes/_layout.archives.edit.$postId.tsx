@@ -37,7 +37,6 @@ const postEditSchema = z.object({
   postTitle: z.string().min(1, 'タイトルが必要です'),
   postContent: z.string().min(10, '本文が短すぎます。'),
   tags: z.array(z.string()).min(1, 'タグが必要です'),
-  userId: z.string().min(1, '無効なリクエスト：ユーザーIDが必要です'),
   turnstileToken: z.string().min(1, '認証に失敗しました。時間をおいて再度試してください。'),
 });
 
@@ -143,7 +142,6 @@ export default function EditPost() {
       postTitle: postData?.postTitle ?? '',
       postContent: postMarkdown ?? '',
       tags: tagNames ?? [],
-      userId: userUuid ?? '',
     },
   });
 
@@ -289,7 +287,6 @@ export default function EditPost() {
           />
         </div>
         {errors.postContent && <p className="text-error">{errors.postContent.message}</p>}
-        <input type="hidden" name="userId" value={userUuid} />
         <Turnstile siteKey={CF_TURNSTILE_SITEKEY} onSuccess={handleTurnstileSuccess} />
         <button
           type="submit"
@@ -380,6 +377,12 @@ export default function EditPost() {
 }
 
 export const action: ActionFunction = async (args) => {
+  const userObject = await getAuthenticatedUser(args.request);
+  const userUuid = userObject?.userUuid;
+  if (!userUuid) {
+    throw redirect('/');
+  }
+
   const formData = await args.request.formData();
   const editData = Object.fromEntries(formData);
   const ipAddress = await getHashedUserIPAddress(args.request);
@@ -396,7 +399,6 @@ export const action: ActionFunction = async (args) => {
     postContent: editData.postContent.toString(),
     tags:
       typeof editData.tags === 'string' ? editData.tags.split(',').map((tag) => tag.trim()) : [],
-    userId: editData.userId.toString(),
     turnstileToken: editData.turnstileToken.toString(),
   } as unknown as PostEditSchema;
 
@@ -436,7 +438,7 @@ export const action: ActionFunction = async (args) => {
       postTitle: parsedData.postTitle,
       postContentHtml,
       tags: parsedData.tags,
-      editorUserId: parsedData.userId,
+      editorUserId: userUuid,
     });
   } catch (error) {
     console.error(error);
