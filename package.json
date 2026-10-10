@@ -47,6 +47,7 @@
     "remark-gfm": "^4.0.1",
     "remix-auth": "^4.2.0",
     "remix-auth-oauth2": "^3.4.1",
+    "sanitize-html": "2.18.0",
     "stripe": "^23.0.0",
     "zod": "^4.6.5"
   },
@@ -65,6 +66,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/react-transition-group": "^4.4.12",
+    "@types/sanitize-html": "2.16.2",
     "@vitest/coverage-v8": "5.0.3",
     "@vitest/ui": "5.0.3",
     "axe-core": "^4.14.0",

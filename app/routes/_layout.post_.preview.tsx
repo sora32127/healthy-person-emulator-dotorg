@@ -15,6 +15,8 @@ import {
 import { commitSession, getSession, isUserValid } from '~/modules/session.server';
 import { getStopWords, createPostWithTags, updatePostWelcomed } from '~/modules/db.server';
 import { createEmbedding } from '~/modules/embedding.server';
+import { getEmbedding, querySimilar } from '~/modules/cloudflare.server';
+import { sanitizePostHtml } from '~/modules/post-html.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 interface SimilarPostPreview {
@@ -56,16 +58,23 @@ export default function PreviewPage() {
 
   const turnstileFetcher = useFetcher();
   const handleTurnStileSuccess = (token: string) => {
+    if (!previewData) return;
     const formData = new FormData();
     formData.append('token', token);
     formData.append('_action', 'validateTurnstile');
+    formData.append('formValues', JSON.stringify(previewData.formValues));
     turnstileFetcher.submit(formData, { method: 'post', action: '/post/preview' });
   };
 
   useEffect(() => {
-    const response = turnstileFetcher.data as { success: boolean } | undefined;
+    const response = turnstileFetcher.data as
+      | { success: boolean; similarPosts?: SimilarPostPreview[] }
+      | undefined;
     if (response?.success === true) {
       setIsTurnstileVerified(true);
+      setPreviewData((current) =>
+        current ? { ...current, similarPosts: response.similarPosts ?? [] } : current,
+      );
     }
     if (response?.success === false) {
       setSubmitError('リクエスト検証に失敗しました。時間をおいて再度お試しください。');
@@ -196,8 +205,27 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (actionType === 'validateTurnstile') {
     const turnstileToken = formData.get('token');
+    const rawFormValues = formData.get('formValues');
+    if (
+      typeof turnstileToken !== 'string' ||
+      !turnstileToken ||
+      typeof rawFormValues !== 'string'
+    ) {
+      return data({ success: false, error: 'リクエスト検証に失敗しました。' }, { status: 400 });
+    }
+    let formValues: unknown;
+    try {
+      formValues = JSON.parse(rawFormValues);
+    } catch {
+      return data({ success: false, error: 'バリデーションエラー' }, { status: 400 });
+    }
+    const stopWords = await getStopWords();
+    const validationResult = createPostFormSchema(stopWords).safeParse(formValues);
+    if (!validationResult.success) {
+      return data({ success: false, error: 'バリデーションエラー' }, { status: 400 });
+    }
     const ipAddress = await getHashedUserIPAddress(request);
-    const isValidatedByTurnstile = await validateRequest(turnstileToken as string, ipAddress);
+    const isValidatedByTurnstile = await validateRequest(turnstileToken, ipAddress);
     if (!isValidatedByTurnstile) {
       return data(
         {
@@ -207,9 +235,16 @@ export async function action({ request }: ActionFunctionArgs) {
         { status: 400 },
       );
     }
+    const similarPosts = await searchSimilarPosts(validationResult.data).catch((error) => {
+      console.error('searchSimilarPosts failed:', error);
+      return [];
+    });
     const session = await getSession(request.headers.get('Cookie'));
     session.set('isValidUser', true);
-    return data({ success: true }, { headers: { 'Set-Cookie': await commitSession(session) } });
+    return data(
+      { success: true, similarPosts },
+      { headers: { 'Set-Cookie': await commitSession(session) } },
+    );
   }
 
   if (actionType === 'secondSubmit') {
@@ -240,7 +275,7 @@ export async function action({ request }: ActionFunctionArgs) {
       return data({ success: false, error: 'バリデーションエラー' }, { status: 400 });
     }
 
-    const wikifyResult = await Wikify(parsedData);
+    const wikifyResult = sanitizePostHtml(Wikify(parsedData));
     if (!wikifyResult) {
       return data({ success: false, error: 'Wikify failed' }, { status: 400 });
     }
@@ -274,6 +309,38 @@ export async function action({ request }: ActionFunctionArgs) {
       data: { postId: newPost.postId },
     });
   }
+}
+
+async function searchSimilarPosts(
+  parsedData: z.infer<ReturnType<typeof createPostFormSchema>>,
+): Promise<SimilarPostPreview[]> {
+  const title = parsedData.title[0];
+  const tags = [...(parsedData.selectedTags || []), ...(parsedData.createdTags || [])];
+  const situations = parsedData.situations;
+  const situationText = [
+    situations.who,
+    situations.when,
+    situations.where,
+    situations.why,
+    situations.what,
+    situations.how,
+    situations.then,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const reflectionText = parsedData.reflection?.filter(Boolean).join(' ') ?? '';
+  const counterText = parsedData.counterReflection?.filter(Boolean).join(' ') ?? '';
+
+  const inputText = `タイトル: ${title}\nタグ: ${tags.join(',')}\n本文: ${situationText} ${reflectionText} ${counterText}`;
+
+  const vector = await getEmbedding(inputText);
+  const matches = await querySimilar(vector, 5);
+
+  return matches.map((m) => ({
+    postId: Number(m.metadata?.postId ?? m.id),
+    postTitle: String(m.metadata?.postTitle ?? ''),
+    score: m.score,
+  }));
 }
 
 function Wikify(postData: z.infer<ReturnType<typeof createPostFormSchema>>): string {
