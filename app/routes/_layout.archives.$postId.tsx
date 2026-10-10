@@ -1,5 +1,5 @@
 import { useLoaderData, NavLink, useFetcher } from 'react-router';
-import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from 'react-router';
+import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction, HeadersFunction } from 'react-router';
 import { Turnstile } from '@marsidev/react-turnstile';
 import {
   ArchiveDataEntry,
@@ -46,6 +46,8 @@ import { setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import { useSetAtom } from 'jotai';
 import { setVisitorCookieData } from '~/modules/visitor.server';
 import { Bookmark } from 'lucide-react';
+import { isAdminUser } from '~/modules/admin.server';
+import AdminLibraryArticle from '~/components/AdminLibraryArticle';
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -58,17 +60,23 @@ export const postVoteSchema = z.object({
 });
 export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
+  const cacheControl = loaderHeaders.get('Cache-Control');
+  return new Headers(cacheControl ? { 'Cache-Control': cacheControl } : {});
+};
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const postId = Number(params.postId);
-  const data = await ArchiveDataEntry.getData(postId);
+  const archiveData = await ArchiveDataEntry.getData(postId);
   const { likedPages, dislikedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
   const isAuthenticated = await getAuthenticatedUser(request);
   const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
+  const isLibraryAdmin = isAdminUser(isAuthenticated);
 
-  return {
-    data,
+  return data({
+    data: archiveData,
     likedPages,
     dislikedPages,
     likedComments,
@@ -76,7 +84,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
-  };
+    isLibraryAdmin,
+  }, { headers: isLibraryAdmin ? { 'Cache-Control': 'private, no-store' } : undefined });
 }
 
 export default function Component() {
@@ -89,6 +98,7 @@ export default function Component() {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
+    isLibraryAdmin,
   } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
@@ -416,6 +426,7 @@ export default function Component() {
             </button>
           </div>
         </div>
+        {isLibraryAdmin && <AdminLibraryArticle key={POSTID} postId={POSTID} />}
         <div className="my-6">
           <button
             onClick={() => {

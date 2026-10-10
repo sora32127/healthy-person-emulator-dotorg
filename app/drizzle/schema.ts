@@ -338,3 +338,31 @@ export const relTagCategories = sqliteTable(
     index('idx_rel_tag_categories_category_id').on(table.categoryId),
   ],
 );
+
+export const userLibraryEntries = sqliteTable(
+  'user_library_entries',
+  {
+    userUuid: text('user_uuid')
+      .notNull()
+      .references(() => dimUsers.userUuid, { onDelete: 'cascade' }),
+    postId: integer('post_id')
+      .notNull()
+      .references(() => dimPosts.postId, { onDelete: 'cascade' }),
+    note: text('note').notNull().default(''),
+    isSaved: integer('is_saved', { mode: 'boolean' }).notNull().default(false),
+    savedAt: text('saved_at'),
+    lastViewedAt: text('last_viewed_at'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userUuid, table.postId] }),
+    index('idx_user_library_saved').on(table.userUuid, table.isSaved, table.savedAt),
+    index('idx_user_library_history').on(table.userUuid, table.lastViewedAt),
+  ],
+);
+
+export const userLibrarySettings = sqliteTable('user_library_settings', {
+  userUuid: text('user_uuid')
+    .primaryKey()
+    .references(() => dimUsers.userUuid, { onDelete: 'cascade' }),
+  historyEnabled: integer('history_enabled', { mode: 'boolean' }).notNull().default(true),
+});
