@@ -35,6 +35,27 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Ensure post support reaction schema
+        run: |
+          set -euo pipefail
+          schema_json="$(npx wrangler d1 execute healthy-person-emulator-db --remote \
+            --config wrangler.toml --command 'PRAGMA table_info(dim_posts)' --json)"
+          has_support_column="$(jq -er '
+            if type == "array" and length == 1 and .[0].success == true
+              and (.[0].results | type == "array" and length > 0
+                and all(.[]; .name | type == "string"))
+            then .[0].results | any(.name == "count_supports") | tostring
+            else error("Invalid dim_posts schema response")
+            end
+          ' <<< "$schema_json")"
+          if [ "$has_support_column" = "false" ]; then
+            npx wrangler d1 execute healthy-person-emulator-db --remote \
+              --config wrangler.toml \
+              --file=drizzle/migrations/0007_add_post_support_reaction.sql
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy to production
         run: pnpm run deploy
         env:
