@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router';
+import { HandHeart } from 'lucide-react';
 import TagCard from './TagCard';
 import RelativeDate from './RelativeDate';
 import CommentIcon from './icons/CommentIcon';
@@ -15,6 +16,7 @@ export interface PostCardProps {
   tagNames: string[];
   countLikes: number;
   countDislikes: number;
+  countSupports: number;
   highLightedText?: string;
   countComments?: number;
   identifier?: string;
@@ -32,6 +34,7 @@ export default function PostCard({
   tagNames,
   countLikes,
   countDislikes,
+  countSupports,
   countComments,
   identifier,
 }: PostCardProps) {
@@ -41,7 +44,7 @@ export default function PostCard({
   return (
     <div className="bg-base-100 p-4 my-1 border-b border-neutral">
       <div className="mx-2">
-        <div className="flex flex-row my-1 justify-start gap-x-4">
+        <div className="flex flex-row flex-wrap my-1 justify-start gap-x-4 gap-y-1">
           <div className="flex">
             <div className="pr-2">
               <ClockIcon />
@@ -56,6 +59,10 @@ export default function PostCard({
             <div className="flex gap-x-1">
               <ThumbsDownIcon />
               <span>{countDislikes}</span>
+            </div>
+            <div className="flex gap-x-1" title="力になりたい">
+              <HandHeart role="img" aria-label="力になりたい" />
+              <span>{countSupports}</span>
             </div>
             {countComments !== undefined && (
               <div className="flex items-center">

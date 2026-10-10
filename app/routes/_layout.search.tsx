@@ -443,6 +443,7 @@ function InfiniteScrollResults({
               postDateGmt={new Date(result.postDateGmt)}
               countLikes={result.countLikes}
               countDislikes={result.countDislikes}
+              countSupports={result.countSupports}
               tagNames={result.tagNames}
               countComments={result.countComments}
             />
