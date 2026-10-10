@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { createRoutesStub, useNavigate } from "react-router";
 import type { ActionFunctionArgs } from "react-router";
@@ -42,6 +42,7 @@ describe("履歴の表示と検索", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("すべての種類を並べ、検索窓だけで絞り込みと解除ができる", async () => {
@@ -233,11 +234,14 @@ describe("履歴の表示と検索", () => {
       { path: "/api/library", action },
     ]);
     render(<Stub initialEntries={["/history"]} />);
-    fireEvent.click(await screen.findByRole("button", { name: "履歴を無効にする" }));
+    const initialDisable = await screen.findByRole("button", { name: "履歴を無効にする" });
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：有効");
+    fireEvent.click(initialDisable);
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "履歴を有効にする" })).toBeEnabled(),
     );
     expect(submittedSettings).toEqual(["false"]);
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
 
     cloudHistoryEnabled = true;
     fireEvent.change(screen.getByRole("searchbox", { name: "履歴を検索" }), {
@@ -245,6 +249,7 @@ describe("履歴の表示と検索", () => {
     });
     const disable = await screen.findByRole("button", { name: "履歴を無効にする" });
     await waitFor(() => expect(disable).toBeEnabled());
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：有効");
     fireEvent.click(disable);
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "履歴を有効にする" })).toBeEnabled(),
@@ -252,5 +257,129 @@ describe("履歴の表示と検索", () => {
     expect(submittedSettings).toEqual(["false", "false"]);
     expect(cloudHistoryEnabled).toBe(false);
     expect(disable).toHaveClass("shadow-none");
+    expect(screen.getByRole("status")).toHaveTextContent("履歴の記録：無効");
+  });
+
+  it.each([true, false])("設定の更新失敗時は現在の記録状態を保つ（有効=%s）", async (enabled) => {
+    vi.mocked(getLibraryPage).mockResolvedValue(page([], enabled));
+    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
+      const form = await request.formData();
+      expect(form.get("intent")).toBe("setHistoryEnabled");
+      expect(form.get("enabled")).toBe(String(!enabled));
+      return Response.json({ success: false, error: "設定を更新できませんでした" }, { status: 500 });
+    });
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history"]} />);
+    const buttonName = enabled ? "履歴を無効にする" : "履歴を有効にする";
+    const currentState = enabled ? "履歴の記録：有効" : "履歴の記録：無効";
+    fireEvent.click(await screen.findByRole("button", { name: buttonName }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("設定を更新できませんでした");
+    expect(screen.getByRole("status")).toHaveTextContent(currentState);
+    expect(screen.getByRole("button", { name: buttonName })).toBeEnabled();
+    expect(action).toHaveBeenCalledOnce();
+  });
+
+  it("消去確認を開く、キャンセル、ESC、外側で閉じる操作では送信しない", async () => {
+    vi.mocked(getLibraryPage).mockResolvedValue(page());
+    const action = vi.fn(async () => ({ success: true }));
+    const showModal = vi.spyOn(HTMLDialogElement.prototype, "showModal");
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history"]} />);
+    const trigger = await screen.findByRole("button", { name: "履歴を消去" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    expect(dialog).toHaveAttribute("open");
+    expect(dialog).toHaveAccessibleDescription("すべての履歴を消去します。");
+    expect(action).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(trigger);
+    const escapedDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    fireEvent(escapedDialog, new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.click(trigger);
+    const outsideDialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    fireEvent.click(within(outsideDialog).getByRole("button", { name: "確認を閉じる" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(showModal).toHaveBeenCalledTimes(3);
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it("確認後だけ消去を送り、送信中は閉じず、成功後に閉じて再度開ける", async () => {
+    vi.mocked(getLibraryPage).mockResolvedValue(page());
+    let finish!: (result: { success: boolean }) => void;
+    const response = new Promise<{ success: boolean }>((resolve) => {
+      finish = resolve;
+    });
+    const action = vi.fn(async ({ request }: ActionFunctionArgs) => {
+      const form = await request.formData();
+      expect(form.get("intent")).toBe("clearHistory");
+      return response;
+    });
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history"]} />);
+    const trigger = await screen.findByRole("button", { name: "履歴を消去" });
+    fireEvent.click(trigger);
+    const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    const form = within(dialog).getByRole("button", { name: "消去する" }).closest("form")!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    await waitFor(() => expect(action).toHaveBeenCalledOnce());
+    expect(within(dialog).getByRole("button", { name: "消去中..." })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "確認を閉じる" })).toBeDisabled();
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "確認を閉じる" }));
+    expect(dialog).toHaveAttribute("open");
+    expect(action).toHaveBeenCalledOnce();
+
+    finish({ success: true });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    fireEvent.click(trigger);
+    const reopened = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    expect(reopened).toHaveAttribute("open");
+    expect(action).toHaveBeenCalledOnce();
+    fireEvent.click(within(reopened).getByRole("button", { name: "キャンセル" }));
+  });
+
+  it("消去失敗は確認内に表示して開いたまま保ち、再試行の成功後に閉じる", async () => {
+    vi.mocked(getLibraryPage).mockResolvedValue(page());
+    const action = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ success: false, error: "履歴を消去できませんでした" }, { status: 500 }),
+      )
+      .mockResolvedValueOnce({ success: true });
+    const Stub = createRoutesStub([
+      { path: "/history", loader, Component: History },
+      { path: "/api/library", action },
+    ]);
+    render(<Stub initialEntries={["/history"]} />);
+    fireEvent.click(await screen.findByRole("button", { name: "履歴を消去" }));
+    const dialog = await screen.findByRole("dialog", { name: "履歴を消去しますか？" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "消去する" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("履歴を消去できませんでした");
+    expect(dialog).toHaveAttribute("open");
+    const retry = within(dialog).getByRole("button", { name: "消去する" });
+    expect(retry).toBeEnabled();
+    expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeEnabled();
+
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(action).toHaveBeenCalledTimes(2);
   });
 });

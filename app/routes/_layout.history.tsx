@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   data,
   Link,
@@ -53,7 +53,10 @@ export default function History() {
   const settings = useFetcher<HistoryMutationResult>();
   const clear = useFetcher<HistoryMutationResult>();
   const [confirmClear, setConfirmClear] = useState(false);
-  const settingsBusy = settings.state !== "idle" || clear.state !== "idle";
+  const clearDialog = useRef<HTMLDialogElement>(null);
+  const clearPending = useRef(false);
+  const clearBusy = clear.state !== "idle";
+  const settingsBusy = settings.state !== "idle" || clearBusy;
   const enabled = historyEnabled;
 
   useEffect(() => {
@@ -74,8 +77,23 @@ export default function History() {
   }, [isComposing, search, query, navigate]);
 
   useEffect(() => {
-    if (clear.state === "idle" && clear.data?.success) setConfirmClear(false);
+    if (confirmClear && !clearDialog.current?.open) clearDialog.current?.showModal();
+  }, [confirmClear]);
+
+  useEffect(() => {
+    if (clear.state !== "idle") return;
+    clearPending.current = false;
+    if (clear.data?.success) {
+      clearDialog.current?.close();
+      setConfirmClear(false);
+    }
   }, [clear.state, clear.data]);
+
+  function closeClearDialog() {
+    if (clearPending.current || clearBusy) return;
+    clearDialog.current?.close();
+    setConfirmClear(false);
+  }
 
   function pageUrl(nextPage: number) {
     const params = new URLSearchParams({ page: String(nextPage) });
@@ -90,6 +108,9 @@ export default function History() {
 
       <div className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
+          <p role="status" className="text-sm">
+            履歴の記録：<strong>{enabled ? "有効" : "無効"}</strong>
+          </p>
           <settings.Form method="post" action="/api/library">
             <input type="hidden" name="intent" value="setHistoryEnabled" />
             <input type="hidden" name="enabled" value={String(!enabled)} />
@@ -105,16 +126,14 @@ export default function History() {
                   : "履歴を有効にする"}
             </button>
           </settings.Form>
-          {!confirmClear && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm shadow-none"
-              onClick={() => setConfirmClear(true)}
-              disabled={settingsBusy}
-            >
-              履歴を消去
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm shadow-none"
+            onClick={() => setConfirmClear(true)}
+            disabled={settingsBusy}
+          >
+            履歴を消去
+          </button>
         </div>
         {settings.data?.success === false && (
           <p role="alert" className="mt-2 text-sm text-error">
@@ -122,32 +141,72 @@ export default function History() {
           </p>
         )}
         {confirmClear && (
-          <clear.Form method="post" action="/api/library" className="mt-3 space-y-2">
-            <input type="hidden" name="intent" value="clearHistory" />
-            <p className="text-sm">履歴をすべて消去しますか？</p>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="btn btn-error btn-sm shadow-none"
-                disabled={settingsBusy}
+          <dialog
+            ref={clearDialog}
+            className="modal"
+            aria-labelledby="history-clear-title"
+            aria-describedby="history-clear-description"
+            onCancel={(event) => {
+              event.preventDefault();
+              closeClearDialog();
+            }}
+            onClose={() => setConfirmClear(false)}
+          >
+            <div className="modal-box shadow-none">
+              <h2 id="history-clear-title" className="font-bold text-lg">
+                履歴を消去しますか？
+              </h2>
+              <p id="history-clear-description" className="py-2 text-sm opacity-70">
+                すべての履歴を消去します。
+              </p>
+              <clear.Form
+                method="post"
+                action="/api/library"
+                onSubmit={(event) => {
+                  if (clearPending.current || settingsBusy) {
+                    event.preventDefault();
+                    return;
+                  }
+                  clearPending.current = true;
+                }}
               >
-                {clear.state !== "idle" ? "消去中..." : "履歴をすべて消去する"}
-              </button>
+                <input type="hidden" name="intent" value="clearHistory" />
+                {clear.data?.success === false && (
+                  <p role="alert" className="mt-2 text-sm text-error">
+                    {clear.data.error}
+                  </p>
+                )}
+                <div className="modal-action">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm shadow-none"
+                    onClick={closeClearDialog}
+                    disabled={clearBusy}
+                    autoFocus
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-error btn-sm shadow-none"
+                    disabled={settingsBusy}
+                  >
+                    {clearBusy ? "消去中..." : "消去する"}
+                  </button>
+                </div>
+              </clear.Form>
+            </div>
+            <form method="dialog" className="modal-backdrop">
               <button
                 type="button"
-                className="btn btn-ghost btn-sm shadow-none"
-                onClick={() => setConfirmClear(false)}
-                disabled={settingsBusy}
+                aria-label="確認を閉じる"
+                onClick={closeClearDialog}
+                disabled={clearBusy}
               >
-                キャンセル
+                閉じる
               </button>
-            </div>
-          </clear.Form>
-        )}
-        {clear.data?.success === false && (
-          <p role="alert" className="mt-2 text-sm text-error">
-            {clear.data.error}
-          </p>
+            </form>
+          </dialog>
         )}
       </div>
 
