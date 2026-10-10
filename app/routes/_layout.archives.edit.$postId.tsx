@@ -32,6 +32,7 @@ import {
 import toast, { Toaster } from 'react-hot-toast';
 import { MakeToastMessage } from '~/utils/makeToastMessage';
 import { getAuthenticatedUser } from '~/modules/auth.google.server';
+import { sanitizePostHtml } from '~/modules/post-html.server';
 
 const postEditSchema = z.object({
   postTitle: z.string().min(1, 'タイトルが必要です'),
@@ -427,7 +428,7 @@ export const action: ActionFunction = async (args) => {
 
   marked.use({ renderer });
 
-  const postContentHtml = await marked(parsedData.postContent as string);
+  const postContentHtml = sanitizePostHtml(await marked(parsedData.postContent as string));
 
   let updatedPost;
   try {
