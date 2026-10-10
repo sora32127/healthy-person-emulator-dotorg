@@ -11,9 +11,10 @@ import {
   FilePlus,
   Bookmark,
   Code2,
+  History,
 } from 'lucide-react';
 
-export function getNavItems(isSignedIn: boolean) {
+export function getNavItems(isSignedIn: boolean, libraryEnabled = false) {
   return [
     { to: '/?referrer=fromMenu', icon: House, text: 'トップ' },
     { to: '/?tab=fixed', text: '固定ページ', icon: Notebook },
@@ -28,6 +29,7 @@ export function getNavItems(isSignedIn: boolean) {
     },
     { to: '/search', icon: Search, text: '検索する' },
     { to: '/post', text: '投稿する', icon: FilePlus },
+    ...(libraryEnabled ? [{ to: '/history', text: '履歴', icon: History }] : []),
 
     ...(isSignedIn
       ? [

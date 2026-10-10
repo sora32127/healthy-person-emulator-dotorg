@@ -1,5 +1,5 @@
 import { useLoaderData, NavLink, useFetcher } from 'react-router';
-import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from 'react-router';
+import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction, HeadersFunction } from 'react-router';
 import { Turnstile } from '@marsidev/react-turnstile';
 import {
   ArchiveDataEntry,
@@ -46,6 +46,9 @@ import { setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 import { useSetAtom } from 'jotai';
 import { setVisitorCookieData } from '~/modules/visitor.server';
 import { Bookmark } from 'lucide-react';
+import { isLibraryEnabledForUser } from '~/modules/feature-flags.server';
+import LibraryArticle from '~/components/LibraryArticle';
+import { recordLibraryReaction } from '~/modules/library.server';
 
 export const commentVoteSchema = z.object({
   commentId: z.number(),
@@ -58,17 +61,23 @@ export const postVoteSchema = z.object({
 });
 export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
+  const cacheControl = loaderHeaders.get('Cache-Control');
+  return new Headers(cacheControl ? { 'Cache-Control': cacheControl } : {});
+};
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const postId = Number(params.postId);
-  const data = await ArchiveDataEntry.getData(postId);
+  const archiveData = await ArchiveDataEntry.getData(postId);
   const { likedPages, dislikedPages, supportedPages, likedComments, dislikedComments } =
     await getUserActivityData(request);
   const isAuthenticated = await getAuthenticatedUser(request);
   const isBookmarked = await judgeIsBookmarked(postId, isAuthenticated?.userUuid);
   const CF_TURNSTILE_SITEKEY = await getTurnStileSiteKey();
+  const libraryEnabled = isLibraryEnabledForUser(isAuthenticated);
 
-  return {
-    data,
+  return data({
+    data: archiveData,
     likedPages,
     dislikedPages,
     supportedPages,
@@ -77,7 +86,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
-  };
+    libraryEnabled,
+  }, { headers: libraryEnabled ? { 'Cache-Control': 'private, no-store' } : undefined });
 }
 
 export default function Component() {
@@ -91,6 +101,7 @@ export default function Component() {
     CF_TURNSTILE_SITEKEY,
     isAuthenticated,
     isBookmarked,
+    libraryEnabled,
   } = useLoaderData<typeof loader>();
   const [isPageLikeButtonPushed, setIsPageLikeButtonPushed] = useState(false);
   const [isPageDislikeButtonPushed, setIsPageDislikeButtonPushed] = useState(false);
@@ -432,6 +443,7 @@ export default function Component() {
             </button>
           </div>
         </div>
+        {libraryEnabled && <LibraryArticle postId={POSTID} />}
         <div className="my-6">
           <button
             onClick={() => {
@@ -612,6 +624,10 @@ async function handleVotePost(
     } else if (voteType === 'support') {
       session.set('supportedPages', [...(session.get('supportedPages') || []), postId]);
     }
+    const sessionCookie = await commitSession(session);
+    if (voteType === 'like' || voteType === 'dislike') {
+      await recordReactionHistory(request, { postId, voteType });
+    }
     return data(
       {
         message: voteType === 'support' ? '「力になりたい」の気持ちを伝えました' : '投稿を評価しました',
@@ -619,7 +635,7 @@ async function handleVotePost(
       },
       {
         headers: {
-          'Set-Cookie': await commitSession(session),
+          'Set-Cookie': sessionCookie,
         },
       },
     );
@@ -645,17 +661,34 @@ async function handleVoteComment(
     } else if (voteType === 'dislike') {
       session.set('dislikedComments', [...(session.get('dislikedComments') || []), commentId]);
     }
+    const sessionCookie = await commitSession(session);
+    await recordReactionHistory(request, {
+      postId,
+      commentId,
+      voteType: voteType as 'like' | 'dislike',
+    });
     return data(
       { message: 'コメントを評価しました', success: true },
       {
         headers: {
-          'Set-Cookie': await commitSession(session),
+          'Set-Cookie': sessionCookie,
         },
       },
     );
   } catch (error) {
     console.error(error);
     return data({ message: 'Internal Server Error', success: false }, { status: 500 });
+  }
+}
+
+async function recordReactionHistory(
+  request: Request,
+  reaction: Parameters<typeof recordLibraryReaction>[1],
+) {
+  try {
+    await recordLibraryReaction(request, reaction);
+  } catch {
+    console.error('Reaction history could not be recorded');
   }
 }
 
