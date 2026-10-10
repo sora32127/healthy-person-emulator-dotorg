@@ -1,4 +1,5 @@
 import { createD1Repository } from '../repositories/d1.server';
+import { sanitizePostHtml } from './post-html.server';
 import type { DatabaseRepository } from '../repositories/types';
 import type {
   PostData,
@@ -178,7 +179,7 @@ export class ArchiveDataEntry {
     this.postTitle = postData.postTitle;
     this.postURL = postData.postURL;
     this.postDateGmt = postData.postDateGmt;
-    this.postContent = postData.postContent;
+    this.postContent = sanitizePostHtml(postData.postContent);
     this.commentStatus = postData.commentStatus;
     this.countLikes = postData.countLikes;
     this.countDislikes = postData.countDislikes;

@@ -8,6 +8,13 @@ export default defineConfig({
     },
   },
   test: {
+    // Bundle the sanitizer's CommonJS/ESM dependencies under the project's Node options.
+    deps: {
+      optimizer: {
+        client: { enabled: true, include: ['sanitize-html'] },
+        ssr: { enabled: true, include: ['sanitize-html'] },
+      },
+    },
     exclude: ['node_modules', 'app/tests', '.agent/**', '.codex/**', '.claude/**', 'e2e/**', 'e2e-local/**'],
     coverage: {
       provider: 'v8',

@@ -15,6 +15,7 @@ import {
 import { commitSession, getSession, isUserValid } from '~/modules/session.server';
 import { getStopWords, createPostWithTags, updatePostWelcomed } from '~/modules/db.server';
 import { createEmbedding } from '~/modules/embedding.server';
+import { sanitizePostHtml } from '~/modules/post-html.server';
 import { Turnstile } from '@marsidev/react-turnstile';
 
 interface SimilarPostPreview {
@@ -240,7 +241,7 @@ export async function action({ request }: ActionFunctionArgs) {
       return data({ success: false, error: 'バリデーションエラー' }, { status: 400 });
     }
 
-    const wikifyResult = await Wikify(parsedData);
+    const wikifyResult = sanitizePostHtml(Wikify(parsedData));
     if (!wikifyResult) {
       return data({ success: false, error: 'Wikify failed' }, { status: 400 });
     }

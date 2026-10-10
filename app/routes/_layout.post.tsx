@@ -10,6 +10,7 @@ import { H3 } from '~/components/Headings';
 import TagSelectionBox from '~/components/SubmitFormComponents/TagSelectionBox';
 import { getStopWords, getTagsCounts } from '~/modules/db.server';
 import { getEmbedding, querySimilar } from '~/modules/cloudflare.server';
+import { sanitizePostHtml } from '~/modules/post-html.server';
 import TagCreateBox from '~/components/SubmitFormComponents/TagCreateBox';
 import TagPreviewBox from '~/components/SubmitFormComponents/TagPreviewBox';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
@@ -865,11 +866,12 @@ async function Wikify(
         : ''
     }
   `;
-  const markdownContent = NodeHtmlMarkdown.translate(result);
+  const safeHtml = sanitizePostHtml(result);
+  const markdownContent = NodeHtmlMarkdown.translate(safeHtml);
   return data({
     success: true,
     error: undefined,
-    data: { WikifiedResult: result, MarkdownResult: markdownContent },
+    data: { WikifiedResult: safeHtml, MarkdownResult: markdownContent },
   });
 }
 
