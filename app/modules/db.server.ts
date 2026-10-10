@@ -154,6 +154,7 @@ export class ArchiveDataEntry {
   commentStatus: string;
   countLikes: number;
   countDislikes: number;
+  countSupports: number;
   ogpImageUrl: string | null;
   tags: { tagName: string; tagId: number }[];
   comments: CommentData[];
@@ -183,6 +184,7 @@ export class ArchiveDataEntry {
     this.commentStatus = postData.commentStatus;
     this.countLikes = postData.countLikes;
     this.countDislikes = postData.countDislikes;
+    this.countSupports = postData.countSupports;
     this.ogpImageUrl = postData.ogpImageUrl;
     this.tags = postData.tags;
     this.comments = comments;

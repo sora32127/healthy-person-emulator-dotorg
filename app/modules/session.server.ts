@@ -9,6 +9,7 @@ interface SessionData {
   };
   likedPages: number[];
   dislikedPages: number[];
+  supportedPages: number[];
   likedComments: number[];
   dislikedComments: number[];
   isValidUser: boolean;
@@ -74,10 +75,11 @@ export async function getUserActivityData(request: Request) {
   const session = await getSession(request.headers.get('Cookie'));
   const likedPages = session.get('likedPages') || [];
   const dislikedPages = session.get('dislikedPages') || [];
+  const supportedPages = session.get('supportedPages') || [];
   const likedComments = session.get('likedComments') || [];
   const dislikedComments = session.get('dislikedComments') || [];
 
-  return { likedPages, dislikedPages, likedComments, dislikedComments };
+  return { likedPages, dislikedPages, supportedPages, likedComments, dislikedComments };
 }
 
 export async function isUserValid(request: Request) {

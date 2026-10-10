@@ -23,6 +23,7 @@ export default function PostSection({ title, posts, identifier, children }: Post
             tagNames={post.tags.map((tag) => tag.tagName)}
             countLikes={post.countLikes}
             countDislikes={post.countDislikes}
+            countSupports={post.countSupports}
             countComments={post.countComments}
             identifier={identifier}
           />

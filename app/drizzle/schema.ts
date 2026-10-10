@@ -30,6 +30,7 @@ export const dimPosts = sqliteTable(
     commentStatus: text('comment_status').notNull(),
     countLikes: integer('count_likes').notNull().default(0),
     countDislikes: integer('count_dislikes').notNull().default(0),
+    countSupports: integer('count_supports').notNull().default(0),
     uuid: text('uuid').notNull(),
     tokenCount: integer('token_count').notNull().default(0),
     ogpImageUrl: text('ogp_image_url'),

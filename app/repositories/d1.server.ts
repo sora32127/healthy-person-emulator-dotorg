@@ -180,6 +180,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           commentStatus: schema.dimPosts.commentStatus,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
           isWelcomed: schema.dimPosts.isWelcomed,
@@ -376,6 +377,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -437,13 +439,14 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
 
     async recordPostVote(
       postId: number,
-      voteType: 'like' | 'dislike',
+      voteType: 'like' | 'dislike' | 'support',
       voteUserIpHash: string,
     ): Promise<void> {
+      const voteTypeInt = { like: 1, dislike: -1, support: 2 }[voteType];
       await db.insert(schema.fctPostVoteHistory).values({
         voteUserIpHash,
         postId,
-        voteTypeInt: voteType === 'like' ? 1 : -1,
+        voteTypeInt,
         voteDateGmt: nowUTC(),
         voteDateJst: nowJST(),
       });
@@ -453,10 +456,15 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           .update(schema.dimPosts)
           .set({ countLikes: sql`${schema.dimPosts.countLikes} + 1` })
           .where(eq(schema.dimPosts.postId, postId));
-      } else {
+      } else if (voteType === 'dislike') {
         await db
           .update(schema.dimPosts)
           .set({ countDislikes: sql`${schema.dimPosts.countDislikes} + 1` })
+          .where(eq(schema.dimPosts.postId, postId));
+      } else if (voteType === 'support') {
+        await db
+          .update(schema.dimPosts)
+          .set({ countSupports: sql`${schema.dimPosts.countSupports} + 1` })
           .where(eq(schema.dimPosts.postId, postId));
       }
     },
@@ -542,6 +550,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -601,6 +610,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
           ogpImageUrl: schema.dimPosts.ogpImageUrl,
         })
         .from(schema.dimPosts)
@@ -676,6 +686,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             postDateGmt: schema.dimPosts.postDateGmt,
             countLikes: schema.dimPosts.countLikes,
             countDislikes: schema.dimPosts.countDislikes,
+            countSupports: schema.dimPosts.countSupports,
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
@@ -694,6 +705,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: toDate(post.postDateGmt),
           countLikes: post.countLikes,
           countDislikes: post.countDislikes,
+          countSupports: post.countSupports,
           ogpImageUrl: post.ogpImageUrl,
           tags: allTags
             .filter((t) => t.postId === post.postId)
@@ -773,6 +785,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
             postDateGmt: schema.dimPosts.postDateGmt,
             countLikes: schema.dimPosts.countLikes,
             countDislikes: schema.dimPosts.countDislikes,
+            countSupports: schema.dimPosts.countSupports,
             ogpImageUrl: schema.dimPosts.ogpImageUrl,
           })
           .from(schema.dimPosts)
@@ -1334,6 +1347,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
           countDislikes: schema.dimPosts.countDislikes,
+          countSupports: schema.dimPosts.countSupports,
         })
         .from(schema.dimPosts)
         .where(whereClause)
@@ -1351,6 +1365,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         postDateGmt: toDate(post.postDateGmt),
         countLikes: post.countLikes,
         countDislikes: post.countDislikes,
+        countSupports: post.countSupports,
         tagNames: allTags.filter((t) => t.postId === post.postId).map((t) => t.tagName),
         countComments: commentCounts.find((c) => c.postId === post.postId)?.cnt || 0,
       }));
