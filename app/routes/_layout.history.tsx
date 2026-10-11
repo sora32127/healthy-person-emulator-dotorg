@@ -18,6 +18,7 @@ type HistoryMutationResult = {
 };
 
 type HistoryEntry = Awaited<ReturnType<typeof getLibraryPage>>["entries"][number];
+type HistoryEvent = HistoryEntry["events"][number];
 
 const historyLabels = {
   view: "閲覧",
@@ -39,7 +40,10 @@ export function headers() {
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 200);
-  const library = await getLibraryPage(request, { query, page: Number(url.searchParams.get("page")) });
+  const library = await getLibraryPage(request, {
+    query,
+    page: Number(url.searchParams.get("page")),
+  });
   return data({ ...library, query }, { headers: headers() });
 }
 
@@ -48,7 +52,30 @@ function formatDate(value: string) {
 }
 
 function entryKey(entry: HistoryEntry) {
-  return `${entry.kind}:${entry.commentId ?? entry.postId}:${entry.occurredAt}`;
+  return `${entry.postId}:${entry.occurredAt}`;
+}
+
+function eventKey(postId: number, event: HistoryEvent) {
+  return `${event.kind}:${event.commentId ?? postId}:${event.occurredAt}`;
+}
+
+function HistoryEvents({ entry }: { entry: HistoryEntry }) {
+  return (
+    <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-60">
+      {entry.events.map((event) => (
+        <li key={eventKey(entry.postId, event)}>
+          {event.commentId ? (
+            <Link className="link" to={`/archives/${entry.postId}#comment-${event.commentId}`}>
+              {historyLabels[event.kind]}
+            </Link>
+          ) : (
+            historyLabels[event.kind]
+          )}{" "}
+          · <time dateTime={event.occurredAt}>{formatDate(event.occurredAt)}</time>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default function History() {
@@ -117,7 +144,7 @@ export default function History() {
   return (
     <div>
       <H1>履歴</H1>
-      <p className="mb-4 text-sm text-base-content/70">{total}件</p>
+      <p className="mb-4 text-sm text-base-content/70">{total}件の記事</p>
 
       <div className="mb-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -154,7 +181,7 @@ export default function History() {
               onClick={() => openClearDialog(selectedEntries)}
               disabled={settingsBusy}
             >
-              選択した履歴を消去（{selectedEntries.length}件）
+              選択した履歴を消去（{selectedEntries.length}件の記事）
             </button>
           )}
         </div>
@@ -179,7 +206,7 @@ export default function History() {
             </h2>
             <p id="history-clear-description" className="py-2 text-sm opacity-70">
               {entriesToClear
-                ? `${entriesToClear.length}件の履歴を消去します。`
+                ? `${entriesToClear.length}件の記事に表示されている履歴を消去します。`
                 : "すべての履歴を消去します。"}
             </p>
             {entriesToClear && (
@@ -187,9 +214,7 @@ export default function History() {
                 {entriesToClear.map((entry) => (
                   <li key={entryKey(entry)}>
                     {entry.postTitle}
-                    <span className="block opacity-60">
-                      {historyLabels[entry.kind]} · {formatDate(entry.occurredAt)}
-                    </span>
+                    <HistoryEvents entry={entry} />
                   </li>
                 ))}
               </ul>
@@ -205,19 +230,25 @@ export default function History() {
                 clearPending.current = true;
               }}
             >
-              <input type="hidden" name="intent" value={entriesToClear ? "clearEntries" : "clearHistory"} />
-              {entriesToClear?.map((entry) => (
-                <input
-                  key={entryKey(entry)}
-                  type="hidden"
-                  name="entries"
-                  value={JSON.stringify({
-                    kind: entry.kind,
-                    targetId: entry.commentId ?? entry.postId,
-                    occurredAt: entry.occurredAt,
-                  })}
-                />
-              ))}
+              <input
+                type="hidden"
+                name="intent"
+                value={entriesToClear ? "clearEntries" : "clearHistory"}
+              />
+              {entriesToClear?.flatMap((entry) =>
+                entry.events.map((event) => (
+                  <input
+                    key={eventKey(entry.postId, event)}
+                    type="hidden"
+                    name="entries"
+                    value={JSON.stringify({
+                      kind: event.kind,
+                      targetId: event.commentId ?? entry.postId,
+                      occurredAt: event.occurredAt,
+                    })}
+                  />
+                )),
+              )}
               {clear.data?.success === false && (
                 <p role="alert" className="mt-2 text-sm text-error">
                   {clear.data.error}
@@ -279,35 +310,27 @@ export default function History() {
       ) : (
         <ul className="space-y-4">
           {entries.map((entry) => (
-            <li
-              key={entryKey(entry)}
-              className="flex items-start gap-3"
-            >
+            <li key={entryKey(entry)} className="flex items-start gap-3">
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm mt-1 shrink-0"
-                aria-label={`${entry.postTitle}の履歴を選択（${historyLabels[entry.kind]} · ${formatDate(entry.occurredAt)}）`}
+                aria-label={`${entry.postTitle}の履歴を選択`}
                 checked={selectedKeys.includes(entryKey(entry))}
                 onChange={() => {
                   const key = entryKey(entry);
-                  setSelectedKeys((keys) => keys.includes(key)
-                    ? keys.filter((selected) => selected !== key)
-                    : [...keys, key]);
+                  setSelectedKeys((keys) =>
+                    keys.includes(key)
+                      ? keys.filter((selected) => selected !== key)
+                      : [...keys, key],
+                  );
                 }}
                 disabled={settingsBusy}
               />
               <div className="min-w-0">
-                <p className="mb-1 text-xs opacity-60">
-                  {historyLabels[entry.kind]} ·{" "}
-                  <time dateTime={entry.occurredAt}>{formatDate(entry.occurredAt)}</time>
-                </p>
                 <h2 className="text-lg font-bold break-words">
-                  <CommonNavLink
-                    to={`/archives/${entry.postId}${entry.commentId ? `#comment-${entry.commentId}` : ""}`}
-                  >
-                    {entry.postTitle}
-                  </CommonNavLink>
+                  <CommonNavLink to={`/archives/${entry.postId}`}>{entry.postTitle}</CommonNavLink>
                 </h2>
+                <HistoryEvents entry={entry} />
               </div>
             </li>
           ))}

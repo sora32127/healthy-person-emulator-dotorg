@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { and, count, desc, eq, exists, gte, isNull, lte, notExists, or, sql } from "drizzle-orm";
+import { and, desc, eq, exists, gte, isNull, lte, notExists, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import {
   dimComments,
@@ -143,35 +143,52 @@ export async function getLibraryPage(request: Request, options: { query: string;
         : undefined,
     )
     .as("filtered_events");
-  const [result, historyEnabled] = await Promise.all([
-    db.with(events).select({ total: count() }).from(filteredEvents).get(),
+  const [rows, historyEnabled] = await Promise.all([
+    db
+      .with(events)
+      .select({
+        postId: filteredEvents.postId,
+        postTitle: filteredEvents.postTitle,
+        kind: filteredEvents.kind,
+        occurredAt: filteredEvents.occurredAt,
+        commentId: filteredEvents.commentId,
+      })
+      .from(filteredEvents)
+      .orderBy(
+        desc(filteredEvents.occurredAt),
+        desc(filteredEvents.postId),
+        desc(filteredEvents.kind),
+        desc(filteredEvents.targetId),
+      ),
     readHistoryEnabled(db, user.userUuid),
   ]);
-  const total = result?.total ?? 0;
+  const grouped = new Map<number, {
+    postId: number;
+    postTitle: string;
+    occurredAt: string;
+    events: { kind: HistoryKind; occurredAt: string; commentId: number | null }[];
+  }>();
+  // Group before pagination so an article's events cannot spill onto another page.
+  // The first event retains the existing latest-first ordering and timestamp.
+  for (const { postId, postTitle, ...event } of rows) {
+    const entry = grouped.get(postId);
+    if (entry) {
+      entry.events.push(event);
+    } else {
+      grouped.set(postId, { postId, postTitle, occurredAt: event.occurredAt, events: [event] });
+    }
+  }
+  const entries = [...grouped.values()];
+  const total = entries.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(
     totalPages,
     Number.isSafeInteger(options.page) && options.page > 0 ? options.page : 1,
   );
-  const rows = await db
-    .with(events)
-    .select({
-      postId: filteredEvents.postId,
-      postTitle: filteredEvents.postTitle,
-      kind: filteredEvents.kind,
-      occurredAt: filteredEvents.occurredAt,
-      commentId: filteredEvents.commentId,
-    })
-    .from(filteredEvents)
-    .orderBy(
-      desc(filteredEvents.occurredAt),
-      desc(filteredEvents.postId),
-      desc(filteredEvents.kind),
-      desc(filteredEvents.targetId),
-    )
-    .limit(PAGE_SIZE)
-    .offset((page - 1) * PAGE_SIZE);
-  return { entries: rows, page, totalPages, total, historyEnabled };
+  return {
+    entries: entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    page, totalPages, total, historyEnabled,
+  };
 }
 
 function pruneHistory(db: LibraryDb, userUuid: string, now: Date) {
@@ -344,7 +361,7 @@ export async function mutateLibrary(request: Request) {
   }
   if (intent === "clearEntries") {
     const values = formData.getAll("entries");
-    if (!values.length || values.length > PAGE_SIZE) {
+    if (!values.length || values.length > HISTORY_LIMIT) {
       throw new LibraryError(400, "履歴の指定が不正です");
     }
     let entries: { kind: HistoryKind; targetId: number; occurredAt: string }[];
@@ -369,24 +386,38 @@ export async function mutateLibrary(request: Request) {
     } catch {
       throw new LibraryError(400, "履歴の指定が不正です");
     }
-    const [first, ...rest] = entries.map(({ kind, targetId, occurredAt }) =>
-      kind === "view"
-        ? db.delete(userLibraryEntries).where(
-            and(
-              eq(userLibraryEntries.userUuid, userUuid),
-              eq(userLibraryEntries.postId, targetId),
-              eq(userLibraryEntries.lastViewedAt, occurredAt),
-            ),
-          )
-        : db.delete(userLibraryReactions).where(
-            and(
-              eq(userLibraryReactions.userUuid, userUuid),
-              eq(userLibraryReactions.kind, kind),
-              eq(userLibraryReactions.targetId, targetId),
-              eq(userLibraryReactions.occurredAt, occurredAt),
-            ),
-          ),
-    );
+    const views = [];
+    const reactions = [];
+    for (const { kind, targetId, occurredAt } of entries) {
+      if (kind === "view") {
+        views.push(and(
+          eq(userLibraryEntries.postId, targetId),
+          eq(userLibraryEntries.lastViewedAt, occurredAt),
+        ));
+      } else {
+        reactions.push(and(
+          eq(userLibraryReactions.kind, kind),
+          eq(userLibraryReactions.targetId, targetId),
+          eq(userLibraryReactions.occurredAt, occurredAt),
+        ));
+      }
+    }
+    // D1 allows 100 bindings per query: one owner + 32 reactions × 3 fields = 97.
+    const deleteChunkSize = 32;
+    const deletes = [];
+    for (let index = 0; index < views.length; index += deleteChunkSize) {
+      deletes.push(db.delete(userLibraryEntries).where(and(
+        eq(userLibraryEntries.userUuid, userUuid),
+        or(...views.slice(index, index + deleteChunkSize)),
+      )));
+    }
+    for (let index = 0; index < reactions.length; index += deleteChunkSize) {
+      deletes.push(db.delete(userLibraryReactions).where(and(
+        eq(userLibraryReactions.userUuid, userUuid),
+        or(...reactions.slice(index, index + deleteChunkSize)),
+      )));
+    }
+    const [first, ...rest] = deletes;
     await db.batch([first!, ...rest]);
     return { success: true as const };
   }
