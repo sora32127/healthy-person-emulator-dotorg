@@ -50,7 +50,7 @@ export function initAuth(env: {
       {
         clientId: env.GOOGLE_CLIENT_ID,
         clientSecret: env.GOOGLE_CLIENT_SECRET,
-        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth?prompt=select_account',
         tokenEndpoint: 'https://oauth2.googleapis.com/token',
         redirectURI: `${env.CLIENT_URL}/auth/google/callback`,
         scopes: ['openid', 'email', 'profile'],
