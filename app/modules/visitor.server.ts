@@ -22,9 +22,9 @@ export function initVisitorSession() {
 }
 
 function ensureStorage() {
-  if (!_sessionStorage)
-    throw new Error('Visitor session storage not initialized. Call initVisitorSession first.');
-  return _sessionStorage;
+  // Callback and resource requests can run before entry.server initializes the app.
+  if (!_sessionStorage) initVisitorSession();
+  return _sessionStorage!;
 }
 
 const getSession = (cookieHeader: string | null) => ensureStorage().getSession(cookieHeader);
