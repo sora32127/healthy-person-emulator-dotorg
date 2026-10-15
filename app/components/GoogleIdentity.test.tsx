@@ -12,6 +12,7 @@ const config: GoogleIdentityConfig = {
   clientId: 'test-client.apps.googleusercontent.com',
   nonce: 'test-nonce',
   autoPrompt: true,
+  autoSelect: true,
 };
 
 function mockGoogle() {
@@ -99,6 +100,17 @@ describe('GoogleIdentityProvider', () => {
     }));
     expect(google.api.prompt).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Googleのログイン画面を開く' })).toBeEnabled();
+  });
+
+  it('ログアウト後もアカウント候補を表示し、操作なしの自動選択だけを無効にする', async () => {
+    const google = mockGoogle();
+
+    render(loginView({ identityConfig: { ...config, autoSelect: false } }));
+
+    await waitFor(() => expect(google.api.prompt).toHaveBeenCalledOnce());
+    expect(google.api.initialize).toHaveBeenCalledWith(expect.objectContaining({
+      auto_select: false,
+    }));
   });
 
   it('親幅の変化に合わせて公式ボタンを描画し、同じ幅では描画せず監視を解除する', async () => {

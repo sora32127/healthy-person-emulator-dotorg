@@ -122,6 +122,8 @@ describe('Google One Tap authentication', () => {
     expect(cookie).toContain('Secure');
     expect(cookie).toContain('Max-Age=600');
     expect(cookie).not.toContain('__healthy_person_emulator=');
+    expect(first.config.autoPrompt).toBe(true);
+    expect(first.config.autoSelect).toBe(true);
     expect(first.config.expiresAt).toBeGreaterThan(Date.now() + 590000);
     expect(first.config.expiresAt).toBeLessThanOrEqual(Date.now() + 600000);
     const second = await getGoogleIdentityConfig(new Request(origin, {
@@ -323,7 +325,7 @@ describe('Google One Tap authentication', () => {
     expect(await response.text()).not.toContain('private database detail');
   });
 
-  it('suppresses automatic prompts after logout and clears suppression after explicit OAuth login', async () => {
+  it('keeps the account chooser after logout while suppressing automatic selection until explicit OAuth login', async () => {
     let logoutResponse: Response | undefined;
     try {
       await logout(args(new Request(`${origin}/logout`)));
@@ -335,11 +337,26 @@ describe('Google One Tap authentication', () => {
     const suppressed = await getGoogleIdentityConfig(new Request(origin, {
       headers: { Cookie: suppressedCookies },
     }));
-    expect(suppressed.config?.autoPrompt).toBe(false);
+    expect(suppressed.config?.autoPrompt).toBe(true);
+    expect(suppressed.config?.autoSelect).toBe(false);
     expect(logoutResponse!.headers.getSetCookie()).toEqual(expect.arrayContaining([
       expect.stringContaining('__Host-hpe_google_auto_prompt='),
       expect.stringContaining('__healthy_person_emulator='),
     ]));
+    const suppressionCookie = logoutResponse!.headers.getSetCookie().find((cookie) =>
+      cookie.startsWith('__Host-hpe_google_auto_prompt='),
+    )!;
+    expect(suppressionCookie).toContain('Max-Age=2592000');
+    const refreshed = await renew(args(new Request(`${origin}/api/googleOneTap`, {
+      headers: { Cookie: `${suppressionCookie.split(';')[0]}; ${cookieHeaders(suppressed.headers)}` },
+    })));
+    expect(refreshed.status).toBe(200);
+    const refreshedConfig = (await refreshed.json()).config;
+    expect(refreshedConfig.nonce).not.toBe(suppressed.config?.nonce);
+    expect(refreshedConfig).toMatchObject({
+      autoPrompt: true,
+      autoSelect: false,
+    });
     vi.mocked(authenticator.authenticate).mockResolvedValue({
       userUuid: existingUser.userUuid,
       email: existingUser.email,
@@ -357,6 +374,10 @@ describe('Google One Tap authentication', () => {
     expect(callbackResponse!.headers.getSetCookie()).toEqual(expect.arrayContaining([
       expect.stringContaining('__Host-hpe_google_auto_prompt=; Max-Age=0'),
     ]));
+    const afterExplicitLogin = await getGoogleIdentityConfig(new Request(origin, {
+      headers: { Cookie: cookieHeaders(callbackResponse!.headers) },
+    }));
+    expect(afterExplicitLogin.config?.autoSelect).toBe(true);
   });
 
   it('disables Google Identity Services for demo credentials', async () => {

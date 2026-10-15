@@ -39,6 +39,7 @@ describe('Google Identity headers on nested article pages', () => {
     expect(response.data.googleIdentity).toMatchObject({
       clientId: 'google-client-id',
       autoPrompt: true,
+      autoSelect: true,
     });
     expect(response.data.googleIdentity?.nonce).toMatch(/^[a-f0-9]{64}$/);
     expect(response.data.googleIdentity?.expiresAt).toBeGreaterThan(Date.now());

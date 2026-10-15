@@ -28,6 +28,7 @@ export type GoogleIdentityConfig = {
   clientId: string;
   nonce: string;
   autoPrompt: boolean;
+  autoSelect: boolean;
   expiresAt?: number;
 };
 
@@ -97,7 +98,7 @@ export function GoogleIdentityProvider({
 
   useEffect(() => {
     setCurrentConfig(config);
-  }, [config?.clientId, config?.nonce, config?.autoPrompt, config?.expiresAt]);
+  }, [config?.clientId, config?.nonce, config?.autoPrompt, config?.autoSelect, config?.expiresAt]);
 
   useEffect(() => {
     if (!currentConfig?.expiresAt) return;
@@ -120,6 +121,7 @@ export function GoogleIdentityProvider({
         const next = body.config;
         if (next !== null && (!next || typeof next.clientId !== 'string' ||
           typeof next.nonce !== 'string' || typeof next.autoPrompt !== 'boolean' ||
+          typeof next.autoSelect !== 'boolean' ||
           typeof next.expiresAt !== 'number' || next.expiresAt <= Date.now() + 60_000)) {
           throw new Error('Invalid Google sign-in configuration');
         }
@@ -147,7 +149,7 @@ export function GoogleIdentityProvider({
       googleId.initialize({
         client_id: currentConfig.clientId,
         nonce: currentConfig.nonce,
-        auto_select: true,
+        auto_select: currentConfig.autoSelect,
         callback: async ({ credential }) => {
           if (!active || submitting.current) return;
           submitting.current = true;
@@ -188,7 +190,7 @@ export function GoogleIdentityProvider({
       active = false;
       initializedApi?.cancel();
     };
-  }, [currentConfig?.clientId, currentConfig?.nonce, currentConfig?.autoPrompt, setIsLoginModalOpen]);
+  }, [currentConfig?.clientId, currentConfig?.nonce, currentConfig?.autoPrompt, currentConfig?.autoSelect, setIsLoginModalOpen]);
 
   useEffect(() => {
     if (isLoginModalOpen) api?.cancel();

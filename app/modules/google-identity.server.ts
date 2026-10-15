@@ -3,7 +3,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { resolveSessionSecret } from './session.server';
 
 const NONCE_TTL = 10 * 60;
-const AUTO_PROMPT_TTL = 30 * 24 * 60 * 60;
+const AUTO_SELECT_TTL = 30 * 24 * 60 * 60;
 const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 function getEnvironment() {
@@ -29,8 +29,8 @@ function nonceCookie() {
   return identityCookie('__Host-hpe_google_nonce', NONCE_TTL);
 }
 
-function autoPromptCookie() {
-  return identityCookie('__Host-hpe_google_auto_prompt', AUTO_PROMPT_TTL);
+function autoSelectCookie() {
+  return identityCookie('__Host-hpe_google_auto_prompt', AUTO_SELECT_TTL);
 }
 
 function isActiveNonce(value: unknown): value is { nonce: string; exp: number } {
@@ -49,7 +49,7 @@ export async function getGoogleIdentityConfig(
   request: Request,
   options?: { renew?: boolean },
 ): Promise<{
-  config: { clientId: string; nonce: string; autoPrompt: boolean; expiresAt: number } | null;
+  config: { clientId: string; nonce: string; autoPrompt: boolean; autoSelect: boolean; expiresAt: number } | null;
   headers: Headers;
 }> {
   const headers = new Headers();
@@ -68,12 +68,13 @@ export async function getGoogleIdentityConfig(
     headers.append('Set-Cookie', await nonceCookie().serialize(nonce));
   }
 
-  const suppressed = await autoPromptCookie().parse(cookies);
+  const suppressed = await autoSelectCookie().parse(cookies);
   return {
     config: {
       clientId,
       nonce: nonce.nonce,
-      autoPrompt: suppressed !== true,
+      autoPrompt: true,
+      autoSelect: suppressed !== true,
       expiresAt: nonce.exp * 1000,
     },
     headers,
@@ -126,10 +127,10 @@ export async function verifyGoogleIdentityCredential(request: Request, credentia
 
 export async function clearGoogleIdentityCookies(headers: Headers) {
   headers.append('Set-Cookie', await nonceCookie().serialize('', { maxAge: 0 }));
-  headers.append('Set-Cookie', await autoPromptCookie().serialize('', { maxAge: 0 }));
+  headers.append('Set-Cookie', await autoSelectCookie().serialize('', { maxAge: 0 }));
 }
 
-export async function suppressGoogleIdentityAutoPrompt(headers: Headers) {
+export async function suppressGoogleIdentityAutoSelect(headers: Headers) {
   headers.append('Set-Cookie', await nonceCookie().serialize('', { maxAge: 0 }));
-  headers.append('Set-Cookie', await autoPromptCookie().serialize(true));
+  headers.append('Set-Cookie', await autoSelectCookie().serialize(true));
 }
