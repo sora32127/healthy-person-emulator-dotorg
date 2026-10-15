@@ -351,7 +351,8 @@ describe('Google One Tap authentication', () => {
       headers: { Cookie: `${suppressionCookie.split(';')[0]}; ${cookieHeaders(suppressed.headers)}` },
     })));
     expect(refreshed.status).toBe(200);
-    const refreshedConfig = (await refreshed.json()).config;
+    const refreshedBody = await refreshed.json() as { config: { nonce: string } };
+    const refreshedConfig = refreshedBody.config;
     expect(refreshedConfig.nonce).not.toBe(suppressed.config?.nonce);
     expect(refreshedConfig).toMatchObject({
       autoPrompt: true,
