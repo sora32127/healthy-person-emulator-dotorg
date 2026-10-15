@@ -16,20 +16,25 @@ import { getAuthenticatedUser } from '~/modules/auth.google.server';
 import { isLibraryEnabledForUser } from '~/modules/feature-flags.server';
 import { Modal } from '~/components/Modal';
 import GoogleLoginButton from '~/components/GoogleAuthButton';
+import { GoogleIdentityProvider } from '~/components/GoogleIdentity';
+import { getGoogleIdentityConfig } from '~/modules/google-identity.server';
 import { getIsLoginModalOpenAtom, setIsLoginModalOpenAtom } from '~/stores/loginmodal';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userObject = await getAuthenticatedUser(request);
   const libraryEnabled = isLibraryEnabledForUser(userObject);
-  return data({ userObject, libraryEnabled }, {
-    headers: libraryEnabled ? { 'Cache-Control': 'private, no-store' } : undefined,
-  });
+  const { config: googleIdentity, headers } = userObject
+    ? { config: null, headers: new Headers() }
+    : await getGoogleIdentityConfig(request);
+  if (libraryEnabled || googleIdentity) headers.set('Cache-Control', 'private, no-store');
+  return data({ userObject, libraryEnabled, googleIdentity }, { headers });
 }
 
 export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
   const result = new Headers(parentHeaders);
   const cacheControl = loaderHeaders.get('Cache-Control');
   if (cacheControl) result.set('Cache-Control', cacheControl);
+  for (const cookie of loaderHeaders.getSetCookie()) result.append('Set-Cookie', cookie);
   return result;
 };
 
@@ -227,7 +232,7 @@ export default function Component() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [_, setAuthState] = useAtom(setAuthStateAtom);
-  const { userObject, libraryEnabled } = useLoaderData<typeof loader>();
+  const { userObject, libraryEnabled, googleIdentity } = useLoaderData<typeof loader>();
   const isLoginModalOpen = useAtomValue(getIsLoginModalOpenAtom);
   const setIsLoginModalOpen = useSetAtom(setIsLoginModalOpenAtom);
 
@@ -289,7 +294,7 @@ export default function Component() {
 
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   useEffect(() => {
-    if (location.search === '?loginSuccess=true') {
+    if (new URLSearchParams(location.search).get('loginSuccess') === 'true') {
       setShowLoginSuccess(true);
       const timer = setTimeout(() => setShowLoginSuccess(false), 3000);
       return () => clearTimeout(timer);
@@ -297,6 +302,7 @@ export default function Component() {
   }, [location.search]);
 
   return (
+    <GoogleIdentityProvider config={googleIdentity} isLoginModalOpen={isLoginModalOpen}>
     <div className="min-h-screen flex flex-col">
       {showLoginSuccess && (
         <div className="alert alert-success fixed top-4 left-1/2 -translate-x-1/2 z-50 w-auto shadow-lg">
@@ -382,13 +388,14 @@ export default function Component() {
         onClose={() => {
           setIsLoginModalOpen(false);
         }}
-        title="ユーザー認証"
-        showCloseButton={false}
+        title="ログイン"
       >
         <div className="mx-4 my-4">
+          <p className="text-sm text-base-content/70 mb-6">Googleアカウントでログイン・登録できます。</p>
           <GoogleLoginButton />
         </div>
       </Modal>
     </div>
+    </GoogleIdentityProvider>
   );
 }

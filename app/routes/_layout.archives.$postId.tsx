@@ -61,9 +61,11 @@ export const postVoteSchema = z.object({
 });
 export type PostVoteSchema = z.infer<typeof postVoteSchema>;
 
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
+export const headers: HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+  const result = new Headers(parentHeaders);
   const cacheControl = loaderHeaders.get('Cache-Control');
-  return new Headers(cacheControl ? { 'Cache-Control': cacheControl } : {});
+  if (cacheControl) result.set('Cache-Control', cacheControl);
+  return result;
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
