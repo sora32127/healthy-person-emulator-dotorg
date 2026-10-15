@@ -1,6 +1,6 @@
 import { Authenticator } from 'remix-auth';
 import { OAuth2Strategy } from 'remix-auth-oauth2';
-import { sessionStorage, getSession, commitSession, destroySession } from './session.server';
+import { getSession, commitSession, destroySession } from './session.server';
 import { findUserByEmail, createGoogleUser } from './db.server';
 import { z } from 'zod';
 import { redirect } from 'react-router';
@@ -65,27 +65,7 @@ export function initAuth(env: {
           email: string;
           picture?: string;
         };
-        const email = profile.email;
-
-        const isUserExists = await judgeIsUserExists(email);
-        if (!isUserExists) {
-          const user = await createUser(email);
-          return {
-            userUuid: user.userUuid,
-            email: user.email ?? email,
-            userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
-          };
-        }
-        const user = await getUser(email);
-        if (!user) {
-          throw new Error('User not found');
-        }
-        return {
-          userUuid: user.userUuid,
-          email: user.email ?? email,
-          userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
-          photoUrl: profile.picture,
-        };
+        return getOrCreateGoogleUser(profile.email, profile.picture);
       },
     );
     _authenticator.use(googleStrategy, 'google');
@@ -188,36 +168,16 @@ class MockGoogleStrategy extends OAuth2Strategy<ExposedUser> {
   }
 
   private async getExposedUserByEmail(email: string): Promise<ExposedUser> {
-    const isUserExists = await judgeIsUserExists(email);
-    if (!isUserExists) {
-      const user = await createUser(email);
-      return {
-        userUuid: user.userUuid,
-        email: user.email ?? email,
-        userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
-      };
-    }
-    const user = await getUser(email);
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return {
-      userUuid: user.userUuid,
-      email: user.email ?? email,
-      userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
-    };
+    return getOrCreateGoogleUser(email);
   }
 }
 
-async function judgeIsUserExists(email: string) {
-  const user = await findUserByEmail(email);
-  return user !== null;
-}
-
-async function createUser(email: string) {
-  return createGoogleUser(email);
-}
-
-async function getUser(email: string) {
-  return findUserByEmail(email);
+export async function getOrCreateGoogleUser(email: string, photoUrl?: string): Promise<ExposedUser> {
+  const user = (await findUserByEmail(email)) ?? (await createGoogleUser(email));
+  return {
+    userUuid: user.userUuid,
+    email: user.email ?? email,
+    userAuthType: (user.userAuthType ?? 'Google') as 'Email' | 'Google',
+    photoUrl,
+  };
 }
