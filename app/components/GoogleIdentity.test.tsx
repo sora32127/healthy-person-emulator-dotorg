@@ -101,6 +101,44 @@ describe('GoogleIdentityProvider', () => {
     expect(screen.getByRole('button', { name: 'Googleのログイン画面を開く' })).toBeEnabled();
   });
 
+  it('親幅の変化に合わせて公式ボタンを描画し、同じ幅では描画せず監視を解除する', async () => {
+    const google = mockGoogle();
+    let availableWidth = 500;
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => availableWidth);
+    let onResize!: ResizeObserverCallback;
+    const observer = { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    vi.stubGlobal('ResizeObserver', vi.fn(function (callback: ResizeObserverCallback) {
+      onResize = callback;
+      return observer;
+    }));
+    const view = render(loginView());
+    const previousButton = await screen.findByRole('button', { name: 'Google公式ログイン' });
+    const buttonContainer = previousButton.parentElement!;
+
+    expect(observer.observe).toHaveBeenCalledWith(buttonContainer.parentElement);
+    expect(google.api.renderButton).toHaveBeenLastCalledWith(buttonContainer, expect.objectContaining({ width: 400 }));
+
+    availableWidth = 280;
+    act(() => { onResize([], observer as unknown as ResizeObserver); });
+
+    expect(google.api.renderButton).toHaveBeenCalledTimes(2);
+    expect(google.api.renderButton).toHaveBeenLastCalledWith(buttonContainer, expect.objectContaining({ width: 260 }));
+    expect(previousButton).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Google公式ログイン' })).toHaveLength(1);
+
+    act(() => { onResize([], observer as unknown as ResizeObserver); });
+    expect(google.api.renderButton).toHaveBeenCalledTimes(2);
+
+    availableWidth = 500;
+    act(() => { onResize([], observer as unknown as ResizeObserver); });
+    expect(google.api.renderButton).toHaveBeenCalledTimes(3);
+    expect(google.api.renderButton).toHaveBeenLastCalledWith(buttonContainer, expect.objectContaining({ width: 400 }));
+
+    view.unmount();
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+    expect(buttonContainer).toBeEmptyDOMElement();
+  });
+
   it('自動表示が有効ならOne Tapを表示し、ログイン画面を開くと閉じる', async () => {
     const google = mockGoogle();
     const store = createStore();

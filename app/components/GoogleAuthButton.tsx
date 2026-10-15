@@ -9,21 +9,36 @@ export default function GoogleLoginButton() {
 
   useEffect(() => {
     const element = buttonRef.current;
-    if (!api || !element) return;
-    try {
-      api.renderButton(element, {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        locale: 'ja',
-        width: Math.min(element.parentElement?.clientWidth ?? 320, 400),
-      });
-      setButtonReady(true);
-    } catch {
-      setButtonReady(false);
-    }
-    return () => { element.replaceChildren(); };
+    const parent = element?.parentElement;
+    if (!api || !element || !parent) return;
+    let renderedWidth: number | undefined;
+    const renderButton = () => {
+      // Google's iframe adds 10px of space on either side of the button.
+      const width = Math.min(Math.max(parent.clientWidth - 20, 0), 400);
+      if (width === renderedWidth) return;
+      renderedWidth = width;
+      element.replaceChildren();
+      try {
+        api.renderButton(element, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          locale: 'ja',
+          width,
+        });
+        setButtonReady(true);
+      } catch {
+        setButtonReady(false);
+      }
+    };
+    renderButton();
+    const observer = new ResizeObserver(renderButton);
+    observer.observe(parent);
+    return () => {
+      observer.disconnect();
+      element.replaceChildren();
+    };
   }, [api, nonce]);
 
   return (
