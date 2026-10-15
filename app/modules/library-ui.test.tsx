@@ -165,7 +165,9 @@ describe("履歴の表示と検索", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ }));
     fireEvent.click(screen.getByRole("link", { name: "次へ" }));
     await screen.findByText("3 / 3");
-    expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeChecked();
+    await waitFor(() => {
+      expect(screen.getByRole("checkbox", { name: /履歴を選択（閲覧/ })).not.toBeChecked();
+    });
     expect(screen.queryByRole("button", { name: /選択した履歴を消去/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "次へ" })).not.toBeInTheDocument();
     expect(getLibraryPage).toHaveBeenLastCalledWith(expect.any(Request), {
