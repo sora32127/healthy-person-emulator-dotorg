@@ -27,6 +27,7 @@ export const dimPosts = sqliteTable(
     postDateGmt: text('post_date_gmt').notNull(),
     postContent: text('post_content').notNull(),
     postTitle: text('post_title').notNull(),
+    seoTitle: text('seo_title'),
     commentStatus: text('comment_status').notNull(),
     countLikes: integer('count_likes').notNull().default(0),
     countDislikes: integer('count_dislikes').notNull().default(0),
@@ -385,3 +386,4 @@ export const userLibraryReactions = sqliteTable(
     index('idx_user_library_reactions_history').on(table.userUuid, table.occurredAt),
   ],
 );
+

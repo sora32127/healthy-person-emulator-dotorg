@@ -60,6 +60,7 @@ export type UpdatePostWithTagsInput = {
 const PostDataSchema = z.object({
   postId: z.number(),
   postTitle: z.string(),
+  seoTitle: z.string().nullable(),
   postContent: z.string(),
   postDateGmt: z.date(),
   countLikes: z.number(),
@@ -321,3 +322,4 @@ export interface DatabaseRepository {
   getNextPost(postId: number): Promise<PreviousOrNextPostData>;
   getCountBookmarks(postId: number): Promise<number>;
 }
+

@@ -722,6 +722,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: data }) => {
 
   const commonMeta = commonMetaFunction({
     title,
+    seoTitle: data.data.seoTitle,
     description: postDescription,
     url,
     image,

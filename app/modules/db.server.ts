@@ -148,6 +148,7 @@ async function getSimilarPosts(postId: number): Promise<SimilarPostsData[]> {
 export class ArchiveDataEntry {
   postId: number;
   postTitle: string;
+  seoTitle: string | null;
   postURL: string;
   postDateGmt: Date;
   postContent: string;
@@ -178,6 +179,7 @@ export class ArchiveDataEntry {
   ) {
     this.postId = postData.postId;
     this.postTitle = postData.postTitle;
+    this.seoTitle = postData.seoTitle;
     this.postURL = postData.postURL;
     this.postDateGmt = postData.postDateGmt;
     this.postContent = sanitizePostHtml(postData.postContent);
@@ -217,3 +219,4 @@ export class ArchiveDataEntry {
     );
   }
 }
+

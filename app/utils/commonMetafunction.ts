@@ -1,18 +1,20 @@
 interface CommonMetaFunctionProps {
   title: string | null;
+  seoTitle?: string | null;
   description: string | null;
   url: string | null;
   image: string | null;
 }
 
-export function commonMetaFunction({ title, description, url, image }: CommonMetaFunctionProps) {
+export function commonMetaFunction({ title, seoTitle, description, url, image }: CommonMetaFunctionProps) {
   const commonTitle = title ? `${title} - 健常者エミュレータ事例集` : '健常者エミュレータ事例集';
+  const documentTitle = seoTitle ? `${seoTitle} - 健常者エミュレータ事例集` : commonTitle;
   const commonDescription = description ?? '現実世界のために';
   const commonImage =
     image ??
     'https://qc5axegmnv2rtzzi.public.blob.vercel-storage.com/favicon-CvNSnEUuNa4esEDkKMIefPO7B1pnip.png';
   return [
-    { title: commonTitle },
+    { title: documentTitle },
     { description: commonDescription },
     { property: 'og:title', content: commonTitle },
     { property: 'og:description', content: commonDescription },
@@ -32,3 +34,4 @@ export function commonMetaFunction({ title, description, url, image }: CommonMet
     { name: 'twitter:image', content: commonImage },
   ];
 }
+
