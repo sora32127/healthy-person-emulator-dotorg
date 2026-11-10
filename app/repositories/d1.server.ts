@@ -176,6 +176,7 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
         .select({
           postId: schema.dimPosts.postId,
           postTitle: schema.dimPosts.postTitle,
+          seoTitle: schema.dimPosts.seoTitle,
           postContent: schema.dimPosts.postContent,
           postDateGmt: schema.dimPosts.postDateGmt,
           countLikes: schema.dimPosts.countLikes,
@@ -1457,3 +1458,4 @@ export function createD1Repository(d1: D1Database): DatabaseRepository {
     },
   };
 }
+
